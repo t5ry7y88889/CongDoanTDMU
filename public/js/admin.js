@@ -270,6 +270,7 @@ function restoreVersionHistory(index) {
 function openSystemSettingsModal() {
   const key = localStorage.getItem('gemini_api_key') || "";
   document.getElementById('settings_api_key_input').value = key;
+  document.getElementById('settings_groq_api_key_input').value = localStorage.getItem('groq_api_key') || '';
   document.getElementById('system_settings_modal').classList.add('active');
 }
 
@@ -280,6 +281,7 @@ function closeSystemSettingsModal() {
 function saveSystemSettings() {
   const key = document.getElementById('settings_api_key_input').value.trim();
   localStorage.setItem('gemini_api_key', key);
+  localStorage.setItem('groq_api_key', document.getElementById('settings_groq_api_key_input').value.trim());
   closeSystemSettingsModal();
   updateAiStatusBadge();
   alert("Đã lưu cấu hình Google Gemini API Key vào hệ thống thành công!");
@@ -350,6 +352,8 @@ async function generateAIContent() {
   const lengthOption = document.getElementById('ai_length_select').value;
   const targetAudience = document.getElementById('ai_audience_select').value;
   const apiKey = localStorage.getItem('gemini_api_key') || "";
+  const groqApiKey = localStorage.getItem('groq_api_key') || "";
+  const aiEngine = localStorage.getItem('ai_engine_preference') || 'auto';
 
   const spinnerBox = document.getElementById('ai_stepper_spinner');
   const resultBox = document.getElementById('ai_editor_workspace');
@@ -363,7 +367,7 @@ async function generateAIContent() {
   await new Promise(r => setTimeout(r, 400));
 
   try {
-    const res = await API.generateAI({ prompt: promptInput, eventForm, category, tone, lengthOption, targetAudience, apiKey });
+    const res = await API.generateAI({ prompt: promptInput, eventForm, category, tone, lengthOption, targetAudience, apiKey, groqApiKey, aiEngine });
     if (res.success) {
       updateAiStepperState("🔍 Step 3/4: AI kiểm tra văn phong & trích xuất tiêu đề...");
       await new Promise(r => setTimeout(r, 300));
@@ -2086,7 +2090,7 @@ function clearCopilotChat() {
 async function generateAIContentFromOmnibar() {
   const promptInput = document.getElementById('manus_omnibar_input')?.value.trim();
   if (!promptInput) {
-    alert("Vui lòng nhập ý tưởng hoặc thông tin sự kiện vào thanh AI!");
+    alert("⚠️ Vui lòng nhập ý tưởng hoặc thông tin sự kiện vào thanh AI!");
     return;
   }
 
@@ -2095,6 +2099,8 @@ async function generateAIContentFromOmnibar() {
   const tone = document.getElementById('ai_tone_select')?.value || 'Trang trọng, chuẩn hành chính';
   const author = getCurrentAuthorName();
   const apiKey = localStorage.getItem('gemini_api_key') || "";
+  const groqApiKey = localStorage.getItem('groq_api_key') || "";
+  const aiEngine = localStorage.getItem('ai_engine_preference') || 'auto';
 
   const spinnerBox = document.getElementById('ai_stepper_spinner');
   if (spinnerBox) spinnerBox.style.display = 'block';
@@ -2108,23 +2114,33 @@ async function generateAIContentFromOmnibar() {
       targetAudience: 'Toàn thể công đoàn viên, cán bộ, giảng viên TDMU',
       issuingUnit,
       author,
-      apiKey
+      apiKey,
+      groqApiKey,
+      aiEngine
     });
 
     if (res.success) {
       if (document.getElementById('ai_final_title')) {
-        document.getElementById('ai_final_title').value = res.titles ? res.titles[0] : promptInput;
+        let cleanTitle = res.titles && res.titles[0] ? res.titles[0] : promptInput;
+        cleanTitle = cleanTitle.replace(/^Tiêu đề \d+:\s*/i, '').replace(/^Tiêu đề chính:\s*/i, '').replace(/^Title:\s*/i, '').trim();
+        document.getElementById('ai_final_title').value = cleanTitle;
       }
       if (document.getElementById('ai_final_subtitle')) {
         document.getElementById('ai_final_subtitle').value = res.subTitle || "Kế hoạch hoạt động trọng tâm Công đoàn TDMU năm 2026";
       }
       if (res.content) {
         setNativeEditorContent(res.content);
+        if (typeof showAiEngineToast === 'function') showAiEngineToast(res.source);
+      } else {
+        alert("⚠️ AI phản hồi nhưng nội dung bài viết bị rỗng! Chi tiết:\n" + JSON.stringify(res, null, 2));
       }
       markContentUnsaved();
+    } else {
+      alert("❌ LỖI SINH BÀI VIẾT (CHI TIẾT):\n\n" + (res.error || "Không nhận được phản hồi từ máy chủ AI."));
     }
   } catch (err) {
-    console.error(err);
+    console.error("Omnibar Generation Error:", err);
+    alert("❌ LỖI KẾT NỐI MẠNG / CLIENT:\n\n" + err.message + "\n\nVui lòng kiểm tra lại console F12 hoặc khởi động lại server.");
   } finally {
     if (spinnerBox) spinnerBox.style.display = 'none';
   }
@@ -2211,3 +2227,34 @@ document.addEventListener('keydown', function(e) {
     redoEditor();
   }
 });
+
+
+
+// ==========================================
+// 21. LIVE AI ENGINE NOTIFICATION ENGINE
+// ==========================================
+function showAiEngineToast(sourceName) {
+  const toast = document.getElementById('ai_engine_active_toast');
+  const text = document.getElementById('ai_toast_text');
+  const icon = document.getElementById('ai_toast_icon');
+  if (!toast || !text) return;
+
+  text.innerText = sourceName || 'AI Engine Live';
+  
+  if (sourceName && sourceName.includes('Groq')) {
+    icon.style.background = '#F59E0B';
+    icon.innerHTML = '<i class="fa-solid fa-bolt" style="color: white;"></i>';
+    text.style.color = '#FBBF24';
+  } else {
+    icon.style.background = '#0284C7';
+    icon.innerHTML = '<i class="fa-solid fa-brain" style="color: white;"></i>';
+    text.style.color = '#38BDF8';
+  }
+
+  toast.style.display = 'flex';
+  
+  clearTimeout(window.aiToastTimeout);
+  window.aiToastTimeout = setTimeout(() => {
+    toast.style.display = 'none';
+  }, 4500);
+}

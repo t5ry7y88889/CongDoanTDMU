@@ -59,14 +59,221 @@ function summarizeTextNlp(text, targetWordLimit = 50) {
 }
 
 // REAL DYNAMIC AI GENERATOR (GEMINI 2.5 FLASH API + DYNAMIC NLP FALLBACK)
-app.post('/api/ai/generate', async (req, res) => {
-  const { prompt, eventForm, category, tone, lengthOption, targetAudience, apiKey } = req.body;
-  const activeApiKey = apiKey || process.env.GEMINI_API_KEY;
 
-  if (activeApiKey) {
-    try {
-      const ai = new GoogleGenAI({ apiKey: activeApiKey });
-const fullSystemPrompt = `BẠN LÀ CHUYÊN VIÊN TRƯỞNG BAN TUYÊN GIÁO - TRUYỀN THÔNG CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT (TDMU).
+// ------------------------------------------------------------------
+// GROQ NATIVE FETCHER HELPER
+// ------------------------------------------------------------------
+// HELPER: ROBUST JSON EXTRACTOR (Extracts valid JSON from anywhere in the string)
+function extractJsonFromText(text) {
+  if (!text) throw new Error("Phản hồi rỗng từ AI");
+  let cleaned = text.trim();
+  // 1. Try stripping markdown blocks
+  cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    // 2. Try regex extraction of first outer JSON object {...}
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch (e2) {
+        throw new Error("Không thể trích xuất JSON hợp lệ từ AI: " + e2.message);
+      }
+    }
+    throw new Error("AI không trả về đúng định dạng JSON: " + e.message);
+  }
+}
+
+async function callGroqAPI(promptContent, systemPrompt, groqApiKey) {
+  const fetch = (await import('node-fetch')).default || globalThis.fetch;
+  const cleanKey = (groqApiKey || "").trim();
+
+  // 1. Dynamically query models
+  let availableModels = [];
+  try {
+    const listRes = await fetch('https://api.groq.com/openai/v1/models', {
+      headers: { 'Authorization': `Bearer ${cleanKey}` }
+    });
+    if (listRes.ok) {
+      const listData = await listRes.json();
+      availableModels = (listData.data || []).map(m => m.id);
+    }
+  } catch (e) {
+    console.warn("[Groq Model List Warning]:", e.message);
+  }
+
+  // 2. Priority order: Reliable compound/chat models first
+  const preferredModels = [
+    'groq/compound-mini',
+    'groq/compound',
+    'openai/gpt-oss-120b',
+    'openai/gpt-oss-20b',
+    'qwen/qwen3.6-27b',
+    'allam-2-7b'
+  ];
+
+  // Sort available models by preferred order
+  let modelsToTry = [];
+  for (const p of preferredModels) {
+    if (availableModels.includes(p)) modelsToTry.push(p);
+  }
+  for (const a of availableModels) {
+    if (!modelsToTry.includes(a) && !a.includes('whisper') && !a.includes('vision') && !a.includes('guard')) {
+      modelsToTry.push(a);
+    }
+  }
+  if (modelsToTry.length === 0) modelsToTry = preferredModels;
+
+  let lastError = null;
+
+  for (const model of modelsToTry) {
+    // Try with response_format first, then without response_format if it complains about JSON validation
+    for (const useJsonFormat of [true, false]) {
+      try {
+        console.log(`[Calling Groq]: Model=${model}, jsonMode=${useJsonFormat}...`);
+        
+        const payload = {
+          model: model,
+          messages: [
+            { 
+              role: 'system', 
+              content: systemPrompt + "\n\nBẠN PHẢI TRẢ VỀ DUY NHẤT MỘT ĐỐI TƯỢNG JSON HỢP LỆ THEO ĐÚNG CẤU TRÚC ĐÃ CHO." 
+            },
+            { role: 'user', content: promptContent }
+          ],
+          temperature: 0.3
+        };
+
+        if (useJsonFormat) {
+          payload.response_format = { type: "json_object" };
+        }
+
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${cleanKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          const msg = errData.error?.message || `HTTP ${response.status}`;
+          // If JSON validation failed, immediately try without jsonMode on next iteration
+          if (useJsonFormat && msg.includes('Failed to validate JSON')) {
+            console.warn(`[Groq ${model} JSON Mode rejected, retrying without strict json_object...]`);
+            continue;
+          }
+          throw new Error(msg);
+        }
+
+        const data = await response.json();
+        const content = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : null;
+        if (content) {
+          console.log(`[Groq Success with model ${model}]`);
+          return content;
+        }
+      } catch (err) {
+        console.warn(`[Groq Model ${model} (json=${useJsonFormat}) failed]:`, err.message);
+        lastError = err;
+        if (err.message && (err.message.includes('Invalid API Key') || err.message.includes('invalid_api_key'))) {
+          throw new Error("Khóa Groq API không hợp lệ hoặc đã bị thu hồi. Vui lòng kiểm tra lại trên console.groq.com!");
+        }
+      }
+    }
+  }
+
+  throw lastError || new Error("Không thể kết nối đến máy chủ Groq AI");
+}
+
+function handleAiError(err, res, engineName) {
+  console.error(engineName + " Error:", err.message || err);
+  let errorMsg = err.message || "Lỗi không xác định";
+  if (err.status === 429 || errorMsg.includes('quota') || errorMsg.includes('429')) {
+    errorMsg = "Khóa API của bạn đã hết lượt dùng miễn phí (Rate Limit). Vui lòng đợi khoảng 1 phút rồi thử lại!";
+  } else if (err.status === 400 || errorMsg.includes('API key not valid')) {
+    errorMsg = "Khóa API không hợp lệ. Vui lòng kiểm tra lại trong phần Cài đặt!";
+  } else {
+    errorMsg = `Lỗi kết nối ${engineName}: ` + errorMsg;
+  }
+  return res.json({ success: false, error: errorMsg });
+}
+
+
+// ------------------------------------------------------------------
+// AI OUTPUT NORMALIZERS (GUARDS AGAINST VARIED MODEL SCHEMAS)
+// ------------------------------------------------------------------
+function normalizeAiGenerateOutput(parsed, defaultPrompt) {
+  let target = parsed;
+  if (target && typeof target === 'object') {
+    if (target.article && typeof target.article === 'object') target = target.article;
+    else if (target.data && typeof target.data === 'object') target = target.data;
+    else if (target.response && typeof target.response === 'object') target = target.response;
+  } else {
+    target = {};
+  }
+
+  let titles = [];
+  if (Array.isArray(target.titles) && target.titles.length > 0) {
+    titles = target.titles;
+  } else if (typeof target.titles === 'string') {
+    titles = [target.titles];
+  } else if (target.title) {
+    titles = Array.isArray(target.title) ? target.title : [target.title];
+  } else {
+    titles = [defaultPrompt || "Thông Báo Hoạt Động Công Đoàn TDMU"];
+  }
+
+  titles = titles.map(t => typeof t === 'string' ? t.replace(/^Tiêu đề \d+:\s*/i, '').replace(/^Tiêu đề chính:\s*/i, '').replace(/^Title:\s*/i, '').replace(/^"|"$/g, '').trim() : String(t));
+
+  const subTitle = target.subTitle || target.subtitle || target.sub_title || "";
+  const summary = target.summary || target.tom_tat || target.description || "";
+  let content = target.content || target.body || target.html || target.text || target.noi_dung || target.article || "";
+
+  // If content is pure plain text without HTML tags, wrap paragraphs in <p>
+  if (typeof content === 'string' && content.length > 0 && !content.includes('<p>') && !content.includes('<h2>')) {
+    content = content.split(/\n\n+/).map(p => `<p>${p.trim()}</p>`).join('\n');
+  }
+
+  return { titles, subTitle, summary, content };
+}
+
+function normalizeAiChatOutput(parsed) {
+  let target = parsed;
+  if (target && typeof target === 'object') {
+    if (target.data && typeof target.data === 'object') target = target.data;
+    else if (target.response && typeof target.response === 'object') target = target.response;
+  } else {
+    target = {};
+  }
+
+  const reply = target.reply || target.message || target.answer || target.text || "Dạ, em đã xử lý xong yêu cầu của thầy/cô rồi ạ!";
+  let editAction = target.editAction || target.action || target.edit_action || "NONE";
+  let editContent = target.editContent || target.content || target.edit_content || target.html || "";
+
+  if (typeof editContent === 'string' && editContent.length > 0 && !editContent.includes('<p>') && !editContent.includes('<h2>') && !editContent.includes('<ul>')) {
+    editContent = editContent.split(/\n\n+/).map(p => `<p>${p.trim()}</p>`).join('\n');
+  }
+
+  return { reply, editAction, editContent };
+}
+
+
+app.post('/api/ai/generate', async (req, res) => {
+  const { prompt, eventForm, category, tone, lengthOption, targetAudience, apiKey, groqApiKey, aiEngine } = req.body;
+  const activeGeminiKey = apiKey || process.env.GEMINI_API_KEY;
+  const activeGroqKey = groqApiKey || process.env.GROQ_API_KEY;
+
+  if (!activeGeminiKey && !activeGroqKey) {
+    return res.json({ 
+      success: false, 
+      error: "Bạn chưa nhập API Key nào! Vui lòng vào Cài Đặt (⚙️) và nhập ít nhất một khóa (Google Gemini hoặc Groq)." 
+    });
+  }
+
+  const fullSystemPrompt = `BẠN LÀ CHUYÊN VIÊN TRƯỞNG BAN TUYÊN GIÁO - TRUYỀN THÔNG CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT (TDMU).
 Nhiệm vụ của bạn là soạn thảo bài viết truyền thông chính thống, chuẩn mực văn phong hành chính đoàn thể, kết hợp hài hòa giữa tính trang trọng của môi trường giáo dục đại học và tinh thần nhiệt huyết, tương thân tương ái của tổ chức Công đoàn.
 
 =========================================
@@ -77,16 +284,12 @@ Nhiệm vụ của bạn là soạn thảo bài viết truyền thông chính th
 - TUYỆT ĐỐI TRÁNH: Không dùng từ ngữ giật gân, câu like mạng xã hội, tiếng lóng, lối hành văn thương mại hoặc cảm tính tiêu cực.
 
 =========================================
-2. CẤU TRÚC BÀI VIẾT 4 PHẦN CHUẨN MỰC BÁO CHÍ ĐOÀN THỂ:
+2. NGUYÊN TẮC BỐ CỤC TỰ NHIÊN, LINH HOẠT & BÁM SÁT THỰC TẾ:
 =========================================
-Phần I. BỐI CẢNH & Ý NGHĨA CHÍNH TRỊ:
-- Nêu rõ căn cứ kế hoạch công tác năm 2026 của Công đoàn Trường Đại học Thủ Dầu Một, mục đích chăm lo hoặc đẩy mạnh phong trào thi đua.
-Phần II. THÔNG TIN TRỌNG TÂM & NỘI DUNG CHI TIẾT:
-- Thời gian, địa điểm, đối tượng tham gia, tiến độ thực hiện, các nội dung hoạt động nổi bật (thi đấu, tọa đàm, trao quà phúc lợi, tập huấn chuyên môn).
-Phần III. LAN TỎA TINH THẦN & TRÍCH DẪN (BLOCKQUOTE):
-- Trích dẫn 1 câu phát biểu ý nghĩa của Ban Thường vụ hoặc thông điệp cốt lõi nhấn mạnh sự đoàn kết, sẻ chia, đổi mới sáng tạo trong nhà trường.
-Phần IV. TRÁCH NHIỆM PHỐI HỢP & THÔNG TIN LIÊN HỆ CHÍNH THỨC:
-- Đề nghị Ban Chấp hành các Công đoàn bộ phận triển khai sâu rộng; cung cấp đầy đủ địa chỉ Văn phòng Công đoàn TDMU (Lầu 1, Dãy A, Cổng 1, Số 06 Trần Văn Ơn, TP. Thủ Dầu Một), Hotline (0274) 3815 184, Email: congdoan@tdmu.edu.vn.
+- TUYỆT ĐỐI KHÔNG sử dụng bố cục rập khuôn "Phần I, Phần II, Phần III, Phần IV" cứng nhắc.
+- Bố cục phải linh hoạt, tự nhiên như một bài báo hiện đại hoặc thông báo súc tích. Dùng các thẻ <h2> với tiêu đề cụ thể theo nội dung (VD: <h2>Ý nghĩa hoạt động</h2>, <h2>Nội dung trọng tâm</h2>) hoặc chia đoạn văn mạch lạc.
+- TUYỆT ĐỐI KHÔNG tự ý bịa đặt lịch trình chi li (như chia từng khung giờ 06h00 - 06h30, 07h00 - 08h30...) hoặc tự chế lời phát biểu nếu người dùng không yêu cầu.
+- Chỉ tập trung vào chủ đề chính mà người dùng yêu cầu, diễn đạt trang trọng, súc tích, văn phong Công đoàn TDMU văn minh, thiết thực.
 
 =========================================
 3. THÔNG TIN ĐẦU VÀO CỦA YÊU CẦU:
@@ -105,73 +308,76 @@ ${eventForm ? `Chi tiết sự kiện: Tên="${eventForm.name}", Ngày="${eventF
 =========================================
 {
   "titles": [
-    "Tiêu đề 1: Trang trọng, chuẩn thông báo hành chính Công đoàn TDMU",
-    "Tiêu đề 2: Khẩu hiệu hành động, sôi nổi phong trào thi đua",
-    "Tiêu đề 3: Góc nhìn báo chí truyền thông hiện đại, thu hút"
+    "TỰ ĐẶT TIÊU ĐỀ 1 CHÍNH THỨC DỰA TRÊN SỰ KIỆN (Không ghi chữ 'Tiêu đề 1:')",
+    "TỰ ĐẶT TIÊU ĐỀ 2 THEO PHONG CÁCH KHẨU HIỆU THI ĐUA",
+    "TỰ ĐẶT TIÊU ĐỀ 3 THEO PHONG CÁCH BÁO CHÍ THỜI SỰ"
   ],
-  "subTitle": "Tiêu đề phụ 1 câu súc tích tóm lược ý nghĩa sự kiện...",
-  "summary": "Tóm tắt bài viết chính xác 50 từ nêu bật thời gian, địa điểm, ý nghĩa và thông điệp chính...",
-  "content": "Nội dung bài viết HTML chuẩn cấu trúc (sử dụng <h2>, <p>, <blockquote>, <ul>, <li>, <div class='journal-contact-card'>...) bao gồm đầy đủ 4 phần chuẩn mực nêu trên."
+  "subTitle": "Viết 1 câu tiêu đề phụ súc tích tóm lược ý nghĩa sự kiện cụ thể này",
+  "summary": "Tóm tắt bài viết chính xác 50 từ nêu bật thời gian, địa điểm, ý nghĩa và thông điệp chính",
+  "content": "Nội dung bài viết HTML tự nhiên, bố cục linh hoạt (sử dụng <h2>, <p>, <ul>, <li>...) bám sát đúng chủ đề yêu cầu, không rập khuôn."
 }`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: fullSystemPrompt,
-        config: { responseMimeType: 'application/json' }
-      });
+  // Helper functions for calling engines
+  const runGemini = async () => {
+    if (!activeGeminiKey) throw new Error("Chưa cấu hình Gemini API Key");
+    const ai = new GoogleGenAI({ apiKey: activeGeminiKey });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: fullSystemPrompt,
+      config: { responseMimeType: 'application/json' }
+    });
+    return response.text;
+  };
 
-      const parsed = JSON.parse(response.text);
-      return res.json({
-        success: true,
-        source: "Google Gemini 2.5 Flash API Live",
-        titles: parsed.titles,
-        summary: parsed.summary,
-        content: parsed.content
-      });
+  const runGroq = async () => {
+    if (!activeGroqKey) throw new Error("Chưa cấu hình Groq API Key");
+    return await callGroqAPI("Bắt đầu sinh bài viết theo yêu cầu.", fullSystemPrompt, activeGroqKey);
+  };
+
+  let rawText = "";
+  let sourceEngine = "";
+  let lastError = null;
+
+  // Determine priority order
+  const order = (aiEngine === 'groq') ? ['groq', 'gemini'] : ['gemini', 'groq'];
+
+  for (const engine of order) {
+    try {
+      if (engine === 'gemini' && activeGeminiKey) {
+        rawText = await runGemini();
+        sourceEngine = (sourceEngine ? "Google Gemini 2.5 (Fallback)" : "Google Gemini 2.5 Flash");
+        break;
+      } else if (engine === 'groq' && activeGroqKey) {
+        rawText = await runGroq();
+        sourceEngine = (order[0] === 'gemini' ? "⚡ Groq Llama 3.1 (Tự động chuyển từ Gemini)" : "⚡ Groq Llama 3.1 70B Siêu Tốc");
+        break;
+      }
     } catch (err) {
-      console.error("Gemini API Error, falling back to Local NLP Engine:", err.message);
+      console.warn(`[Engine ${engine} failed]:`, err.message || err);
+      lastError = err;
     }
   }
 
-  // Dynamic Local NLP Generation
-  const eventTitle = (eventForm && eventForm.name) ? eventForm.name : (prompt || "Hoạt Động Phong Trào Công Đoàn TDMU");
-  const eventTime = (eventForm && eventForm.time) ? eventForm.time : "Thời gian sắp tới trong năm 2026";
-  const eventLoc = (eventForm && eventForm.location) ? eventForm.location : "Trường Đại học Thủ Dầu Một (Số 06 Trần Văn Ơn, TP. Thủ Dầu Một)";
+  if (!rawText) {
+    return handleAiError(lastError || new Error("Không thể kết nối đến cả Gemini và Groq"), res, "AI Engine");
+  }
 
-  const titles = [
-    `Thông Báo: Kế Hoạch Tổ Chức ${eventTitle} (Công Đoàn TDMU 2026)`,
-    `Sôi Nổi Thi Đua: ${eventTitle} Chào Mừng Phong Trào Đột Phá ĐH Thủ Dầu Một`,
-    `Công Đoàn TDMU Triển Khai Chương Trình: ${eventTitle}`
-  ];
-
-  const contentHtml = `<h2>I. MỤC ĐÍCH VÀ Ý NGHĨA CHƯƠNG TRÌNH</h2>
-<p>Thực hiện chương trình công tác năm 2026 và nhằm chăm lo tốt hơn đời sống vật chất, tinh thần cho cán bộ, giảng viên, Ban Thường vụ Công đoàn Trường Đại học Thủ Dầu Một trân trọng thông báo kế hoạch tổ chức: <strong>${eventTitle}</strong>.</p>
-
-<h2>II. THỜI GIAN VÀ ĐỊA ĐIỂM TỔ CHỨC</h2>
-<p>• <strong>Thời gian diễn ra:</strong> ${eventTime}</p>
-<p>• <strong>Địa điểm:</strong> ${eventLoc}</p>
-<p>• <strong>Đối tượng tham gia:</strong> Toàn thể đoàn viên, cán bộ, giảng viên và người lao động trực thuộc các Tổ Công đoàn bộ phận nhà trường.</p>
-
-<blockquote><i class="fa-solid fa-quote-left"></i> "Chương trình là dịp thắt chặt tình đoàn kết, lan tỏa tinh thần đổi mới sáng tạo và xây dựng môi trường đại học văn minh, hạnh phúc."</blockquote>
-
-<h2>III. YÊU CẦU PHỐI HỢP THỰC HIỆN</h2>
-<p>Ban Thường vụ Công đoàn đề nghị Ban Chấp hành các Công đoàn bộ phận Khoa/Phòng/Viện trực thuộc phổ biến sâu rộng tới toàn thể đoàn viên, đăng ký danh sách đại biểu tham dự đúng tiến độ quy định.</p>
-
-<div class="journal-contact-card">
-  📌 <strong>Thông tin liên hệ & Giải đáp thắc mắc:</strong><br>
-  🏠 <strong>Văn phòng Công đoàn TDMU:</strong> Lầu 1, Dãy A, Cổng 1, Số 06 Trần Văn Ơn, TP. Thủ Dầu Một<br>
-  📞 <strong>Hotline:</strong> (0274) 3815 184 | ✉️ <strong>Email:</strong> congdoan@tdmu.edu.vn
-</div>`;
-
-  const summary = summarizeTextNlp(contentHtml, 50);
-
-  res.json({
-    success: true,
-    source: "Local Dynamic NLP Engine (Offline Fallback)",
-    titles,
-    summary,
-    content: contentHtml
-  });
+  try {
+    rawText = rawText.trim().replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '');
+    const parsed = extractJsonFromText(rawText);
+    const normalized = normalizeAiGenerateOutput(parsed, prompt);
+    
+    return res.json({
+      success: true,
+      source: sourceEngine,
+      titles: normalized.titles,
+      subTitle: normalized.subTitle,
+      summary: normalized.summary,
+      content: normalized.content
+    });
+  } catch (parseErr) {
+    return res.json({ success: false, error: "Lỗi định dạng dữ liệu từ AI: " + parseErr.message });
+  }
 });
 
 // REAL DYNAMIC AI QUALITY CHECK AUDIT ENGINE (DYNAMIC COMPUTED SCORE 0-100)
@@ -267,27 +473,22 @@ app.post('/api/ai/quality-check', async (req, res) => {
 
 // REAL INLINE FLOATING AI TRANSFORMER
 
-// TRUE MANUS AI COPILOT - DIRECT DOCUMENT EDITING ENDPOINT
+// TRUE MANUS AI COPILOT - MULTI-ENGINE AUTO-FALLBACK (GEMINI <-> GROQ)
 app.post('/api/ai/chat', async (req, res) => {
-  const { message, history, articleTitle, articleContent, selectedText, apiKey } = req.body;
-  if (!message) return res.status(400).json({ error: 'Message là bắt buộc' });
+  const { message, history, articleTitle, articleContent, selectedText, apiKey, groqApiKey, aiEngine } = req.body;
+  if (!message) return res.json({ success: false, error: 'Message là bắt buộc' });
 
-  const activeApiKey = apiKey || process.env.GEMINI_API_KEY;
+  const activeGeminiKey = apiKey || process.env.GEMINI_API_KEY;
+  const activeGroqKey = groqApiKey || process.env.GROQ_API_KEY;
 
-  if (activeApiKey) {
-    try {
-      const ai = new GoogleGenAI({ apiKey: activeApiKey });
-      
-      let historyText = "";
-      if (history && Array.isArray(history) && history.length > 0) {
-        historyText = "\n--- LỊCH SỬ TRÒ CHUYỆN (CONTEXT MEMORY) ---\n";
-        history.slice(-4).forEach(h => {
-          historyText += `${h.role === 'user' ? 'CÁN BỘ' : 'BẠN (COPILOT)'}: "${h.text}"\n`;
-        });
-        historyText += "ĐẶC BIỆT LƯU Ý: Nếu người dùng báo lỗi, yêu cầu viết lại hoặc tạo bản khác, bạn PHẢI TẠO RA MỘT KẾT QUẢ MỚI HOÀN TOÀN, không lặp lại sai lầm hoặc kết quả đã cung cấp trong lịch sử!\n";
-      }
+  if (!activeGeminiKey && !activeGroqKey) {
+    return res.json({ 
+      success: false, 
+      error: "Bạn chưa nhập API Key nào! Vui lòng vào Cài Đặt (⚙️) và nhập ít nhất một khóa (Google Gemini hoặc Groq)." 
+    });
+  }
 
-      const systemPrompt = `BẠN LÀ MANUS AI COPILOT - TRỢ LÝ TRUYỀN THÔNG CÔNG ĐOÀN TDMU.
+  const systemPrompt = `BẠN LÀ MANUS AI COPILOT - TRỢ LÝ TRUYỀN THÔNG CÔNG ĐOÀN TDMU.
 Bạn có quyền năng CHỈNH SỬA TRỰC TIẾP tài liệu của người dùng, không chỉ chat suông.
 Ngữ cảnh hiện tại:
 - Tiêu đề: "${articleTitle || 'Trống'}"
@@ -309,52 +510,72 @@ QUY TẮC SỐNG CÒN VỀ ĐỊNH VỊ VÀ LOGIC BÀI VIẾT:
 2. CHỈ TRẢ VỀ ĐÚNG ĐOẠN ĐƯỢC YÊU CẦU TRONG 'editContent':
    - Nếu bôi đen và yêu cầu sửa: BẠN PHẢI dùng "REPLACE_SELECTION". Thuộc tính 'editContent' CHỈ ĐƯỢC CHỨA ĐOẠN VĂN ĐÃ SỬA. TUYỆT ĐỐI KHÔNG chép lại toàn bộ bài viết, nó sẽ phá hỏng tài liệu của người dùng. Hãy chắc chắn thẻ HTML mở và đóng đầy đủ.
    - Nếu yêu cầu chèn thêm: Dùng "APPEND". 'editContent' chỉ chứa phần mới chèn.
-   - Nếu yêu cầu làm mới toàn bộ bài: Dùng "REPLACE_ALL", nhưng bạn PHẢI VIẾT HOÀN CHỈNH BÀI VIẾT TỪ ĐẦU ĐẾN CUỐI. Không được bỏ dở.
-   - Trò chuyện bình thường: Dùng "NONE" và 'editContent' bằng "".
+   - Nếu và chỉ nếu yêu cầu làm mới toàn bộ bài: Dùng "REPLACE_ALL", nhưng bạn PHẢI VIẾT HOÀN CHỈNH BÀI VIẾT TỪ ĐẦU ĐẾN CUỐI. Không được bỏ dở.
+   - Trò chuyện bình thường: Dùng "NONE" và 'editContent' bằng "".`;
 
-${historyText}`;
+  const runGeminiChat = async () => {
+    if (!activeGeminiKey) throw new Error("Chưa cấu hình Gemini API Key");
+    const ai = new GoogleGenAI({ apiKey: activeGeminiKey });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: systemPrompt + "\n\nYÊU CẦU CỦA NGƯỜI DÙNG: " + message,
+      config: { responseMimeType: 'application/json' }
+    });
+    return response.text;
+  };
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: systemPrompt,
-        config: { responseMimeType: 'application/json' }
-      });
+  const runGroqChat = async () => {
+    if (!activeGroqKey) throw new Error("Chưa cấu hình Groq API Key");
+    return await callGroqAPI(message, systemPrompt, activeGroqKey);
+  };
 
-      const result = JSON.parse(response.text.trim());
-      return res.json({
-        success: true,
-        source: 'Google Gemini 2.5 Flash Live Copilot',
-        reply: result.reply,
-        editAction: result.editAction || 'NONE',
-        editContent: result.editContent || ''
-      });
+  let rawText = "";
+  let sourceEngine = "";
+  let lastError = null;
+
+  const order = (aiEngine === 'groq') ? ['groq', 'gemini'] : ['gemini', 'groq'];
+
+  for (const engine of order) {
+    try {
+      if (engine === 'gemini' && activeGeminiKey) {
+        rawText = await runGeminiChat();
+        sourceEngine = (sourceEngine ? "Google Gemini 2.5 Copilot (Fallback)" : "Google Gemini 2.5 Flash Copilot");
+        break;
+      } else if (engine === 'groq' && activeGroqKey) {
+        rawText = await runGroqChat();
+        sourceEngine = (order[0] === 'gemini' ? "⚡ Groq Llama 3.1 Copilot (Tự động chuyển từ Gemini)" : "⚡ Groq Llama 3.1 Copilot");
+        break;
+      }
     } catch (err) {
-      console.error("Gemini Copilot Error, falling back to Local Engine:", err.message);
+      console.warn(`[Copilot Engine ${engine} failed]:`, err.message || err);
+      lastError = err;
     }
   }
 
-  // Local Fallback Mock for Manus Copilot
-  let reply = "Dạ, em đã chuẩn bị nội dung theo yêu cầu ạ.";
-  let editAction = "APPEND";
-  let editContent = `<p>Nội dung sinh tự động do thiếu API Key...</p>`;
-  
-  if (selectedText) {
-    editAction = "REPLACE_SELECTION";
-    editContent = `<p><strong>[Đã sửa]</strong> ${selectedText} (Phiên bản tốt hơn)</p>`;
+  if (!rawText) {
+    return handleAiError(lastError || new Error("Không thể kết nối đến cả Gemini và Groq"), res, "Copilot AI");
   }
 
-  res.json({
-    success: true,
-    source: 'Local Fallback Copilot',
-    reply,
-    editAction,
-    editContent
-  });
+  try {
+    rawText = rawText.trim().replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '');
+    const result = extractJsonFromText(rawText);
+    const normalizedChat = normalizeAiChatOutput(result);
+    
+    return res.json({
+      success: true,
+      source: sourceEngine,
+      reply: normalizedChat.reply,
+      editAction: normalizedChat.editAction,
+      editContent: normalizedChat.editContent
+    });
+  } catch (parseErr) {
+    return res.json({ success: false, error: "Lỗi định dạng dữ liệu từ Copilot: " + parseErr.message });
+  }
 });
 
 app.post('/api/ai/floating-command', async (req, res) => {
   const { action, text } = req.body;
-  if (!text) return res.status(400).json({ error: 'Text là bắt buộc' });
+  if (!text) return res.json({ success: false, error: 'Text là bắt buộc' });
 
   const apiKey = req.body.apiKey || process.env.GEMINI_API_KEY;
   if (apiKey) {
@@ -429,7 +650,7 @@ app.get('/api/articles/:id', (req, res) => {
 
 app.post('/api/articles', async (req, res) => {
   const { title, categoryName, categoryId, summary, content, image, author, status, isAiGenerated, aiPrompt } = req.body;
-  if (!title) return res.status(400).json({ error: 'Tiêu đề là bắt buộc' });
+  if (!title) return res.json({ success: false, error: 'Tiêu đề là bắt buộc' });
 
   const articleData = {
     title,
@@ -530,4 +751,103 @@ app.listen(PORT, () => {
   console.log(`🌐 Public Portal: http://localhost:${PORT}`);
   console.log(`⚙️  Admin CMS Portal: http://localhost:${PORT}/admin.html`);
   console.log(`====================================================`);
+});// TRUE MANUS AI COPILOT - DIRECT EDITING ENDPOINT WITH AUTO-FALLBACK
+app.post('/api/ai/chat', async (req, res) => {
+  const { message, history, articleTitle, articleContent, selectedText, apiKey, groqApiKey, aiEngine } = req.body;
+  if (!message) return res.json({ success: false, error: 'Message là bắt buộc' });
+
+  const activeGeminiKey = apiKey || process.env.GEMINI_API_KEY;
+  const activeGroqKey = groqApiKey || process.env.GROQ_API_KEY;
+
+  if (!activeGeminiKey && !activeGroqKey) {
+    return res.json({ 
+      success: false, 
+      error: "Bạn chưa nhập API Key nào! Vui lòng vào Cài Đặt (⚙️) và nhập ít nhất một khóa (Google Gemini hoặc Groq)." 
+    });
+  }
+
+  const systemPrompt = `BẠN LÀ MANUS AI COPILOT - TRỢ LÝ TRUYỀN THÔNG CÔNG ĐOÀN TDMU.
+Bạn có quyền năng CHỈNH SỬA TRỰC TIẾP tài liệu của người dùng, không chỉ chat suông.
+Ngữ cảnh hiện tại:
+- Tiêu đề: "${articleTitle || 'Trống'}"
+- Đoạn văn bản NGƯỜI DÙNG ĐANG BÔI ĐEN (Nếu có): "${selectedText || 'Không có đoạn nào được bôi đen'}"
+- Toàn bộ nội dung bài viết: "${(articleContent || '').replace(/<[^>]*>/g, ' ').slice(0, 1500)}..."
+
+NHIỆM VỤ CỦA BẠN: Phân tích yêu cầu của người dùng ("${message}") và trả về ĐÚNG định dạng JSON Schema sau:
+{
+  "reply": "Câu trả lời ngắn gọn, thân thiện (VD: Dạ, em đã sửa lại đoạn bôi đen cho trang trọng hơn rồi ạ!)",
+  "editAction": "REPLACE_SELECTION" | "REPLACE_ALL" | "APPEND" | "NONE",
+  "editContent": "Nội dung HTML mới (Sử dụng <h2>, <p>, <ul>...) để áp dụng vào tài liệu. Nếu editAction là NONE thì để rỗng."
+}
+
+QUY TẮC SỐNG CÒN VỀ ĐỊNH VỊ VÀ LOGIC BÀI VIẾT:
+1. PHÂN TÍCH LOGIC TOÀN BÀI KHI SỬA ĐOẠN VĂN: 
+   - Nếu người dùng ĐANG BÔI ĐEN CHỮ và yêu cầu sửa (VD: đổi thời gian, đổi ý), bạn phải đối chiếu đoạn sửa với "Toàn bộ nội dung bài viết". 
+   - NẾU sự thay đổi gây mâu thuẫn với các đoạn sau (VD: đổi ngày đoạn đầu nhưng đoạn cuối vẫn ghi ngày cũ), BẠN PHẢI nhắc nhở/cảnh báo người dùng một cách thân thiện trong thuộc tính 'reply' của chat!
+2. CHỈ TRẢ VỀ ĐÚNG ĐOẠN ĐƯỢC YÊU CẦU TRONG 'editContent':
+   - Nếu bôi đen và yêu cầu sửa: BẠN PHẢI dùng "REPLACE_SELECTION". Thuộc tính 'editContent' CHỈ ĐƯỢC CHỨA ĐOẠN VĂN ĐÃ SỬA, tuyệt đối không chép lại cả bài.
+   - Nếu yêu cầu chèn thêm: Dùng "APPEND". 'editContent' chỉ chứa phần mới chèn.
+   - Nếu và chỉ nếu yêu cầu làm mới toàn bộ bài: Dùng "REPLACE_ALL".
+   - Trò chuyện không sửa đổi: Dùng "NONE" và 'editContent' bằng "".`;
+
+  const runGeminiChat = async () => {
+    if (!activeGeminiKey) throw new Error("Chưa cấu hình Gemini API Key");
+    const ai = new GoogleGenAI({ apiKey: activeGeminiKey });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: systemPrompt + "\n\nYÊU CẦU CỦA NGƯỜI DÙNG: " + message,
+      config: { responseMimeType: 'application/json' }
+    });
+    return response.text;
+  };
+
+  const runGroqChat = async () => {
+    if (!activeGroqKey) throw new Error("Chưa cấu hình Groq API Key");
+    return await callGroqAPI(message, systemPrompt, activeGroqKey);
+  };
+
+  let rawText = "";
+  let sourceEngine = "";
+  let lastError = null;
+
+  const order = (aiEngine === 'groq') ? ['groq', 'gemini'] : ['gemini', 'groq'];
+
+  for (const engine of order) {
+    try {
+      if (engine === 'gemini' && activeGeminiKey) {
+        rawText = await runGeminiChat();
+        sourceEngine = (sourceEngine ? "Google Gemini 2.5 Copilot (Fallback)" : "Google Gemini 2.5 Flash Copilot");
+        break;
+      } else if (engine === 'groq' && activeGroqKey) {
+        rawText = await runGroqChat();
+        sourceEngine = (order[0] === 'gemini' ? "⚡ Groq Llama 3.1 Copilot (Tự động chuyển từ Gemini)" : "⚡ Groq Llama 3.1 Copilot");
+        break;
+      }
+    } catch (err) {
+      console.warn(`[Copilot Engine ${engine} failed]:`, err.message || err);
+      lastError = err;
+    }
+  }
+
+  if (!rawText) {
+    return handleAiError(lastError || new Error("Không thể kết nối đến cả Gemini và Groq"), res, "Copilot AI");
+  }
+
+  try {
+    rawText = rawText.trim().replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '');
+    const result = extractJsonFromText(rawText);
+    const normalizedChat = normalizeAiChatOutput(result);
+    
+    return res.json({
+      success: true,
+      source: sourceEngine,
+      reply: normalizedChat.reply,
+      editAction: normalizedChat.editAction,
+      editContent: normalizedChat.editContent
+    });
+  } catch (parseErr) {
+    return res.json({ success: false, error: "Lỗi định dạng dữ liệu từ Copilot: " + parseErr.message });
+  }
 });
+
+
