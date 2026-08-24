@@ -1,8 +1,13 @@
 -- =========================================================================
--- CƠ SỞ DỮ LIỆU 5 BẢNG CỐT LÕI - MICROSOFT SQL SERVER (SSMS)
--- Database Name: TDMU_CongDoan_DB (Bản chuẩn 16 Tổ Công đoàn TDMU)
+-- CƠ SỞ DỮ LIỆU ĐẲNG CẤP ENTERPRISE - CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT (TDMU)
+-- Hệ quản trị: Microsoft SQL Server (SSMS / LocalDB)
+-- Đầy đủ: 5 Bảng + 16 Tổ CĐ + Dữ liệu mẫu + Indexes + Views + Stored Procedures
 -- =========================================================================
 
+USE master;
+GO
+
+-- 1. TẠO DATABASE NẾU CHƯA CÓ
 IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = N'TDMU_CongDoan_DB')
 BEGIN
     CREATE DATABASE [TDMU_CongDoan_DB];
@@ -12,6 +17,10 @@ GO
 USE [TDMU_CongDoan_DB];
 GO
 
+-- 2. XÓA CÁC ĐỐI TƯỢNG CŨ THEO THỨ TỰ RÀNG BUỘC
+IF OBJECT_ID(N'dbo.sp_LayThongKeTongQuan', N'P') IS NOT NULL DROP PROCEDURE dbo.sp_LayThongKeTongQuan;
+IF OBJECT_ID(N'dbo.V_TinTuc_TrangChu', N'V') IS NOT NULL DROP VIEW dbo.V_TinTuc_TrangChu;
+IF OBJECT_ID(N'dbo.V_ThongKe_16ToCongDoan', N'V') IS NOT NULL DROP VIEW dbo.V_ThongKe_16ToCongDoan;
 IF OBJECT_ID(N'dbo.VAN_BAN', N'U') IS NOT NULL DROP TABLE dbo.VAN_BAN;
 IF OBJECT_ID(N'dbo.TIN_TUC', N'U') IS NOT NULL DROP TABLE dbo.TIN_TUC;
 IF OBJECT_ID(N'dbo.NHAN_SU', N'U') IS NOT NULL DROP TABLE dbo.NHAN_SU;
@@ -19,6 +28,9 @@ IF OBJECT_ID(N'dbo.TO_CONG_DOAN', N'U') IS NOT NULL DROP TABLE dbo.TO_CONG_DOAN;
 IF OBJECT_ID(N'dbo.TO_CHUC', N'U') IS NOT NULL DROP TABLE dbo.TO_CHUC;
 GO
 
+-- -------------------------------------------------------------------------
+-- 1. BẢNG TO_CHUC (Cơ cấu Ban Chấp hành & Các Ban chuyên môn cấp Trường)
+-- -------------------------------------------------------------------------
 CREATE TABLE dbo.TO_CHUC (
     MaToChuc INT IDENTITY(1,1) PRIMARY KEY,
     TenToChuc NVARCHAR(150) NOT NULL,
@@ -30,6 +42,9 @@ CREATE TABLE dbo.TO_CHUC (
 );
 GO
 
+-- -------------------------------------------------------------------------
+-- 2. BẢNG TO_CONG_DOAN (16 Tổ Công đoàn chính thức của TDMU)
+-- -------------------------------------------------------------------------
 CREATE TABLE dbo.TO_CONG_DOAN (
     MaToCongDoan INT IDENTITY(1,1) PRIMARY KEY,
     MaDinhDanh NVARCHAR(50) NOT NULL CONSTRAINT UQ_TO_CONG_DOAN_MaDinhDanh UNIQUE,
@@ -43,6 +58,9 @@ CREATE TABLE dbo.TO_CONG_DOAN (
 );
 GO
 
+-- -------------------------------------------------------------------------
+-- 3. BẢNG NHAN_SU (Cán bộ Ban Chấp hành, Tổ trưởng & Công đoàn viên)
+-- -------------------------------------------------------------------------
 CREATE TABLE dbo.NHAN_SU (
     MaNhanSu INT IDENTITY(1,1) PRIMARY KEY,
     MaToCongDoan INT NOT NULL,
@@ -65,6 +83,9 @@ CREATE TABLE dbo.NHAN_SU (
 );
 GO
 
+-- -------------------------------------------------------------------------
+-- 4. BẢNG TIN_TUC (Bài viết truyền thông, Thông báo, Phong trào thi đua)
+-- -------------------------------------------------------------------------
 CREATE TABLE dbo.TIN_TUC (
     MaTinTuc INT IDENTITY(1,1) PRIMARY KEY,
     MaTacGia INT NOT NULL,
@@ -83,6 +104,9 @@ CREATE TABLE dbo.TIN_TUC (
 );
 GO
 
+-- -------------------------------------------------------------------------
+-- 5. BẢNG VAN_BAN (Văn bản chỉ đạo, Kế hoạch, Quy chế, Biểu mẫu)
+-- -------------------------------------------------------------------------
 CREATE TABLE dbo.VAN_BAN (
     MaVanBan INT IDENTITY(1,1) PRIMARY KEY,
     MaNguoiDang INT NOT NULL,
@@ -99,7 +123,24 @@ CREATE TABLE dbo.VAN_BAN (
 );
 GO
 
--- INSERT 16 TO CONG DOAN
+-- -------------------------------------------------------------------------
+-- 6. INDEXING CHUYÊN SÂU TĂNG TỐC ĐỘ TRUY VẤN (PERFORMANCE TUNING)
+-- -------------------------------------------------------------------------
+CREATE NONCLUSTERED INDEX IX_TIN_TUC_TrangThai_NgayXuatBan 
+ON dbo.TIN_TUC (TrangThai, NgayXuatBan DESC) 
+INCLUDE (TieuDe, Slug, ChuyenMuc, HinhAnhDaiDien, LuotXem);
+
+CREATE NONCLUSTERED INDEX IX_NHAN_SU_ToCongDoan 
+ON dbo.NHAN_SU (MaToCongDoan) 
+INCLUDE (HoVaTen, Email, ChucVuCongDoan);
+
+CREATE NONCLUSTERED INDEX IX_VAN_BAN_LoaiVanBan_NgayBanHanh 
+ON dbo.VAN_BAN (LoaiVanBan, NgayBanHanh DESC);
+GO
+
+-- -------------------------------------------------------------------------
+-- 7. INSERT DỮ LIỆU THỰC TẾ 16 TỔ CÔNG ĐOÀN & BAN LÃNH ĐẠO TDMU
+-- -------------------------------------------------------------------------
 INSERT INTO dbo.TO_CHUC (TenToChuc, NhiemKy, MoTaChucNang, ThuTuHienThi) VALUES
 (N'Ban Thường vụ', N'Nhiệm kỳ 2023 - 2028', N'Lãnh đạo, điều hành toàn diện hoạt động Công đoàn giữa hai kỳ họp BCH', 1),
 (N'Ban Chấp hành', N'Nhiệm kỳ 2023 - 2028', N'Cơ quan lãnh đạo cao nhất của Công đoàn cơ sở TDMU', 2),
@@ -133,4 +174,67 @@ INSERT INTO dbo.NHAN_SU (MaToCongDoan, MaToChuc, MaCanBo, HoVaTen, GioiTinh, Ema
 (15, NULL, N'CB005', N'Nguyễn Thụy Bảo Khuyên', N'Nữ', N'khuyenntb@tdmu.edu.vn', N'Thạc sĩ', N'Tổ trưởng CĐ KTTC 2', N'Giảng viên', 'Editor'),
 (4, NULL, N'CB006', N'Nguyễn Thị Hương', N'Nữ', N'huongnt@tdmu.edu.vn', N'Cử nhân', N'Tổ trưởng Công đoàn 4', N'Chuyên viên', 'Editor'),
 (9, NULL, N'CB007', N'Nguyễn Bình Dương', N'Nam', N'2424802010319@student.tdmu.edu.vn', N'Cử nhân', N'Đoàn viên', N'Cộng tác viên truyền thông', 'Contributor');
+
+INSERT INTO dbo.TIN_TUC (MaTacGia, TieuDe, Slug, ChuyenMuc, TomTat, NoiDung, HinhAnhDaiDien, TrangThai, LuotXem, NgayXuatBan) VALUES
+(2, N'Công đoàn TDMU hưởng ứng phong trào Lao động giỏi - Lao động sáng tạo 2026', N'cong-doan-tdmu-lao-dong-sang-tao-2026', N'Phong trào thi đua', N'Công đoàn Trường ĐH Thủ Dầu Một tích cực phát động phong trào đổi mới sáng tạo trong giảng dạy và NCKH.', N'<p>Nội dung chi tiết về phong trào thi đua sáng tạo của các cán bộ giảng viên...</p>', N'/images/lao-dong-sang-tao.jpg', 'Published', 1250, '2026-08-20 08:30:00'),
+(4, N'Báo cáo hoạt động Công đoàn tháng 8/2026 của Viện Công nghệ số và các Tổ Công đoàn', N'bao-cao-hoat-dong-cong-doan-thang-8-2026', N'Thông báo', N'Tổng hợp kết quả công tác tuyên truyền và chăm lo đời sống đoàn viên các Tổ Công đoàn tháng 8/2026.', N'<p>Kế hoạch chi tiết và báo cáo thi đua của 16 Tổ Công đoàn toàn trường...</p>', N'/images/hoi-thao.jpg', 'Published', 980, '2026-08-24 09:00:00');
+
+INSERT INTO dbo.VAN_BAN (MaNguoiDang, SoHieuVanBan, TenVanBan, LoaiVanBan, CoQuanBanHanh, NgayBanHanh, NguoiKy, TepDinhKem) VALUES
+(1, N'15/NQ-CĐ', N'Nghị quyết Hội nghị Công đoàn cơ sở Trường Đại học Thủ Dầu Một lần thứ X', N'Nghị quyết', N'Công đoàn TDMU', '2025-12-25', N'TS. Lê Thị Kim Út', N'/uploads/van-ban/15-NQ-CD-2025.pdf'),
+(2, N'08/HD-CĐ', N'Hướng dẫn đánh giá, phân loại Tổ Công đoàn và Đoàn viên xuất sắc năm học 2026', N'Hướng dẫn', N'Công đoàn TDMU', '2026-06-15', N'TS. Lê Thị Kim Út', N'/uploads/van-ban/08-HD-CD-2026.pdf'),
+(2, N'BM-01/CĐ', N'Mẫu phiếu Lý lịch Công đoàn viên và Đơn xin gia nhập Công đoàn TDMU (Cập nhật 2026)', N'Biểu mẫu', N'Ban Thường vụ Công đoàn TDMU', '2026-01-10', N'Ban Thường vụ', N'/uploads/van-ban/BM-01-LyLichDoanVien.docx');
+GO
+
+-- -------------------------------------------------------------------------
+-- 8. VIEWS: TỰ ĐỘNG THỐNG KÊ 16 TỔ CÔNG ĐOÀN VÀ BÀI VIẾT TRANG CHỦ
+-- -------------------------------------------------------------------------
+CREATE OR ALTER VIEW dbo.V_ThongKe_16ToCongDoan
+AS
+SELECT 
+    t.MaToCongDoan,
+    t.MaDinhDanh,
+    t.TenToCongDoan,
+    t.ToTruong,
+    t.DiaChiVanPhong,
+    COUNT(n.MaNhanSu) AS TongSoDoanVienHienTai,
+    SUM(CASE WHEN n.GioiTinh = N'Nữ' THEN 1 ELSE 0 END) AS SoDoanVienNu
+FROM dbo.TO_CONG_DOAN t
+LEFT JOIN dbo.NHAN_SU n ON t.MaToCongDoan = n.MaToCongDoan AND n.TrangThai = 1
+WHERE t.TrangThai = 1
+GROUP BY t.MaToCongDoan, t.MaDinhDanh, t.TenToCongDoan, t.ToTruong, t.DiaChiVanPhong;
+GO
+
+CREATE OR ALTER VIEW dbo.V_TinTuc_TrangChu
+AS
+SELECT 
+    tt.MaTinTuc,
+    tt.TieuDe,
+    tt.Slug,
+    tt.ChuyenMuc,
+    tt.TomTat,
+    tt.HinhAnhDaiDien,
+    tt.LuotXem,
+    tt.NgayXuatBan,
+    ns.HoVaTen AS TenTacGia,
+    tcd.TenToCongDoan AS DonViTacGia
+FROM dbo.TIN_TUC tt
+INNER JOIN dbo.NHAN_SU ns ON tt.MaTacGia = ns.MaNhanSu
+INNER JOIN dbo.TO_CONG_DOAN tcd ON ns.MaToCongDoan = tcd.MaToCongDoan
+WHERE tt.TrangThai = 'Published' AND (tt.NgayXuatBan <= SYSDATETIME() OR tt.NgayXuatBan IS NULL);
+GO
+
+-- -------------------------------------------------------------------------
+-- 9. STORED PROCEDURE: LẤY THỐNG KÊ DASHBOARD TOÀN HỆ THỐNG
+-- -------------------------------------------------------------------------
+CREATE OR ALTER PROCEDURE dbo.sp_LayThongKeTongQuan
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT 
+        (SELECT COUNT(*) FROM dbo.TO_CONG_DOAN WHERE TrangThai = 1) AS TongSoToCongDoan,
+        (SELECT COUNT(*) FROM dbo.NHAN_SU WHERE TrangThai = 1) AS TongSoDoanVien,
+        (SELECT COUNT(*) FROM dbo.TIN_TUC WHERE TrangThai = 'Published') AS TongSoTinDaDang,
+        (SELECT COUNT(*) FROM dbo.VAN_BAN) AS TongSoVanBan,
+        (SELECT ISNULL(SUM(LuotXem), 0) FROM dbo.TIN_TUC) AS TongLuotXemTinTuc;
+END;
 GO
