@@ -73,15 +73,17 @@ Hệ thống được thiết kế theo chuẩn **3NF**, có đầy đủ Ràng 
 
 ### Bước 1: Cài đặt thư viện dependencies
 Mở Terminal tại thư mục 	dmu-congdoan-web:
-`ash
+
+```bash
 npm install
-`
+```
 
 ### Bước 2: Khởi động Server
-`ash
+
+```bash
 npm start
 # hoặc: node server/server.js
-`
+```
 
 ### Bước 3: Truy cập hệ thống trên trình duyệt
 * **Cổng thông tin người đọc:** http://localhost:3000
@@ -96,7 +98,8 @@ npm start
 
 ## 📂 5. CẤU TRÚC THƯ MỤC DỰ ÁN
 
-`	ext
+
+```text
 tdmu-congdoan-web/
 ├── database/                        # Cơ sở dữ liệu & Migrations
 │   ├── migrations/                  # 5 file Laravel Migrations chuẩn
@@ -125,7 +128,8 @@ tdmu-congdoan-web/
 ├── .gitignore                       # Cấu hình bỏ qua file nhạy cảm
 ├── package.json                     # Thông tin gói thư viện
 └── README.md                        # Tài liệu hướng dẫn dự án
-`
+```
+
 
 ---
 
