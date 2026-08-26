@@ -492,5 +492,225 @@
       "email": "haitv@tdmu.edu.vn",
       "phone": "0916 789 012"
     }
+  ],
+  "trade_unions": [
+    {
+      "id": "TCD_01",
+      "name": "Công đoàn 1",
+      "category": "Khối phòng ban"
+    },
+    {
+      "id": "TCD_02",
+      "name": "Công đoàn 2",
+      "category": "Khối phòng ban"
+    },
+    {
+      "id": "TCD_03",
+      "name": "Công đoàn 3",
+      "category": "Khối trung tâm"
+    },
+    {
+      "id": "TCD_04",
+      "name": "Công đoàn 4",
+      "category": "Khối phòng ban"
+    },
+    {
+      "id": "TCD_KCNVH",
+      "name": "Khoa Công nghiệp Văn hóa",
+      "category": "Khối đào tạo"
+    },
+    {
+      "id": "TCD_KNN",
+      "name": "Khoa Ngoại ngữ",
+      "category": "Khối đào tạo"
+    },
+    {
+      "id": "TCD_KKTXD",
+      "name": "Khoa Kiến trúc - Xây dựng",
+      "category": "Khối đào tạo"
+    },
+    {
+      "id": "TCD_VKTCN",
+      "name": "Viện Kỹ thuật công nghệ",
+      "category": "Khối viện NCKH"
+    },
+    {
+      "id": "TCD_VCNS",
+      "name": "Viện Công nghệ số",
+      "category": "Khối viện NCKH"
+    },
+    {
+      "id": "TCD_VCNXBV",
+      "name": "Viện Công nghệ xanh và bền vững",
+      "category": "Khối viện NCKH"
+    },
+    {
+      "id": "TCD_TLQL",
+      "name": "Trường Luật và Quản lý",
+      "category": "Khối trường trực thuộc"
+    },
+    {
+      "id": "TCD_SP1",
+      "name": "Sư phạm 1",
+      "category": "Khối sư phạm"
+    },
+    {
+      "id": "TCD_SP2",
+      "name": "Sư phạm 2",
+      "category": "Khối sư phạm"
+    },
+    {
+      "id": "TCD_KTTC1",
+      "name": "Kinh tế tài chính 1",
+      "category": "Khối kinh tế"
+    },
+    {
+      "id": "TCD_KTTC2",
+      "name": "Kinh tế tài chính 2",
+      "category": "Khối kinh tế"
+    },
+    {
+      "id": "TCD_KTTC3",
+      "name": "Kinh tế tài chính 3",
+      "category": "Khối kinh tế"
+    }
+  ],
+  "monthly_reports": [
+    {
+      "id": 1,
+      "union_id": "TCD_VCNS",
+      "union_name": "9. Viện Công nghệ số",
+      "month": 8,
+      "year": 2026,
+      "reporter_name": "Hồ Ngọc Trung Kiên",
+      "reporter_email": "kienhnt@tdmu.edu.vn",
+      "timestamp": "8/24/2026 7:58:17",
+      "total_staff": 66,
+      "total_union_members": 66,
+      "female_union_members": 17,
+      "new_members_month": 0,
+      "resigned_members_month": 0,
+      "party_introduced_members": 0,
+      "party_admitted_members": 0,
+      "severe_illness_count": 1,
+      "cared_members_count": 3,
+      "total_care_fund": 1500000,
+      "work_accidents_count": 0,
+      "fatal_accidents_count": 0,
+      "inspection_sessions_count": 0,
+      "inspection_content": "",
+      "inspection_result": "",
+      "propaganda_sessions_count": 2,
+      "propaganda_attendees_count": 66,
+      "propaganda_content": "- Tuyên truyền kỷ niệm 97 năm ngày thành lập công đoàn việt nam;\n- Tuyên truyền Nghị quyết Đại hội Công đoàn Thành phố Hồ Chí Minh lần thứ I, nhiệm kỳ (2025-2030).",
+      "other_activities": "0",
+      "proof_url": "",
+      "next_month_plan": "1. Tổ chức tết Trung thu\n2. Tổ chức khám sức khỏe CĐV theo kế hoạch của Công đoàn Trường",
+      "recommendations": "Không",
+      "status": "approved",
+      "evaluation_score": 98
+    },
+    {
+      "id": 2,
+      "union_id": "TCD_TLQL",
+      "union_name": "11. Trường Luật và Quản lý",
+      "month": 8,
+      "year": 2026,
+      "reporter_name": "Huỳnh Thị Lệ Kha",
+      "reporter_email": "khahlt@tdmu.edu.vn",
+      "timestamp": "8/24/2026 8:27:20",
+      "total_staff": 51,
+      "total_union_members": 51,
+      "female_union_members": 17,
+      "new_members_month": 0,
+      "resigned_members_month": 0,
+      "party_introduced_members": 1,
+      "party_admitted_members": 0,
+      "severe_illness_count": 0,
+      "cared_members_count": 3,
+      "total_care_fund": 3800000,
+      "work_accidents_count": 0,
+      "fatal_accidents_count": 0,
+      "inspection_sessions_count": 0,
+      "inspection_content": "",
+      "inspection_result": "",
+      "propaganda_sessions_count": 3,
+      "propaganda_attendees_count": 51,
+      "propaganda_content": "- Tuyên truyền Nghị quyết Đại hội Công đoàn Thành phố Hồ Chí Minh lần thứ I, nhiệm kỳ (2025-2030).\n- 97 năm ngày thành lập Công đoàn Việt Nam (27/8/1929 - 27/8/2026);",
+      "other_activities": "1. Công đoàn viên đăng kí cam kết làm theo Bác năm 2026: 30 CĐV Không là đảng viên - 80% CĐV không là đảng viên\n2. Tham dự Tọa đàm Chuyên đề 'Dinh dưỡng lành mạnh vì sức khỏe gia đình': 5 CĐV",
+      "proof_url": "",
+      "next_month_plan": "1. Kết hợp với Tổ công đoàn Viện CN Xanh và bền vững tổ chức Tết Trung thu;\n2. Tổ chức sinh nhật cho CĐV có ngày sinh trong Quý 3",
+      "recommendations": "không",
+      "status": "approved",
+      "evaluation_score": 99
+    },
+    {
+      "id": 3,
+      "union_id": "TCD_KTTC2",
+      "union_name": "15. Kinh tế tài chính 2",
+      "month": 8,
+      "year": 2026,
+      "reporter_name": "Nguyễn Thụy Bảo Khuyên",
+      "reporter_email": "khuyenntb@tdmu.edu.vn",
+      "timestamp": "8/24/2026 8:32:01",
+      "total_staff": 42,
+      "total_union_members": 42,
+      "female_union_members": 31,
+      "new_members_month": 0,
+      "resigned_members_month": 0,
+      "party_introduced_members": 0,
+      "party_admitted_members": 0,
+      "severe_illness_count": 0,
+      "cared_members_count": 0,
+      "total_care_fund": 0,
+      "work_accidents_count": 0,
+      "fatal_accidents_count": 0,
+      "inspection_sessions_count": 0,
+      "inspection_content": "",
+      "inspection_result": "",
+      "propaganda_sessions_count": 1,
+      "propaganda_attendees_count": 42,
+      "propaganda_content": "Vận động CĐV tham gia Hiến máu nhân đạo (16/8)",
+      "other_activities": "1. Họp xét thi đua công đoàn NH 2025-2026\n2. Phối hợp trường KTTC họp xét thi đua năm học 2025-2026",
+      "proof_url": "",
+      "next_month_plan": "1. Tham gia các hoạt động do CĐCS phát động\n2. Tiếp tục thực hiện chế độ chăm lo cho CĐV theo quy định",
+      "recommendations": "Không",
+      "status": "approved",
+      "evaluation_score": 95
+    },
+    {
+      "id": 4,
+      "union_id": "TCD_04",
+      "union_name": "4. Công đoàn 4",
+      "month": 8,
+      "year": 2026,
+      "reporter_name": "Nguyễn Thị Hương",
+      "reporter_email": "huongnt@tdmu.edu.vn",
+      "timestamp": "8/24/2026 8:44:45",
+      "total_staff": 23,
+      "total_union_members": 23,
+      "female_union_members": 11,
+      "new_members_month": 0,
+      "resigned_members_month": 0,
+      "party_introduced_members": 0,
+      "party_admitted_members": 0,
+      "severe_illness_count": 0,
+      "cared_members_count": 15,
+      "total_care_fund": 1900000,
+      "work_accidents_count": 0,
+      "fatal_accidents_count": 0,
+      "inspection_sessions_count": 0,
+      "inspection_content": "",
+      "inspection_result": "",
+      "propaganda_sessions_count": 2,
+      "propaganda_attendees_count": 23,
+      "propaganda_content": "Kỷ niệm 81 năm Ngày Cách mạng tháng Tám thành công và Quốc khánh 2/9",
+      "other_activities": "",
+      "proof_url": "https://drive.google.com/open?id=14uZ3gcXFNrGescFh5neJd-w7KRVS-BX0",
+      "next_month_plan": "Tiếp tục phối hợp cùng các đơn vị tổ chức và thực hiện các phong trào, hoạt động của Công đoàn Trường và công việc thường xuyên của các đơn vị.",
+      "recommendations": "Không",
+      "status": "approved",
+      "evaluation_score": 97
+    }
   ]
 }

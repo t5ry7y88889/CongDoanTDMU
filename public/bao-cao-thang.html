@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo Cáo Tổng Hợp Đánh Giá Thi Đua 16 Tổ Công Đoàn - TDMU</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --tdmu-blue: #005baa;
+      --tdmu-dark-blue: #003e75;
+      --tdmu-red: #d32f2f;
+      --tdmu-text: #1e293b;
+      --bg-gray: #f8fafc;
+    }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: var(--tdmu-text); background-color: #f1f5f9; }
+    .top-header { background: white; padding: 14px 0; border-bottom: 3px solid var(--tdmu-blue); }
+    .site-title h5 { color: var(--tdmu-blue); font-weight: 800; margin-bottom: 2px; text-transform: uppercase; font-size: 18px; }
+    .site-title small { color: #64748b; font-weight: 600; font-size: 12px; text-transform: uppercase; }
+    .main-navbar { background: var(--tdmu-blue); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .main-navbar .nav-link { color: white !important; font-weight: 600; padding: 12px 14px !important; text-transform: uppercase; font-size: 13px; transition: all 0.2s; }
+    .main-navbar .nav-link:hover, .main-navbar .nav-link.active { background: var(--tdmu-dark-blue); }
+    .content-box { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); padding: 24px; margin-bottom: 24px; }
+    .section-header { border-bottom: 2px solid var(--tdmu-blue); padding-bottom: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .section-title { color: var(--tdmu-blue); font-weight: 700; font-size: 17px; text-transform: uppercase; margin: 0; }
+    .sidebar-widget { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 20px; overflow: hidden; }
+    .widget-header { background: #f8fafc; border-bottom: 2px solid #e2e8f0; padding: 12px 16px; font-weight: 700; font-size: 14.5px; color: var(--tdmu-blue); text-transform: uppercase; }
+    .widget-body { padding: 14px 16px; }
+    .doc-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px dashed #e2e8f0; font-size: 13.5px; }
+    .doc-item:last-child { border-bottom: none; }
+    .doc-item a { color: #334155; text-decoration: none; font-weight: 500; }
+    .doc-item a:hover { color: var(--tdmu-blue); }
+    .notice-item { padding: 9px 0; border-bottom: 1px solid #edf2f7; font-size: 13.5px; }
+    .notice-item:last-child { border-bottom: none; }
+    .notice-date { font-size: 11.5px; color: var(--tdmu-red); font-weight: 700; }
+    .breadcrumb-box { background: transparent; padding: 10px 0; font-size: 13.5px; }
+    footer { background: #1e293b; color: #94a3b8; padding: 35px 0 20px; font-size: 13.5px; }
+    footer h6 { color: white; font-weight: 700; text-transform: uppercase; margin-bottom: 14px; }
+    
+    /* Stats & Form Styles */
+    .stat-card { background: white; border-radius: 8px; border: 1px solid #e2e8f0; padding: 16px; text-align: center; }
+    .stat-val { font-size: 24px; font-weight: 800; color: var(--tdmu-blue); }
+    .stat-lbl { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
+    .form-section-title { font-weight: 700; color: var(--tdmu-blue); border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin: 20px 0 14px 0; font-size: 15px; }
+</style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header class="top-header">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+          <i class="fa-solid fa-graduation-cap fa-3x text-primary"></i>
+          <div class="site-title">
+            <h5>CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h5>
+            <small>THU DAU MOT UNIVERSITY TRADE UNION</small>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <span class="badge bg-danger p-2"><i class="fa-solid fa-flag me-1"></i> Khóa X (2023 - 2028)</span>
+          <a href="admin.html" class="btn btn-sm btn-outline-primary fw-bold"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> Portal Cán Bộ AI CMS</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Navigation Bar -->
+  <nav class="main-navbar sticky-top">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center">
+        <ul class="nav">
+          <li class="nav-item"><a class="nav-link " href="index.html"><i class="fa-solid fa-house me-1"></i> Trang Chủ</a></li>
+<li class="nav-item"><a class="nav-link " href="gioi-thieu.html">Giới Thiệu</a></li>
+<li class="nav-item"><a class="nav-link " href="co-cau-to-chuc.html">Cơ Cấu Tổ Chức</a></li>
+<li class="nav-item"><a class="nav-link " href="lien-he.html">16 Tổ Công Đoàn</a></li>
+<li class="nav-item"><a class="nav-link active" href="bao-cao-thang.html"><i class="fa-solid fa-clipboard-check me-1 text-warning"></i> Báo Cáo Thi Đua 16 Tổ</a></li>
+<li class="nav-item"><a class="nav-link " href="van-ban.html">Văn Bản</a></li>
+<li class="nav-item"><a class="nav-link " href="bieu-mau.html">Biểu Mẫu</a></li>
+<li class="nav-item"><a class="nav-link " href="phuc-loi-doan-vien.html">Chăm Lo & Phúc Lợi</a></li>
+<li class="nav-item"><a class="nav-link " href="lien-he.html">Liên Hệ</a></li>
+
+        </ul>
+        <div class="d-flex align-items-center text-white small pe-2">
+          <i class="fa-solid fa-phone me-2"></i> (0274) 3.815.184
+        </div>
+      </div>
+    </div>
+  </nav>
+
+
+  <div class="container my-4">
+    <div class="breadcrumb-box"><a href="index.html" class="text-decoration-none">Trang chủ</a> / <span class="text-muted">Báo cáo tổng hợp & Đánh giá thi đua 16 Tổ Công đoàn</span></div>
+    
+    <!-- Tab Navigation: 1. Bảng Tổng Hợp Thi Đua | 2. Form Nộp Báo Cáo Trực Tuyến -->
+    <ul class="nav nav-pills nav-fill mb-4 p-2 bg-white rounded-3 shadow-sm" id="reportTabs">
+      <li class="nav-item">
+        <button class="nav-link active fw-bold py-2" data-bs-toggle="pill" data-bs-target="#tab-summary">
+          <i class="fa-solid fa-table-list me-2"></i> 1. BẢNG TỔNG HỢP ĐÁNH GIÁ THI ĐUA 16 TỔ CÔNG ĐOÀN
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link fw-bold py-2" data-bs-toggle="pill" data-bs-target="#tab-submit">
+          <i class="fa-solid fa-file-circle-plus me-2 text-danger"></i> 2. BIỂU MẪU NỘP BÁO CÁO THÁNG TRỰC TUYẾN
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      
+      <!-- TAB 1: BẢNG TỔNG HỢP 16 TỔ CÔNG ĐOÀN -->
+      <div class="tab-pane fade show active" id="tab-summary">
+        
+        <!-- Summary KPI Cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-3 col-6">
+            <div class="stat-card">
+              <div class="stat-val" id="stat_submitted">4 / 16</div>
+              <div class="stat-lbl"><i class="fa-solid fa-check-double text-success me-1"></i> Tiến độ nộp báo cáo</div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="stat-card">
+              <div class="stat-val" id="stat_members">182</div>
+              <div class="stat-lbl"><i class="fa-solid fa-users text-primary me-1"></i> Tổng số Đoàn viên CĐ</div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="stat-card">
+              <div class="stat-val text-danger" id="stat_care_fund">7.200.000 đ</div>
+              <div class="stat-lbl"><i class="fa-solid fa-hand-holding-dollar text-danger me-1"></i> Kinh phí chăm lo tháng</div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="stat-card">
+              <div class="stat-val text-warning" id="stat_rate">25%</div>
+              <div class="stat-lbl"><i class="fa-solid fa-chart-pie text-warning me-1"></i> Tỷ lệ hoàn thành</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-box">
+          <div class="section-header">
+            <h4 class="section-title"><i class="fa-solid fa-ranking-star me-2"></i>BÁO CÁO TỔNG HỢP KẾT QUẢ ĐÁNH GIÁ THI ĐUA 16 TỔ CÔNG ĐOÀN</h4>
+            <div class="d-flex gap-2">
+              <select class="form-select form-select-sm" id="select_filter_month" onchange="loadReportSummary()" style="width: 140px;">
+                <option value="8" selected>Tháng 8 / 2026</option>
+                <option value="9">Tháng 9 / 2026</option>
+                <option value="10">Tháng 10 / 2026</option>
+              </select>
+              <button class="btn btn-sm btn-outline-success" onclick="exportSummaryExcel()"><i class="fa-solid fa-file-excel me-1"></i> Xuất Excel</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle" style="font-size: 13.5px;">
+              <thead class="table-light text-primary">
+                <tr class="text-center align-middle">
+                  <th style="width: 50px;">STT</th>
+                  <th>Tên Tổ Công Đoàn</th>
+                  <th>Khối</th>
+                  <th style="width: 110px;">Trạng Thái</th>
+                  <th>Người Báo Cáo</th>
+                  <th style="width: 80px;">ĐVCĐ</th>
+                  <th>Kinh Phí Chăm Lo</th>
+                  <th style="width: 90px;">Tuyên Truyền</th>
+                  <th style="width: 100px;">Minh Chứng</th>
+                  <th style="width: 110px;">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="summary_table_body">
+                <tr><td colspan="10" class="text-center py-4"><i class="fa-solid fa-spinner fa-spin me-2"></i> Đang tải dữ liệu thi đua 16 Tổ...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: FORM NỘP BÁO CÁO THÁNG ONLINE (GOOGLE FORMS STANDARD) -->
+      <div class="tab-pane fade" id="tab-submit">
+        <div class="content-box">
+          <div class="section-header">
+            <h4 class="section-title"><i class="fa-solid fa-file-signature me-2"></i>BIỂU MẪU BÁO CÁO THÁNG CỦA TỔ CÔNG ĐOÀN</h4>
+            <span class="badge bg-danger">Khóa X (Nhiệm kỳ 2023-2028)</span>
+          </div>
+
+          <form id="monthlyReportForm" onsubmit="submitMonthlyReport(event)">
+            
+            <!-- THÔNG TIN CHUNG -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold">1. Chọn Tổ Công Đoàn (*)</label>
+                <select class="form-select" id="form_union_id" required>
+                  <option value="">-- Chọn 1 trong 16 Tổ Công đoàn --</option>
+                  <option value="TCD_01">1. Công đoàn 1</option>
+                  <option value="TCD_02">2. Công đoàn 2</option>
+                  <option value="TCD_03">3. Công đoàn 3</option>
+                  <option value="TCD_04">4. Công đoàn 4</option>
+                  <option value="TCD_KCNVH">5. Khoa Công nghiệp Văn hóa</option>
+                  <option value="TCD_KNN">6. Khoa Ngoại ngữ</option>
+                  <option value="TCD_KKTXD">7. Khoa Kiến trúc - Xây dựng</option>
+                  <option value="TCD_VKTCN">8. Viện Kỹ thuật công nghệ</option>
+                  <option value="TCD_VCNS">9. Viện Công nghệ số</option>
+                  <option value="TCD_VCNXBV">10. Viện Công nghệ xanh và bền vững</option>
+                  <option value="TCD_TLQL">11. Trường Luật và Quản lý</option>
+                  <option value="TCD_SP1">12. Sư phạm 1</option>
+                  <option value="TCD_SP2">13. Sư phạm 2</option>
+                  <option value="TCD_KTTC1">14. Kinh tế tài chính 1</option>
+                  <option value="TCD_KTTC2">15. Kinh tế tài chính 2</option>
+                  <option value="TCD_KTTC3">16. Kinh tế tài chính 3</option>
+                </select>
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label fw-bold">2. Chọn Tháng Báo Cáo</label>
+                <select class="form-select" id="form_month">
+                  <option value="8" selected>Tháng 8</option>
+                  <option value="9">Tháng 9</option>
+                  <option value="10">Tháng 10</option>
+                </select>
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label fw-bold">3. Năm</label>
+                <input type="number" class="form-control" id="form_year" value="2026" readonly>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">4. Họ Và Tên Người Báo Cáo (*)</label>
+                <input type="text" class="form-control" id="form_reporter_name" placeholder="VD: Hồ Ngọc Trung Kiên" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">5. Email Người Báo Cáo (*)</label>
+                <input type="email" class="form-control" id="form_reporter_email" placeholder="VD: kienhnt@tdmu.edu.vn" required>
+              </div>
+            </div>
+
+            <!-- I. SỐ LIỆU ĐOÀN VIÊN & CÔNG TÁC ĐẢNG -->
+            <div class="form-section-title"><i class="fa-solid fa-users-gear me-2"></i>I. SỐ LIỆU ĐOÀN VIÊN & CÔNG TÁC ĐẢNG</div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-4 col-6">
+                <label class="form-label small">1. Tổng số CB, NV, NLĐ:</label>
+                <input type="number" class="form-control" id="form_total_staff" value="0" required>
+              </div>
+              <div class="col-md-4 col-6">
+                <label class="form-label small">2. Tổng số đoàn viên công đoàn:</label>
+                <input type="number" class="form-control" id="form_total_union_members" value="0" required>
+              </div>
+              <div class="col-md-4 col-6">
+                <label class="form-label small">3. Tổng số nữ đoàn viên CĐ:</label>
+                <input type="number" class="form-control" id="form_female_union_members" value="0" required>
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small">4. Số ĐVCĐ kết nạp trong tháng:</label>
+                <input type="number" class="form-control" id="form_new_members_month" value="0">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small">5. Số ĐVCĐ giảm (nghỉ việc):</label>
+                <input type="number" class="form-control" id="form_resigned_members_month" value="0">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small">6. ĐVCĐ ưu tú giới thiệu sang Đảng:</label>
+                <input type="number" class="form-control" id="form_party_introduced_members" value="0">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small">7. ĐVCĐ được kết nạp Đảng:</label>
+                <input type="number" class="form-control" id="form_party_admitted_members" value="0">
+              </div>
+            </div>
+
+            <!-- II. CHĂM LO ĐỜI SỐNG & AN TOÀN LAO ĐỘNG -->
+            <div class="form-section-title"><i class="fa-solid fa-hand-holding-heart me-2 text-danger"></i>II. CHĂM LO ĐỜI SỐNG & AN TOÀN LAO ĐỘNG</div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-4 col-6">
+                <label class="form-label small">1. Số người bị bệnh hiểm nghèo:</label>
+                <input type="number" class="form-control" id="form_severe_illness_count" value="0">
+              </div>
+              <div class="col-md-4 col-6">
+                <label class="form-label small">2. Số người được chăm lo trong tháng:</label>
+                <input type="number" class="form-control" id="form_cared_members_count" value="0">
+              </div>
+              <div class="col-md-4 col-12">
+                <label class="form-label small">3. Tổng số tiền chăm lo (VNĐ):</label>
+                <input type="number" class="form-control" id="form_total_care_fund" value="0" placeholder="VD: 1500000">
+              </div>
+              <div class="col-md-6 col-6">
+                <label class="form-label small">4. Số vụ tai nạn lao động:</label>
+                <input type="number" class="form-control" id="form_work_accidents_count" value="0">
+              </div>
+              <div class="col-md-6 col-6">
+                <label class="form-label small">5. Số người chết vì tai nạn LĐ:</label>
+                <input type="number" class="form-control" id="form_fatal_accidents_count" value="0">
+              </div>
+            </div>
+
+            <!-- III. CÔNG TÁC KIỂM TRA -->
+            <div class="form-section-title"><i class="fa-solid fa-clipboard-check me-2 text-primary"></i>III. CÔNG TÁC KIỂM TRA & GIÁM SÁT</div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-3">
+                <label class="form-label small">1. Số buổi kiểm tra:</label>
+                <input type="number" class="form-control" id="form_inspection_sessions_count" value="0">
+              </div>
+              <div class="col-md-5">
+                <label class="form-label small">2. Nội dung kiểm tra:</label>
+                <input type="text" class="form-control" id="form_inspection_content" placeholder="Nội dung kiểm tra nếu có">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small">3. Kết quả kiểm tra:</label>
+                <input type="text" class="form-control" id="form_inspection_result" placeholder="Kết quả kiểm tra">
+              </div>
+            </div>
+
+            <!-- IV. CÔNG TÁC TUYÊN TRUYỀN -->
+            <div class="form-section-title"><i class="fa-solid fa-bullhorn me-2 text-warning"></i>IV. CÔNG TÁC TUYÊN TRUYỀN</div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-3 col-6">
+                <label class="form-label small">1. Số buổi tuyên truyền:</label>
+                <input type="number" class="form-control" id="form_propaganda_sessions_count" value="0">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small">2. Số người tham dự:</label>
+                <input type="number" class="form-control" id="form_propaganda_attendees_count" value="0">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">3. Nội dung tuyên truyền:</label>
+                <textarea class="form-control" id="form_propaganda_content" rows="2" placeholder="- Tuyên truyền kỷ niệm 97 năm ngày thành lập CĐVN..."></textarea>
+              </div>
+            </div>
+
+            <!-- V. HOẠT ĐỘNG KHÁC & KẾ HOẠCH -->
+            <div class="form-section-title"><i class="fa-solid fa-paperclip me-2"></i>V. HOẠT ĐỘNG KHÁC, MINH CHỨNG & KIẾN NGHỊ</div>
+            <div class="row g-3 mb-4">
+              <div class="col-md-12">
+                <label class="form-label small">1. Hoạt động khác trong tháng (tổ chức hoặc tham gia):</label>
+                <textarea class="form-control" id="form_other_activities" rows="2" placeholder="VD: Họp xét thi đua, Hiến máu nhân đạo..."></textarea>
+              </div>
+              <div class="col-md-12">
+                <label class="form-label small">2. Link Google Drive Minh Chứng Hoạt Động (Nếu có):</label>
+                <input type="url" class="form-control" id="form_proof_url" placeholder="https://drive.google.com/open?id=...">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">3. Kế hoạch tháng tới:</label>
+                <textarea class="form-control" id="form_next_month_plan" rows="2" placeholder="1. Tổ chức Tết Trung thu..."></textarea>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">4. Kiến nghị với Nhà trường & Công đoàn Trường:</label>
+                <textarea class="form-control" id="form_recommendations" rows="2" placeholder="Không"></textarea>
+              </div>
+            </div>
+
+            <div class="text-center">
+              <button type="submit" class="btn btn-primary btn-lg px-5 fw-bold shadow"><i class="fa-solid fa-paper-plane me-2"></i> Gửi Báo Cáo Tháng</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal Xem Chi Tiết Báo Cáo 24 Trường Dữ Liệu -->
+  <div class="modal fade" id="detailReportModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold" id="detail_modal_title">Chi tiết Báo cáo tháng</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4" id="detail_modal_body">
+          <!-- Dynamic 24 Fields -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row gy-3">
+        <div class="col-md-7">
+          <h6>CÔNG ĐOÀN CƠ SỞ TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h6>
+          <p class="mb-1"><i class="fa-solid fa-location-dot me-2"></i> Địa chỉ: Lầu 1, Dãy A, Cổng 1, Số 06 Trần Văn Ơn, P. Phú Lợi, TP. Thủ Dầu Một, Bình Dương</p>
+          <p class="mb-1"><i class="fa-solid fa-phone me-2"></i> Điện thoại: (0274) 3.815.184 | <i class="fa-solid fa-envelope ms-2 me-1"></i> Email: congdoan@tdmu.edu.vn</p>
+          <p class="mb-0"><i class="fa-solid fa-globe me-2"></i> Website: congdoan.tdmu.edu.vn</p>
+        </div>
+        <div class="col-md-5 text-md-end">
+          <h6>HỆ THỐNG TRUYỀN THÔNG TÍCH HỢP AI</h6>
+          <p class="mb-1">Đề tài NCKH Sinh viên / Đồ án CS ngành - Viện Công nghệ số</p>
+          <p class="mb-0 text-muted">Nhóm 2: Nguyễn Bình Dương - Trần Hồng Thanh - Phạm Anh Tuấn</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let currentReportList = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadReportSummary();
+    });
+
+    async function loadReportSummary() {
+      const month = document.getElementById('select_filter_month').value || 8;
+      const tbody = document.getElementById('summary_table_body');
+      
+      try {
+        const res = await fetch(`/api/monthly-reports/summary?month=${month}&year=2026`);
+        const json = await res.json();
+        if (json.success) {
+          currentReportList = json.data;
+          
+          // Update Stats
+          document.getElementById('stat_submitted').innerText = `${json.stats.submitted_count} / ${json.stats.total_unions}`;
+          document.getElementById('stat_members').innerText = json.stats.total_members;
+          document.getElementById('stat_care_fund').innerText = json.stats.total_care_fund.toLocaleString('vi-VN') + ' đ';
+          document.getElementById('stat_rate').innerText = json.stats.submission_rate + '%';
+
+          // Render Table
+          tbody.innerHTML = json.data.map(u => `
+            <tr>
+              <td class="text-center fw-bold">${u.stt}</td>
+              <td class="fw-bold text-primary">${u.union_name}</td>
+              <td><small class="text-muted">${u.category}</small></td>
+              <td class="text-center">
+                ${u.has_submitted ? '<span class="badge bg-success"><i class="fa-solid fa-check me-1"></i> Đã nộp</span>' : '<span class="badge bg-secondary">Chưa nộp</span>'}
+              </td>
+              <td>${u.has_submitted ? `<strong>${u.reporter_name}</strong><br><small class="text-muted">${u.timestamp}</small>` : '<span class="text-muted font-italic">Chưa báo cáo</span>'}</td>
+              <td class="text-center">${u.has_submitted ? `<strong>${u.total_members}</strong> <small class="text-muted">(${u.female_members} nữ)</small>` : '-'}</td>
+              <td class="text-end fw-semibold text-danger">${u.has_submitted && u.care_fund > 0 ? u.care_fund.toLocaleString('vi-VN') + ' đ' : (u.has_submitted ? '0 đ' : '-')}</td>
+              <td class="text-center">${u.has_submitted ? `${u.propaganda_sessions} buổi` : '-'}</td>
+              <td class="text-center">
+                ${u.proof_url ? `<a href="${u.proof_url}" target="_blank" class="btn btn-sm btn-outline-info py-0 px-2"><i class="fa-brands fa-google-drive me-1"></i> Link</a>` : '<span class="text-muted small">Không</span>'}
+              </td>
+              <td class="text-center">
+                ${u.has_submitted ? `<button class="btn btn-sm btn-primary py-0 px-2" onclick="viewDetailReport('${u.union_id}')"><i class="fa-regular fa-eye me-1"></i> Xem</button>` : '<button class="btn btn-sm btn-outline-secondary py-0 px-2" disabled>Chưa nộp</button>'}
+              </td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) {
+        console.error(err);
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center text-danger py-4">Lỗi kết nối máy chủ dữ liệu báo cáo!</td></tr>`;
+      }
+    }
+
+    async function viewDetailReport(unionId) {
+      try {
+        const res = await fetch(`/api/monthly-reports?union_id=${unionId}&month=8&year=2026`);
+        const json = await res.json();
+        if (json.success && json.data.length > 0) {
+          const r = json.data[0];
+          document.getElementById('detail_modal_title').innerText = `BÁO CÁO THÁNG 8/2026 — ${r.union_name}`;
+          
+          document.getElementById('detail_modal_body').innerHTML = `
+            <div class="alert alert-info py-2 mb-3">
+              <strong>Người báo cáo:</strong> ${r.reporter_name} (${r.reporter_email}) | <strong>Thời gian gửi:</strong> ${r.timestamp}
+            </div>
+
+            <h6 class="fw-bold text-primary border-bottom pb-1 mb-2">I. SỐ LIỆU ĐOÀN VIÊN & ĐẢNG:</h6>
+            <div class="row g-2 mb-3 small">
+              <div class="col-6">1. Tổng số CB, NV, NLĐ: <strong>${r.total_staff}</strong></div>
+              <div class="col-6">2. Tổng số ĐVCĐ: <strong>${r.total_union_members}</strong> (Nữ: ${r.female_union_members})</div>
+              <div class="col-6">3. Kết nạp trong tháng: <strong>${r.new_members_month}</strong></div>
+              <div class="col-6">4. Giảm do nghỉ việc: <strong>${r.resigned_members_month}</strong></div>
+              <div class="col-6">5. Giới thiệu sang Đảng: <strong>${r.party_introduced_members}</strong></div>
+              <div class="col-6">6. Kết nạp Đảng: <strong>${r.party_admitted_members}</strong></div>
+            </div>
+
+            <h6 class="fw-bold text-danger border-bottom pb-1 mb-2">II. CHĂM LO ĐỜI SỐNG & AN TOÀN LAO ĐỘNG:</h6>
+            <div class="row g-2 mb-3 small">
+              <div class="col-6">1. Số người bệnh hiểm nghèo: <strong>${r.severe_illness_count}</strong></div>
+              <div class="col-6">2. Số người được chăm lo: <strong>${r.cared_members_count}</strong></div>
+              <div class="col-12">3. Tổng tiền chăm lo: <strong class="text-danger">${r.total_care_fund.toLocaleString('vi-VN')} VNĐ</strong></div>
+              <div class="col-6">4. Số vụ tai nạn LĐ: <strong>${r.work_accidents_count}</strong></div>
+              <div class="col-6">5. Số người chết vì TNLĐ: <strong>${r.fatal_accidents_count}</strong></div>
+            </div>
+
+            <h6 class="fw-bold text-primary border-bottom pb-1 mb-2">III. CÔNG TÁC TUYÊN TRUYỀN & HOẠT ĐỘNG:</h6>
+            <div class="small mb-3">
+              <p class="mb-1"><strong>Số buổi tuyên truyền:</strong> ${r.propaganda_sessions_count} buổi (${r.propaganda_attendees_count} người tham dự)</p>
+              <p class="mb-2 bg-light p-2 rounded"><strong>Nội dung:</strong><br>${r.propaganda_content ? r.propaganda_content.replace(/\n/g, '<br>') : 'Không'}</p>
+              <p class="mb-1"><strong>Hoạt động khác:</strong><br>${r.other_activities ? r.other_activities.replace(/\n/g, '<br>') : 'Không'}</p>
+              ${r.proof_url ? `<p class="mb-1"><strong>Minh chứng:</strong> <a href="${r.proof_url}" target="_blank" class="text-primary fw-bold"><i class="fa-brands fa-google-drive me-1"></i> Xem trên Google Drive</a></p>` : ''}
+            </div>
+
+            <h6 class="fw-bold text-dark border-bottom pb-1 mb-2">IV. KẾ HOẠCH THÁNG TỚI & KIẾN NGHỊ:</h6>
+            <div class="small">
+              <p class="mb-1 bg-light p-2 rounded"><strong>Kế hoạch tháng tới:</strong><br>${r.next_month_plan ? r.next_month_plan.replace(/\n/g, '<br>') : 'Không'}</p>
+              <p class="mb-0"><strong>Kiến nghị:</strong> ${r.recommendations || 'Không'}</p>
+            </div>
+          `;
+
+          const modal = new bootstrap.Modal(document.getElementById('detailReportModal'));
+          modal.show();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function submitMonthlyReport(e) {
+      e.preventDefault();
+      const selectUnion = document.getElementById('form_union_id');
+      const unionId = selectUnion.value;
+      const unionName = selectUnion.options[selectUnion.selectedIndex].text;
+
+      const body = {
+        union_id: unionId,
+        union_name: unionName,
+        month: document.getElementById('form_month').value,
+        year: document.getElementById('form_year').value,
+        reporter_name: document.getElementById('form_reporter_name').value,
+        reporter_email: document.getElementById('form_reporter_email').value,
+        total_staff: document.getElementById('form_total_staff').value,
+        total_union_members: document.getElementById('form_total_union_members').value,
+        female_union_members: document.getElementById('form_female_union_members').value,
+        new_members_month: document.getElementById('form_new_members_month').value,
+        resigned_members_month: document.getElementById('form_resigned_members_month').value,
+        party_introduced_members: document.getElementById('form_party_introduced_members').value,
+        party_admitted_members: document.getElementById('form_party_admitted_members').value,
+        severe_illness_count: document.getElementById('form_severe_illness_count').value,
+        cared_members_count: document.getElementById('form_cared_members_count').value,
+        total_care_fund: document.getElementById('form_total_care_fund').value,
+        work_accidents_count: document.getElementById('form_work_accidents_count').value,
+        fatal_accidents_count: document.getElementById('form_fatal_accidents_count').value,
+        inspection_sessions_count: document.getElementById('form_inspection_sessions_count').value,
+        inspection_content: document.getElementById('form_inspection_content').value,
+        inspection_result: document.getElementById('form_inspection_result').value,
+        propaganda_sessions_count: document.getElementById('form_propaganda_sessions_count').value,
+        propaganda_attendees_count: document.getElementById('form_propaganda_attendees_count').value,
+        propaganda_content: document.getElementById('form_propaganda_content').value,
+        other_activities: document.getElementById('form_other_activities').value,
+        proof_url: document.getElementById('form_proof_url').value,
+        next_month_plan: document.getElementById('form_next_month_plan').value,
+        recommendations: document.getElementById('form_recommendations').value
+      };
+
+      try {
+        const res = await fetch('/api/monthly-reports', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const json = await res.json();
+        if (json.success) {
+          alert('🎉 Chúc mừng! Bạn đã nộp Báo cáo tháng thành công và cập nhật ngay vào Bảng Thi đua 16 Tổ!');
+          // Switch back to summary tab
+          const triggerEl = document.querySelector('#reportTabs button[data-bs-target="#tab-summary"]');
+          bootstrap.Tab.getInstance(triggerEl) ? bootstrap.Tab.getInstance(triggerEl).show() : new bootstrap.Tab(triggerEl).show();
+          loadReportSummary();
+        }
+      } catch (err) {
+        alert('Lỗi nộp báo cáo: ' + err.message);
+      }
+    }
+
+    function exportSummaryExcel() {
+      alert('Đang xuất bảng tổng hợp kết quả đánh giá thi đua 16 Tổ Công đoàn tháng 8/2026 dạng Excel (.xlsx)!');
+    }
+  </script>
+</body>
+</html>
