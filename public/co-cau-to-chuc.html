@@ -69,23 +69,71 @@
     </div>
   </header>
 
-  <!-- Main Navigation Bar -->
-  <nav class="main-navbar sticky-top">
-    <div class="container">
-      <div class="d-flex justify-content-between align-items-center">
-        <ul class="nav">
-  <li class="nav-item"><a class="nav-link " href="index.html"><i class="fa-solid fa-house me-1"></i> Trang Chủ</a></li>
-  <li class="nav-item"><a class="nav-link " href="gioi-thieu.html">Giới Thiệu</a></li>
-  <li class="nav-item"><a class="nav-link active" href="co-cau-to-chuc.html">Cơ Cấu Tổ Chức</a></li>
-  <li class="nav-item"><a class="nav-link " href="lien-he.html">Tổ Công Đoàn</a></li>
-  <li class="nav-item"><a class="nav-link " href="bao-cao-thang.html"><i class="fa-solid fa-clipboard-check me-1 text-warning"></i> Báo Cáo Thi Đua</a></li>
-  <li class="nav-item"><a class="nav-link " href="van-ban.html">Văn Bản</a></li>
-  <li class="nav-item"><a class="nav-link " href="bieu-mau.html">Biểu Mẫu</a></li>
-  <li class="nav-item"><a class="nav-link " href="phuc-loi-doan-vien.html">Phúc Lợi</a></li>
-</ul>
-        <div class="d-flex align-items-center text-white small pe-2">
-          <i class="fa-solid fa-phone me-2"></i> (0274) 3.815.184
+  <!-- <!-- Top Brand Header -->
+  <header class="top-brand-header">
+    <div class="container d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-3">
+        <i class="fa-solid fa-graduation-cap fa-3x text-primary"></i>
+        <div>
+          <h1 class="brand-title-main">CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h1>
+          <span class="brand-sub-main">THU DAU MOT UNIVERSITY TRADE UNION</span>
         </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSelw4xZGXNz2fUHOy0wHZ9-rIt5N-gneVP005KjpjURduNvrg/viewform" target="_blank" class="btn btn-sm btn-danger fw-bold shadow-sm">
+          <i class="fa-solid fa-file-pen me-1"></i> Điền Báo Cáo Tháng (Google Form)
+        </a>
+        <a href="admin.html" class="btn btn-sm btn-outline-primary fw-bold">
+          <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Portal AI CMS
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Official Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-tdmu sticky-top">
+    <div class="container">
+      <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse" data-bs-target="#tdmuNavbar">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="collapse navbar-collapse" id="tdmuNavbar">
+        <ul class="navbar-nav mx-auto">
+          <li class="nav-item"><a class="nav-link " href="index.html">Trang Chủ</a></li>
+          <li class="nav-item"><a class="nav-link " href="gioi-thieu.html">Giới Thiệu</a></li>
+          
+          <!-- Dropdown: Cơ Cấu Tổ Chức -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle active" href="#" data-bs-toggle="dropdown">
+              Cơ Cấu Tổ Chức
+            </a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="co-cau-to-chuc.html#ban-thuong-vu"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban thường vụ</a></li>
+              <li><a class="dropdown-item" href="co-cau-to-chuc.html#ban-chap-hanh"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban chấp hành</a></li>
+              <li><a class="dropdown-item" href="co-cau-to-chuc.html#uy-ban-kiem-tra"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ủy ban kiểm tra</a></li>
+              <li><a class="dropdown-item" href="lien-he.html"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Công đoàn bộ phận & Tổ công đoàn</a></li>
+            </ul>
+          </li>
+
+          <li class="nav-item"><a class="nav-link " href="index.html#tintuc">Tin Tức</a></li>
+          <li class="nav-item"><a class="nav-link " href="phuc-loi-doan-vien.html">Phúc Lợi Đoàn Viên</a></li>
+
+          <!-- Dropdown: Văn Bản -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle " href="#" data-bs-toggle="dropdown">
+              Văn Bản
+            </a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="van-ban.html#tuyen-truyen"><i class="fa-solid fa-file-lines me-1 text-primary"></i> Công văn tuyên truyền</a></li>
+              <li><a class="dropdown-item" href="van-ban.html#ke-hoach"><i class="fa-solid fa-calendar-check me-1 text-primary"></i> Kế hoạch hoạt động</a></li>
+              <li><a class="dropdown-item" href="van-ban.html#luat"><i class="fa-solid fa-scale-balanced me-1 text-primary"></i> Văn bản luật</a></li>
+              <li><a class="dropdown-item" href="van-ban.html#quyet-dinh"><i class="fa-solid fa-stamp me-1 text-primary"></i> Quyết định</a></li>
+            </ul>
+          </li>
+
+          <li class="nav-item"><a class="nav-link " href="bao-cao-thang.html"><i class="fa-solid fa-clipboard-check me-1 text-warning"></i> Báo Cáo Thi Đua</a></li>
+          <li class="nav-item"><a class="nav-link " href="bieu-mau.html">Biểu Mẫu</a></li>
+          <li class="nav-item"><a class="nav-link " href="lien-he.html">Liên Hệ</a></li>
+        </ul>
       </div>
     </div>
   </nav>
