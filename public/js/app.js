@@ -57,41 +57,33 @@ function renderArticles(articles) {
 
   if (articles.length === 0) {
     container.innerHTML = `
-      <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: white; border-radius: 12px; border: 1px solid #E2E8F0;">
-        <i class="fa-solid fa-folder-open fa-2x" style="color: #94A3B8;"></i>
-        <p style="margin-top: 12px; color: #64748B; font-weight: 600;">Chưa có bài viết nào thuộc chuyên mục này.</p>
+      <div style="text-align: center; padding: 40px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+        <i class="fa-solid fa-folder-open fa-2x text-muted"></i>
+        <p class="mt-2 text-muted fw-semibold">Chưa có bài viết nào thuộc chuyên mục này.</p>
       </div>
     `;
     return;
   }
 
   container.innerHTML = articles.map(art => `
-    <article class="card" id="article_card_${art.id}">
-      <img src="${art.image || 'images/banner.jpg'}" alt="${art.title}" class="card-img">
-      <div class="card-body">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span class="badge badge-gold">${art.categoryName}</span>
-          ${art.isAiGenerated ? '<span class="badge badge-info" style="font-size: 10px;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Created</span>' : ''}
+    <div class="news-item" id="article_card_${art.id}">
+      <img src="${art.image || 'images/banner.jpg'}" alt="${art.title}" class="news-thumb">
+      <div class="flex-grow-1">
+        <a href="javascript:void(0)" onclick="openArticleModal(${art.id})" class="news-title fw-bold">${art.title}</a>
+        <div class="news-date d-flex align-items-center gap-2 mt-1">
+          <span><i class="fa-regular fa-calendar me-1"></i> ${art.createdAt || '2026-08-24'}</span>
+          <span class="badge bg-primary-subtle text-primary border">${art.categoryName || 'Tin hoạt động'}</span>
+          ${art.isAiGenerated ? '<span class="badge bg-success-subtle text-success border"><i class="fa-solid fa-wand-magic-sparkles"></i> AI</span>' : ''}
+          <span class="ms-auto text-muted"><i class="fa-regular fa-eye me-1"></i> ${art.viewsCount || 0}</span>
         </div>
-        <h3 class="card-title">${art.title}</h3>
-        <p class="card-excerpt">${art.summary || ''}</p>
-
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <button class="btn btn-outline btn-sm" onclick="openArticleModal(${art.id})" id="btn_view_${art.id}">
-            <i class="fa-regular fa-eye"></i> Đọc Tin & AI Summary
-          </button>
-          
-          <button class="btn btn-outline btn-sm" style="color: var(--primary-color);" onclick="likeArticle(${art.id})" id="btn_like_${art.id}">
-            <i class="fa-regular fa-thumbs-up"></i> <span id="like_count_${art.id}">${art.likesCount || 0}</span>
-          </button>
-        </div>
-
-        <div class="card-footer">
-          <span><i class="fa-regular fa-calendar"></i> ${art.createdAt || '2026-08-21'}</span>
-          <span><i class="fa-regular fa-eye"></i> ${art.viewsCount || 0} lượt xem</span>
-        </div>
+        <p class="small text-muted mb-2 mt-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+          ${art.summary || ''}
+        </p>
+        <button class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 12px;" onclick="openArticleModal(${art.id})">
+          <i class="fa-regular fa-eye me-1"></i> Đọc tin & AI Sapo
+        </button>
       </div>
-    </article>
+    </div>
   `).join('');
 }
 
