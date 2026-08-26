@@ -3,190 +3,218 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Văn Bản Chỉ Đạo - Công Đoàn Trường Đại Học Thủ Dầu Một</title>
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/font/libs/font-awesome/6.4.0/css/all.min.css">
+  <title>Kho Văn Bản Chỉ Đạo - Công đoàn TDMU</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --tdmu-blue: #005baa;
+      --tdmu-dark-blue: #003e75;
+      --tdmu-red: #d32f2f;
+      --tdmu-text: #1e293b;
+      --bg-gray: #f8fafc;
+    }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: var(--tdmu-text); background-color: #f1f5f9; }
+    .top-header { background: white; padding: 14px 0; border-bottom: 3px solid var(--tdmu-blue); }
+    .site-title h5 { color: var(--tdmu-blue); font-weight: 800; margin-bottom: 2px; text-transform: uppercase; font-size: 18px; }
+    .site-title small { color: #64748b; font-weight: 600; font-size: 12px; text-transform: uppercase; }
+    .main-navbar { background: var(--tdmu-blue); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .main-navbar .nav-link { color: white !important; font-weight: 600; padding: 12px 16px !important; text-transform: uppercase; font-size: 13.5px; transition: all 0.2s; }
+    .main-navbar .nav-link:hover, .main-navbar .nav-link.active { background: var(--tdmu-dark-blue); }
+    .content-box { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); padding: 24px; margin-bottom: 24px; }
+    .section-header { border-bottom: 2px solid var(--tdmu-blue); padding-bottom: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .section-title { color: var(--tdmu-blue); font-weight: 700; font-size: 17px; text-transform: uppercase; margin: 0; }
+    .sidebar-widget { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 20px; overflow: hidden; }
+    .widget-header { background: #f8fafc; border-bottom: 2px solid #e2e8f0; padding: 12px 16px; font-weight: 700; font-size: 14.5px; color: var(--tdmu-blue); text-transform: uppercase; }
+    .widget-body { padding: 14px 16px; }
+    .doc-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px dashed #e2e8f0; font-size: 13.5px; }
+    .doc-item:last-child { border-bottom: none; }
+    .doc-item a { color: #334155; text-decoration: none; font-weight: 500; }
+    .doc-item a:hover { color: var(--tdmu-blue); }
+    .notice-item { padding: 9px 0; border-bottom: 1px solid #edf2f7; font-size: 13.5px; }
+    .notice-item:last-child { border-bottom: none; }
+    .notice-date { font-size: 11.5px; color: var(--tdmu-red); font-weight: 700; }
+    .breadcrumb-box { background: transparent; padding: 10px 0; font-size: 13.5px; }
+    footer { background: #1e293b; color: #94a3b8; padding: 35px 0 20px; font-size: 13.5px; }
+    footer h6 { color: white; font-weight: 700; text-transform: uppercase; margin-bottom: 14px; }
+
+    .doc-table th { background: #f8fafc; color: var(--tdmu-blue); font-weight: 700; font-size: 13.5px; }
+    .doc-table td { font-size: 13.5px; vertical-align: middle; }
+  </style>
 </head>
 <body>
-  
-  <!-- Top Bar -->
-  <div class="top-bar">
-    <div class="container top-bar-content">
-      <div><i class="fa-solid fa-graduation-cap"></i> TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT - THU DAU MOT UNIVERSITY</div>
-      <div><i class="fa-solid fa-phone"></i> Hotline: (0274) 3815 184 | <i class="fa-solid fa-envelope"></i> congdoan@tdmu.edu.vn</div>
-    </div>
-  </div>
 
-  <!-- Unified Header & Nav Group -->
-  <div class="header-nav-group" style="position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
-    <header class="main-header" style="background: #003865; color: white;">
-      <div class="container header-wrapper" style="padding: 10px 0; display: flex; justify-content: space-between; align-items: center;">
-        <a href="index.html" class="brand-logo" style="display: flex; align-items: center; gap: 14px; text-decoration: none;">
-          <img src="images/tdmu_logo.png" alt="TDMU Logo" style="height: 48px; width: auto; display: block;">
-          <div class="brand-text">
-            <span class="brand-title" style="color: #FFFFFF; font-weight: 800; font-size: 17px; letter-spacing: 0.5px; line-height: 1.2;">CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</span>
-            <span class="brand-subtitle" style="color: #F1C40F; font-size: 11.5px; font-weight: 700; display: block; margin-top: 2px;">THU DAU MOT UNIVERSITY TRADE UNION</span>
+  <!-- Top Header -->
+  <header class="top-header">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+          <i class="fa-solid fa-graduation-cap fa-3x text-primary"></i>
+          <div class="site-title">
+            <h5>CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h5>
+            <small>THU DAU MOT UNIVERSITY TRADE UNION</small>
           </div>
-        </a>
-        <div>
-          <a href="admin.html" class="btn btn-accent btn-sm" style="font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
-            <i class="fa-solid fa-wand-magic-sparkles"></i> Portal Cán Bộ AI CMS
-          </a>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <span class="badge bg-danger p-2"><i class="fa-solid fa-flag me-1"></i> Khóa X (2023 - 2028)</span>
+          <a href="admin.html" class="btn btn-sm btn-outline-primary fw-bold"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> Portal Cán Bộ AI CMS</a>
         </div>
       </div>
-    </header>
-
-    <nav class="official-nav-bar">
-      <div class="container">
-        <ul class="official-nav-menu">
-          <li><a href="index.html" class=""><i class="fa-solid fa-house"></i> Trang Chủ</a></li>
-          <li class="has-dropdown">
-            <a href="gioi-thieu.html" class="">Giới Thiệu <i class="fa-solid fa-chevron-down" style="font-size: 10px;"></i></a>
-            <ul class="dropdown-menu">
-              <li><a href="gioi-thieu.html">Tổng Quan Công Đoàn</a></li>
-              <li><a href="gioi-thieu.html#lich-su">Lịch Sử Thành Lập</a></li>
-            </ul>
-          </li>
-          <li class="has-dropdown">
-            <a href="co-cau-to-chuc.html" class="">Cơ Cấu Tổ Chức <i class="fa-solid fa-chevron-down" style="font-size: 10px;"></i></a>
-            <ul class="dropdown-menu">
-              <li><a href="co-cau-to-chuc.html#ban-thuong-vu">Ban Thường Vụ</a></li>
-              <li><a href="co-cau-to-chuc.html#ban-chap-hanh">Ban Chấp Hành</a></li>
-              <li><a href="co-cau-to-chuc.html#uy-ban-kiem-tra">Ủy Ban Kiểm Tra</a></li>
-              <li><a href="co-cau-to-chuc.html#cong-doan-bo-phan">Công Đoàn Bộ Phận</a></li>
-            </ul>
-          </li>
-          <li><a href="index.html#tin-tuc" class="">Tin Tức</a></li>
-          <li><a href="phuc-loi-doan-vien.html" class="">Phúc Lợi Đoàn Viên</a></li>
-          <li class="has-dropdown">
-            <a href="van-ban.html" class="active">Văn Bản <i class="fa-solid fa-chevron-down" style="font-size: 10px;"></i></a>
-            <ul class="dropdown-menu">
-              <li><a href="van-ban.html#tuyen-truyen">Công Văn Tuyên Truyền</a></li>
-              <li><a href="van-ban.html#ke-hoach">Kế Hoạch Hoạt Động</a></li>
-              <li><a href="van-ban.html#luat">Văn Bản Luật</a></li>
-            </ul>
-          </li>
-          <li><a href="lien-he.html" class="">Liên Hệ</a></li>
-          <li><a href="bieu-mau.html" class="">Biểu Mẫu</a></li>
-        </ul>
-      </div>
-    </nav>
-  </div>
-
-
-  <main class="container" style="padding-top: 24px; padding-bottom: 40px;">
-    <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
-      <a href="index.html" style="color: var(--primary-color); text-decoration: none;">Trang chủ</a> / <span>Văn bản</span>
     </div>
+  </header>
 
-    <div class="layout-grid">
-      <div style="background: white; padding: 32px; border-radius: 12px; border: 1px solid #E2E8F0;">
-        <h1 style="font-size: 26px; font-weight: 800; color: #002543; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 3px solid #D97706;">
-          Kho Văn Bản, Công Văn Tuyên Truyền & Kế Hoạch Hoạt Động
-        </h1>
+  <!-- Main Navigation Bar -->
+  <nav class="main-navbar sticky-top">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center">
+        <ul class="nav">
+          <li class="nav-item"><a class="nav-link " href="index.html"><i class="fa-solid fa-house me-1"></i> Trang Chủ</a></li>
+<li class="nav-item"><a class="nav-link " href="co-cau-to-chuc.html">Cơ Cấu Tổ Chức</a></li>
+<li class="nav-item"><a class="nav-link " href="lien-he.html">16 Tổ Công Đoàn</a></li>
+<li class="nav-item"><a class="nav-link active" href="van-ban.html">Văn Bản - Chỉ Đạo</a></li>
+<li class="nav-item"><a class="nav-link " href="bieu-mau.html">Biểu Mẫu</a></li>
+<li class="nav-item"><a class="nav-link " href="phuc-loi-doan-vien.html">Chăm Lo & Phúc Lợi</a></li>
+<li class="nav-item"><a class="nav-link " href="gioi-thieu.html">Giới Thiệu</a></li>
 
-        <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 16px;">
-          <thead>
-            <tr style="background: #F8FAFC; border-bottom: 2px solid #CBD5E1; text-align: left;">
-              <th style="padding: 12px;">Số / Ký Hiệu</th>
-              <th style="padding: 12px;">Tên Văn Bản / Kế Hoạch</th>
-              <th style="padding: 12px;">Ngày Ban Hành</th>
-              <th style="padding: 12px; text-align: right;">Tải Về</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="border-bottom: 1px solid #E2E8F0;">
-              <td style="padding: 12px; font-weight: 700; color: #003865;">KH-CĐ/2026</td>
-              <td style="padding: 12px; font-weight: 600;">Kế hoạch hoạt động trọng tâm công tác Công đoàn năm 2026</td>
-              <td style="padding: 12px;">15/01/2026</td>
-              <td style="padding: 12px; text-align: right;"><button class="btn btn-outline btn-sm" onclick="alert('Đang tải văn bản PDF...')"><i class="fa-solid fa-download"></i> Tải PDF</button></td>
-            </tr>
-            <tr style="border-bottom: 1px solid #E2E8F0;">
-              <td style="padding: 12px; font-weight: 700; color: #003865;">CV-TT/08</td>
-              <td style="padding: 12px; font-weight: 600;">Công văn tuyên truyền kỷ niệm Ngày Gia đình Việt Nam 28/6</td>
-              <td style="padding: 12px;">01/06/2026</td>
-              <td style="padding: 12px; text-align: right;"><button class="btn btn-outline btn-sm" onclick="alert('Đang tải văn bản PDF...')"><i class="fa-solid fa-download"></i> Tải PDF</button></td>
-            </tr>
-            <tr style="border-bottom: 1px solid #E2E8F0;">
-              <td style="padding: 12px; font-weight: 700; color: #003865;">QC-CĐ/02</td>
-              <td style="padding: 12px; font-weight: 600;">Quy chế thu chi và quản lý tài chính Công đoàn cơ sở TDMU</td>
-              <td style="padding: 12px;">10/02/2026</td>
-              <td style="padding: 12px; text-align: right;"><button class="btn btn-outline btn-sm" onclick="alert('Đang tải văn bản PDF...')"><i class="fa-solid fa-download"></i> Tải PDF</button></td>
-            </tr>
-          </tbody>
-        </table>
+        </ul>
+        <div class="d-flex align-items-center text-white small pe-2">
+          <i class="fa-solid fa-phone me-2"></i> (0274) 3.815.184
+        </div>
       </div>
+    </div>
+  </nav>
 
+  <div class="container my-4">
+    <div class="breadcrumb-box"><a href="index.html" class="text-decoration-none">Trang chủ</a> / <span class="text-muted">Kho văn bản chỉ đạo</span></div>
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="content-box">
+          <div class="section-header">
+            <h4 class="section-title"><i class="fa-solid fa-folder-tree me-2"></i>Kho Văn Bản & Nghị Quyết Công Đoàn</h4>
+            <div class="input-group input-group-sm" style="max-width: 250px;">
+              <input type="text" class="form-control" placeholder="Tìm số hiệu, tên văn bản...">
+              <button class="btn btn-outline-primary"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </div>
+          </div>
+          
+          <div class="table-responsive">
+            <table class="table table-hover doc-table">
+              <thead>
+                <tr>
+                  <th style="width: 110px;">Số hiệu</th>
+                  <th>Trích yếu nội dung</th>
+                  <th style="width: 100px;">Ngày ban hành</th>
+                  <th style="width: 80px;" class="text-center">Tải về</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="badge bg-primary">15/NQ-CĐ</span></td>
+                  <td><a href="#" class="fw-bold text-dark text-decoration-none">Nghị quyết Đại hội Công đoàn cơ sở Trường Đại học Thủ Dầu Một lần thứ X (2023 - 2028)</a><br><small class="text-muted">Cơ quan: Công đoàn TDMU | Người ký: TS. Lê Thị Kim Út</small></td>
+                  <td>25/12/2025</td>
+                  <td class="text-center"><a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-file-pdf"></i></a></td>
+                </tr>
+                <tr>
+                  <td><span class="badge bg-primary">08/HD-CĐ</span></td>
+                  <td><a href="#" class="fw-bold text-dark text-decoration-none">Hướng dẫn đánh giá, phân loại Tổ Công đoàn và Đoàn viên xuất sắc năm học 2026</a><br><small class="text-muted">Cơ quan: Công đoàn TDMU | Người ký: TS. Lê Thị Kim Út</small></td>
+                  <td>15/06/2026</td>
+                  <td class="text-center"><a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-file-pdf"></i></a></td>
+                </tr>
+                <tr>
+                  <td><span class="badge bg-secondary">02/KH-CĐ</span></td>
+                  <td><a href="#" class="fw-bold text-dark text-decoration-none">Kế hoạch tổ chức Hội thao và các hoạt động văn hóa văn nghệ chào mừng năm học mới 2026 - 2027</a><br><small class="text-muted">Cơ quan: Ban Chấp hành CĐ | Người ký: ThS. Võ Quốc Lương</small></td>
+                  <td>10/08/2026</td>
+                  <td class="text-center"><a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-file-pdf"></i></a></td>
+                </tr>
+                <tr>
+                  <td><span class="badge bg-info text-dark">01/QC-CĐ</span></td>
+                  <td><a href="#" class="fw-bold text-dark text-decoration-none">Quy chế chi tiêu nội bộ và sử dụng quỹ hỗ trợ công đoàn viên TDMU năm 2026</a><br><small class="text-muted">Cơ quan: Ban Thường vụ CĐ TDMU</small></td>
+                  <td>05/01/2026</td>
+                  <td class="text-center"><a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-file-pdf"></i></a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
       
-      <aside class="sidebar">
-        <div class="sidebar-widget" style="background: linear-gradient(135deg, #003865 0%, #002543 100%); color: white;">
-          <h3 class="widget-title" style="color: #F1C40F; border-bottom-color: #F1C40F;">
-            <i class="fa-solid fa-wand-magic-sparkles"></i> Trợ Lý AI TDMU
-          </h3>
-          <p style="font-size: 13px; color: #E2E8F0; margin-bottom: 16px;">
-            Hệ thống tích hợp <strong>Google Gemini 2.5 Flash API Live & Local NLP Engine</strong> giúp tạo bài viết chuẩn văn phong chỉ trong 5 giây!
-          </p>
-          <a href="admin.html#ai-creator" class="btn btn-accent btn-sm" style="width: 100%;">
-            <i class="fa-solid fa-robot"></i> Trải Nghiệm AI Creator
-          </a>
-        </div>
-
+      <!-- RIGHT COLUMN (30% - SIDEBAR) -->
+      <div class="col-lg-4">
         <div class="sidebar-widget">
-          <h3 class="widget-title"><i class="fa-solid fa-link"></i> Liên Kết Website</h3>
-          <div style="display: flex; flex-direction: column;">
-            <a href="https://tdmu.edu.vn" target="_blank" class="widget-link-item"><i class="fa-solid fa-globe" style="color: #003865;"></i> Đại Học Thủ Dầu Một</a>
-            <a href="https://danguy.tdmu.edu.vn" target="_blank" class="widget-link-item"><i class="fa-solid fa-flag" style="color: #D97706;"></i> Đảng Bộ ĐH Thủ Dầu Một</a>
-            <a href="http://www.congdoan.vn" target="_blank" class="widget-link-item"><i class="fa-solid fa-users" style="color: #1877F2;"></i> Tổng Liên Đoàn Lao Động VN</a>
-            <a href="http://congdoanbinhduong.org.vn" target="_blank" class="widget-link-item"><i class="fa-solid fa-handshake" style="color: #10B981;"></i> LĐLĐ Tỉnh Bình Dương</a>
-            <a href="http://lib.tdmu.edu.vn" target="_blank" class="widget-link-item"><i class="fa-solid fa-book-bookmark" style="color: #8B5CF6;"></i> Trung Tâm Học Liệu TDMU</a>
-            <a href="http://doanvien.congdoan.vn" target="_blank" class="widget-link-item"><i class="fa-solid fa-laptop-code" style="color: #EC4899;"></i> Phần Mềm Quản Lý Đoàn Viên</a>
+          <div class="widget-header"><i class="fa-solid fa-bullhorn me-2 text-danger"></i>Thông Báo Mới</div>
+          <div class="widget-body">
+            <div class="notice-item">
+              <span class="notice-date">[24/08/2026]</span>
+              <a href="#" class="d-block text-dark text-decoration-none fw-semibold mt-1">Thông báo về việc gửi Báo cáo định kỳ tháng 8/2026 của 16 Tổ Công đoàn</a>
+            </div>
+            <div class="notice-item">
+              <span class="notice-date">[20/08/2026]</span>
+              <a href="#" class="d-block text-dark text-decoration-none fw-semibold mt-1">Kế hoạch tổ chức khám sức khỏe định kỳ cho Cán bộ Đoàn viên năm 2026</a>
+            </div>
+            <div class="notice-item">
+              <span class="notice-date">[15/08/2026]</span>
+              <a href="#" class="d-block text-dark text-decoration-none fw-semibold mt-1">Vận động đoàn viên công đoàn tham gia ngày hội Hiến máu tình nguyện</a>
+            </div>
           </div>
         </div>
 
         <div class="sidebar-widget">
-          <h3 class="widget-title"><i class="fa-solid fa-chart-pie"></i> Thống Kê Truy Cập</h3>
-          <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; color: var(--text-main);">
-            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #E2E8F0;">
-              <span><i class="fa-solid fa-user-group" style="color: #10B981;"></i> Đang truy cập:</span>
-              <strong style="color: #10B981;">745</strong>
+          <div class="widget-header"><i class="fa-solid fa-file-pdf me-2 text-danger"></i>Văn Bản - Biểu Mẫu Mới</div>
+          <div class="widget-body">
+            <div class="doc-item">
+              <i class="fa-solid fa-file-pdf text-danger fa-lg"></i>
+              <a href="van-ban.html">15/NQ-CĐ Nghị quyết Đại hội Công đoàn cơ sở TDMU lần thứ X.pdf</a>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 6px 0;">
-              <span><i class="fa-solid fa-chart-line" style="color: #003865;"></i> Tổng số lượt xem:</span>
-              <strong style="color: #003865;">609,825</strong>
+            <div class="doc-item">
+              <i class="fa-solid fa-file-pdf text-danger fa-lg"></i>
+              <a href="van-ban.html">08/HD-CĐ Hướng dẫn đánh giá phân loại Tổ Công đoàn xuất sắc.pdf</a>
+            </div>
+            <div class="doc-item">
+              <i class="fa-solid fa-file-word text-primary fa-lg"></i>
+              <a href="bieu-mau.html">BM-01/CĐ Mẫu Phiếu lý lịch & Đơn xin gia nhập Công đoàn.docx</a>
+            </div>
+            <div class="doc-item">
+              <i class="fa-solid fa-file-word text-primary fa-lg"></i>
+              <a href="bieu-mau.html">BM-02/CĐ Mẫu Báo cáo tháng của Tổ Công đoàn.docx</a>
             </div>
           </div>
         </div>
-      </aside>
+
+        <div class="sidebar-widget">
+          <div class="widget-header"><i class="fa-solid fa-link me-2 text-primary"></i>Liên Kết Nhanh</div>
+          <div class="widget-body">
+            <ul class="list-unstyled mb-0 small">
+              <li class="mb-2"><a href="https://tdmu.edu.vn" target="_blank" class="text-decoration-none"><i class="fa-solid fa-angle-right me-1 text-muted"></i> Cổng thông tin ĐH Thủ Dầu Một</a></li>
+              <li class="mb-2"><a href="#" class="text-decoration-none"><i class="fa-solid fa-angle-right me-1 text-muted"></i> Liên đoàn Lao động Tỉnh Bình Dương</a></li>
+              <li class="mb-2"><a href="#" class="text-decoration-none"><i class="fa-solid fa-angle-right me-1 text-muted"></i> Công đoàn Giáo dục Việt Nam</a></li>
+              <li><a href="#" class="text-decoration-none"><i class="fa-solid fa-angle-right me-1 text-muted"></i> Tạp chí Khoa học TDMU</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
 
     </div>
-  </main>
+  </div>
 
-  
+  <!-- Footer -->
   <footer>
-    <div class="container footer-grid">
-      <div>
-        <h4 style="color: white; font-size: 16px; margin-bottom: 12px;">CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h4>
-        <p style="font-size: 13px;">Địa chỉ: Số 06, đường Trần Văn Ơn, P. Phú Hòa, TP. Thủ Dầu Một, Tỉnh Bình Dương.</p>
-        <p style="font-size: 13px; margin-top: 6px;">Điện thoại: (0274) 3815 184 | Email: congdoan@tdmu.edu.vn</p>
+    <div class="container">
+      <div class="row gy-3">
+        <div class="col-md-7">
+          <h6>CÔNG ĐOÀN CƠ SỞ TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h6>
+          <p class="mb-1"><i class="fa-solid fa-location-dot me-2"></i> Địa chỉ: Lầu 1, Dãy A, Cổng 1, Số 06 Trần Văn Ơn, P. Phú Lợi, TP. Thủ Dầu Một, Bình Dương</p>
+          <p class="mb-1"><i class="fa-solid fa-phone me-2"></i> Điện thoại: (0274) 3.815.184 | <i class="fa-solid fa-envelope ms-2 me-1"></i> Email: congdoan@tdmu.edu.vn</p>
+          <p class="mb-0"><i class="fa-solid fa-globe me-2"></i> Website: congdoan.tdmu.edu.vn</p>
+        </div>
+        <div class="col-md-5 text-md-end">
+          <h6>HỆ THỐNG TRUYỀN THÔNG TÍCH HỢP AI</h6>
+          <p class="mb-1">Đề tài NCKH Sinh viên / Đồ án CS ngành - Viện Công nghệ số</p>
+          <p class="mb-0 text-muted">Nhóm 2: Nguyễn Bình Dương - Trần Hồng Thanh - Phạm Anh Tuấn</p>
+        </div>
       </div>
-      <div>
-        <h4 style="color: white; font-size: 16px; margin-bottom: 12px;">Chuyên Mục</h4>
-        <ul style="list-style: none; font-size: 13px; display: flex; flex-direction: column; gap: 6px;">
-          <li><a href="gioi-thieu.html" style="color: #94A3B8; text-decoration: none;">Giới Thiệu</a></li>
-          <li><a href="co-cau-to-chuc.html" style="color: #94A3B8; text-decoration: none;">Cơ Cấu Tổ Chức</a></li>
-          <li><a href="phuc-loi-doan-vien.html" style="color: #94A3B8; text-decoration: none;">Phúc Lợi Đoàn Viên</a></li>
-          <li><a href="van-ban.html" style="color: #94A3B8; text-decoration: none;">Văn Bản Chỉ Đạo</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4 style="color: white; font-size: 16px; margin-bottom: 12px;">Chuyển Đổi Số AI</h4>
-        <p style="font-size: 13px;">Hệ thống phát triển làm Đồ án cơ sở ngành tích hợp Google Gemini AI API.</p>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      &copy; 2026 Công đoàn Trường Đại học Thủ Dầu Một.
     </div>
   </footer>
-
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
