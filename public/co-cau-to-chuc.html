@@ -120,56 +120,258 @@
     <div class="breadcrumb-box"><a href="index.html" class="text-decoration-none">Trang chủ</a> / <span class="text-muted">Cơ cấu tổ chức</span></div>
     <div class="row g-4">
       <div class="col-lg-9">
-        <div class="content-box" id="ban-thuong-vu">
-          <div class="tieudelon"><i class="fa-solid fa-sitemap me-2"></i>Ban Thường Vụ Công Đoàn TDMU (Khóa X)</div>
-          <div class="row g-3 mb-4">
-            <div class="col-md-6">
-              <div class="p-3 border rounded bg-light">
-                <span class="badge bg-danger mb-1">Chủ tịch Công đoàn</span>
-                <h5 class="fw-bold text-primary mb-1">TS. Lê Thị Kim Út</h5>
-                <small class="text-muted d-block">Giảng viên cao cấp</small>
-                <small class="text-secondary"><i class="fa-solid fa-envelope me-1"></i> utltk@tdmu.edu.vn</small>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="p-3 border rounded bg-light">
-                <span class="badge bg-danger mb-1">Ủy viên Ban Thường Vụ</span>
-                <h5 class="fw-bold text-primary mb-1">ThS. Võ Quốc Lương</h5>
-                <small class="text-muted d-block">Giảng viên chính Viện Công nghệ số</small>
-                <small class="text-secondary"><i class="fa-solid fa-envelope me-1"></i> luongvq@tdmu.edu.vn</small>
+        
+        <!-- Tab navigation inside co-cau-to-chuc -->
+        <ul class="nav nav-pills nav-fill mb-4 p-2 bg-white border rounded shadow-sm" id="orgTabs">
+          <li class="nav-item">
+            <button class="nav-link active fw-bold py-2" data-bs-toggle="pill" data-bs-target="#tab-bch">
+              <i class="fa-solid fa-users-gear me-2"></i> BAN CHẤP HÀNH (13 Đ/C)
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link fw-bold py-2" data-bs-toggle="pill" data-bs-target="#tab-ubkt">
+              <i class="fa-solid fa-clipboard-check me-2 text-danger"></i> ỦY BAN KIỂM TRA (3 Đ/C)
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link fw-bold py-2" data-bs-toggle="pill" data-bs-target="#tab-banquanchung">
+              <i class="fa-solid fa-people-group me-2 text-success"></i> CÁC BAN CHUYÊN MÔN
+            </button>
+          </li>
+        </ul>
+
+        <div class="tab-content">
+          
+          <!-- TAB 1: BAN CHẤP HÀNH (13 THÀNH VIÊN) -->
+          <div class="tab-pane fade show active" id="tab-bch">
+            <div class="content-box">
+              <div class="tieudelon"><i class="fa-solid fa-sitemap me-2"></i>BAN CHẤP HÀNH CÔNG ĐOÀN TRƯỜNG ĐH THỦ DẦU MỘT (NHIỆM KỲ 2023 - 2028)</div>
+              <p class="small text-muted mb-4">Theo Quyết định số 206/QĐ-LĐLĐ của Liên đoàn Lao động Tỉnh Bình Dương công nhận kết quả bầu cử BCH Khóa X gồm 13 đồng chí:</p>
+              
+              <div class="row g-3">
+                <!-- 1. Chủ tịch -->
+                <div class="col-md-6">
+                  <div class="p-3 border border-2 border-primary rounded bg-light d-flex align-items-center gap-3">
+                    <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150" class="rounded-circle border border-2 border-primary" style="width: 70px; height: 70px; object-fit: cover;" alt="Lê Thị Kim Út">
+                    <div>
+                      <span class="badge bg-danger mb-1">Chủ tịch Công đoàn</span>
+                      <h6 class="fw-bold text-primary mb-0">TS. Lê Thị Kim Út</h6>
+                      <small class="text-muted d-block">Giảng viên cao cấp</small>
+                      <small class="text-secondary"><i class="fa-solid fa-envelope me-1"></i> utltk@tdmu.edu.vn</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 2. Phó Chủ tịch -->
+                <div class="col-md-6">
+                  <div class="p-3 border border-2 border-primary rounded bg-light d-flex align-items-center gap-3">
+                    <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150" class="rounded-circle border border-2 border-primary" style="width: 70px; height: 70px; object-fit: cover;" alt="Nguyễn Minh Danh">
+                    <div>
+                      <span class="badge bg-primary mb-1">Phó Chủ tịch & CN UBKT</span>
+                      <h6 class="fw-bold text-primary mb-0">ThS. Nguyễn Minh Danh</h6>
+                      <small class="text-muted d-block">Phụ trách công tác Kiểm tra & Đời sống</small>
+                      <small class="text-secondary"><i class="fa-solid fa-envelope me-1"></i> danhnm@tdmu.edu.vn</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 3. Phó Chủ tịch -->
+                <div class="col-md-6">
+                  <div class="p-3 border rounded bg-light d-flex align-items-center gap-3">
+                    <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150" class="rounded-circle" style="width: 60px; height: 60px; object-fit: cover;" alt="Phan Nguyễn Quỳnh Anh">
+                    <div>
+                      <span class="badge bg-info text-dark mb-1">Phó Chủ tịch</span>
+                      <h6 class="fw-bold text-primary mb-0">ThS. Phan Nguyễn Quỳnh Anh</h6>
+                      <small class="text-muted d-block">Phụ trách công tác Tuyên giáo - Nữ công</small>
+                      <small class="text-secondary"><i class="fa-solid fa-envelope me-1"></i> anhpnq@tdmu.edu.vn</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 4. UV BCH -->
+                <div class="col-md-6">
+                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">XL</div>
+                    <div>
+                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
+                      <h6 class="fw-bold text-dark mb-0">Lê Nguyễn Xuân Lan</h6>
+                      <small class="text-muted">Phòng Đào tạo Đại học</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 5. UV BCH -->
+                <div class="col-md-6">
+                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">HD</div>
+                    <div>
+                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
+                      <h6 class="fw-bold text-dark mb-0">Phan Nguyễn Hồng Diễm</h6>
+                      <small class="text-muted">Phòng Tổ chức - Cán bộ</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 6. UV BCH -->
+                <div class="col-md-6">
+                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">DT</div>
+                    <div>
+                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
+                      <h6 class="fw-bold text-dark mb-0">Võ Nguyễn Đoan Trinh</h6>
+                      <small class="text-muted">Khoa Ngoại ngữ</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 7. UV BCH -->
+                <div class="col-md-6">
+                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">TL</div>
+                    <div>
+                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
+                      <h6 class="fw-bold text-dark mb-0">Nguyễn Võ Thành Long</h6>
+                      <small class="text-muted">Phòng Kế hoạch - Tài chính</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 8. UV BCH -->
+                <div class="col-md-6">
+                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">ĐH</div>
+                    <div>
+                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
+                      <h6 class="fw-bold text-dark mb-0">Trần Đức Hoàn</h6>
+                      <small class="text-muted">Khoa Công nghiệp Văn hóa</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 9. UV BCH - GVHD Võ Quốc Lương -->
+                <div class="col-md-6">
+                  <div class="p-3 border border-2 border-warning rounded bg-light d-flex align-items-center gap-3">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" class="rounded-circle border border-2 border-warning" style="width: 60px; height: 60px; object-fit: cover;" alt="Võ Quốc Lương">
+                    <div>
+                      <span class="badge bg-warning text-dark mb-1">Ủy viên BCH (GVHD)</span>
+                      <h6 class="fw-bold text-primary mb-0">ThS. Võ Quốc Lương</h6>
+                      <small class="text-muted d-block">Giảng viên chính Viện Công nghệ số</small>
+                      <small class="text-secondary"><i class="fa-solid fa-envelope me-1"></i> luongvq@tdmu.edu.vn</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 10. UV BCH -->
+                <div class="col-md-6">
+                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">TT</div>
+                    <div>
+                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
+                      <h6 class="fw-bold text-dark mb-0">Huỳnh Thanh Thúy</h6>
+                      <small class="text-muted">Trung tâm Khảo thí & ĐBCL</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 11. UV BCH -->
+                <div class="col-md-6">
+                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">TN</div>
+                    <div>
+                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
+                      <h6 class="fw-bold text-dark mb-0">Phú Thị Tuyết Nga</h6>
+                      <small class="text-muted">Trung tâm Học liệu</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 12. UV BCH -->
+                <div class="col-md-6">
+                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">MT</div>
+                    <div>
+                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
+                      <h6 class="fw-bold text-dark mb-0">Âu Minh Triết</h6>
+                      <small class="text-muted">Viện Kỹ thuật công nghệ</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 13. UV BCH -->
+                <div class="col-md-6">
+                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">TT</div>
+                    <div>
+                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
+                      <h6 class="fw-bold text-dark mb-0">Nguyễn Thị Thanh Thảo</h6>
+                      <small class="text-muted">Khoa Sư phạm</small>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="tieudelon" id="ban-chap-hanh"><i class="fa-solid fa-users me-2"></i>Ban Chấp Hành & Các Ban Chuyên Môn</div>
-          <div class="accordion" id="accordionBCH">
-            <div class="accordion-item mb-2 border rounded" id="uy-ban-kiem-tra">
-              <h2 class="accordion-header">
-                <button class="accordion-button fw-bold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
-                  1. Ủy Ban Kiểm Tra Công Đoàn (Khóa X)
-                </button>
-              </h2>
-              <div id="collapseOne" class="accordion-collapse collapse show">
-                <div class="accordion-body">
-                  <p class="mb-2"><strong>Chủ nhiệm UBKT:</strong> TS. Nguyễn Văn Hùng - Phó Trưởng khoa Kinh tế</p>
-                  <p class="mb-0 text-muted"><strong>Nhiệm vụ:</strong> Kiểm tra việc chấp hành Điều lệ Công đoàn, giám sát tài chính và giải quyết khiếu nại, tố cáo.</p>
+          <!-- TAB 2: ỦY BAN KIỂM TRA (3 Đ/C) -->
+          <div class="tab-pane fade" id="tab-ubkt">
+            <div class="content-box">
+              <div class="tieudelon"><i class="fa-solid fa-clipboard-check me-2"></i>ỦY BAN KIỂM TRA CÔNG ĐOÀN TRƯỜNG (NHIỆM KỲ 2023 - 2028)</div>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <div class="p-3 border border-2 border-danger rounded bg-light text-center">
+                    <span class="badge bg-danger mb-2">Chủ nhiệm UBKT</span>
+                    <h6 class="fw-bold text-primary mb-1">ThS. Nguyễn Minh Danh</h6>
+                    <small class="text-muted d-block mb-1">UV Ban Thường vụ</small>
+                    <small class="text-secondary"><i class="fa-solid fa-envelope me-1"></i> danhnm@tdmu.edu.vn</small>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div class="accordion-item mb-2 border rounded">
-              <h2 class="accordion-header">
-                <button class="accordion-button collapsed fw-bold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
-                  2. Ban Nữ Công Quần Chúng
-                </button>
-              </h2>
-              <div id="collapseTwo" class="accordion-collapse collapse">
-                <div class="accordion-body">
-                  <p class="mb-2"><strong>Trưởng Ban Nữ công:</strong> ThS. Huỳnh Thị Lệ Kha - Giảng viên Trường Luật & Quản lý</p>
-                  <p class="mb-0 text-muted"><strong>Nhiệm vụ:</strong> Đại diện, chăm lo quyền lợi nữ CBVC, phong trào "Giỏi việc trường - Đảm việc nhà".</p>
+                <div class="col-md-4">
+                  <div class="p-3 border rounded bg-white text-center">
+                    <span class="badge bg-primary mb-2">Ủy viên UBKT</span>
+                    <h6 class="fw-bold text-dark mb-1">Nguyễn Ngọc Hiền</h6>
+                    <small class="text-muted d-block mb-1">Phụ trách kiểm tra tài chính</small>
+                    <small class="text-secondary"><i class="fa-solid fa-envelope me-1"></i> hiennn@tdmu.edu.vn</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="p-3 border rounded bg-white text-center">
+                    <span class="badge bg-primary mb-2">Ủy viên UBKT</span>
+                    <h6 class="fw-bold text-dark mb-1">Nguyễn Văn Trường</h6>
+                    <small class="text-muted d-block mb-1">Phụ trách giám sát điều lệ</small>
+                    <small class="text-secondary"><i class="fa-solid fa-envelope me-1"></i> truongnv@tdmu.edu.vn</small>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+
+          <!-- TAB 3: CÁC BAN CHUYÊN MÔN -->
+          <div class="tab-pane fade" id="tab-banquanchung">
+            <div class="content-box">
+              <div class="tieudelon"><i class="fa-solid fa-users me-2"></i>CÁC BAN QUẦN CHÚNG & BAN CHUYÊN MÔN (QĐ SỐ 08/QĐ-CĐ)</div>
+              
+              <div class="p-3 border rounded mb-3 bg-light">
+                <h6 class="fw-bold text-primary mb-1"><i class="fa-solid fa-female text-danger me-2"></i>1. Ban Nữ Công Quần Chúng</h6>
+                <p class="small text-muted mb-0">Đại diện chăm lo, bảo vệ quyền lợi chính đáng cho nữ cán bộ viên chức, phong trào "Giỏi việc trường - Đảm việc nhà".</p>
+              </div>
+
+              <div class="p-3 border rounded mb-3 bg-light">
+                <h6 class="fw-bold text-primary mb-1"><i class="fa-solid fa-bullhorn text-warning me-2"></i>2. Ban Tuyên Giáo & Thi Đua - Khen Thưởng</h6>
+                <p class="small text-muted mb-0">Tuyên truyền đường lối của Đảng, chính sách pháp luật, tổ chức các đợt thi đua dạy tốt - nghiên cứu khoa học và tổng hợp đánh giá 16 Tổ Công đoàn.</p>
+              </div>
+
+              <div class="p-3 border rounded mb-3 bg-light">
+                <h6 class="fw-bold text-primary mb-1"><i class="fa-solid fa-heart-pulse text-success me-2"></i>3. Ban Đời Sống & Chăm Lo Phúc Lợi</h6>
+                <p class="small text-muted mb-0">Khảo sát, hỗ trợ thăm hỏi ốm đau, hiếu hỷ, bệnh hiểm nghèo, phối hợp tổ chức khám sức khỏe và kết nối các gói phúc lợi ưu đãi.</p>
+              </div>
+
+              <div class="p-3 border rounded bg-light">
+                <h6 class="fw-bold text-primary mb-1"><i class="fa-solid fa-futbol text-info me-2"></i>4. Ban Văn Thể Mỹ</h6>
+                <p class="small text-muted mb-0">Tổ chức các giải bóng đá truyền thống, hội thi văn nghệ, hội thi áo dài và hội thi Mic Vàng TDMU.</p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
       
