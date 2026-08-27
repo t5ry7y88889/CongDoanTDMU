@@ -649,7 +649,7 @@ app.get('/api/articles/:id', (req, res) => {
 });
 
 app.post('/api/articles', async (req, res) => {
-  const { title, categoryName, categoryId, summary, content, image, author, status, isAiGenerated, aiPrompt } = req.body;
+  const { title, categoryName, categoryId, summary, content, image, author, status, isAiGenerated, aiPrompt, packageData } = req.body;
   if (!title) return res.json({ success: false, error: 'Tiêu đề là bắt buộc' });
 
   const articleData = {
@@ -663,7 +663,8 @@ app.post('/api/articles', async (req, res) => {
     authorId: 1,
     status: status || 'pending_review',
     isAiGenerated: !!isAiGenerated,
-    aiPrompt: aiPrompt || ''
+    aiPrompt: aiPrompt || '',
+    packageData: packageData || null
   };
 
   const created = await insertArticleToDb(articleData);
@@ -674,26 +675,75 @@ app.post('/api/articles', async (req, res) => {
 
 app.put('/api/articles/:id', async (req, res) => {
   const id = req.params.id;
-  const { title, categoryName, summary, content, status, scheduledAt, image, changeType, isAiGenerated, aiProvider, aiModel, aiPrompt } = req.body;
+  const { title, categoryName, summary, content, status, scheduledAt, publish_mode, image, changeType, isAiGenerated, aiProvider, aiModel, aiPrompt, currentUserId } = req.body;
 
-  const updateData = {
-    title,
-    categoryName,
-    summary,
-    content,
-    status,
-    scheduledAt,
-    image,
-    changeType: changeType || 'EDITOR_EDIT',
-    isAiGenerated: !!isAiGenerated,
-    aiProvider: aiProvider || null,
-    aiModel: aiModel || null,
-    aiPrompt: aiPrompt || null
-  };
+  // HARD LOCK CHECK (JSON Fallback DB check for now)
+  const db = loadDB();
+  const art = (db.articles || []).find(a => a.id == id);
+  if (art && art.assignee_id && currentUserId && art.assignee_id !== currentUserId) {
+    return res.status(403).json({ success: false, error: 'Package này đang được xử lý bởi người khác (Hard Lock).' });
+  }
+
+  let finalStatus = status;
+  if (publish_mode === 'schedule' && scheduledAt) {
+    finalStatus = 'scheduled';
+  }
+
+  const updateData = {};
+  if (req.body.title !== undefined) updateData.title = req.body.title;
+  if (req.body.categoryName !== undefined) updateData.categoryName = req.body.categoryName;
+  if (req.body.summary !== undefined) updateData.summary = req.body.summary;
+  if (req.body.content !== undefined) updateData.content = req.body.content;
+  if (finalStatus !== undefined) updateData.status = finalStatus;
+  if (req.body.scheduledAt !== undefined) updateData.scheduledAt = req.body.scheduledAt;
+  if (req.body.image !== undefined) updateData.image = req.body.image;
+  if (req.body.changeType !== undefined) updateData.changeType = req.body.changeType;
+  if (req.body.isAiGenerated !== undefined) updateData.isAiGenerated = !!req.body.isAiGenerated;
+  if (req.body.aiProvider !== undefined) updateData.aiProvider = req.body.aiProvider;
+  if (req.body.aiModel !== undefined) updateData.aiModel = req.body.aiModel;
+  if (req.body.aiPrompt !== undefined) updateData.aiPrompt = req.body.aiPrompt;
+  if (req.body.packageData !== undefined) updateData.packageData = req.body.packageData;
 
   await updateArticleInDb(id, updateData);
-  const statusMap = { published: 'Đã Xuất Bản', approved: 'Đã Duyệt', pending_review: 'Chờ Duyệt', pending: 'Chờ Duyệt', draft: 'Bản Nháp' };
-  res.json({ success: true, message: 'Đã cập nhật bài viết & lưu phiên bản mới vào CSDL (Transactional)', data: { id, status: updateData.status, statusName: statusMap[updateData.status] || 'Đã Lưu' } });
+  const statusMap = { published: 'Đã Xuất Bản', approved: 'Đã Duyệt', pending_review: 'Chờ Duyệt', pending: 'Chờ Duyệt', draft: 'Bản Nháp', scheduled: 'Đã Lên Lịch', publish_failed: 'Lỗi Đăng Bài' };
+  res.json({ success: true, message: 'Đã cập nhật bài viết & lưu phiên bản mới vào CSDL', data: { id, status: updateData.status, statusName: statusMap[updateData.status] || 'Đã Lưu' } });
+});
+
+// CLAIM & UNCLAIM APIS
+app.post('/api/packages/:id/claim', (req, res) => {
+  const id = req.params.id;
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ success: false, error: 'Thiếu userId' });
+
+  const db = loadDB();
+  const art = (db.articles || []).find(a => a.id == id);
+  if (!art) return res.status(404).json({ success: false, error: 'Không tìm thấy package' });
+  
+  if (art.assignee_id && art.assignee_id !== userId) {
+    return res.status(403).json({ success: false, error: 'Package này đã bị claim bởi người khác.' });
+  }
+
+  art.assignee_id = userId;
+  art.updatedAt = new Date().toISOString();
+  saveDB(db);
+  res.json({ success: true, message: 'Đã nhận việc thành công.' });
+});
+
+app.post('/api/packages/:id/unclaim', (req, res) => {
+  const id = req.params.id;
+  const { userId } = req.body;
+  const db = loadDB();
+  const art = (db.articles || []).find(a => a.id == id);
+  if (!art) return res.status(404).json({ success: false, error: 'Không tìm thấy package' });
+  
+  if (art.assignee_id && art.assignee_id !== userId) {
+    return res.status(403).json({ success: false, error: 'Bạn không có quyền trả việc package của người khác.' });
+  }
+
+  art.assignee_id = null;
+  art.updatedAt = new Date().toISOString();
+  saveDB(db);
+  res.json({ success: true, message: 'Đã hủy nhận việc thành công.' });
 });
 
 app.delete('/api/articles/:id', async (req, res) => {
@@ -707,6 +757,345 @@ app.post('/api/articles/:id/approve', async (req, res) => {
   await updateArticleInDb(id, { status: 'approved' });
   res.json({ success: true, message: 'Đã duyệt bài viết thành công' });
 });
+
+
+// =========================================================================
+// 📁 ENTERPRISE CONTENT LIFECYCLE MANAGEMENT (DOSSIERS & ASSETS REPOSITORY)
+// =========================================================================
+
+// 1. DOSSIERS API (Hồ Sơ Nội Dung / Workspaces)
+app.get('/api/dossiers', (req, res) => {
+  const db = loadDB();
+  const dossiers = db.dossiers || [];
+  const assets = db.assets || [];
+  const articles = db.articles || [];
+
+  // Dynamically calculate asset and article counts
+  const enriched = dossiers.map(d => ({
+    ...d,
+    assetsCount: assets.filter(a => a.dossierId === d.id).length,
+    contentCount: articles.filter(a => a.dossierId === d.id).length
+  }));
+
+  res.json({ success: true, count: enriched.length, data: enriched });
+});
+
+app.get('/api/dossiers/:id', (req, res) => {
+  const db = loadDB();
+  const dossier = (db.dossiers || []).find(d => d.id === req.params.id);
+  if (!dossier) return res.status(404).json({ success: false, error: 'Không tìm thấy hồ sơ' });
+  
+  const relatedAssets = (db.assets || []).filter(a => a.dossierId === req.params.id);
+  const relatedArticles = (db.articles || []).filter(a => a.dossierId === req.params.id);
+  
+  res.json({ success: true, data: { ...dossier, assets: relatedAssets, articles: relatedArticles } });
+});
+
+app.post('/api/dossiers', (req, res) => {
+  const { title, code, category, unit, leadPerson, description, startDate, endDate } = req.body;
+  if (!title) return res.json({ success: false, error: 'Tiêu đề hồ sơ là bắt buộc' });
+
+  const db = loadDB();
+  if (!db.dossiers) db.dossiers = [];
+
+  const newDossier = {
+    id: `dossier_${Date.now()}`,
+    code: code || `HS-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+    title,
+    category: category || 'Thông Báo Chỉ Đạo',
+    unit: unit || 'Ban Thường Vụ Công Đoàn',
+    leadPerson: leadPerson || 'Cán Bộ Phụ Trách',
+    status: 'active',
+    startDate: startDate || new Date().toISOString().slice(0, 10),
+    endDate: endDate || '',
+    description: description || '',
+    createdAt: new Date().toISOString()
+  };
+
+  db.dossiers.unshift(newDossier);
+  saveDB(db);
+  res.json({ success: true, message: 'Đã tạo Hồ sơ nội dung mới thành công!', data: newDossier });
+});
+
+// 2. ASSETS API (Kho Tư Liệu Nguồn Đa Phương Tiện)
+app.get('/api/assets', (req, res) => {
+  const { dossierId, fileType, source } = req.query;
+  const db = loadDB();
+  let list = db.assets || [];
+
+  if (dossierId && dossierId !== 'all') {
+    list = list.filter(a => a.dossierId === dossierId);
+  }
+  if (fileType && fileType !== 'all') {
+    list = list.filter(a => a.fileType === fileType);
+  }
+  if (source && source !== 'all') {
+    list = list.filter(a => a.source === source);
+  }
+
+  res.json({ success: true, count: list.length, data: list });
+});
+
+app.post('/api/assets', async (req, res) => {
+  const { title, fileName, fileType, dossierId, source, unit, uploadedBy, summary, fileUrl } = req.body;
+  if (!title) return res.json({ success: false, error: 'Tên tư liệu là bắt buộc' });
+
+  const db = loadDB();
+  if (!db.assets) db.assets = [];
+
+  const newAsset = {
+    id: `asset_${Date.now()}`,
+    title,
+    fileName: fileName || `${title.replace(/\s+/g, '_')}.pdf`,
+    fileType: fileType || 'document',
+    fileSize: req.body.fileSize || '1.5 MB',
+    fileUrl: fileUrl || (fileType === 'image' ? 'images/banner.jpg' : 'uploads/sample.pdf'),
+    dossierId: dossierId || null,
+    source: source || 'Công đoàn TDMU',
+    unit: unit || 'Ban Thường Vụ',
+    uploadedBy: uploadedBy || 'Cán Bộ Phụ Trách',
+    status: 'verified',
+    ai_status: 'triage_pending',
+    confidence_score: null,
+    ai_notes: null,
+    aiAllowed: true,
+    summary: summary || title,
+    createdAt: new Date().toISOString()
+  };
+
+  db.assets.unshift(newAsset);
+  saveDB(db);
+  
+  // Asynchronously trigger AI Triage (simulate or real)
+  // For now, we simulate a triage process that randomly passes or fails based on fileType or title
+  setTimeout(() => {
+    const freshDb = loadDB();
+    const asset = freshDb.assets.find(a => a.id === newAsset.id);
+    if (asset) {
+      if (asset.title.toLowerCase().includes('lỗi') || asset.title.toLowerCase().includes('mờ')) {
+        asset.ai_status = 'triage_failed';
+        asset.confidence_score = 45;
+        asset.ai_notes = 'Tài liệu không rõ ràng hoặc không phù hợp để truyền thông.';
+      } else {
+        asset.ai_status = 'ready';
+        asset.confidence_score = 92;
+        asset.ai_notes = 'Tài liệu rõ nét, đầy đủ thông tin truyền thông.';
+      }
+      saveDB(freshDb);
+    }
+  }, 3000);
+
+  res.json({ success: true, message: 'Đã nạp tư liệu mới vào Hòm Thư Tư Liệu thành công!', data: newAsset });
+});
+
+
+app.delete('/api/assets/:id', (req, res) => {
+  const db = loadDB();
+  db.assets = (db.assets || []).filter(a => a.id !== req.params.id);
+  saveDB(db);
+  res.json({ success: true, message: 'Đã xóa tư liệu khỏi hệ thống' });
+});
+
+// 3. EDITORIAL WORKFLOW LIFECYCLE (SUBMIT REVIEW, REJECT)
+app.post('/api/articles/:id/submit-review', async (req, res) => {
+  await updateArticleInDb(req.params.id, { status: 'pending_review' });
+  res.json({ success: true, message: 'Đã gửi bài viết lên Ban Chấp Hành chờ phê duyệt!' });
+});
+
+app.post('/api/articles/:id/reject', async (req, res) => {
+  const reason = req.body.reason || 'Cần chỉnh sửa lại theo góp ý';
+  await updateArticleInDb(req.params.id, { status: 'draft', rejectReason: reason });
+  res.json({ success: true, message: 'Đã hoàn trả bài viết về trạng thái Bản Nháp để biên tập lại!' });
+});
+
+// 4. MULTI-CHANNEL CONTENT PACKAGE GENERATOR (AI GROUNDED IN ASSETS)
+app.post('/api/ai/package-generator', async (req, res) => {
+  const { dossierId, assetIds, briefText, channels, customPrompt, apiKey, groqApiKey, aiEngine } = req.body;
+  const db = loadDB();
+
+  const dossier = (db.dossiers || []).find(d => d.id === dossierId) || { title: "Hoạt động Công đoàn TDMU", category: "Thông Báo Chỉ Đạo", description: "" };
+  const allAssets = db.assets || [];
+  const selectedAssets = (assetIds && Array.isArray(assetIds) && assetIds.length > 0)
+    ? allAssets.filter(a => assetIds.includes(a.id))
+    : allAssets.filter(a => a.dossierId === dossierId);
+
+  // BUILD GROUNDED KNOWLEDGE BASE PROMPT
+  let evidenceText = `CHỦ ĐỀ CHÍNH: "${dossier.title}" (${dossier.category})\nMô tả: ${dossier.description || 'Không có'}\n\n`;
+  
+  if (briefText) {
+    evidenceText += `NỘI DUNG TÓM TẮT/YÊU CẦU TRỰC TIẾP TỪ CÁN BỘ:\n${briefText}\n\n`;
+  }
+
+  evidenceText += `TƯ LIỆU NGUỒN ĐÍNH KÈM (GROUNDING EVIDENCE):\n`;
+  
+  if (selectedAssets.length > 0) {
+    selectedAssets.forEach((a, i) => {
+      evidenceText += `[Tư liệu ${i + 1}] "${a.title}" (Loại: ${a.fileType}, Nguồn: ${a.source}, Đơn vị: ${a.unit})\nNội dung tóm tắt: ${a.summary}\n\n`;
+    });
+  } else {
+    evidenceText += `Không có file đính kèm.\n`;
+  }
+
+  const requestedChannels = (channels && Array.isArray(channels) && channels.length > 0)
+    ? channels
+    : ['website', 'facebook', 'zalo', 'video', 'banner'];
+
+  const systemPrompt = `BẠN LÀ GIÁM ĐỐC TRUYỀN THÔNG ĐA KÊNH CỦA CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT (TDMU).
+Nhiệm vụ của bạn là nhận Hồ sơ và các Tư liệu nguồn thực tế, sau đó sản xuất trọn gói 1 "CONTENT PACKAGE ĐA KÊNH" hoàn chỉnh.
+
+QUY TẮC CỐT LÕI BẮT BUỘC (GROUNDING TRUTHFULNESS):
+1. BÁM SÁT SỰ THẬT TỪ TƯ LIỆU: Chỉ được dùng các dữ kiện, con số, đối tượng đã ghi trong phần Tư liệu nguồn. TUYỆT ĐỐI KHÔNG tự ý bịa đặt lịch trình, số tiền, tên người nếu tư liệu không nhắc đến.
+2. ĐỊNH DẠNG ĐA KÊNH CHUYÊN BIỆT:
+   - Website: Trang trọng, mạch lạc, dùng các thẻ HTML <h2>, <p>, <ul>, <li>, văn phong hành chính hiện đại.
+   - Facebook: Giọng văn truyền cảm hứng, ngắn gọn, có icon sinh động, có bộ Hashtags chuẩn và Call to Action (CTA).
+   - Zalo OA: Tin vắn dưới 100 chữ, súc tích, dạng thẻ hành động.
+   - Video Script: Kịch bản phân cảnh (Scene, Visual, Voice-over) thời lượng 60 giây.
+   - Banner Concept: Khẩu hiệu ngắn gọn (dưới 10 chữ) và thông điệp phụ.
+
+YÊU CẦU ĐẦU RA: Trả về DUY NHẤT 1 đối tượng JSON hợp lệ theo đúng cấu trúc sau (không có văn bản nào khác ngoài JSON):
+{
+  "website": {
+    "title": "Tiêu đề bài báo Web chính thống",
+    "sapo": "Đoạn mở đầu tóm lược khoảng 40-50 từ",
+    "content": "Nội dung HTML đầy đủ có <h2>, <p>, <ul>...",
+    "suggestedTags": ["Công đoàn TDMU", "Chăm lo đời sống"]
+  },
+  "facebook": {
+    "caption": "Bài đăng Facebook truyền thông cảm xúc, có biểu tượng icon sinh động...",
+    "hashtags": "#CongDoanTDMU #TDMU2026",
+    "callToAction": "Quý Thầy/Cô vui lòng chia sẻ thông tin đến toàn thể đoàn viên tại đơn vị!",
+    "suggestedImages": ["${selectedAssets.find(a => a.fileType === 'image')?.fileName || 'banner.jpg'}"]
+  },
+  "zalo": {
+    "headline": "Tiêu đề tin Zalo OA",
+    "broadcastBody": "Nội dung tin nhắn Zalo vắn tắt, súc tích dưới 80 từ...",
+    "actionLink": "https://congdoan.tdmu.edu.vn"
+  },
+  "video": {
+    "title": "Kịch bản phóng sự ngắn 60s",
+    "scenes": [
+      { "scene": 1, "visual": "Hình ảnh khuôn viên trường TDMU và biểu trưng Công đoàn", "voiceover": "Đoàn kết, đổi mới và sáng tạo - Công đoàn Trường Đại học Thủ Dầu Một luôn đồng hành..." },
+      { "scene": 2, "visual": "Hình ảnh cán bộ công đoàn tham gia hoạt động", "voiceover": "Kế hoạch được triển khai sâu rộng mang lại nhiều quyền lợi thiết thực..." }
+    ]
+  },
+  "banner": {
+    "headline": "KHẨU HIỆU BANNER CHÍNH",
+    "subText": "Thông điệp bổ trợ",
+    "suggestedPalette": "Xanh dương TDMU & Vàng kim năng động"
+  }
+}`;
+
+  const promptContent = `${evidenceText}\nYÊU CẦU BỔ SUNG CỦA BIÊN TẬP VIÊN: ${customPrompt || 'Tạo trọn gói Content Package truyền thông chuẩn mực cho các kênh đã chọn.'}`;
+
+  const activeGeminiKey = apiKey || process.env.GEMINI_API_KEY;
+  const activeGroqKey = groqApiKey || process.env.GROQ_API_KEY;
+
+  if (!activeGeminiKey && !activeGroqKey) {
+    return res.json({ success: false, error: "Bạn chưa nhập API Key nào! Vui lòng vào Cài Đặt (⚙️)." });
+  }
+
+  // Multi-engine execution
+  const runGeminiPackage = async () => {
+    if (!activeGeminiKey) throw new Error("Chưa cấu hình Gemini Key");
+    const ai = new GoogleGenAI({ apiKey: activeGeminiKey });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: systemPrompt + "\n\n" + promptContent,
+      config: { responseMimeType: 'application/json' }
+    });
+    return response.text;
+  };
+
+  const runGroqPackage = async () => {
+    if (!activeGroqKey) throw new Error("Chưa cấu hình Groq Key");
+    return await callGroqAPI(promptContent, systemPrompt, activeGroqKey);
+  };
+
+  let rawText = "";
+  let sourceEngine = "";
+  let lastError = null;
+  const order = (aiEngine === 'groq') ? ['groq', 'gemini'] : ['gemini', 'groq'];
+
+  for (const engine of order) {
+    try {
+      if (engine === 'gemini' && activeGeminiKey) {
+        rawText = await runGeminiPackage();
+        sourceEngine = "Google Gemini 2.5 Flash Package Engine";
+        break;
+      } else if (engine === 'groq' && activeGroqKey) {
+        rawText = await runGroqPackage();
+        sourceEngine = "Groq AI Multi-Channel Package Engine";
+        break;
+      }
+    } catch (e) {
+      console.warn(`[Package Generator Engine ${engine} failed]:`, e.message);
+      lastError = e;
+    }
+  }
+
+  if (!rawText) {
+    return handleAiError(lastError || new Error("Không thể tạo Content Package"), res, "Package Engine");
+  }
+
+  try {
+    const pkg = extractJsonFromText(rawText);
+    return res.json({
+      success: true,
+      source: sourceEngine,
+      dossierId,
+      dossierTitle: dossier.title,
+      groundedAssetsCount: selectedAssets.length,
+      package: pkg
+    });
+  } catch (err) {
+    return res.json({ success: false, error: "Lỗi giải mã JSON Content Package: " + err.message });
+  }
+});
+
+// 5. INLINE MICRO-EDITING (GRAMMARLY STYLE)
+app.post('/api/ai/inline-edit', async (req, res) => {
+  const { text, action, customPrompt, apiKey } = req.body;
+  const activeGeminiKey = apiKey || process.env.GEMINI_API_KEY;
+
+  if (!activeGeminiKey) {
+    return res.json({ success: false, error: "Chưa cấu hình Gemini API Key." });
+  }
+
+  let instruction = "";
+  if (action === 'rewrite') instruction = "Viết lại đoạn văn bản sau sao cho mạch lạc, hấp dẫn và tự nhiên hơn. Giữ nguyên ý nghĩa gốc.";
+  else if (action === 'shorten') instruction = "Viết lại đoạn văn bản sau ngắn gọn, súc tích hơn. Cắt bỏ các từ ngữ dư thừa nhưng không làm mất ý chính.";
+  else if (action === 'expand') instruction = "Mở rộng đoạn văn bản sau thêm chi tiết, diễn giải rõ ràng và sâu sắc hơn.";
+  else if (action === 'formal') instruction = "Viết lại đoạn văn bản sau theo phong cách trang trọng, nghiêm túc, chuẩn mực văn bản hành chính Công đoàn.";
+  else if (action === 'casual') instruction = "Viết lại đoạn văn bản sau theo phong cách gần gũi, năng động, phù hợp đăng mạng xã hội cho sinh viên.";
+  else if (action === 'custom') instruction = customPrompt || "Chỉnh sửa đoạn văn sau.";
+  
+  const systemPrompt = `BẠN LÀ TRỢ LÝ CHỈNH SỬA VĂN BẢN (MICRO-EDITOR).
+Nhiệm vụ của bạn là thực hiện yêu cầu chỉnh sửa trên đoạn văn bản được cung cấp.
+YÊU CẦU: Trả về DUY NHẤT đoạn văn bản đã được chỉnh sửa. Tuyệt đối KHÔNG trả về các câu như "Dưới đây là đoạn văn...", KHÔNG thêm dấu ngoặc kép bọc ngoài nếu không cần thiết, KHÔNG giải thích. Chỉ trả về kết quả cuối cùng.`;
+
+  const promptContent = `YÊU CẦU CHỈNH SỬA: ${instruction}\n\nĐOẠN VĂN BẢN CẦN SỬA:\n"""\n${text}\n"""`;
+
+  try {
+    const ai = new GoogleGenAI({ apiKey: activeGeminiKey });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: systemPrompt + "\n\n" + promptContent
+    });
+    
+    // Clean up potential markdown code blocks if the AI returned it as markdown
+    let result = response.text.trim();
+    if (result.startsWith('```')) {
+      result = result.replace(/^```[a-z]*\n/, '').replace(/\n```$/, '');
+    }
+
+    res.json({ success: true, text: result.trim() });
+  } catch (e) {
+    console.error("Inline edit error:", e);
+    res.json({ success: false, error: e.message });
+  }
+});
+
+
 
 // REST API USERS, EVENTS, MEDIA, AUDITS, SIMULATED SOCIAL
 app.get('/api/users', (req, res) => res.json({ success: true, data: loadDB().users || [] }));
@@ -875,6 +1264,52 @@ app.get('/api/monthly-reports/summary', (req, res) => {
     data: summary
   });
 });
+
+// =========================================================================
+// BACKGROUND CRON JOBS (AUTO-PUBLISH & AUTO-RELEASE)
+// =========================================================================
+setInterval(() => {
+  const db = loadDB();
+  const now = new Date();
+  let changed = false;
+
+  (db.articles || []).forEach(art => {
+    // 1. Auto Publish Worker
+    if (art.status === 'scheduled' && art.scheduledAt) {
+      const scheduledTime = new Date(art.scheduledAt);
+      if (scheduledTime <= now) {
+        console.log(`[Cron] Executing Auto-Publish for Package #${art.id}...`);
+        // Simulate external API call (Facebook/Zalo)
+        const isSuccess = Math.random() > 0.1; // 90% success rate
+        if (isSuccess) {
+          art.status = 'published';
+          art.statusName = 'Đã Xuất Bản';
+          console.log(`[Cron] Successfully published Package #${art.id}`);
+        } else {
+          art.status = 'publish_failed';
+          art.statusName = 'Lỗi Đăng Bài';
+          console.error(`[Cron] Failed to publish Package #${art.id}`);
+        }
+        changed = true;
+      }
+    }
+
+    // 2. Auto Release Worker (Release locks idle for > 24 hours)
+    if (art.assignee_id && art.updatedAt) {
+      const lastUpdate = new Date(art.updatedAt);
+      const diffHours = (now - lastUpdate) / (1000 * 60 * 60);
+      if (diffHours >= 24) {
+        console.log(`[Cron] Auto-releasing idle Package #${art.id} from User ${art.assignee_id}`);
+        art.assignee_id = null;
+        changed = true;
+      }
+    }
+  });
+
+  if (changed) {
+    saveDB(db);
+  }
+}, 60000); // Check every minute
 
 app.listen(PORT, () => {
   console.log(`====================================================`);

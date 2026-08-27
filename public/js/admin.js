@@ -35,28 +35,49 @@ window.addEventListener('hashchange', () => {
 });
 
 // NAVIGATION
-function showAdminTab(tabName) {
-  const tabs = ['dashboard', 'articles', 'ai-creator', 'schedule', 'social', 'events', 'media', 'roles', 'users', 'audits', 'inbox'];
+function showAdminTab(tabName, subFilter = null) {
+  const tabs = ['dashboard', 'articles', 'inbox', 'workspace', 'ai-creator', 'schedule', 'social', 'analytics', 'events', 'media', 'roles', 'users', 'audits'];
+  
   tabs.forEach(t => {
     const elContent = document.getElementById(`tab_${t}_content`);
     const elMenu = document.getElementById(`menu_${t}`);
 
     if (elContent) elContent.style.display = (t === tabName) ? 'block' : 'none';
     if (elMenu) {
-      if (t === tabName) elMenu.classList.add('active');
+      if (t === tabName && !subFilter) elMenu.classList.add('active');
       else elMenu.classList.remove('active');
     }
   });
 
+  // Handle article sub-status filters in menu
+  if (tabName === 'articles') {
+    ['all', 'draft', 'pending_review', 'published'].forEach(s => {
+      const el = document.getElementById(`menu_articles_${s}`);
+      if (el) {
+        if (s === subFilter) el.classList.add('active');
+        else el.classList.remove('active');
+      }
+    });
+  }
+
   if (tabName === 'dashboard') loadAdminDashboard();
-  if (tabName === 'articles') loadAdminArticles('all');
+  if (tabName === 'articles') loadAdminArticles(subFilter || 'all');
+  if (tabName === 'inbox') loadAssetsRepository();
+  if (tabName === 'workspace') loadWorkspacePackages();
+  if (tabName === 'ai-creator') {
+    initStudioDossierDropdown();
+    checkAndPromptLocalDraft();
+    startStudioAutoSave();
+  } else {
+    if (typeof stopStudioAutoSave === 'function') stopStudioAutoSave();
+  }
   if (tabName === 'users') loadUsersTable();
   if (tabName === 'audits') loadAuditLogs();
   if (tabName === 'media') loadMediaLibrary();
   if (tabName === 'events') loadEventsList();
-  if (tabName === 'inbox') loadInboxComments();
   if (tabName === 'schedule') loadScheduleTable();
   if (tabName === 'social') loadFacebookPublishSelect();
+  if (tabName === 'analytics') loadAdminDashboard();
 }
 
 function switchUserRole(role) {
@@ -188,7 +209,7 @@ function setNativeEditorContent(html, skipHistory = false) {
     editor.innerHTML = html;
     updateEditorMetrics();
     if (!skipHistory) {
-      saveVersionHistory(html);
+      if (typeof saveEditorState === 'function') saveEditorState();
     }
   }
 }
@@ -683,6 +704,14 @@ async function openEditArticleModal(id) {
     if (!res.success) return;
 
     const art = res.data;
+    
+    // Check if this is a Full Package Draft
+    if (art.packageData) {
+      resumeAiPackage(art.packageData, art.id);
+      return;
+    }
+
+    // Otherwise, open the simple editor modal
     currentEditingArticleId = art.id;
     document.getElementById('modal_article_heading').innerText = `Chỉnh Sửa Bài Viết #${art.id}`;
     document.getElementById('edit_article_id').value = art.id;
@@ -1576,14 +1605,14 @@ function insertCurrentCanvasIntoArticle() {
 }
 
 function setAsMainArticleBanner() {
-  const canvas = document.getElementById('integrated_studio_canvas');
-  if (!canvas) return;
-  const dataUrl = canvas.toDataURL('image/png');
+  const imgEl = document.getElementById('ai_image_result');
+  if (!imgEl || !imgEl.src) return;
+  const dataUrl = imgEl.src;
 
   const newImg = {
     id: `img_${Date.now()}`,
     url: dataUrl,
-    title: document.getElementById('studio_title_text')?.value || 'Banner Thiết Kế Studio',
+    title: document.getElementById('ai_image_prompt')?.value || 'Banner AI Tạo',
     isBanner: true,
     date: new Date().toISOString().slice(0, 10)
   };
@@ -1591,9 +1620,6 @@ function setAsMainArticleBanner() {
   articleGallery.forEach(g => g.isBanner = false);
   articleGallery.unshift(newImg);
   renderArticleGallery();
-
-  const previewImg = document.getElementById('studio_image_preview');
-  if (previewImg) previewImg.src = dataUrl;
 
   alert("✓ Đã đặt làm Banner đại diện chính cho bài viết!");
 }
@@ -2257,4 +2283,1182 @@ function showAiEngineToast(sourceName) {
   window.aiToastTimeout = setTimeout(() => {
     toast.style.display = 'none';
   }, 4500);
+}
+
+
+
+// =========================================================================
+// 📁 ENTERPRISE CONTENT LIFECYCLE MANAGEMENT (CLM) LOGIC
+// =========================================================================
+
+let cachedDossiers = [];
+let cachedAssets = [];
+let currentStudioDossierId = 'dossier_1';
+let currentPackageData = null;
+
+// 1. DASHBOARD & 5 OPERATIONAL QUESTIONS
+async function loadAdminDashboard() {
+  try {
+    const resArticles = await fetch('/api/articles').then(r => r.json());
+    const resAssets = await fetch('/api/assets').then(r => r.json());
+    
+    const articles = resArticles.data || [];
+    const assets = resAssets.data || [];
+
+    // Calculate 4 Lifecycle KPIs
+    const drafts = articles.filter(a => a.status === 'draft' || !a.status);
+    const pendings = articles.filter(a => a.status === 'pending_review' || a.status === 'pending');
+    const scheduled = articles.filter(a => a.status === 'scheduled' || a.scheduledAt);
+    const published = articles.filter(a => a.status === 'published');
+
+    if (document.getElementById('dash_stat_drafts')) document.getElementById('dash_stat_drafts').innerText = drafts.length;
+    if (document.getElementById('dash_stat_pending')) document.getElementById('dash_stat_pending').innerText = pendings.length;
+    if (document.getElementById('dash_stat_scheduled')) document.getElementById('dash_stat_scheduled').innerText = scheduled.length;
+    if (document.getElementById('dash_stat_published')) document.getElementById('dash_stat_published').innerText = published.length;
+
+    // Sidebar badges
+    if (document.getElementById('badge_draft_count')) document.getElementById('badge_draft_count').innerText = drafts.length;
+    if (document.getElementById('badge_pending_count')) document.getElementById('badge_pending_count').innerText = pendings.length;
+
+    // Assets count
+    if (document.getElementById('dash_total_assets_count')) document.getElementById('dash_total_assets_count').innerText = `${assets.length} tư liệu`;
+
+    // Multi-channel views
+    const totalViews = articles.reduce((acc, a) => acc + (a.viewsCount || 0), 0);
+    const totalLikes = articles.reduce((acc, a) => acc + (a.likesCount || 0), 0);
+    if (document.getElementById('dash_views_web')) document.getElementById('dash_views_web').innerText = `${totalViews.toLocaleString()} lượt xem`;
+    if (document.getElementById('dash_views_fb')) document.getElementById('dash_views_fb').innerText = `${totalLikes.toLocaleString()} tương tác`;
+    if (document.getElementById('dash_views_zalo')) document.getElementById('dash_views_zalo').innerText = `${(articles.length * 150).toLocaleString()} tin nhận`;
+
+    // Render Pending Review List (Actionable Work)
+    const pendingListEl = document.getElementById('dash_pending_review_list');
+    if (pendingListEl) {
+      if (pendings.length === 0) {
+        pendingListEl.innerHTML = `
+          <div style="text-align: center; padding: 20px; color: #10B981; font-size: 13.5px; font-weight: 600;">
+            <i class="fa-solid fa-circle-check fa-2x" style="display: block; margin-bottom: 6px;"></i>
+            Tuyệt vời! Hiện không có bài viết nào đang chờ duyệt.
+          </div>
+        `;
+      } else {
+        pendingListEl.innerHTML = pendings.slice(0, 4).map(p => `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px;">
+            <div style="max-width: 65%;">
+              <div style="font-weight: 700; font-size: 13.5px; color: #92400E; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${p.title}</div>
+              <div style="font-size: 11.5px; color: #B45309; margin-top: 2px;">
+                Tác giả: <b>${p.author || 'Cán Bộ'}</b> • ${p.categoryName || 'Thông báo'}
+              </div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button type="button" class="btn btn-sm btn-outline" style="font-size: 11px; padding: 4px 8px; border-color: #FCD34D;" onclick="rejectArticle('${p.id}')">Trả lại</button>
+              <button type="button" class="btn btn-sm" style="font-size: 11px; padding: 4px 10px; background: #059669; color: white; border: none; font-weight: 700;" onclick="approveArticle('${p.id}')"><i class="fa-solid fa-check"></i> Duyệt</button>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // Render Recent Articles Table
+    const topTable = document.getElementById('top_articles_table');
+    if (topTable) {
+      topTable.innerHTML = articles.slice(0, 6).map(a => {
+        let statusBadge = '<span class="badge" style="background:#E2E8F0; color:#475569;">Bản Nháp</span>';
+        if (a.status === 'pending_review' || a.status === 'pending') statusBadge = '<span class="badge" style="background:#FEF3C7; color:#B45309;">Chờ Duyệt</span>';
+        if (a.status === 'approved') statusBadge = '<span class="badge" style="background:#E0F2FE; color:#0284C7;">Đã Duyệt</span>';
+        if (a.status === 'published') statusBadge = '<span class="badge" style="background:#D1FAE5; color:#065F46;">Đã Xuất Bản</span>';
+
+        return `
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 12px 10px; font-weight: 600; color: #0F172A; max-width: 320px;">
+              <div style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${a.title}</div>
+            </td>
+            <td style="padding: 12px 10px; color: #64748B; font-size: 13px;">${a.dossierId ? 'HS-2026' : 'Nội bộ'}</td>
+            <td style="padding: 12px 10px; font-size: 13px;">
+              <i class="fa-solid fa-globe" style="color: #0284C7;" title="Website"></i> 
+              <i class="fa-brands fa-facebook" style="color: #1877F2; margin-left: 4px;" title="Facebook"></i>
+            </td>
+            <td style="padding: 12px 10px;">${statusBadge}</td>
+            <td style="padding: 12px 10px; text-align: right;">
+              <button class="btn btn-sm btn-outline" onclick="editArticleFromDb('${a.id}')"><i class="fa-solid fa-pen-to-square"></i> Mở</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  } catch (err) {
+    console.error("Dashboard Load Error:", err);
+  }
+}
+
+// 2. DOSSIERS WORKSPACE ENGINE
+async function loadDossiersList() {
+  try {
+    const res = await fetch('/api/dossiers').then(r => r.json());
+    cachedDossiers = res.data || [];
+    renderDossiers(cachedDossiers);
+  } catch (err) {
+    console.error("Dossiers Load Error:", err);
+  }
+}
+
+function renderDossiers(list) {
+  const container = document.getElementById('dossiers_grid_container');
+  if (!container) return;
+
+  if (list.length === 0) {
+    container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #64748B;">Chưa có hồ sơ nào. Bấm '+ Tạo Hồ Sơ Mới' để bắt đầu.</div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(d => `
+    <div style="background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <span class="badge" style="background: #E0F2FE; color: #0284C7; font-weight: 700; font-size: 11px;">${d.code || 'HS-TDMU'}</span>
+          <span class="badge" style="background: ${d.status === 'active' ? '#D1FAE5' : '#E2E8F0'}; color: ${d.status === 'active' ? '#065F46' : '#475569'}; font-size: 11px;">
+            ${d.status === 'active' ? '● Đang triển khai' : '✓ Đã hoàn tất'}
+          </span>
+        </div>
+
+        <h3 style="font-size: 16px; font-weight: 800; color: #0F172A; margin: 0 0 8px 0; line-height: 1.4;">${d.title}</h3>
+        <p style="font-size: 12.5px; color: #64748B; margin: 0 0 14px 0; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+          ${d.description || 'Chưa có mô tả mục tiêu chiến dịch.'}
+        </p>
+
+        <div style="font-size: 12px; color: #475569; margin-bottom: 14px;">
+          <div><i class="fa-solid fa-user-tie" style="color: #64748B; width: 16px;"></i> <b>Chủ trì:</b> ${d.leadPerson || 'BTV Công đoàn'}</div>
+          <div style="margin-top: 4px;"><i class="fa-regular fa-calendar" style="color: #64748B; width: 16px;"></i> <b>Thời gian:</b> ${d.startDate || '2026'} ${d.endDate ? '&rarr; ' + d.endDate : ''}</div>
+        </div>
+      </div>
+
+      <div>
+        <div style="display: flex; gap: 8px; padding-top: 14px; border-top: 1px dashed #E2E8F0; margin-bottom: 14px;">
+          <span style="font-size: 11.5px; background: #F1F5F9; padding: 4px 8px; border-radius: 6px; color: #334155; font-weight: 600;">
+            <i class="fa-solid fa-file-lines" style="color: #0284C7;"></i> ${d.assetsCount || 0} tư liệu
+          </span>
+          <span style="font-size: 11.5px; background: #F1F5F9; padding: 4px 8px; border-radius: 6px; color: #334155; font-weight: 600;">
+            <i class="fa-solid fa-newspaper" style="color: #10B981;"></i> ${d.contentCount || 0} bài viết
+          </span>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-sm btn-outline" style="flex: 1; font-size: 12px;" onclick="viewDossierAssets('${d.id}')">
+            <i class="fa-solid fa-photo-film"></i> Xem Tư Liệu
+          </button>
+          <button type="button" class="btn btn-sm btn-primary" style="flex: 1; font-size: 12px; font-weight: 700;" onclick="openDossierInStudio('${d.id}')">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Mở AI Studio
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterDossiersList() {
+  const query = document.getElementById('dossier_search_input')?.value.toLowerCase() || '';
+  const status = document.getElementById('dossier_status_filter')?.value || 'all';
+
+  const filtered = cachedDossiers.filter(d => {
+    const matchQ = (d.title || '').toLowerCase().includes(query) || (d.code || '').toLowerCase().includes(query) || (d.leadPerson || '').toLowerCase().includes(query);
+    const matchS = (status === 'all') || (d.status === status);
+    return matchQ && matchS;
+  });
+
+  renderDossiers(filtered);
+}
+
+function openCreateDossierModal() {
+  document.getElementById('create_dossier_modal')?.classList.add('active');
+}
+function closeCreateDossierModal() {
+  document.getElementById('create_dossier_modal')?.classList.remove('active');
+}
+
+async function submitCreateNewDossier() {
+  const title = document.getElementById('new_dossier_title')?.value.trim();
+  if (!title) {
+    alert("Vui lòng nhập tên hồ sơ chiến dịch!");
+    return;
+  }
+
+  const payload = {
+    title,
+    code: document.getElementById('new_dossier_code')?.value.trim(),
+    category: document.getElementById('new_dossier_category')?.value,
+    unit: document.getElementById('new_dossier_unit')?.value,
+    leadPerson: document.getElementById('new_dossier_lead')?.value,
+    startDate: document.getElementById('new_dossier_start')?.value,
+    endDate: document.getElementById('new_dossier_end')?.value,
+    description: document.getElementById('new_dossier_desc')?.value
+  };
+
+  const res = await fetch('/api/dossiers', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(r => r.json());
+
+  if (res.success) {
+    closeCreateDossierModal();
+    alert("✅ Đã tạo hồ sơ nội dung mới thành công!");
+    loadDossiersList();
+  }
+}
+
+// 3. ASSETS REPOSITORY ENGINE
+async function loadAssetsRepository() {
+  try {
+    const resAssets = await fetch('/api/assets').then(r => r.json());
+    cachedAssets = resAssets.data || [];
+    renderAssetsTable(cachedAssets);
+    
+    // Auto-refresh if there are items triage_processing
+    if (cachedAssets.some(a => a.ai_status === 'triage_processing')) {
+      setTimeout(() => {
+        if (document.getElementById('tab_inbox_content').style.display === 'block') {
+          loadAssetsRepository();
+        }
+      }, 3000);
+    }
+  } catch (err) {
+    console.error("Assets Load Error:", err);
+  }
+}
+
+function renderAssetsTable(list) {
+  const tbody = document.getElementById('assets_table_body');
+  if (!tbody) return;
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: #64748B;">Chưa có tư liệu nào trong hòm thư. Bấm '+ Nạp Tư Liệu Mới' để bổ sung.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(a => {
+    let typeIcon = '<i class="fa-solid fa-file-pdf" style="color: #EF4444;"></i> Văn Bản PDF';
+    if (a.fileType === 'image') typeIcon = '<i class="fa-solid fa-image" style="color: #10B981;"></i> Hình Ảnh';
+    if (a.fileType === 'video') typeIcon = '<i class="fa-solid fa-video" style="color: #8B5CF6;"></i> Video Clip';
+
+    let triageBadge = '';
+    if (a.ai_status === 'triage_processing') {
+      triageBadge = `<span class="badge" style="background: #FEF3C7; color: #B45309; font-size: 11px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang Phân Loại...</span>`;
+    } else if (a.ai_status === 'triage_failed') {
+      triageBadge = `<span class="badge" style="background: #FEE2E2; color: #B91C1C; font-size: 11px;" title="${a.ai_notes}">❌ Loại (${a.confidence_score}%)</span><div style="font-size:10px; color:#EF4444; margin-top:2px;">${a.ai_notes || 'Không hợp lệ'}</div>`;
+    } else {
+      triageBadge = `<span class="badge" style="background: #D1FAE5; color: #065F46; font-size: 11px;"><i class="fa-solid fa-check"></i> Đạt (${a.confidence_score}%)</span>`;
+    }
+
+    return `
+      <tr style="border-bottom: 1px solid var(--border-color);">
+        <td style="padding: 12px 16px;">
+          <div style="font-weight: 700; color: #0F172A; font-size: 14px;">${a.title}</div>
+          <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Tệp: ${a.fileName}</div>
+        </td>
+        <td style="padding: 12px 16px; font-size: 12.5px;">
+          <div>${typeIcon}</div>
+          <div style="color: #94A3B8; font-size: 11.5px; margin-top: 2px;">${a.fileSize || '1 MB'}</div>
+        </td>
+        <td style="padding: 12px 16px; font-size: 12.5px; color: #475569;">
+          <div><b>${a.source || 'Nội bộ'}</b></div>
+          <div style="font-size: 11.5px; color: #64748B;">${a.unit || 'Đoàn thể'}</div>
+        </td>
+        <td style="padding: 12px 16px; text-align: center;">
+          ${triageBadge}
+        </td>
+        <td style="padding: 12px 16px; text-align: right; white-space: nowrap;">
+          <button type="button" class="btn btn-sm btn-outline" style="font-size: 11.5px;" onclick="openInboxInStudio('${a.id}')" ${a.ai_status === 'triage_failed' ? 'disabled' : ''} title="Đưa sang AI tạo Package">
+            <i class="fa-solid fa-wand-magic-sparkles" style="color: #F59E0B;"></i> Tạo Gói Tin
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterAssetsByType(type) {
+  document.querySelectorAll('.asset-filter-btn').forEach(btn => {
+    if (btn.getAttribute('data-type') === type) {
+      btn.className = 'btn btn-sm btn-primary asset-filter-btn active';
+    } else {
+      btn.className = 'btn btn-sm btn-outline asset-filter-btn';
+    }
+  });
+
+  if (type === 'all') renderAssetsTable(cachedAssets);
+  else renderAssetsTable(cachedAssets.filter(a => a.fileType === type));
+}
+
+function filterAssetsByDossier() {
+  const dId = document.getElementById('asset_dossier_filter')?.value;
+  if (dId === 'all') renderAssetsTable(cachedAssets);
+  else renderAssetsTable(cachedAssets.filter(a => a.dossierId === dId));
+}
+
+let uploadOrigin = null;
+
+function openUploadAssetModal(origin = null) {
+  uploadOrigin = origin;
+  document.getElementById('upload_asset_modal')?.classList.add('active');
+}
+function closeUploadAssetModal() {
+  document.getElementById('upload_asset_modal')?.classList.remove('active');
+}
+
+async function submitUploadNewAsset() {
+  const title = document.getElementById('new_asset_title')?.value.trim();
+  if (!title) {
+    alert("Vui lòng nhập tên tư liệu!");
+    return;
+  }
+
+  const payload = {
+    title,
+    fileType: document.getElementById('new_asset_type')?.value,
+    source: document.getElementById('new_asset_source')?.value,
+    unit: document.getElementById('new_asset_unit')?.value,
+    summary: document.getElementById('new_asset_summary')?.value,
+    aiAllowed: document.getElementById('new_asset_ai_allowed')?.checked
+  };
+
+  const res = await fetch('/api/assets', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(r => r.json());
+
+  if (res.success) {
+    closeUploadAssetModal();
+    await loadAssetsRepository();
+    
+    if (uploadOrigin === 'studio') {
+      addAssetToStudio(res.data.id);
+    } else {
+      alert("✅ Đã nạp tư liệu vào Hòm Thư thành công. AI đang phân loại (Triage) ngầm!");
+    }
+  }
+}
+
+// WORKSPACE ENGINE
+async function loadWorkspacePackages() {
+  try {
+    const res = await fetch('/api/articles').then(r => r.json());
+    if (!res.success) return;
+    
+    // Filter packages: draft, pending_review, or scheduled that are not published yet
+    let packages = (res.data || []).filter(a => a.status === 'draft' || a.status === 'pending_review' || a.status === 'scheduled');
+    
+    const tbody = document.getElementById('workspace_packages_body');
+    if (!tbody) return;
+
+    if (packages.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: #64748B;">Hàng đợi trống. Chưa có gói tin nào cần xử lý.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = packages.map(p => {
+      let statusBadge = '<span class="badge" style="background:#E2E8F0; color:#475569;">Bản Nháp (Draft)</span>';
+      if (p.status === 'pending_review') statusBadge = '<span class="badge" style="background:#FEF3C7; color:#B45309;">Chờ Duyệt (Pending)</span>';
+      if (p.status === 'scheduled') statusBadge = '<span class="badge" style="background:#DBEAFE; color:#1E40AF;">Đã Hẹn Giờ (Scheduled)</span>';
+
+      let assigneeHtml = '<span style="color: #94A3B8; font-style: italic;">Chưa phân công</span>';
+      let actionHtml = `<button class="btn btn-sm btn-primary" onclick="claimPackage('${p.id}')">Nhận Việc (Claim)</button>`;
+      
+      const currentUserId = 'user_' + currentUserRole;
+
+      if (p.assignee_id) {
+        assigneeHtml = `<b>${p.assignee_id}</b>`;
+        if (p.assignee_id === currentUserId) {
+          actionHtml = `
+            <button class="btn btn-sm btn-outline" style="color: #0284C7; border-color: #0284C7;" onclick="openEditArticleModal('${p.id}')">Mở Biên Tập</button>
+            <button class="btn btn-sm btn-outline" style="color: #EF4444; border-color: #EF4444; margin-left: 5px;" onclick="unclaimPackage('${p.id}')">Bỏ Qua</button>
+          `;
+        } else {
+          actionHtml = `<button class="btn btn-sm btn-outline" disabled style="background: #F1F5F9; color: #94A3B8; border-color: #E2E8F0;"><i class="fa-solid fa-lock"></i> Đang Khóa</button>`;
+        }
+      }
+
+      return `
+        <tr style="border-bottom: 1px solid var(--border-color);">
+          <td style="padding: 12px 16px; font-weight: 600; color: #0F172A;">[#${p.id}] ${p.title}</td>
+          <td style="padding: 12px 16px; font-size: 12px; color: #64748B;">${p.createdAt || 'Vừa xong'}</td>
+          <td style="padding: 12px 16px;">${statusBadge}</td>
+          <td style="padding: 12px 16px; font-size: 13px;">${assigneeHtml}</td>
+          <td style="padding: 12px 16px; text-align: right;">${actionHtml}</td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error("Workspace Load Error:", err);
+  }
+}
+
+async function claimPackage(id) {
+  const currentUserId = 'user_' + currentUserRole;
+  try {
+    const res = await fetch(`/api/packages/${id}/claim`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUserId })
+    }).then(r => r.json());
+
+    if (res.success) {
+      loadWorkspacePackages();
+    } else {
+      alert("Lỗi: " + res.error);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function unclaimPackage(id) {
+  const currentUserId = 'user_' + currentUserRole;
+  try {
+    const res = await fetch(`/api/packages/${id}/unclaim`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUserId })
+    }).then(r => r.json());
+
+    if (res.success) {
+      loadWorkspacePackages();
+    } else {
+      alert("Lỗi: " + res.error);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// 4. FLAGSHIP AI CONTENT STUDIO (GROUNDED MULTI-CHANNEL PACKAGE)
+function addAssetToStudio(assetId) {
+  showAdminTab('ai-creator');
+  setTimeout(() => {
+    const asset = cachedAssets.find(a => a.id == assetId);
+    if (!asset) return;
+    
+    const listEl = document.getElementById('studio_assets_checklist');
+    if (!listEl) return;
+
+    let icon = '<i class="fa-solid fa-file-pdf" style="color:#EF4444;"></i>';
+    if (asset.fileType === 'image') icon = '<i class="fa-solid fa-image" style="color:#10B981;"></i>';
+    if (asset.fileType === 'video') icon = '<i class="fa-solid fa-video" style="color:#8B5CF6;"></i>';
+
+    listEl.insertAdjacentHTML('beforeend', `
+      <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; padding: 4px 8px; background: white; border-radius: 4px; border: 1px solid #E2E8F0;">
+        <input type="checkbox" class="studio-asset-chk" value="${asset.id}" checked>
+        <span>${icon}</span>
+        <span style="font-weight: 600; color: #1E293B; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${asset.title}</span>
+      </label>
+    `);
+    updateSelectedAssetsCount();
+  }, 200);
+}
+
+function updateSelectedAssetsCount() {
+  const chks = document.querySelectorAll('.studio-asset-chk:checked');
+  const countEl = document.getElementById('studio_selected_assets_count');
+  if (countEl) countEl.innerText = `Đã đính kèm: ${chks.length} file`;
+}
+
+async function generateGroundedContentPackage() {
+  const dossierId = document.getElementById('studio_dossier_select')?.value || currentStudioDossierId;
+  const chkElements = document.querySelectorAll('.studio-asset-chk:checked');
+  const assetIds = Array.from(chkElements).map(el => el.value);
+
+  const channels = [];
+  if (document.getElementById('chk_chan_web')?.checked) channels.push('website');
+  if (document.getElementById('chk_chan_fb')?.checked) channels.push('facebook');
+  if (document.getElementById('chk_chan_zalo')?.checked) channels.push('zalo');
+  if (document.getElementById('chk_chan_video')?.checked) channels.push('video');
+
+  const customPrompt = document.getElementById('studio_custom_instructions')?.value.trim();
+  const briefText = document.getElementById('studio_brief_text')?.value.trim();
+  const apiKey = localStorage.getItem('gemini_api_key') || "";
+  const groqApiKey = localStorage.getItem('groq_api_key') || "";
+  const aiEngine = localStorage.getItem('ai_engine_preference') || 'auto';
+
+  const spinner = document.getElementById('studio_package_spinner');
+  const btn = document.getElementById('btn_generate_package');
+
+  if (spinner) spinner.style.display = 'block';
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/ai/package-generator', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        dossierId,
+        assetIds,
+        briefText,
+        channels,
+        customPrompt,
+        apiKey,
+        groqApiKey,
+        aiEngine
+      })
+    }).then(r => r.json());
+
+    if (res.success && res.package) {
+      currentPackageData = res.package;
+      const pkg = res.package;
+
+      // 1. Fill Website Article
+      if (pkg.website) {
+        if (document.getElementById('ai_final_title')) document.getElementById('ai_final_title').value = pkg.website.title || '';
+        if (document.getElementById('ai_final_subtitle')) document.getElementById('ai_final_subtitle').value = pkg.website.sapo || '';
+        if (pkg.website.content) setNativeEditorContent(pkg.website.content);
+      }
+
+      // 2. Fill Facebook Post
+      if (pkg.facebook) {
+        if (document.getElementById('fb_preview_caption')) document.getElementById('fb_preview_caption').value = pkg.facebook.caption || '';
+        if (document.getElementById('fb_preview_hashtags')) document.getElementById('fb_preview_hashtags').value = pkg.facebook.hashtags || '';
+      }
+
+      // 3. Fill Zalo OA
+      if (pkg.zalo) {
+        if (document.getElementById('zalo_preview_title')) document.getElementById('zalo_preview_title').value = pkg.zalo.headline || '';
+        if (document.getElementById('zalo_preview_body')) document.getElementById('zalo_preview_body').value = pkg.zalo.broadcastBody || '';
+      }
+
+      // 4. Fill Video Script
+      if (pkg.video) {
+        if (document.getElementById('video_script_title')) document.getElementById('video_script_title').innerText = pkg.video.title || 'KỊCH BẢN PHÓNG SỰ 60S';
+        const tbody = document.getElementById('video_scenes_tbody');
+        if (tbody && Array.isArray(pkg.video.scenes)) {
+          tbody.innerHTML = pkg.video.scenes.map((s, idx) => `
+            <tr style="border-bottom: 1px solid #E2E8F0;">
+              <td style="padding: 10px 16px; font-weight: 700; color: #8B5CF6;">Cảnh ${s.scene || idx + 1}</td>
+              <td style="padding: 10px 16px; color: #334155;">${s.visual || ''}</td>
+              <td style="padding: 10px 16px; font-style: italic; color: #0F172A;">"${s.voiceover || ''}"</td>
+              <td style="padding: 10px 16px; color: #64748B; font-weight: 600;">10 - 15s</td>
+            </tr>
+          `).join('');
+        }
+      }
+
+      // 5. Fill Banner Concept
+      if (pkg.banner) {
+        if (document.getElementById('banner_concept_headline')) document.getElementById('banner_concept_headline').innerText = pkg.banner.headline || '';
+        if (document.getElementById('banner_concept_sub')) document.getElementById('banner_concept_sub').innerText = pkg.banner.subText || '';
+      }
+
+      // Update package status badge
+      const badge = document.getElementById('package_status_badge');
+      if (badge) {
+        badge.className = 'badge';
+        badge.style.background = '#E2E8F0';
+        badge.style.color = '#475569';
+        badge.innerText = 'Bản Nháp (Draft)';
+      }
+
+      // Toast notification
+      if (typeof showAiEngineToast === 'function') {
+        showAiEngineToast(res.source);
+      }
+
+      switchPackageTab('web');
+      alert(`🎉 ĐÃ XUẤT XƯỞNG TRỌN GÓI CONTENT PACKAGE ĐA KÊNH!\n\nNguồn AI: ${res.source}\nCăn cứ: ${res.groundedAssetsCount} tư liệu thực tế.`);
+    } else {
+      alert("❌ LỖI TẠO CONTENT PACKAGE:\n\n" + (res.error || "Không nhận được phản hồi"));
+    }
+  } catch (err) {
+    console.error(err);
+    alert("❌ LỖI KẾT NỐI MẠNG:\n" + err.message);
+  } finally {
+    if (spinner) spinner.style.display = 'none';
+    if (btn) btn.disabled = false;
+  }
+}
+
+function switchPackageTab(tab) {
+  ['web', 'fb', 'zalo', 'video', 'banner'].forEach(t => {
+    const pane = document.getElementById(`pkg_view_${t}`);
+    const btn = document.getElementById(`tab_btn_pkg_${t}`);
+    
+    if (pane) pane.style.display = (t === tab) ? 'block' : 'none';
+    if (btn) {
+      if (t === tab) {
+        btn.style.background = 'white';
+        btn.style.color = '#0284C7';
+        btn.style.borderBottom = '3px solid #0284C7';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color = '#64748B';
+        btn.style.borderBottom = 'none';
+      }
+    }
+  });
+
+  if (tab === 'banner') {
+    applySloganToCanvas();
+  }
+}
+
+function applySloganToCanvas() {
+  const headline = document.getElementById('banner_concept_headline')?.innerText || 'CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT';
+  const sub = document.getElementById('banner_concept_sub')?.innerText || 'Đoàn kết - Tiên phong - Đổi mới';
+
+  const titleInput = document.getElementById('studio_title_text');
+  const subInput = document.getElementById('studio_subtitle_text');
+
+  if (titleInput && (!titleInput.value || titleInput.value === 'Tiêu đề trên ảnh...')) {
+    titleInput.value = headline;
+  }
+  if (subInput && (!subInput.value || subInput.value === 'Khẩu hiệu / Slogan...')) {
+    subInput.value = sub;
+  }
+
+  if (typeof redrawCanvasStudio === 'function') {
+    redrawCanvasStudio();
+  } else if (typeof renderStudioCanvasBanner === 'function') {
+    renderStudioCanvasBanner(headline);
+  }
+}
+
+function downloadCanvasBanner() {
+  const canvas = document.getElementById('integrated_studio_canvas');
+  if (!canvas) return;
+  const link = document.createElement('a');
+  link.download = `Banner_CongDoan_TDMU_${Date.now()}.png`;
+  link.href = canvas.toDataURL('image/png');
+}
+
+function copyFacebookCaption() {
+  const cap = document.getElementById('fb_preview_caption')?.value || '';
+  const hash = document.getElementById('fb_preview_hashtags')?.value || '';
+  navigator.clipboard.writeText(`${cap}\n\n${hash}`);
+  alert("📋 Đã sao chép toàn bộ nội dung bài đăng Facebook!");
+}
+
+function copyVideoScript() {
+  if (!currentPackageData || !currentPackageData.video) return;
+  const txt = JSON.stringify(currentPackageData.video, null, 2);
+  navigator.clipboard.writeText(txt);
+  alert("📋 Đã sao chép kịch bản video vào bộ nhớ tạm!");
+}
+
+async function saveCurrentPackageDraft() {
+  const state = getCompletePackageState();
+  const title = state.website.title || 'Bài Viết Mới (Bản Nháp)';
+  const content = state.website.content;
+  const summary = state.website.summary || title;
+
+  const payload = {
+    title,
+    content,
+    summary,
+    dossierId: currentStudioDossierId,
+    status: 'draft',
+    isAiGenerated: true,
+    packageData: state
+  };
+
+  let url = '/api/articles';
+  let method = 'POST';
+  
+  if (currentAiPackageArticleId) {
+    url = `/api/articles/${currentAiPackageArticleId}`;
+    method = 'PUT';
+  }
+
+  const res = await fetch(url, {
+    method: method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(r => r.json());
+
+  if (res.success) {
+    const badge = document.getElementById('package_status_badge');
+    if (badge) {
+      badge.style.background = '#E2E8F0';
+      badge.style.color = '#475569';
+      badge.innerText = 'Đã Lưu Nháp (Draft)';
+    }
+    alert("💾 Đã lưu bài viết vào hệ thống ở trạng thái Bản Nháp (Draft)!");
+  }
+}
+
+let pendingPublishPayload = null;
+
+function submitPackageForApproval() {
+  const state = getCompletePackageState();
+  const title = state.website.title || 'Bài Viết Mới';
+  const content = state.website.content;
+  const summary = state.website.summary || title;
+
+  pendingPublishPayload = {
+    title,
+    content,
+    summary,
+    dossierId: currentStudioDossierId,
+    status: 'published',
+    isAiGenerated: true,
+    packageData: state
+  };
+
+  document.getElementById('publish_article_id').value = currentAiPackageArticleId || '';
+  document.getElementById('publish_schedule_modal').classList.add('active');
+}
+
+function openPublishModal(articleId = null) {
+  // Fix popup over popup issue
+  const articleModal = document.getElementById('article_edit_modal');
+  if (articleModal && articleModal.classList.contains('active')) {
+    articleModal.classList.remove('active');
+  }
+
+  if (articleId) {
+    // Publish from existing article
+    document.getElementById('publish_article_id').value = articleId;
+    pendingPublishPayload = null; // We'll PUT to the API
+  } else {
+    // Use the payload from AI Studio
+    document.getElementById('publish_article_id').value = '';
+  }
+  document.getElementById('publish_schedule_modal').classList.add('active');
+}
+
+function toggleScheduleInput() {
+  const mode = document.getElementById('publish_mode_select').value;
+  document.getElementById('publish_schedule_group').style.display = (mode === 'schedule') ? 'block' : 'none';
+}
+
+function closePublishScheduleModal() {
+  document.getElementById('publish_schedule_modal').classList.remove('active');
+  pendingPublishPayload = null;
+  document.getElementById('publish_article_id').value = '';
+}
+
+async function executePublish() {
+  const articleId = document.getElementById('publish_article_id').value;
+  const mode = document.getElementById('publish_mode_select').value;
+  
+  let targetStatus = 'published';
+  let scheduledAt = null;
+
+  if (mode === 'schedule') {
+    const timeVal = document.getElementById('publish_schedule_time').value;
+    if (!timeVal) {
+      alert("Vui lòng chọn ngày giờ xuất bản!");
+      return;
+    }
+    const localDate = new Date(timeVal);
+    targetStatus = 'scheduled';
+    scheduledAt = localDate.toISOString(); 
+  }
+
+  try {
+    let res;
+    if (articleId) {
+      let payload = { status: targetStatus };
+      if (scheduledAt) payload.scheduledAt = scheduledAt;
+      
+      if (pendingPublishPayload) {
+         payload = { ...pendingPublishPayload, ...payload };
+      }
+
+      res = await fetch(`/api/articles/${articleId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(r => r.json());
+
+    } else if (pendingPublishPayload) {
+      // We are publishing a newly generated AI Studio package
+      pendingPublishPayload.status = targetStatus;
+      if (scheduledAt) pendingPublishPayload.scheduledAt = scheduledAt;
+      
+      res = await fetch('/api/articles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pendingPublishPayload)
+      }).then(r => r.json());
+    } else {
+      return;
+    }
+
+    if (res.success) {
+      closePublishScheduleModal();
+      const badge = document.getElementById('package_status_badge');
+      if (badge) {
+        badge.style.background = mode === 'schedule' ? '#DBEAFE' : '#D1FAE5';
+        badge.style.color = mode === 'schedule' ? '#1E40AF' : '#065F46';
+        badge.innerText = mode === 'schedule' ? 'Đã Hẹn Giờ (Scheduled)' : 'Đã Xuất Bản (Published)';
+      }
+      alert(mode === 'schedule' ? "⏰ Đã lên lịch đăng bài thành công!" : "🚀 Đã xuất bản nội dung thành công!");
+      
+      // Update views if necessary
+      closeArticleEditModal();
+      loadAdminArticles('all');
+      loadWorkspacePackages();
+      loadScheduleTable();
+    } else {
+      alert("Lỗi xuất bản: " + res.error);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function approveArticle(id) {
+  if (!confirm("Bác có chắc chắn muốn PHÊ DUYỆT bài viết này không?")) return;
+  const res = await fetch(`/api/articles/${id}/approve`, { method: 'POST' }).then(r => r.json());
+  if (res.success) {
+    alert("✅ Đã phê duyệt bài viết thành công!");
+    loadAdminDashboard();
+    loadAdminArticles('all');
+  }
+}
+
+async function rejectArticle(id) {
+  const reason = prompt("Lý do trả lại bản nháp (góp ý cho biên tập viên):", "Cần chỉnh sửa lại câu từ cho trang trọng hơn");
+  if (reason === null) return;
+  const res = await fetch(`/api/articles/${id}/reject`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason })
+  }).then(r => r.json());
+  if (res.success) {
+    alert("↩️ Đã hoàn trả bài viết về Bản Nháp để sửa đổi!");
+    loadAdminDashboard();
+    loadAdminArticles('all');
+  }
+}
+
+
+
+// ==========================================
+// 🛡️ MODAL BACKDROP SAFETY ENGINE (PREVENTS FROZEN OVERLAYS)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+  // 1. Ensure all modal backdrops are cleanly closed on start
+  document.querySelectorAll('.modal-backdrop').forEach(modal => {
+    modal.classList.remove('active');
+    
+    // 2. Click on backdrop closes modal
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('active');
+      }
+    });
+  });
+
+  // 3. Escape key closes any active modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-backdrop.active').forEach(m => m.classList.remove('active'));
+    }
+  });
+});
+// AI IMAGE GENERATOR
+function generateAiImage() {
+  const prompt = document.getElementById('ai_image_prompt').value.trim();
+  if (!prompt) {
+    alert("Vui l?ng nh?p m� t? ?nh!");
+    return;
+  }
+  
+  document.getElementById('ai_image_empty').style.display = 'none';
+  document.getElementById('ai_image_result').style.display = 'none';
+  document.getElementById('ai_image_actions').style.display = 'none';
+  document.getElementById('ai_image_loading').style.display = 'flex';
+  document.getElementById('btn_generate_image').disabled = true;
+
+  // Simulate AI Generation Delay
+  setTimeout(() => {
+    // Determine ratio for placeholder
+    const ratio = document.getElementById('ai_image_ratio').value;
+    let width = 800;
+    let height = 450; // 16:9
+    if (ratio === '1:1') height = 800;
+    if (ratio === '4:3') height = 600;
+
+    // Use placeholder service to simulate result
+    const randomId = Math.floor(Math.random() * 1000);
+    
+    document.getElementById('ai_image_loading').style.display = 'none';
+    const resultImg = document.getElementById('ai_image_result');
+    const imageUrl = finalizeImageUrl(Math.floor(Math.random() * 1000), width, height);
+    resultImg.src = imageUrl;
+    resultImg.style.display = 'block';
+    document.getElementById('ai_image_actions').style.display = 'flex';
+    document.getElementById('btn_generate_image').disabled = false;
+  }, 3500);
+}
+
+function downloadAiImage() {
+  const imgEl = document.getElementById('ai_image_result');
+  if (!imgEl || !imgEl.src) return;
+  
+  const a = document.createElement('a');
+  a.href = imgEl.src;
+  a.download = finalizeDownloadName();
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+// Added lines back correctly
+function finalizeImageUrl(randomId, width, height) {
+    return 'https://picsum.photos/seed/' + randomId + '/' + width + '/' + height;
+}
+
+function finalizeDownloadName() {
+    return 'AI_Generated_' + Date.now() + '.jpg';
+}
+// --- INLINE AI MICRO-EDITING (GRAMMARLY STYLE) ---
+let currentAiSelection = null;
+let currentAiRange = null;
+
+document.addEventListener('selectionchange', () => {
+  const selection = window.getSelection();
+  const floatingMenu = document.getElementById('ai_floating_toolbar');
+  
+  if (!selection || selection.isCollapsed || selection.toString().trim().length < 5) {
+    if (floatingMenu) floatingMenu.style.display = 'none';
+    currentAiSelection = null;
+    currentAiRange = null;
+    return;
+  }
+
+  // Check if selection is inside native_rich_editor
+  let node = selection.anchorNode;
+  let isInsideEditor = false;
+  while (node) {
+    if (node.id === 'native_rich_editor') {
+      isInsideEditor = true;
+      break;
+    }
+    node = node.parentNode;
+  }
+
+  if (isInsideEditor) {
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    
+    currentAiSelection = selection.toString();
+    currentAiRange = range.cloneRange();
+
+    floatingMenu.style.display = 'flex';
+    floatingMenu.style.top = (rect.bottom + window.scrollY + 8) + 'px';
+    floatingMenu.style.left = (rect.left + window.scrollX) + 'px';
+  } else {
+    floatingMenu.style.display = 'none';
+  }
+});
+
+async function inlineAiAction(action) {
+  if (!currentAiSelection || !currentAiRange) return;
+
+  const originalText = currentAiSelection;
+  const range = currentAiRange;
+  
+  // Visual feedback: replace text with loading state
+  const loadingSpan = document.createElement('span');
+  loadingSpan.style.backgroundColor = '#E0E7FF';
+  loadingSpan.style.color = '#4F46E5';
+  loadingSpan.style.borderRadius = '4px';
+  loadingSpan.style.padding = '0 4px';
+  loadingSpan.innerText = '? AI �ang x? l?...';
+  
+  range.deleteContents();
+  range.insertNode(loadingSpan);
+  document.getElementById('ai_floating_toolbar').style.display = 'none';
+
+  try {
+    const apiKey = localStorage.getItem('gemini_api_key') || "";
+    const res = await fetch('/api/ai/inline-edit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: originalText,
+        action: action,
+        apiKey: apiKey
+      })
+    }).then(r => r.json());
+
+    if (res.success && res.text) {
+      // Replace loading span with result
+      loadingSpan.replaceWith(document.createTextNode(res.text));
+      saveEditorState(); // Save to undo stack
+    } else {
+      loadingSpan.replaceWith(document.createTextNode(originalText));
+      alert("L?i AI: " + (res.error || "Kh�ng th? x? l?."));
+    }
+  } catch (e) {
+    loadingSpan.replaceWith(document.createTextNode(originalText));
+    alert("L?i m?ng: " + e.message);
+  }
+}
+// --- UNDO / REDO / REGENERATE EDITOR STATE ---
+let editorHistory = [];
+let historyIndex = -1;
+
+function saveEditorState() {
+  const editor = document.getElementById('native_rich_editor');
+  if (!editor) return;
+  const content = editor.innerHTML;
+  
+  // If we are not at the end of history, truncate the future
+  if (historyIndex < editorHistory.length - 1) {
+    editorHistory = editorHistory.slice(0, historyIndex + 1);
+  }
+  
+  editorHistory.push(content);
+  // Keep last 20 states
+  if (editorHistory.length > 20) {
+    editorHistory.shift();
+  } else {
+    historyIndex++;
+  }
+}
+
+function undoEditorAction() {
+  if (historyIndex > 0) {
+    historyIndex--;
+    const editor = document.getElementById('native_rich_editor');
+    if (editor) editor.innerHTML = editorHistory[historyIndex];
+  }
+}
+
+function redoEditorAction() {
+  if (historyIndex < editorHistory.length - 1) {
+    historyIndex++;
+    const editor = document.getElementById('native_rich_editor');
+    if (editor) editor.innerHTML = editorHistory[historyIndex];
+  }
+}
+
+// Hook into editor changes
+document.addEventListener('DOMContentLoaded', () => {
+  const editor = document.getElementById('native_rich_editor');
+  if (editor) {
+    saveEditorState(); // Initial state
+    editor.addEventListener('input', () => {
+      // Debounce saving state on manual typing
+      clearTimeout(editor.saveTimeout);
+      editor.saveTimeout = setTimeout(saveEditorState, 1000);
+    });
+  }
+});
+// --- AI PACKAGE STATE MANAGEMENT ---
+function getCompletePackageState() {
+  const state = {
+    website: {
+      title: document.getElementById('ai_final_title')?.value || '',
+      summary: document.getElementById('ai_final_subtitle')?.value || '',
+      content: getNativeEditorContent() || ''
+    },
+    facebook: {
+      caption: document.getElementById('fb_preview_caption')?.value || '',
+      hashtags: document.getElementById('fb_preview_hashtags')?.value || ''
+    },
+    zalo: {
+      title: document.getElementById('zalo_preview_title')?.value || '',
+      body: document.getElementById('zalo_preview_body')?.value || ''
+    },
+    video: {
+      html: document.getElementById('video_scenes_tbody')?.innerHTML || ''
+    },
+    image: {
+      prompt: document.getElementById('ai_image_prompt')?.value || '',
+      ratio: document.getElementById('ai_image_ratio')?.value || '',
+      style: document.getElementById('ai_image_style')?.value || '',
+      url: document.getElementById('ai_image_result')?.src || ''
+    }
+  };
+  return state;
+}
+
+let isResumingFromDb = false;
+function resumeAiPackage(packageData, articleId = null) {
+  isResumingFromDb = true;
+  if (!packageData) return;
+  currentAiPackageArticleId = articleId;
+  showAdminTab('ai-creator');
+
+  // Website
+  if (packageData.website) {
+    if (document.getElementById('ai_final_title')) document.getElementById('ai_final_title').value = packageData.website.title || '';
+    if (document.getElementById('ai_final_subtitle')) document.getElementById('ai_final_subtitle').value = packageData.website.summary || '';
+    if (packageData.website.content) setNativeEditorContent(packageData.website.content, true);
+  }
+
+  // Facebook
+  if (packageData.facebook) {
+    if (document.getElementById('fb_preview_caption')) document.getElementById('fb_preview_caption').value = packageData.facebook.caption || '';
+    if (document.getElementById('fb_preview_hashtags')) document.getElementById('fb_preview_hashtags').value = packageData.facebook.hashtags || '';
+  }
+
+  // Zalo
+  if (packageData.zalo) {
+    if (document.getElementById('zalo_preview_title')) document.getElementById('zalo_preview_title').value = packageData.zalo.title || '';
+    if (document.getElementById('zalo_preview_body')) document.getElementById('zalo_preview_body').value = packageData.zalo.body || '';
+  }
+
+  // Video
+  if (packageData.video && packageData.video.html) {
+    const tbody = document.getElementById('video_scenes_tbody');
+    if (tbody) tbody.innerHTML = packageData.video.html;
+  }
+
+  // Image
+  if (packageData.image) {
+    if (document.getElementById('ai_image_prompt')) document.getElementById('ai_image_prompt').value = packageData.image.prompt || '';
+    if (document.getElementById('ai_image_ratio')) document.getElementById('ai_image_ratio').value = packageData.image.ratio || '';
+    if (document.getElementById('ai_image_style')) document.getElementById('ai_image_style').value = packageData.image.style || '';
+    if (packageData.image.url && packageData.image.url !== window.location.href) {
+      document.getElementById('ai_image_empty').style.display = 'none';
+      const imgEl = document.getElementById('ai_image_result');
+      imgEl.src = packageData.image.url;
+      imgEl.style.display = 'block';
+      document.getElementById('ai_image_actions').style.display = 'flex';
+    }
+  }
+
+  alert("�? kh�i ph?c th�nh c�ng B?n Nh�p (Package State). B?n c� th? ti?p t?c bi�n t?p!");
+}
+let currentAiPackageArticleId = null;
+// --- LOCAL STORAGE AUTO-SAVE (SIMPLE DRAFT RECOVERY) ---
+let autoSaveInterval = null;
+
+function startStudioAutoSave() {
+  if (autoSaveInterval) clearInterval(autoSaveInterval);
+  autoSaveInterval = setInterval(() => {
+    // Only save if there is actually some content
+    const state = getCompletePackageState();
+    const hasContent = state.website.title || state.website.content.replace(/<[^>]*>?/gm, '').trim().length > 10 || state.facebook.caption;
+    if (hasContent) {
+      localStorage.setItem('studioLocalDraft', JSON.stringify(state));
+    }
+  }, 3000);
+}
+
+function stopStudioAutoSave() {
+  if (autoSaveInterval) clearInterval(autoSaveInterval);
+}
+
+function checkAndPromptLocalDraft() {
+  if (isResumingFromDb) {
+    isResumingFromDb = false;
+    return;
+  }
+  const draftStr = localStorage.getItem('studioLocalDraft');
+  if (draftStr) {
+    try {
+      const draft = JSON.parse(draftStr);
+      // Ensure it's not totally empty
+      if (draft && (draft.website.title || draft.website.content.replace(/<[^>]*>?/gm, '').trim().length > 10)) {
+        if (confirm("?? TR? L? AI: B?n �ang c� m?t phi�n l�m vi?c �ang l�m d? (ch�a l�u ho?c ch�a xu?t b?n). B?n c� mu?n kh�i ph?c l?i �? l�m ti?p kh�ng? (B?m Cancel �? x�a nh�p)")) {
+          resumeAiPackage(draft);
+        } else {
+          localStorage.removeItem('studioLocalDraft');
+        }
+      }
+    } catch (e) {
+      localStorage.removeItem('studioLocalDraft');
+    }
+  }
 }

@@ -445,20 +445,21 @@ body {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(4px);
-  display: flex;
+  display: none !important;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999;
   opacity: 0;
   pointer-events: none;
-  transition: var(--transition);
+  transition: opacity 0.2s ease;
 }
 
 .modal-backdrop.active {
-  opacity: 1;
-  pointer-events: auto;
+  display: flex !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
 .modal-content {
