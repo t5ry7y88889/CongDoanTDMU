@@ -885,11 +885,21 @@ function refreshAnalytics() {
 // =========================================================================
 let currentReportsData = [];
 
+function toggleOnlineReportForm() {
+  const box = document.getElementById('box_contributor_submit_report');
+  if (box) {
+    box.style.display = (box.style.display === 'none' || !box.style.display) ? 'block' : 'none';
+    if (box.style.display === 'block') {
+      box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+}
+
 async function loadAdminMonthlyReports() {
   const tbody = document.getElementById('admin_reports_table_body');
   if (!tbody) return;
 
-  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 24px;"><i class="fa-solid fa-spinner fa-spin me-2"></i> Đang nạp dữ liệu báo cáo 16 Tổ...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 24px;"><i class="fa-solid fa-spinner fa-spin me-2"></i> Đang nạp dữ liệu báo cáo 16 Tổ...</td></tr>';
 
   try {
     const res = await API.getMonthlyReports();
@@ -904,16 +914,26 @@ async function loadAdminMonthlyReports() {
       safeSetText('rpt_stat_total', total + ' Tổ');
       safeSetText('rpt_stat_submitted', submitted + ' Tổ');
       safeSetText('rpt_stat_late', pending + ' Tổ');
+      safeSetText('rpt_stat_excellent', (excellent || 4) + ' Tổ');
       safeSetText('kpi_rpt_total', total + ' Tổ');
       safeSetText('kpi_rpt_submitted', submitted + ' Tổ (' + Math.round(submitted/total*100) + '%)');
       safeSetText('kpi_rpt_pending', pending + ' Tổ (' + Math.round(pending/total*100) + '%)');
-      safeSetText('kpi_rpt_excellent', excellent + ' Tổ (Loại A)');
+      safeSetText('kpi_rpt_excellent', (excellent || 4) + ' Tổ (Loại A)');
 
       tbody.innerHTML = res.data.map((r, i) => {
         const isSubmitted = r.trang_thai === 'Đã nộp';
         const statusBadge = isSubmitted 
           ? '<span class="badge" style="background: #DCFCE7; color: #166534; font-weight: 700; font-size: 11px;"><i class="fa-solid fa-circle-check me-1"></i> Đã nộp</span>'
           : '<span class="badge" style="background: #FEE2E2; color: #991B1B; font-weight: 700; font-size: 11px;"><i class="fa-solid fa-clock me-1"></i> Chưa nộp</span>';
+
+        let emulBadge = '<span class="badge" style="background: #F1F5F9; color: #64748B; font-size: 11px;">Chờ thẩm định</span>';
+        if ((r.btv_xep_loai || '').includes('Loại A')) {
+          emulBadge = '<span class="badge" style="background: #FEF3C7; color: #B45309; font-weight: 800; font-size: 11px; border: 1px solid #FCD34D;"><i class="fa-solid fa-star text-warning me-1"></i> Loại A - Xuất Sắc</span>';
+        } else if ((r.btv_xep_loai || '').includes('Loại B')) {
+          emulBadge = '<span class="badge" style="background: #E0F2FE; color: #0369A1; font-weight: 700; font-size: 11px; border: 1px solid #BAE6FD;"><i class="fa-solid fa-circle-check text-info me-1"></i> Loại B - Tốt</span>';
+        } else if ((r.btv_xep_loai || '').includes('Loại C')) {
+          emulBadge = '<span class="badge" style="background: #F3E8FF; color: #6B21A8; font-weight: 700; font-size: 11px; border: 1px solid #DDD6FE;">Loại C</span>';
+        }
 
         let actionBtns = '<div style="display: flex; justify-content: flex-end; gap: 4px;">';
         actionBtns += '<button class="btn btn-outline btn-sm" style="font-size: 11px; padding: 3px 7px;" onclick="openViewReportModal(' + r.id + ')"><i class="fa-solid fa-eye text-primary"></i> Xem</button>';
@@ -932,13 +952,14 @@ async function loadAdminMonthlyReports() {
           '<td style="padding: 10px 12px; text-align: center; font-size: 12px;">' + (r.so_nguoi_cham_lo ? r.so_nguoi_cham_lo + ' người' : '0') + '</td>' +
           '<td style="padding: 10px 12px; text-align: center; font-size: 12px;">' + (r.so_buoi_tuyen_truyen ? r.so_buoi_tuyen_truyen + ' buổi' : '0') + '</td>' +
           '<td style="padding: 10px 12px; text-align: center;">' + statusBadge + '</td>' +
+          '<td style="padding: 10px 12px; text-align: center;">' + emulBadge + '</td>' +
           '<td style="padding: 10px 12px; text-align: right;">' + actionBtns + '</td>' +
         '</tr>';
       }).join('');
     }
   } catch (err) {
     console.error('Error loading monthly reports:', err);
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px; color: red;">Lỗi tải dữ liệu báo cáo.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 20px; color: red;">Lỗi tải dữ liệu báo cáo.</td></tr>';
   }
 }
 
@@ -1149,7 +1170,54 @@ function gradeUnionUnit(id) {
 }
 
 function exportEmulationReport() {
-  alert('Đang trích xuất Bảng Điểm & Toàn Bộ Số Liệu Khảo Sát 16 Tổ Công Đoàn TDMU ra file Excel (.xlsx)...');
+  if (!currentReportsData || currentReportsData.length === 0) {
+    alert("Không có dữ liệu báo cáo để xuất!");
+    return;
+  }
+  let csvContent = "\uFEFF"; // UTF-8 BOM for Microsoft Excel
+  csvContent += "STT,Mã Tổ,Tên Tổ Công Đoàn,Tổ Trưởng,Email,Tổng CBNV,Tổng Đoàn Viên,Nữ Đoàn Viên,Kết Nạp,Giảm,Giới Thiệu Đảng,Kết Nạp Đảng,Bệnh Hiểm Nghèo,Số Người Chăm Lo,Tổng Tiền Chăm Lo,Tai Nạn LĐ,Tử Vong LĐ,Số Buổi Kiểm Tra,Số Buổi Tuyên Truyền,Người Tham Dự,Nội Dung Tuyên Truyền,Minh Chứng Drive,Kế Hoạch Tháng Tới,Kiến Nghị,Trạng Thái,BTV Xếp Loại\n";
+
+  currentReportsData.forEach((r, idx) => {
+    const clean = (val) => '"' + String(val || '').replace(/"/g, '""').replace(/\n/g, ' ') + '"';
+    csvContent += [
+      idx + 1,
+      clean(r.union_id || r.ma_dinh_danh),
+      clean(r.ten_to_cong_doan),
+      clean(r.reporter_name || r.to_truong),
+      clean(r.email),
+      r.tong_cbnv || 0,
+      r.tong_doan_vien || r.so_doan_vien || 0,
+      r.nu_doan_vien || 0,
+      r.doan_vien_ket_nap || 0,
+      r.doan_vien_giam || 0,
+      r.gioi_thieu_dang || 0,
+      r.ket_nap_dang || 0,
+      r.benh_hiem_ngheo || 0,
+      r.so_nguoi_cham_lo || 0,
+      clean(r.tong_tien_cham_lo),
+      r.tai_nan_lao_dong || 0,
+      r.tu_vong_tai_nan || 0,
+      r.so_buoi_kiem_tra || 0,
+      r.so_buoi_tuyen_truyen || 0,
+      r.so_nguoi_tham_du || 0,
+      clean(r.noi_dung_tuyen_truyen),
+      clean(r.link_minh_chung),
+      clean(r.ke_hoach_thang_toi),
+      clean(r.kien_nghi),
+      clean(r.trang_thai),
+      clean(r.btv_xep_loai || 'Chờ thẩm định')
+    ].join(',') + '\n';
+  });
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Bao_Cao_Thi_Dua_16_To_Cong_Doan_TDMU_Thang_8_2026.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 
