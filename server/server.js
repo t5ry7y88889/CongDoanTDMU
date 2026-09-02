@@ -650,7 +650,7 @@ app.post('/api/ai/repurpose', (req, res) => {
 app.get('/api/documents', (req, res) => {
   const { category, search } = req.query;
   const db = loadDB();
-  let list = db.van_ban || [];
+  let list = db.documents || [];
   
   if (category && category !== 'all') {
     list = list.filter(d => (d.loai_van_ban === category || (d.loai_van_ban_ten && d.loai_van_ban_ten.toLowerCase().includes(category.toLowerCase()))));
@@ -681,8 +681,8 @@ app.post('/api/documents', (req, res) => {
   };
 
   const db = loadDB();
-  db.van_ban = db.van_ban || [];
-  const nextId = db.van_ban.length > 0 ? Math.max(...db.van_ban.map(d => parseInt(d.id) || 0)) + 1 : 1;
+  db.documents = db.documents || [];
+  const nextId = db.documents.length > 0 ? Math.max(...db.documents.map(d => parseInt(d.id) || 0)) + 1 : 1;
 
   const newDoc = {
     id: nextId,
@@ -703,7 +703,7 @@ app.post('/api/documents', (req, res) => {
     created_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
   };
 
-  db.van_ban.unshift(newDoc);
+  db.documents.unshift(newDoc);
   saveDB(db);
 
   if (typeof logAuditRecord === 'function') {
@@ -715,14 +715,14 @@ app.post('/api/documents', (req, res) => {
 
 app.delete('/api/documents/:id', (req, res) => {
   const db = loadDB();
-  db.van_ban = db.van_ban || [];
+  db.documents = db.documents || [];
   const id = parseInt(req.params.id);
-  const idx = db.van_ban.findIndex(d => d.id === id || d.MaVanBan === id);
+  const idx = db.documents.findIndex(d => d.id === id || d.MaVanBan === id);
   if (idx === -1) {
     return res.json({ success: false, error: 'Không tìm thấy văn bản!' });
   }
 
-  const deleted = db.van_ban.splice(idx, 1)[0];
+  const deleted = db.documents.splice(idx, 1)[0];
   saveDB(db);
   if (typeof logAuditRecord === 'function') {
     logAuditRecord(null, 'DOCUMENT_DELETED', 'Đã xóa văn bản [' + deleted.so_hieu + '] khỏi CSDL', 'Quản Trị Viên');
@@ -1231,13 +1231,13 @@ app.get('/api/events', (req, res) => res.json({ success: true, data: loadDB().ev
 app.get('/api/media', (req, res) => res.json({ success: true, data: loadDB().media || [] }));
 app.get('/api/audits', (req, res) => {
   const db = loadDB();
-  res.json({ success: true, data: db.audits || db.nhat_ky || [] });
+  res.json({ success: true, data: db.article_audits || db.article_audits || [] });
 });
 app.get('/api/inbox/comments', (req, res) => res.json({ success: true, data: loadDB().comments || [] }));
 
 const getDashboardStats = (req, res) => {
   const db = loadDB();
-  const arts = db.articles || db.tin_tuc || [];
+  const arts = db.articles || db.articles || [];
   res.json({
     success: true,
     totalArticles: arts.length,

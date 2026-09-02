@@ -460,200 +460,6 @@
       "NhiemVuPhanCong": "Kiểm tra tài chính, chứng từ thu chi và quản lý tài sản công đoàn định kỳ."
     }
   ],
-  "tin_tuc": [
-    {
-      "MaTinTuc": 1,
-      "TieuDe": "Công đoàn TDMU hưởng ứng phong trào Lao động giỏi - Lao động sáng tạo 2026",
-      "ChuyenMuc": "Phong trào thi đua",
-      "TacGia": "ThS. Võ Quốc Lương",
-      "TrangThai": "Published"
-    },
-    {
-      "MaTinTuc": 2,
-      "TieuDe": "Báo cáo hoạt động Công đoàn tháng 8/2026 của Viện Công nghệ số và các Tổ Công đoàn",
-      "ChuyenMuc": "Thông báo",
-      "TacGia": "Hồ Ngọc Trung Kiên",
-      "TrangThai": "Published"
-    }
-  ],
-  "van_ban": [
-    {
-      "id": 7,
-      "MaVanBan": 7,
-      "so_hieu": "99/TB-CĐ",
-      "SoHieuVanBan": "99/TB-CĐ",
-      "tieu_de": "Thông báo về việc tổ chức Hội thao Cán bộ Giảng viên Chào mừng Ngày Nhà giáo Việt Nam 20/11",
-      "TenVanBan": "Thông báo về việc tổ chức Hội thao Cán bộ Giảng viên Chào mừng Ngày Nhà giáo Việt Nam 20/11",
-      "loai_van_ban": "kehoach",
-      "loai_van_ban_ten": "Kế hoạch hoạt động",
-      "co_quan_ban_hanh": "Ban Thường Vụ Công Đoàn TDMU",
-      "ngay_ban_hanh": "2026-09-01",
-      "nguoi_ky": "TS. Nguyễn Văn A",
-      "NguoiKy": "TS. Nguyễn Văn A",
-      "file_url": "uploads/documents/99_TB_CD_HoiThao2011.pdf",
-      "dung_luong": "2.0 MB",
-      "luot_tai": 0,
-      "created_at": "2026-08-31 14:56:54"
-    },
-    {
-      "id": 1,
-      "MaVanBan": 1,
-      "so_hieu": "18/CV-CĐCS",
-      "SoHieuVanBan": "18/CV-CĐCS",
-      "tieu_de": "Vận động ủng hộ đồng bào bị thiệt hại do bão số 3",
-      "TenVanBan": "Vận động ủng hộ đồng bào bị thiệt hại do bão số 3",
-      "loai_van_ban": "tuyentruyen",
-      "loai_van_ban_ten": "Công văn tuyên truyền",
-      "co_quan_ban_hanh": "Ban Thường Vụ Công Đoàn TDMU",
-      "ngay_ban_hanh": "2026-08-15",
-      "nguoi_ky": "TS. Nguyễn Văn A",
-      "NguoiKy": "TS. Nguyễn Văn A",
-      "file_url": "uploads/documents/18_CV_CDCS_UngHoBaoSo3.pdf",
-      "dung_luong": "1.2 MB",
-      "luot_tai": 2524,
-      "created_at": "2026-08-15 08:30:00"
-    },
-    {
-      "id": 2,
-      "MaVanBan": 2,
-      "so_hieu": "1630/CV-BTG",
-      "SoHieuVanBan": "1630/CV-BTG",
-      "tieu_de": "Công văn số 1630 của Ban Tuyên giáo Tỉnh ủy Bình Dương: Cuộc thi trực tuyến \"Tìm hiểu Nghị quyết TW 8 khóa XIII\"",
-      "TenVanBan": "Công văn số 1630 của Ban Tuyên giáo Tỉnh ủy Bình Dương: Cuộc thi trực tuyến \"Tìm hiểu Nghị quyết TW 8 khóa XIII\"",
-      "loai_van_ban": "tuyentruyen",
-      "loai_van_ban_ten": "Công văn tuyên truyền",
-      "co_quan_ban_hanh": "Ban Tuyên Giáo Tỉnh Ủy Bình Dương",
-      "ngay_ban_hanh": "2026-08-01",
-      "nguoi_ky": "Trưởng Ban Tuyên Giáo Tỉnh",
-      "NguoiKy": "Trưởng Ban Tuyên Giáo Tỉnh",
-      "file_url": "uploads/documents/1630_CV_BTG_CuocThiNghiQuyet.pdf",
-      "dung_luong": "2.4 MB",
-      "luot_tai": 3915,
-      "created_at": "2026-08-01 09:00:00"
-    },
-    {
-      "id": 3,
-      "MaVanBan": 3,
-      "so_hieu": "41/KH-CĐCS",
-      "SoHieuVanBan": "41/KH-CĐCS",
-      "tieu_de": "Kế hoạch số 41/KH-CĐCS về tuyên truyền, phổ biến pháp luật: Chuyên đề \"Pháp luật người lao động\"",
-      "TenVanBan": "Kế hoạch số 41/KH-CĐCS về tuyên truyền, phổ biến pháp luật: Chuyên đề \"Pháp luật người lao động\"",
-      "loai_van_ban": "kehoach",
-      "loai_van_ban_ten": "Kế hoạch hoạt động",
-      "co_quan_ban_hanh": "BCH Công Đoàn Cơ Sở TDMU",
-      "ngay_ban_hanh": "2026-07-20",
-      "nguoi_ky": "ThS. Trần Thị B",
-      "NguoiKy": "ThS. Trần Thị B",
-      "file_url": "uploads/documents/41_KH_CDCS_PhoBienPhapLuat.pdf",
-      "dung_luong": "1.8 MB",
-      "luot_tai": 3041,
-      "created_at": "2026-07-20 14:00:00"
-    },
-    {
-      "id": 4,
-      "MaVanBan": 4,
-      "so_hieu": "25/KH-CĐCS",
-      "SoHieuVanBan": "25/KH-CĐCS",
-      "tieu_de": "Kế hoạch tổ chức giải Bóng đá truyền thống \"Công đoàn trường ĐH Thủ Dầu Một\" lần thứ X",
-      "TenVanBan": "Kế hoạch tổ chức giải Bóng đá truyền thống \"Công đoàn trường ĐH Thủ Dầu Một\" lần thứ X",
-      "loai_van_ban": "kehoach",
-      "loai_van_ban_ten": "Kế hoạch hoạt động",
-      "co_quan_ban_hanh": "BTV Công Đoàn TDMU",
-      "ngay_ban_hanh": "2026-07-10",
-      "nguoi_ky": "TS. Nguyễn Văn A",
-      "NguoiKy": "TS. Nguyễn Văn A",
-      "file_url": "uploads/documents/25_KH_GiaiBongDaTruyenThong.pdf",
-      "dung_luong": "3.1 MB",
-      "luot_tai": 1478,
-      "created_at": "2026-07-10 10:15:00"
-    },
-    {
-      "id": 5,
-      "MaVanBan": 5,
-      "so_hieu": "12/2012/QH13",
-      "SoHieuVanBan": "12/2012/QH13",
-      "tieu_de": "Luật Công đoàn số 12/2012/QH13 của Quốc hội nước CHXHCN Việt Nam",
-      "TenVanBan": "Luật Công đoàn số 12/2012/QH13 của Quốc hội nước CHXHCN Việt Nam",
-      "loai_van_ban": "luat",
-      "loai_van_ban_ten": "Văn bản luật",
-      "co_quan_ban_hanh": "Quốc Hội Nước CHXHCN Việt Nam",
-      "ngay_ban_hanh": "2026-01-01",
-      "nguoi_ky": "Chủ Tịch Quốc Hội",
-      "NguoiKy": "Chủ Tịch Quốc Hội",
-      "file_url": "uploads/documents/Luat_Cong_Doan_2012.pdf",
-      "dung_luong": "5.2 MB",
-      "luot_tai": 8920,
-      "created_at": "2026-01-01 00:00:00"
-    },
-    {
-      "id": 6,
-      "MaVanBan": 6,
-      "so_hieu": "82/QĐ-LĐLĐ",
-      "SoHieuVanBan": "82/QĐ-LĐLĐ",
-      "tieu_de": "Quyết định số 82/QĐ-LĐLĐ về việc ban hành Quy chế Khen thưởng của tổ chức công đoàn",
-      "TenVanBan": "Quyết định số 82/QĐ-LĐLĐ về việc ban hành Quy chế Khen thưởng của tổ chức công đoàn",
-      "loai_van_ban": "quyetdinh",
-      "loai_van_ban_ten": "Quyết định",
-      "co_quan_ban_hanh": "Tổng Liên Đoàn Lao Động Việt Nam",
-      "ngay_ban_hanh": "2026-06-18",
-      "nguoi_ky": "Đoàn Chủ Tịch Tổng LĐLĐ",
-      "NguoiKy": "Đoàn Chủ Tịch Tổng LĐLĐ",
-      "file_url": "uploads/documents/82_QD_LDLD_QuyCheKhenThuong.pdf",
-      "dung_luong": "2.1 MB",
-      "luot_tai": 4120,
-      "created_at": "2026-06-18 15:30:00"
-    }
-  ],
-  "bao_cao_thang": [
-    {
-      "MaBaoCao": 1,
-      "TenToCongDoan": "Viện Công nghệ số",
-      "NguoiBaoCao": "Hồ Ngọc Trung Kiên",
-      "ThangBaoCao": 8,
-      "TongSoCBNV": 66,
-      "TongSoDoanVien": 66,
-      "TongSoNuDoanVien": 17,
-      "SoNguoiChamLo": 3,
-      "TongTienChamLo": 1500000,
-      "LinkMinhChung": "Không"
-    },
-    {
-      "MaBaoCao": 2,
-      "TenToCongDoan": "Trường Luật và Quản lý",
-      "NguoiBaoCao": "Huỳnh Thị Lệ Kha",
-      "ThangBaoCao": 8,
-      "TongSoCBNV": 51,
-      "TongSoDoanVien": 51,
-      "TongSoNuDoanVien": 17,
-      "SoNguoiChamLo": 3,
-      "TongTienChamLo": 3800000,
-      "LinkMinhChung": "Không"
-    },
-    {
-      "MaBaoCao": 3,
-      "TenToCongDoan": "Kinh tế tài chính 2",
-      "NguoiBaoCao": "Nguyễn Thụy Bảo Khuyên",
-      "ThangBaoCao": 8,
-      "TongSoCBNV": 42,
-      "TongSoDoanVien": 42,
-      "TongSoNuDoanVien": 31,
-      "SoNguoiChamLo": 0,
-      "TongTienChamLo": 0,
-      "LinkMinhChung": "Không"
-    },
-    {
-      "MaBaoCao": 4,
-      "TenToCongDoan": "Công đoàn 4",
-      "NguoiBaoCao": "Nguyễn Thị Hương",
-      "ThangBaoCao": 8,
-      "TongSoCBNV": 23,
-      "TongSoDoanVien": 23,
-      "TongSoNuDoanVien": 11,
-      "SoNguoiChamLo": 15,
-      "TongTienChamLo": 1900000,
-      "LinkMinhChung": "https://drive.google.com/open?id=14uZ3gcXFNrGescFh5neJd-w7KRVS-BX0"
-    }
-  ],
   "articles": [
     {
       "id": 1,
@@ -1442,41 +1248,6 @@
       "btv_xep_loai": "Chờ nộp báo cáo"
     }
   ],
-  "kho_tu_lieu": [
-    {
-      "id": 1,
-      "MaTuLieu": 1,
-      "ten_file": "Dai_Hoi_Cong_Doan_2026_Banner.jpg",
-      "duong_dan": "images/banner.jpg",
-      "loai_file": "image/jpeg",
-      "dung_luong": "1.8 MB",
-      "chu_de_tag": "Đại hội Công đoàn",
-      "ai_triage_score": 98,
-      "created_at": "2026-08-31 10:00:00"
-    },
-    {
-      "id": 2,
-      "MaTuLieu": 2,
-      "ten_file": "Hoi_Thao_Dinh_Duong_Suc_Khoe.jpg",
-      "duong_dan": "images/hoi_thao_dinh_duong.jpg",
-      "loai_file": "image/jpeg",
-      "dung_luong": "2.4 MB",
-      "chu_de_tag": "Tọa đàm sức khỏe",
-      "ai_triage_score": 92,
-      "created_at": "2026-08-31 11:30:00"
-    },
-    {
-      "id": 3,
-      "MaTuLieu": 3,
-      "ten_file": "Ky_Yeu_Thanh_Tich_2021_2026.pdf",
-      "duong_dan": "uploads/documents/Ky_Yeu_2026.pdf",
-      "loai_file": "application/pdf",
-      "dung_luong": "12.5 MB",
-      "chu_de_tag": "Điển hình tiên tiến",
-      "ai_triage_score": 95,
-      "created_at": "2026-08-31 14:00:00"
-    }
-  ],
   "bookmarks": [
     {
       "id": 1,
@@ -1566,32 +1337,6 @@
       "response": "Ban Thường vụ đã ghi nhận và giao Ban Tuyên giáo triển khai trên Cổng thông tin mới."
     }
   ],
-  "article_reactions": [
-    {
-      "id": 1,
-      "article_id": 1,
-      "user_id": "CB_001",
-      "user_name": "TS. Lê Thị Kim Út",
-      "reaction_type": "heart",
-      "created_at": "2026-09-01T15:10:00Z"
-    },
-    {
-      "id": 2,
-      "article_id": 1,
-      "user_id": "CB_002",
-      "user_name": "ThS. Nguyễn Minh Danh",
-      "reaction_type": "like",
-      "created_at": "2026-09-01T15:15:00Z"
-    },
-    {
-      "id": 3,
-      "article_id": 1,
-      "user_id": "CB_003",
-      "user_name": "ThS. Phan Nguyễn Quỳnh Anh",
-      "reaction_type": "clap",
-      "created_at": "2026-09-01T15:20:00Z"
-    }
-  ],
   "users": [
     {
       "id": 1,
@@ -1677,14 +1422,86 @@
       "status": "published"
     }
   ],
-  "audits": [
+  "documents": [
     {
-      "id": 1,
-      "article_id": 1,
-      "user_id": 1,
-      "action": "PUBLISHED",
-      "note": "Xuất bản bài báo Tọa đàm dinh dưỡng lên Cổng thông tin",
-      "created_at": "2026-09-01T08:00:00Z"
+      "MaVanBan": 7,
+      "TieuDe": "Thông báo về việc tổ chức Hội thao Cán bộ Giảng viên Chào mừng Ngày Nhà giáo Việt Nam 20/11",
+      "LoaiVanBan": "Văn bản chỉ đạo",
+      "MoTa": "",
+      "FileUrl": "uploads/documents/99_TB_CD_HoiThao2011.pdf",
+      "NgayBanHanh": "2026-09-01",
+      "CoQuanBanHanh": "Ban Thường vụ Công đoàn TDMU",
+      "LuotTai": 0
+    },
+    {
+      "MaVanBan": 1,
+      "TieuDe": "Vận động ủng hộ đồng bào bị thiệt hại do bão số 3",
+      "LoaiVanBan": "Văn bản chỉ đạo",
+      "MoTa": "",
+      "FileUrl": "uploads/documents/18_CV_CDCS_UngHoBaoSo3.pdf",
+      "NgayBanHanh": "2026-08-15",
+      "CoQuanBanHanh": "Ban Thường vụ Công đoàn TDMU",
+      "LuotTai": 2524
+    },
+    {
+      "MaVanBan": 2,
+      "TieuDe": "Công văn số 1630 của Ban Tuyên giáo Tỉnh ủy Bình Dương: Cuộc thi trực tuyến \"Tìm hiểu Nghị quyết TW 8 khóa XIII\"",
+      "LoaiVanBan": "Văn bản chỉ đạo",
+      "MoTa": "",
+      "FileUrl": "uploads/documents/1630_CV_BTG_CuocThiNghiQuyet.pdf",
+      "NgayBanHanh": "2026-08-01",
+      "CoQuanBanHanh": "Ban Thường vụ Công đoàn TDMU",
+      "LuotTai": 3915
+    },
+    {
+      "MaVanBan": 3,
+      "TieuDe": "Kế hoạch số 41/KH-CĐCS về tuyên truyền, phổ biến pháp luật: Chuyên đề \"Pháp luật người lao động\"",
+      "LoaiVanBan": "Văn bản chỉ đạo",
+      "MoTa": "",
+      "FileUrl": "uploads/documents/41_KH_CDCS_PhoBienPhapLuat.pdf",
+      "NgayBanHanh": "2026-07-20",
+      "CoQuanBanHanh": "Ban Thường vụ Công đoàn TDMU",
+      "LuotTai": 3041
+    },
+    {
+      "MaVanBan": 4,
+      "TieuDe": "Kế hoạch tổ chức giải Bóng đá truyền thống \"Công đoàn trường ĐH Thủ Dầu Một\" lần thứ X",
+      "LoaiVanBan": "Văn bản chỉ đạo",
+      "MoTa": "",
+      "FileUrl": "uploads/documents/25_KH_GiaiBongDaTruyenThong.pdf",
+      "NgayBanHanh": "2026-07-10",
+      "CoQuanBanHanh": "Ban Thường vụ Công đoàn TDMU",
+      "LuotTai": 1478
+    },
+    {
+      "MaVanBan": 5,
+      "TieuDe": "Luật Công đoàn số 12/2012/QH13 của Quốc hội nước CHXHCN Việt Nam",
+      "LoaiVanBan": "Văn bản chỉ đạo",
+      "MoTa": "",
+      "FileUrl": "uploads/documents/Luat_Cong_Doan_2012.pdf",
+      "NgayBanHanh": "2026-01-01",
+      "CoQuanBanHanh": "Ban Thường vụ Công đoàn TDMU",
+      "LuotTai": 8920
+    },
+    {
+      "MaVanBan": 6,
+      "TieuDe": "Quyết định số 82/QĐ-LĐLĐ về việc ban hành Quy chế Khen thưởng của tổ chức công đoàn",
+      "LoaiVanBan": "Văn bản chỉ đạo",
+      "MoTa": "",
+      "FileUrl": "uploads/documents/82_QD_LDLD_QuyCheKhenThuong.pdf",
+      "NgayBanHanh": "2026-06-18",
+      "CoQuanBanHanh": "Ban Thường vụ Công đoàn TDMU",
+      "LuotTai": 4120
+    }
+  ],
+  "article_audits": [
+    {
+      "MaKiemToan": 1,
+      "MaBaiViet": 1,
+      "MaNguoiDung": 1,
+      "HanhDong": "PUBLISHED",
+      "GhiChu": "Xuất bản bài báo Tọa đàm dinh dưỡng lên Cổng thông tin",
+      "ThoiGian": "2026-09-01T08:00:00Z"
     }
   ]
 }
