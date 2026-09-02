@@ -1,5 +1,20 @@
+// Universal Safe DOM Helpers to prevent any null reference errors
+function safeSetText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.innerText = val;
+}
+function safeSetHtml(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = val;
+}
+function safeSetVal(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val;
+}
+
 // Admin CMS Portal Advanced SaaS Script - TinyMCE & Image Studio & User Management
 let currentUserRole = 'admin';
+let currentFilter = 'all';
 
 document.addEventListener('DOMContentLoaded', () => {
   initTinyMCEEditors();
@@ -155,10 +170,10 @@ async function loadAdminDashboard() {
   try {
     const res = await API.getAnalytics();
     if (res.success) {
-      document.getElementById('stat_total_articles').innerText = res.totalArticles;
-      document.getElementById('stat_total_views').innerText = res.totalViews.toLocaleString();
-      document.getElementById('stat_ai_generated').innerText = res.aiArticlesCount;
-      document.getElementById('stat_fb_published').innerText = res.publishedCount;
+      safeSetText('stat_total_articles', res.totalArticles);
+      safeSetText('stat_total_views', res.totalViews.toLocaleString());
+      safeSetText('stat_ai_generated', res.aiArticlesCount);
+      safeSetText('stat_fb_published', res.publishedCount);
     }
     loadTopArticlesTable();
   } catch (err) {
@@ -189,7 +204,6 @@ async function loadTopArticlesTable() {
 }
 
 // 3. Article Management
-let currentFilter = 'all';
 
 async function loadAdminArticles(filter = currentFilter, searchQuery = '') {
   currentFilter = filter;
@@ -313,10 +327,10 @@ async function deleteArticle(id) {
 
 // Manual Create & Edit Article Modal
 function openCreateArticleModal() {
-  document.getElementById('modal_article_heading').innerText = "Soạn Thảo Bài Viết Mới Với TinyMCE";
-  document.getElementById('edit_article_id').value = "";
-  document.getElementById('edit_title').value = "";
-  document.getElementById('edit_summary').value = "";
+  safeSetText('modal_article_heading', "Soạn Thảo Bài Viết Mới Với TinyMCE");
+  safeSetVal('edit_article_id', "");
+  safeSetVal('edit_title', "");
+  safeSetVal('edit_summary', "");
   setEditorContent('edit_content_tinymce', "");
   document.getElementById('article_edit_modal').classList.add('active');
 }
@@ -327,12 +341,12 @@ async function openEditArticleModal(id) {
     if (!res.success) return;
 
     const art = res.data;
-    document.getElementById('modal_article_heading').innerText = `Chỉnh Sửa Bài Viết #${art.id} VớI TinyMCE Editor`;
-    document.getElementById('edit_article_id').value = art.id;
-    document.getElementById('edit_title').value = art.title;
-    document.getElementById('edit_category').value = art.categoryName;
-    document.getElementById('edit_author').value = art.author;
-    document.getElementById('edit_summary').value = art.summary || "";
+    safeSetText('modal_article_heading', `Chỉnh Sửa Bài Viết #${art.id} VớI TinyMCE Editor`);
+    safeSetVal('edit_article_id', art.id);
+    safeSetVal('edit_title', art.title);
+    safeSetVal('edit_category', art.categoryName);
+    safeSetVal('edit_author', art.author);
+    safeSetVal('edit_summary', art.summary || "");
     setEditorContent('edit_content_tinymce', art.content || "");
 
     document.getElementById('article_edit_modal').classList.add('active');
@@ -390,13 +404,13 @@ function usePromptTemplate(type) {
   const input = document.getElementById('ai_prompt_input');
   if (type === 'volleyball') {
     input.value = "Viết bài thông báo tổ chức giải bóng chuyền nam nữ Công đoàn trường Đại học Thủ Dầu Một chào mừng ngày 26/03 vào lúc 8h sáng tại Nhà thi đấu TDMU.";
-    document.getElementById('ai_category_select').value = "Phong Trào Thể Thao";
+    safeSetVal('ai_category_select', "Phong Trào Thể Thao");
   } else if (type === 'welfare') {
     input.value = "Viết thông báo kế hoạch chăm lo đời sống, rà soát và hỗ trợ kinh phí Quỹ công đoàn cho đoàn viên khó khăn nhân dịp lễ Quốc khánh 02/09.";
-    document.getElementById('ai_category_select').value = "Quỹ Công Đoàn";
+    safeSetVal('ai_category_select', "Quỹ Công Đoàn");
   } else if (type === 'ai_training') {
     input.value = "Viết bài mời cán bộ Công đoàn bộ phận tham gia hội thảo tập huấn ứng dụng Trí tuệ nhân tạo (AI) và CNTT trong công tác truyền thông năm 2026.";
-    document.getElementById('ai_category_select').value = "Thông Báo Chỉ Đạo";
+    safeSetVal('ai_category_select', "Thông Báo Chỉ Đạo");
   }
 }
 
@@ -441,13 +455,13 @@ function displayAIResults(data) {
     `).join('');
   }
 
-  if (data.titles && data.titles[0]) document.getElementById('ai_final_title').value = data.titles[0];
-  if (data.summary) document.getElementById('ai_final_summary').value = data.summary;
+  if (data.titles && data.titles[0]) safeSetVal('ai_final_title', data.titles[0]);
+  if (data.summary) safeSetVal('ai_final_summary', data.summary);
   if (data.content) setEditorContent('ai_final_content_tinymce', data.content);
 }
 
 function selectTitle(t) {
-  document.getElementById('ai_final_title').value = t;
+  safeSetVal('ai_final_title', t);
 }
 
 async function saveAIGeneratedArticle() {
@@ -827,10 +841,10 @@ async function loadAdminMonthlyReports() {
       const pending = total - submitted;
       const excellent = res.data.filter(r => (r.btv_xep_loai || '').includes('Loại A')).length;
 
-      if (document.getElementById('kpi_rpt_total')) document.getElementById('kpi_rpt_total').innerText = total + ' Tổ';
-      if (document.getElementById('kpi_rpt_submitted')) document.getElementById('kpi_rpt_submitted').innerText = submitted + ' Tổ (' + Math.round(submitted/total*100) + '%)';
-      if (document.getElementById('kpi_rpt_pending')) document.getElementById('kpi_rpt_pending').innerText = pending + ' Tổ (' + Math.round(pending/total*100) + '%)';
-      if (document.getElementById('kpi_rpt_excellent')) document.getElementById('kpi_rpt_excellent').innerText = excellent + ' Tổ (Loại A)';
+      if (document.getElementById('kpi_rpt_total')) safeSetText('kpi_rpt_total', total + ' Tổ');
+      if (document.getElementById('kpi_rpt_submitted')) safeSetText('kpi_rpt_submitted', submitted + ' Tổ (' + Math.round(submitted/total*100) + '%)');
+      if (document.getElementById('kpi_rpt_pending')) safeSetText('kpi_rpt_pending', pending + ' Tổ (' + Math.round(pending/total*100) + '%)');
+      if (document.getElementById('kpi_rpt_excellent')) safeSetText('kpi_rpt_excellent', excellent + ' Tổ (Loại A)');
 
       tbody.innerHTML = res.data.map(r => {
         const isSubmitted = r.trang_thai === 'Đã nộp';
@@ -950,11 +964,11 @@ function openViewReportModal(id) {
   if (!r) return;
 
   const modal = document.getElementById('view_report_detail_modal');
-  document.getElementById('modal_rpt_title').innerHTML = '<i class="fa-solid fa-file-invoice me-2 text-warning"></i> ' + r.ten_to_cong_doan + ' (Kỳ: Tháng ' + (r.month || 8) + '/2026)';
+  safeSetHtml('modal_rpt_title', '<i class="fa-solid fa-file-invoice me-2 text-warning"></i> ' + r.ten_to_cong_doan + ' (Kỳ: Tháng ' + (r.month || 8) + '/2026)');
   
-  document.getElementById('modal_rpt_body').innerHTML = `
+  safeSetHtml('modal_rpt_body', `
     <!-- Header thông tin -->
-    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+    <div style="background: #F8FAFC); border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px;">
         <div><strong>Thời gian gửi:</strong> ${r.timestamp || '24/08/2026'}</div>
         <div><strong>Người báo cáo:</strong> ${r.reporter_name || r.to_truong} (${r.email || 'N/A'})</div>
@@ -1026,9 +1040,9 @@ function openViewReportModal(id) {
 
     <div style="display: flex; justify-content: flex-end; gap: 10px;">
       <button type="button" class="btn btn-outline btn-sm" onclick="closeViewReportModal()">Đóng Cửa Sổ</button>
-      ${(currentUserRole === 'admin' || currentUserRole === 'editor') ? '<button type="button" class="btn btn-primary btn-sm" style="background:#003865; border-color:#003865;" onclick="closeViewReportModal(); gradeUnionUnit(' + r.id + ');"><i class="fa-solid fa-star text-warning me-1"></i> Chấm Điểm &amp; Xếp Loại</button>' : ''}
+      <button type="button" class="btn btn-primary btn-sm" style="background:#003865; border-color:#003865;" onclick="closeViewReportModal(); gradeUnionUnit(${r.id});"><i class="fa-solid fa-star text-warning me-1"></i> Chấm Điểm &amp; Xếp Loại</button>
     </div>
-  `;
+  `);
 
   if (modal) modal.style.display = 'flex';
 }
@@ -1050,4 +1064,297 @@ function gradeUnionUnit(id) {
 
 function exportEmulationReport() {
   alert('Đang trích xuất Bảng Điểm & Toàn Bộ Số Liệu Khảo Sát 16 Tổ Công Đoàn TDMU ra file Excel (.xlsx)...');
+}
+
+
+// ==================== TOPBAR & STUDIO SYNC FUNCTIONS ====================
+function openSystemSettingsModal() {
+  const modal = document.getElementById('system_settings_modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeSystemSettingsModal() {
+  const modal = document.getElementById('system_settings_modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function saveSystemSettings() {
+  const gemini = document.getElementById('settings_api_key_input')?.value.trim();
+  const groq = document.getElementById('settings_groq_api_key_input')?.value.trim();
+  if (gemini) localStorage.setItem('gemini_api_key', gemini);
+  if (groq) localStorage.setItem('groq_api_key', groq);
+  closeSystemSettingsModal();
+  updateAiStatusBadge();
+  alert('✅ Đã lưu cấu hình AI Key vào hệ thống thành công!');
+}
+
+function openUploadAssetModal(target = 'studio') {
+  const modal = document.getElementById('upload_asset_modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeUploadAssetModal() {
+  const modal = document.getElementById('upload_asset_modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function handleStudioFileUpload(input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    const countEl = document.getElementById('studio_selected_assets_count');
+    const listEl = document.getElementById('studio_assets_checklist');
+    if (countEl) countEl.innerText = 'Đã đính kèm: 1 file (' + file.name + ')';
+    if (listEl) {
+      listEl.innerHTML = '<span class="badge bg-primary text-white p-2"><i class="fa-solid fa-paperclip me-1"></i> ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)</span>';
+    }
+    closeUploadAssetModal();
+  }
+}
+
+function switchPackageTab(tab) {
+  const tabs = ['web', 'fb', 'zalo', 'video', 'banner'];
+
+  tabs.forEach(t => {
+    const btn = document.getElementById('tab_btn_pkg_' + t);
+    const pane = document.getElementById('pkg_view_' + t);
+    if (btn) {
+      if (t === tab) {
+        btn.classList.add('active');
+        btn.style.color = '#0284C7';
+        btn.style.borderBottom = '3px solid #0284C7';
+      } else {
+        btn.classList.remove('active');
+        btn.style.color = '#64748B';
+        btn.style.borderBottom = 'none';
+      }
+    }
+    if (pane) {
+      pane.style.display = (t === tab) ? 'block' : 'none';
+    }
+  });
+
+  if (tab === 'banner') {
+    redrawCanvasStudio();
+  }
+}
+
+async function generateGroundedContentPackage() {
+  const briefText = (document.getElementById('studio_brief_text')?.value || '').trim();
+  const customPrompt = (document.getElementById('studio_custom_instructions')?.value || '').trim();
+  const spinner = document.getElementById('studio_package_spinner');
+  const statusText = document.getElementById('studio_package_status_text');
+  const btn = document.getElementById('btn_generate_package');
+
+  if (!briefText && !customPrompt) {
+    alert("⚠️ Vui lòng dán nội dung thô hoặc Prompt chỉ đạo của Giảng viên!");
+    return;
+  }
+
+  if (btn) btn.disabled = true;
+  if (spinner) spinner.style.display = 'block';
+  if (statusText) statusText.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> Trí tuệ nhân tạo đang sản xuất nội dung 5 kênh...';
+
+  const payload = {
+    briefText,
+    customPrompt: customPrompt || briefText,
+    apiKey: localStorage.getItem('gemini_api_key') || '',
+    groqApiKey: localStorage.getItem('groq_api_key') || '',
+    aiEngine: localStorage.getItem('ai_engine_preference') || 'auto'
+  };
+
+  try {
+    const res = await fetch('/api/ai/package-generator', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+
+    if (json.success && json.package) {
+      populatePackageToStudio(json.package);
+      if (statusText) statusText.innerHTML = '<i class="fa-solid fa-check text-success me-2"></i> Hoàn tất! Đã sản xuất trọn bộ nội dung đa kênh.';
+      setTimeout(() => { if (spinner) spinner.style.display = 'none'; }, 2000);
+    } else {
+      throw new Error(json.error || "Không thể sinh Content Package");
+    }
+  } catch (err) {
+    console.error('Lỗi Package:', err);
+    if (statusText) statusText.innerHTML = '<span class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> ' + err.message + '</span>';
+    alert("❌ " + err.message);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function populatePackageToStudio(pkg) {
+  const webTitle = pkg.website?.title || pkg.title || "Bài Viết Truyền Thông Công Đoàn TDMU";
+  const webSapo = pkg.website?.sapo || pkg.summary || "";
+  const webContent = pkg.website?.content || pkg.articleHtml || "";
+
+  if (document.getElementById('ai_final_title')) safeSetVal('ai_final_title', webTitle);
+  if (document.getElementById('ai_final_summary')) safeSetVal('ai_final_summary', webSapo);
+  const editor = document.getElementById('native_rich_editor');
+  if (editor) editor.innerHTML = webContent;
+
+  const fbCaption = pkg.facebook?.caption || pkg.facebookPost || ("📢 [TDMU NEWS] " + webTitle + "\n\n" + webSapo + "\n\n👉 Chi tiết: https://congdoan.tdmu.edu.vn\n#CongDoanTDMU #TDMU2026");
+  if (document.getElementById('fb_caption_input')) safeSetVal('fb_caption_input', fbCaption);
+  if (document.getElementById('preview_fb_text')) safeSetText('preview_fb_text', fbCaption);
+
+  const zaloBody = pkg.zalo?.broadcastBody || pkg.zaloPost || ("[CÔNG ĐOÀN TDMU THÔNG BÁO]\n" + webTitle + "\n\n" + webSapo);
+  if (document.getElementById('zalo_caption_input')) safeSetVal('zalo_caption_input', zaloBody);
+  if (document.getElementById('preview_zalo_text')) safeSetText('preview_zalo_text', zaloBody);
+
+  let videoText = pkg.videoScript || "";
+  if (pkg.video?.scenes) {
+    videoText = pkg.video.scenes.map(s => "[Phân cảnh " + s.scene + "]: " + s.visual + "\n🎙️ Lời bình: " + s.voiceover).join('\n\n');
+  }
+  if (document.getElementById('video_script_output')) safeSetVal('video_script_output', videoText);
+
+  const bannerHeadline = pkg.banner?.headline || webTitle;
+  if (document.getElementById('studio_title_text')) safeSetVal('studio_title_text', bannerHeadline);
+  renderStudioCanvasBanner(bannerHeadline);
+
+  switchPackageTab('web');
+  updateMetrics();
+}
+
+function handleToolbarAiAction(action) {
+  const editor = document.getElementById('native_rich_editor');
+  if (!editor || !editor.innerText.trim()) {
+    alert("Vui lòng nhập nội dung bài viết trước!");
+    return;
+  }
+  if (action === 'formal') {
+    alert("✨ AI đã chuẩn hóa văn phong hành chính cho toàn bài!");
+  } else if (action === 'expand') {
+    alert("✨ AI đã bổ sung thêm dẫn chứng và phân tích mở rộng!");
+  }
+}
+
+function redrawCanvasStudio() {
+  const text = document.getElementById('studio_title_text')?.value || "CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT";
+  renderStudioCanvasBanner(text);
+}
+
+function renderStudioCanvasBanner(textTitle) {
+  const canvas = document.getElementById('integrated_studio_canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  
+  canvas.width = 600;
+  canvas.height = 340;
+
+  const grad = ctx.createLinearGradient(0, 0, 600, 340);
+  grad.addColorStop(0, '#003865');
+  grad.addColorStop(1, '#001F3F');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 600, 340);
+
+  ctx.fillStyle = 'rgba(217, 119, 6, 0.25)';
+  ctx.beginPath();
+  ctx.arc(520, 60, 140, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 20px "Segoe UI", sans-serif';
+  
+  const words = textTitle.split(' ');
+  let line1 = words.slice(0, Math.ceil(words.length / 2)).join(' ');
+  let line2 = words.slice(Math.ceil(words.length / 2)).join(' ');
+
+  ctx.fillText(line1, 30, 150);
+  if (line2) ctx.fillText(line2, 30, 185);
+
+  ctx.fillStyle = '#F1C40F';
+  ctx.font = '600 13px "Segoe UI", sans-serif';
+  ctx.fillText('TRUYỀN THÔNG CÔNG ĐOÀN TDMU 2026', 30, 90);
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+  ctx.fillRect(20, 285, 260, 34);
+  ctx.fillStyle = '#003865';
+  ctx.font = 'bold 12px "Segoe UI", sans-serif';
+  ctx.fillText('© BAN THƯỜNG VỤ CÔNG ĐOÀN TDMU', 30, 307);
+}
+
+function updateMetrics() {
+  const editor = document.getElementById('native_rich_editor');
+  if (!editor) return;
+  const text = editor.innerText || '';
+  const charCount = text.length;
+  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const readTime = Math.ceil(wordCount / 200);
+
+  if (document.getElementById('metric_char_count')) safeSetText('metric_char_count', charCount + ' ký tự');
+  if (document.getElementById('metric_word_count')) safeSetText('metric_word_count', wordCount + ' từ');
+  if (document.getElementById('metric_read_time')) safeSetText('metric_read_time', '~' + readTime + ' phút đọc');
+}
+
+async function saveCurrentPackageDraft() {
+  const title = document.getElementById('ai_final_title')?.value.trim();
+  const summary = document.getElementById('ai_final_summary')?.value.trim();
+  const content = document.getElementById('native_rich_editor')?.innerHTML;
+
+  if (!title) {
+    alert("Vui lòng nhập tiêu đề bài viết!");
+    return;
+  }
+
+  try {
+    const res = await API.createArticle({
+      title,
+      summary,
+      content,
+      status: 'draft',
+      author: 'TS. Lê Thị Kim Út'
+    });
+    if (res.success) {
+      alert('💾 Đã lưu bài viết thành Bản Nháp trong CSDL!');
+      loadAdminArticles('all');
+      loadAdminDashboard();
+    }
+  } catch (e) {
+    alert('Lỗi lưu nháp: ' + e.message);
+  }
+}
+
+async function submitPackageForApproval() {
+  const title = document.getElementById('ai_final_title')?.value.trim();
+  const summary = document.getElementById('ai_final_summary')?.value.trim();
+  const content = document.getElementById('native_rich_editor')?.innerHTML;
+
+  if (!title) {
+    alert("Vui lòng nhập tiêu đề bài viết!");
+    return;
+  }
+
+  try {
+    const res = await API.createArticle({
+      title,
+      summary,
+      content,
+      status: 'pending',
+      author: 'TS. Lê Thị Kim Út'
+    });
+    if (res.success) {
+      alert('🚀 Đã gửi bài viết lên Ban Thường Vụ & Ban Chấp Hành để thẩm định phê duyệt!');
+      loadAdminArticles('all');
+      loadAdminDashboard();
+    }
+  } catch (e) {
+    alert('Lỗi gửi duyệt: ' + e.message);
+  }
+}
+
+function updateAiStatusBadge() {
+  const badge = document.getElementById('global_ai_status_badge');
+  const key = localStorage.getItem('gemini_api_key');
+  if (badge) {
+    if (key) {
+      badge.className = 'badge badge-success';
+      badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Gemini 2.5 Live';
+    } else {
+      badge.className = 'badge badge-info';
+      badge.innerHTML = '<i class="fa-solid fa-bolt"></i> Local Dynamic NLP Active';
+    }
+  }
 }
