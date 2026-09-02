@@ -885,14 +885,28 @@ function refreshAnalytics() {
 // =========================================================================
 let currentReportsData = [];
 
-function toggleOnlineReportForm() {
-  const box = document.getElementById('box_contributor_submit_report');
-  if (box) {
-    box.style.display = (box.style.display === 'none' || !box.style.display) ? 'block' : 'none';
-    if (box.style.display === 'block') {
-      box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+function switchReportSubTab(tab) {
+  const tabs = ['summary', 'form', 'gform'];
+  tabs.forEach(t => {
+    const view = document.getElementById('subtab_view_reports_' + t);
+    const btn = document.getElementById('subtab_btn_reports_' + t);
+    if (view) view.style.display = (t === tab) ? 'block' : 'none';
+    if (btn) {
+      if (t === tab) {
+        btn.style.background = '#003865';
+        btn.style.color = 'white';
+        btn.style.borderColor = '#003865';
+      } else {
+        btn.style.background = 'white';
+        btn.style.color = '#475569';
+        btn.style.borderColor = '#CBD5E1';
+      }
     }
-  }
+  });
+}
+
+function toggleOnlineReportForm() {
+  switchReportSubTab('form');
 }
 
 async function loadAdminMonthlyReports() {
@@ -1185,12 +1199,20 @@ function openViewReportModal(id) {
     </div>
   `);
 
-  if (modal) modal.style.display = 'flex';
+  if (modal) {
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.style.setProperty('opacity', '1', 'important');
+    modal.style.setProperty('pointer-events', 'auto', 'important');
+  }
 }
 
 function closeViewReportModal() {
   const modal = document.getElementById('view_report_detail_modal');
-  if (modal) modal.style.display = 'none';
+  if (modal) {
+    modal.style.setProperty('display', 'none', 'important');
+    modal.style.setProperty('opacity', '0', 'important');
+    modal.style.setProperty('pointer-events', 'none', 'important');
+  }
 }
 
 function gradeUnionUnit(id) {

@@ -448,7 +448,7 @@
 
           <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSelw4xZGXNz2fUHOy0wHZ9-rIt5N-gneVP005KjpjURduNvrg/viewform" target="_blank" class="btn btn-sm" style="background: #DC2626; color: white; font-weight: 700; text-decoration: none; padding: 8px 14px; border-radius: 6px; box-shadow: 0 2px 8px rgba(220,38,38,0.25);">
-              <i class="fa-brands fa-google me-1"></i> Mở Google Form Nộp Báo Cáo
+              <i class="fa-brands fa-google me-1"></i> Mở Google Form Tab Mới
             </a>
             <button type="button" class="btn btn-sm" onclick="exportEmulationReport()" style="background: #10B981; color: white; font-weight: 700; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer;">
               <i class="fa-solid fa-file-excel me-1"></i> Xuất Báo Cáo Excel
@@ -459,58 +459,77 @@
           </div>
         </div>
 
-        <!-- BANNER GOOGLE FORM CHÍNH THỨC -->
-        <div style="background: linear-gradient(135deg, #EFF6FF, #DBEAFE); border: 1px solid #BFDBFE; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="background: #0284C7; color: white; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px;">
-              <i class="fa-solid fa-cloud-arrow-up"></i>
-            </div>
-            <div>
-              <div style="font-weight: 800; font-size: 14px; color: #0369A1;">HỆ THỐNG BÁO CÁO THÁNG TRỰC TUYẾN 16 TỔ CÔNG ĐOÀN CƠ SỞ</div>
-              <div style="font-size: 12px; color: #475569;">Đồng bộ 2 chiều: Nộp trực tiếp trên biểu mẫu điện tử hoặc nộp qua link Google Form chính thức của Công đoàn TDMU</div>
-            </div>
-          </div>
-          <button type="button" class="btn btn-sm" onclick="toggleOnlineReportForm()" style="background: #003865; color: #FEF08A; font-weight: 700; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer;">
-            <i class="fa-solid fa-pen-to-square me-1"></i> Mở Biểu Mẫu Điền Báo Cáo Điện Tử
+        <!-- 3 SUBTABS NAVIGATION -->
+        <div style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid #CBD5E1;">
+          <button type="button" id="subtab_btn_reports_summary" onclick="switchReportSubTab('summary')" style="background: #003865; color: white; border: 1px solid #003865; border-bottom: none; border-radius: 8px 8px 0 0; padding: 10px 18px; font-weight: 700; font-size: 13px; cursor: pointer;">
+            <i class="fa-solid fa-table-list me-1 text-warning"></i> 1. BẢNG TỔNG HỢP &amp; XẾP LOẠI 16 TỔ
+          </button>
+          <button type="button" id="subtab_btn_reports_form" onclick="switchReportSubTab('form')" style="background: white; color: #475569; border: 1px solid #CBD5E1; border-bottom: none; border-radius: 8px 8px 0 0; padding: 10px 18px; font-weight: 700; font-size: 13px; cursor: pointer;">
+            <i class="fa-solid fa-file-circle-plus me-1 text-primary"></i> 2. BIỂU MẪU ĐIỀN BÁO CÁO THÁNG (BM-02/CĐ)
+          </button>
+          <button type="button" id="subtab_btn_reports_gform" onclick="switchReportSubTab('gform')" style="background: white; color: #475569; border: 1px solid #CBD5E1; border-bottom: none; border-radius: 8px 8px 0 0; padding: 10px 18px; font-weight: 700; font-size: 13px; cursor: pointer;">
+            <i class="fa-brands fa-google me-1 text-danger"></i> 3. GOOGLE FORM CHÍNH THỨC (TRỰC TIẾP)
           </button>
         </div>
 
-        <!-- 4 THẺ KPI TIẾN ĐỘ & XẾP LOẠI THI ĐUA -->
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
-          <div style="background: white; border-top: 4px solid #0284C7; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-            <span style="font-size: 12.5px; color: #64748B; font-weight: 700;"><i class="fa-solid fa-building-columns text-primary me-1"></i> Tổng Số Tổ CĐ</span>
-            <div class="stat-number" id="rpt_stat_total" style="font-size: 26px; font-weight: 800; color: #0284C7; margin-top: 4px;">16 Tổ</div>
+        <!-- SUBTAB 1: BẢNG TỔNG HỢP & 4 KPI -->
+        <div id="subtab_view_reports_summary">
+          <!-- 4 THẺ KPI TIẾN ĐỘ & XẾP LOẠI THI ĐUA -->
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+            <div style="background: white; border-top: 4px solid #0284C7; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+              <span style="font-size: 12.5px; color: #64748B; font-weight: 700;"><i class="fa-solid fa-building-columns text-primary me-1"></i> Tổng Số Tổ CĐ</span>
+              <div class="stat-number" id="rpt_stat_total" style="font-size: 26px; font-weight: 800; color: #0284C7; margin-top: 4px;">16 Tổ</div>
+            </div>
+            <div style="background: white; border-top: 4px solid #10B981; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+              <span style="font-size: 12.5px; color: #64748B; font-weight: 700;"><i class="fa-solid fa-circle-check text-success me-1"></i> Đã Nộp Đúng Hạn</span>
+              <div class="stat-number" id="rpt_stat_submitted" style="font-size: 26px; font-weight: 800; color: #059669; margin-top: 4px;">16 Tổ</div>
+            </div>
+            <div style="background: white; border-top: 4px solid #EF4444; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+              <span style="font-size: 12.5px; color: #64748B; font-weight: 700;"><i class="fa-solid fa-clock-rotate-left text-danger me-1"></i> Chưa Nộp / Trễ Hạn</span>
+              <div class="stat-number" id="rpt_stat_late" style="font-size: 26px; font-weight: 800; color: #DC2626; margin-top: 4px;">0 Tổ</div>
+            </div>
+            <div style="background: #FFFBEB; border-top: 4px solid #F59E0B; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+              <span style="font-size: 12.5px; color: #B45309; font-weight: 700;"><i class="fa-solid fa-star text-warning me-1"></i> Xếp Loại Xuất Sắc (Loại A)</span>
+              <div class="stat-number" id="rpt_stat_excellent" style="font-size: 26px; font-weight: 800; color: #D97706; margin-top: 4px;">4 Tổ</div>
+            </div>
           </div>
-          <div style="background: white; border-top: 4px solid #10B981; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-            <span style="font-size: 12.5px; color: #64748B; font-weight: 700;"><i class="fa-solid fa-circle-check text-success me-1"></i> Đã Nộp Đúng Hạn</span>
-            <div class="stat-number" id="rpt_stat_submitted" style="font-size: 26px; font-weight: 800; color: #059669; margin-top: 4px;">16 Tổ</div>
-          </div>
-          <div style="background: white; border-top: 4px solid #EF4444; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-            <span style="font-size: 12.5px; color: #64748B; font-weight: 700;"><i class="fa-solid fa-clock-rotate-left text-danger me-1"></i> Chưa Nộp / Trễ Hạn</span>
-            <div class="stat-number" id="rpt_stat_late" style="font-size: 26px; font-weight: 800; color: #DC2626; margin-top: 4px;">0 Tổ</div>
-          </div>
-          <div style="background: #FFFBEB; border-top: 4px solid #F59E0B; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-            <span style="font-size: 12.5px; color: #B45309; font-weight: 700;"><i class="fa-solid fa-star text-warning me-1"></i> Xếp Loại Xuất Sắc (Loại A)</span>
-            <div class="stat-number" id="rpt_stat_excellent" style="font-size: 26px; font-weight: 800; color: #D97706; margin-top: 4px;">4 Tổ</div>
+
+          <!-- BẢNG TỔNG HỢP SỐ LIỆU 16 TỔ CÔNG ĐOÀN -->
+          <div style="background: white; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <thead>
+                <tr style="background: #003865; color: white; text-align: left;">
+                  <th style="padding: 12px 10px;">STT</th>
+                  <th style="padding: 12px 10px;">Tên Tổ Công Đoàn</th>
+                  <th style="padding: 12px 10px;">Tổ Trưởng</th>
+                  <th style="padding: 12px 10px; text-align: center;">Tổng ĐV</th>
+                  <th style="padding: 12px 10px; text-align: center;">Nữ</th>
+                  <th style="padding: 12px 10px; text-align: center;">Kết Nạp</th>
+                  <th style="padding: 12px 10px; text-align: center;">Chăm Lo</th>
+                  <th style="padding: 12px 10px; text-align: center;">Tuyên Truyền</th>
+                  <th style="padding: 12px 10px; text-align: center;">Trạng Thái</th>
+                  <th style="padding: 12px 10px; text-align: center;">BTV Xếp Loại</th>
+                  <th style="padding: 12px 10px; text-align: right;">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="admin_reports_table_body"></tbody>
+            </table>
           </div>
         </div>
 
-        <!-- FORM ĐIỀN BÁO CÁO THÁNG TRỰC TUYẾN DÀNH CHO TỔ TRƯỞNG (Ẩn/Hiện) -->
-        <div id="box_contributor_submit_report" style="display: none; background: white; border: 1px solid #BAE6FD; border-radius: 12px; padding: 22px; margin-bottom: 24px; box-shadow: 0 4px 15px rgba(2,132,199,0.08);">
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E2E8F0; padding-bottom: 12px; margin-bottom: 18px;">
-            <div>
-              <h3 style="font-size: 16px; font-weight: 800; color: #003865; margin: 0;">
-                <i class="fa-solid fa-file-circle-plus text-primary me-2"></i> BIỂU MẪU ĐIỀN BÁO CÁO THÁNG ĐIỆN TỬ (MẪU BM-02/CĐ)
-              </h3>
-              <p style="font-size: 12px; color: #64748B; margin: 2px 0 0;">Dành cho Tổ trưởng các Tổ Công đoàn nộp trực tiếp số liệu định kỳ lên Ban Thường Vụ</p>
-            </div>
-            <button type="button" onclick="toggleOnlineReportForm()" style="background: none; border: none; font-size: 20px; color: #64748B; cursor: pointer;">&times;</button>
+        <!-- SUBTAB 2: FORM ĐIỀN BÁO CÁO THÁNG TRỰC TUYẾN DÀNH CHO TỔ TRƯỞNG -->
+        <div id="subtab_view_reports_form" style="display: none; background: white; border: 1px solid #BAE6FD; border-radius: 12px; padding: 24px; box-shadow: 0 4px 15px rgba(2,132,199,0.08);">
+          <div style="border-bottom: 2px solid #E2E8F0; padding-bottom: 12px; margin-bottom: 20px;">
+            <h3 style="font-size: 17px; font-weight: 800; color: #003865; margin: 0;">
+              <i class="fa-solid fa-file-circle-plus text-primary me-2"></i> BIỂU MẪU ĐIỀN BÁO CÁO THÁNG ĐIỆN TỬ (MẪU BM-02/CĐ)
+            </h3>
+            <p style="font-size: 13px; color: #64748B; margin: 4px 0 0;">Dành cho Tổ trưởng các Tổ Công đoàn nộp trực tiếp số liệu định kỳ lên Ban Thường Vụ</p>
           </div>
 
           <!-- Nhóm 0: Thông tin chung -->
           <div style="display: grid; grid-template-columns: 2fr 1fr 1.5fr 1.5fr; gap: 14px; margin-bottom: 18px;">
             <div>
-              <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">Tổ Công Đoàn <span style="color: red;">*</span></label>
+              <label style="display: block; font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 4px;">Tổ Công Đoàn <span style="color: red;">*</span></label>
               <select id="rpt_input_unit" style="width: 100%; padding: 8px; border: 1px solid #CBD5E1; border-radius: 6px; font-weight: 700; color: #003865;">
                 <option value="9" selected>9. Viện Công nghệ số</option>
                 <option value="11">11. Trường Luật và Quản lý</option>
@@ -531,7 +550,7 @@
               </select>
             </div>
             <div>
-              <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">Kỳ Báo Cáo <span style="color: red;">*</span></label>
+              <label style="display: block; font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 4px;">Kỳ Báo Cáo <span style="color: red;">*</span></label>
               <select id="rpt_input_month" style="width: 100%; padding: 8px; border: 1px solid #CBD5E1; border-radius: 6px; font-weight: 700;">
                 <option value="8" selected>Tháng 8 / 2026</option>
                 <option value="9">Tháng 9 / 2026</option>
@@ -539,11 +558,11 @@
               </select>
             </div>
             <div>
-              <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">Người Báo Cáo <span style="color: red;">*</span></label>
+              <label style="display: block; font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 4px;">Người Báo Cáo <span style="color: red;">*</span></label>
               <input type="text" id="rpt_input_reporter" value="Hồ Ngọc Trung Kiên" style="width: 100%; padding: 8px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; font-weight: 600;">
             </div>
             <div>
-              <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">Email Liên Hệ <span style="color: red;">*</span></label>
+              <label style="display: block; font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 4px;">Email Liên Hệ <span style="color: red;">*</span></label>
               <input type="email" id="rpt_input_email" value="kienhnt@tdmu.edu.vn" style="width: 100%; padding: 8px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px;">
             </div>
           </div>
@@ -551,76 +570,84 @@
           <!-- Nhóm 1: Nhân sự & Chăm lo -->
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px;">
             <div style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px; background: #F8FAFC;">
-              <h5 style="font-size: 13px; font-weight: 800; color: #003865; margin: 0 0 10px;"><i class="fa-solid fa-users text-primary me-1"></i> 1. TÌNH HÌNH NHÂN SỰ &amp; ĐOÀN VIÊN</h5>
+              <h5 style="font-size: 13px; font-weight: 800; color: #003865; margin: 0 0 10px;"><i class="fa-solid fa-users text-primary me-1"></i> I. TÌNH HÌNH NHÂN SỰ &amp; ĐOÀN VIÊN</h5>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
-                <div><label>Tổng CBNV:</label><input type="number" id="rpt_f1_cbnv" value="66" style="width: 100%; padding: 4px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
-                <div><label>Tổng đoàn viên:</label><input type="number" id="rpt_f1_doanvien" value="66" style="width: 100%; padding: 4px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
-                <div><label>Nữ đoàn viên:</label><input type="number" id="rpt_f1_nu" value="17" style="width: 100%; padding: 4px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
-                <div><label>Kết nạp mới:</label><input type="number" id="rpt_f1_ketnap" value="0" style="width: 100%; padding: 4px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
+                <div><label>1. Tổng CBNV:</label><input type="number" id="rpt_f1_cbnv" value="66" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
+                <div><label>2. Tổng đoàn viên:</label><input type="number" id="rpt_f1_doanvien" value="66" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
+                <div><label>3. Nữ đoàn viên:</label><input type="number" id="rpt_f1_nu" value="17" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
+                <div><label>4. Kết nạp trong tháng:</label><input type="number" id="rpt_f1_ketnap" value="0" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
+                <div><label>5. Đoàn viên giảm:</label><input type="number" id="rpt_f1_giam" value="0" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
+                <div><label>6. Giới thiệu Đảng:</label><input type="number" id="rpt_f1_gtdang" value="0" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
+                <div style="grid-column: span 2;"><label>7. Kết nạp Đảng trong tháng:</label><input type="number" id="rpt_f1_kndang" value="0" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
               </div>
             </div>
 
             <div style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px; background: #F8FAFC;">
-              <h5 style="font-size: 13px; font-weight: 800; color: #003865; margin: 0 0 10px;"><i class="fa-solid fa-heart-pulse text-danger me-1"></i> 2. CHĂM LO ĐỜI SỐNG &amp; AN TOÀN</h5>
+              <h5 style="font-size: 13px; font-weight: 800; color: #003865; margin: 0 0 10px;"><i class="fa-solid fa-heart-pulse text-danger me-1"></i> II. CHĂM LO ĐỜI SỐNG &amp; AN TOÀN</h5>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
-                <div><label>Số người chăm lo:</label><input type="number" id="rpt_f2_chamlo" value="3" style="width: 100%; padding: 4px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
-                <div><label>Tổng tiền chăm lo (VNĐ):</label><input type="text" id="rpt_f2_tienchamlo" value="1,500,000 VNĐ" style="width: 100%; padding: 4px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
-                <div><label>Bệnh hiểm nghèo:</label><input type="number" id="rpt_f2_hiemngheo" value="1" style="width: 100%; padding: 4px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
-                <div><label>Tai nạn LĐ (người chết):</label><input type="number" id="rpt_f2_tainan" value="0" style="width: 100%; padding: 4px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
+                <div><label>1. Bệnh hiểm nghèo:</label><input type="number" id="rpt_f2_hiemngheo" value="1" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
+                <div><label>2. Người được chăm lo:</label><input type="number" id="rpt_f2_chamlo" value="3" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
+                <div style="grid-column: span 2;"><label>3. Tổng tiền chăm lo (VNĐ):</label><input type="text" id="rpt_f2_tienchamlo" value="1,500,000 VNĐ" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
+                <div><label>4. Vụ tai nạn LĐ:</label><input type="number" id="rpt_f2_tainan" value="0" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
+                <div><label>6. Người chết do TNLĐ:</label><input type="number" id="rpt_f2_tuvong" value="0" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px;"></div>
               </div>
             </div>
           </div>
 
           <!-- Nhóm 2: Tuyên truyền & Kế hoạch & Link Minh Chứng -->
           <div style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px; background: #F8FAFC; margin-bottom: 18px;">
-            <h5 style="font-size: 13px; font-weight: 800; color: #003865; margin: 0 0 10px;"><i class="fa-solid fa-bullhorn text-warning me-1"></i> 3. CÔNG TÁC TUYÊN TRUYỀN &amp; MINH CHỨNG</h5>
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin-bottom: 8px; font-size: 12px;">
+            <h5 style="font-size: 13px; font-weight: 800; color: #003865; margin: 0 0 10px;"><i class="fa-solid fa-bullhorn text-warning me-1"></i> III. CÔNG TÁC TUYÊN TRUYỀN, MINH CHỨNG &amp; KIẾN NGHỊ</h5>
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin-bottom: 12px; font-size: 12px;">
               <div>
-                <label>Số buổi tuyên truyền:</label>
-                <input type="number" id="rpt_f4_tt_buoi" value="2" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px; margin-bottom: 6px;">
-                <label>Số người tham dự:</label>
+                <label>1. Số buổi tuyên truyền:</label>
+                <input type="number" id="rpt_f4_tt_buoi" value="2" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px; margin-bottom: 8px;">
+                <label>2. Số người tham dự:</label>
                 <input type="number" id="rpt_f4_tt_nguoi" value="66" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px;">
               </div>
               <div>
-                <label>Nội dung tuyên truyền trọng tâm:</label>
+                <label>3. Nội dung tuyên truyền trọng tâm:</label>
                 <textarea id="rpt_f4_tt_noidung" rows="3" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px; font-size: 12.5px;">- Tuyên truyền kỷ niệm 97 năm ngày thành lập Công đoàn Việt Nam;
 - Tuyên truyền Nghị quyết Đại hội Công đoàn Thành phố Hồ Chí Minh lần thứ I.</textarea>
               </div>
             </div>
-            <div style="font-size: 12px;">
-              <label>Đường dẫn thư mục Minh chứng hoạt động (Google Drive / OneDriver):</label>
-              <input type="text" id="rpt_f5_minhchung" placeholder="https://drive.google.com/drive/folders/..." style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px;">
+            <div style="margin-bottom: 12px; font-size: 12px;">
+              <label><strong>Gửi minh chứng các hoạt động nếu có (Link Google Drive):</strong></label>
+              <input type="text" id="rpt_f5_minhchung" placeholder="https://drive.google.com/open?id=..." style="width: 100%; padding: 8px; border: 1px solid #CBD5E1; border-radius: 4px;">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px;">
+              <div>
+                <label>2. Kế hoạch tháng tới:</label>
+                <textarea id="rpt_f5_kehoach" rows="2" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px;">1. Tổ chức tết Trung thu; 2. Tổ chức khám sức khỏe CĐV</textarea>
+              </div>
+              <div>
+                <label>3. Những vấn đề cần kiến nghị Nhà trường / CĐ Trường:</label>
+                <textarea id="rpt_f5_kiennghi" rows="2" style="width: 100%; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 4px;">Không</textarea>
+              </div>
             </div>
           </div>
 
           <div style="display: flex; justify-content: flex-end; gap: 10px;">
-            <button type="button" onclick="toggleOnlineReportForm()" style="padding: 8px 16px; border: 1px solid #CBD5E1; background: white; border-radius: 6px; cursor: pointer;">Đóng Lại</button>
-            <button type="button" onclick="submitGoogleFormReport()" style="padding: 8px 24px; border: none; background: #003865; color: white; font-weight: 700; border-radius: 6px; cursor: pointer;">
-              <i class="fa-solid fa-paper-plane me-1 text-warning"></i> NỘP BÁO CÁO LÊN BAN THƯỜNG VỤ
+            <button type="button" onclick="switchReportSubTab('summary')" style="padding: 10px 20px; border: 1px solid #CBD5E1; background: white; border-radius: 6px; cursor: pointer; font-weight: 600;">Quay Lại Bảng Tổng Hợp</button>
+            <button type="button" onclick="submitGoogleFormReport()" style="padding: 10px 28px; border: none; background: #003865; color: white; font-weight: 700; border-radius: 6px; cursor: pointer; font-size: 14px;">
+              <i class="fa-solid fa-paper-plane me-2 text-warning"></i> NỘP BÁO CÁO LÊN BAN THƯỜNG VỤ
             </button>
           </div>
         </div>
 
-        <!-- BẢNG TỔNG HỢP SỐ LIỆU 16 TỔ CÔNG ĐOÀN (CÓ HUY HIỆU XẾP LOẠI BTV) -->
-        <div style="background: white; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
-          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-            <thead>
-              <tr style="background: #003865; color: white; text-align: left;">
-                <th style="padding: 12px 10px;">STT</th>
-                <th style="padding: 12px 10px;">Tên Tổ Công Đoàn</th>
-                <th style="padding: 12px 10px;">Tổ Trưởng</th>
-                <th style="padding: 12px 10px; text-align: center;">Tổng ĐV</th>
-                <th style="padding: 12px 10px; text-align: center;">Nữ</th>
-                <th style="padding: 12px 10px; text-align: center;">Kết Nạp</th>
-                <th style="padding: 12px 10px; text-align: center;">Chăm Lo</th>
-                <th style="padding: 12px 10px; text-align: center;">Tuyên Truyền</th>
-                <th style="padding: 12px 10px; text-align: center;">Trạng Thái</th>
-                <th style="padding: 12px 10px; text-align: center;">BTV Xếp Loại</th>
-                <th style="padding: 12px 10px; text-align: right;">Thao Tác</th>
-              </tr>
-            </thead>
-            <tbody id="admin_reports_table_body"></tbody>
-          </table>
+        <!-- SUBTAB 3: GOOGLE FORM NHÀ TRƯỜNG CHÍNH THỨC NHÚNG TRỰC TIẾP -->
+        <div id="subtab_view_reports_gform" style="display: none; background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.04);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #E2E8F0;">
+            <div>
+              <h3 style="font-size: 16px; font-weight: 800; color: #DC2626; margin: 0;">
+                <i class="fa-brands fa-google me-2"></i> BIỂU MẪU ĐIỀN BÁO CÁO CHÍNH THỨC CÔNG ĐOÀN TRƯỜNG ĐH THỦ DẦU MỘT
+              </h3>
+              <span style="font-size: 12px; color: #64748B;">Hệ thống Google Forms gốc của Nhà trường được nhúng trực tiếp để cán bộ thao tác thuận tiện</span>
+            </div>
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSelw4xZGXNz2fUHOy0wHZ9-rIt5N-gneVP005KjpjURduNvrg/viewform" target="_blank" class="btn btn-sm" style="background: #DC2626; color: white; font-weight: 700; text-decoration: none; padding: 8px 16px; border-radius: 6px;">
+              <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Mở Trong Cửa Sổ Mới
+            </a>
+          </div>
+          <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSelw4xZGXNz2fUHOy0wHZ9-rIt5N-gneVP005KjpjURduNvrg/viewform?embedded=true" width="100%" height="820" frameborder="0" marginheight="0" marginwidth="0" style="border-radius: 8px; border: 1px solid #CBD5E1;">Đang tải Google Form...</iframe>
         </div>
       </section>
 
@@ -739,13 +766,13 @@
   </div>
 
   <!-- MODAL BÁO CÁO THÁNG CHI TIẾT -->
-  <div class="modal-backdrop" id="view_report_detail_modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 9999;">
-    <div style="background: white; border-radius: 12px; padding: 24px; max-width: 800px; width: 100%; max-height: 90vh; overflow-y: auto;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px;">
-        <h3 id="modal_rpt_title" style="font-size: 16px; font-weight: 800; color: #003865; margin: 0;">Chi Tiết Báo Cáo Tháng</h3>
-        <button onclick="closeViewReportModal()" style="background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+  <div id="view_report_detail_modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); align-items: center; justify-content: center; z-index: 999999; backdrop-filter: blur(4px);">
+    <div style="background: white; border-radius: 12px; width: 95%; max-width: 820px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); position: relative;">
+      <div style="background: #003865; color: white; border-radius: 12px 12px 0 0; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10;">
+        <h3 id="modal_rpt_title" style="font-size: 16px; font-weight: 800; color: white; margin: 0;">Chi Tiết Báo Cáo Tháng</h3>
+        <button type="button" onclick="closeViewReportModal()" style="background: none; border: none; font-size: 26px; color: white; cursor: pointer; line-height: 1;">&times;</button>
       </div>
-      <div id="modal_rpt_body"></div>
+      <div id="modal_rpt_body" style="padding: 24px;"></div>
     </div>
   </div>
 
