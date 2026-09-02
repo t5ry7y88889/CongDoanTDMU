@@ -1,0 +1,274 @@
+﻿-- =========================================================================
+-- CƠ SỞ DỮ LIỆU TOÀN DIỆN 15 BẢNG (15 TABLES ENTERPRISE SCHEMA - 3NF)
+-- HỆ THỐNG TRUYỀN THÔNG & QUẢN TRỊ CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT (TDMU)
+-- MYSQL 8.0+ / MARIADB / PHPMYADMIN / LARAGON
+-- Database: TDMU_CongDoan_DB
+-- =========================================================================
+
+CREATE DATABASE IF NOT EXISTS TDMU_CongDoan_DB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE TDMU_CongDoan_DB;
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- Xóa các bảng cũ theo thứ tự
+DROP TABLE IF EXISTS INBOX_FEEDBACK;
+DROP TABLE IF EXISTS DON_TRO_CAP;
+DROP TABLE IF EXISTS PHUC_LOI;
+DROP TABLE IF EXISTS BOOKMARKS;
+DROP TABLE IF EXISTS COMMENTS;
+DROP TABLE IF EXISTS ARTICLE_AUDITS;
+DROP TABLE IF EXISTS USERS;
+DROP TABLE IF EXISTS SCHEDULES;
+DROP TABLE IF EXISTS MONTHLY_REPORTS;
+DROP TABLE IF EXISTS DOCUMENTS;
+DROP TABLE IF EXISTS ARTICLES;
+DROP TABLE IF EXISTS CATEGORIES;
+DROP TABLE IF EXISTS NHAN_SU;
+DROP TABLE IF EXISTS TO_CONG_DOAN;
+DROP TABLE IF EXISTS TO_CHUC;
+
+-- =========================================================================
+-- NHÓM 1: 8 BẢNG QUẢN TRỊ CỐT LÕI (CORE GOVERNANCE & CONTENT)
+-- =========================================================================
+
+-- 1. BẢNG TO_CHUC (5 Ban chuyên môn cấp Trường)
+CREATE TABLE TO_CHUC (
+    MaToChuc INT AUTO_INCREMENT PRIMARY KEY,
+    TenToChuc VARCHAR(150) NOT NULL,
+    NhiemKy VARCHAR(50) NOT NULL DEFAULT 'Nhiệm kỳ 2023 - 2028',
+    MoTaChucNang TEXT NULL,
+    ThuTuHienThi INT DEFAULT 1,
+    TrangThai TINYINT(1) DEFAULT 1,
+    NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 2. BẢNG TO_CONG_DOAN (16 Tổ công đoàn bộ phận)
+CREATE TABLE TO_CONG_DOAN (
+    MaToCongDoan INT AUTO_INCREMENT PRIMARY KEY,
+    MaDinhDanh VARCHAR(50) UNIQUE NOT NULL,
+    TenToCongDoan VARCHAR(150) NOT NULL,
+    ToTruong VARCHAR(100) NULL,
+    EmailLienHe VARCHAR(100) NULL,
+    SoDienThoai VARCHAR(20) NULL,
+    DiaChiVanPhong VARCHAR(150) NULL,
+    TrangThai TINYINT(1) DEFAULT 1,
+    NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 3. BẢNG NHAN_SU (Cán bộ giảng viên đoàn viên)
+CREATE TABLE NHAN_SU (
+    MaNhanSu INT AUTO_INCREMENT PRIMARY KEY,
+    MaToCongDoan INT NOT NULL,
+    MaToChuc INT NULL,
+    MaCanBo VARCHAR(50) UNIQUE NOT NULL,
+    HoVaTen VARCHAR(100) NOT NULL,
+    GioiTinh VARCHAR(10) DEFAULT 'Nam',
+    NgaySinh DATE NULL,
+    Email VARCHAR(100) UNIQUE NOT NULL,
+    SoDienThoai VARCHAR(20) NULL,
+    HocHamHocVi VARCHAR(50) NULL,
+    ChucVuCongDoan VARCHAR(100) DEFAULT 'Đoàn viên',
+    ChucVuChuyenMon VARCHAR(100) NULL,
+    TrangThai TINYINT(1) DEFAULT 1,
+    NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT FK_NhanSu_ToCongDoan FOREIGN KEY (MaToCongDoan) REFERENCES TO_CONG_DOAN(MaToCongDoan),
+    CONSTRAINT FK_NhanSu_ToChuc FOREIGN KEY (MaToChuc) REFERENCES TO_CHUC(MaToChuc) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 4. BẢNG CATEGORIES (Chuyên mục bài viết)
+CREATE TABLE CATEGORIES (
+    CategoryId INT AUTO_INCREMENT PRIMARY KEY,
+    TenChuyenMuc VARCHAR(100) NOT NULL,
+    Slug VARCHAR(120) UNIQUE NOT NULL,
+    MoTa TEXT NULL,
+    ThuTu INT DEFAULT 1,
+    TrangThai TINYINT(1) DEFAULT 1,
+    NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 5. BẢNG ARTICLES (Bài viết & Tòa soạn AI Đa Kênh)
+CREATE TABLE ARTICLES (
+    ArticleId INT AUTO_INCREMENT PRIMARY KEY,
+    MaTacGia INT NOT NULL,
+    CategoryId INT NULL,
+    TieuDe VARCHAR(255) NOT NULL,
+    Slug VARCHAR(255) UNIQUE NOT NULL,
+    TomTat TEXT NULL,
+    NoiDung LONGTEXT NOT NULL,
+    HinhAnhDaiDien VARCHAR(500) NULL,
+    NoiDungFB TEXT NULL,
+    NoiDungZalo TEXT NULL,
+    VideoScript TEXT NULL,
+    IsAiGenerated TINYINT(1) DEFAULT 0,
+    AiPrompt TEXT NULL,
+    TrangThai VARCHAR(20) DEFAULT 'draft',
+    LuotXem INT DEFAULT 0,
+    LuotThich INT DEFAULT 0,
+    NgayXuatBan DATETIME NULL,
+    NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    NgayCapNhat DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT FK_Articles_TacGia FOREIGN KEY (MaTacGia) REFERENCES NHAN_SU(MaNhanSu),
+    CONSTRAINT FK_Articles_Category FOREIGN KEY (CategoryId) REFERENCES CATEGORIES(CategoryId) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 6. BẢNG DOCUMENTS (Kho văn bản chỉ đạo & biểu mẫu)
+CREATE TABLE DOCUMENTS (
+    DocumentId INT AUTO_INCREMENT PRIMARY KEY,
+    MaNguoiDang INT NOT NULL,
+    SoHieuVanBan VARCHAR(100) NOT NULL,
+    TenVanBan VARCHAR(255) NOT NULL,
+    LoaiVanBan VARCHAR(50) NOT NULL DEFAULT 'tuyentruyen',
+    CoQuanBanHanh VARCHAR(150) NOT NULL DEFAULT 'Ban Thường Vụ Công Đoàn TDMU',
+    NgayBanHanh DATE NOT NULL,
+    NguoiKy VARCHAR(100) NULL,
+    TepDinhKem VARCHAR(500) NOT NULL,
+    DungLuong VARCHAR(50) DEFAULT '1.5 MB',
+    LuotTai INT DEFAULT 0,
+    GhiChu TEXT NULL,
+    NgayDang DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT FK_Documents_NguoiDang FOREIGN KEY (MaNguoiDang) REFERENCES NHAN_SU(MaNhanSu)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 7. BẢNG MONTHLY_REPORTS (Báo cáo tháng định kỳ 16 Tổ CĐ - BM-02/CĐ)
+CREATE TABLE MONTHLY_REPORTS (
+    ReportId INT AUTO_INCREMENT PRIMARY KEY,
+    MaToCongDoan INT NOT NULL,
+    MaNguoiBaoCao INT NOT NULL,
+    ThangBaoCao INT NOT NULL,
+    NamBaoCao INT NOT NULL DEFAULT 2026,
+    TongSoCBNV INT DEFAULT 0,
+    TongSoDoanVien INT DEFAULT 0,
+    TongSoNuDoanVien INT DEFAULT 0,
+    SoDoanVienKetNap INT DEFAULT 0,
+    SoDoanVienUuTuSangDang INT DEFAULT 0,
+    SoNguoiDuocChamLo INT DEFAULT 0,
+    TongTienChamLo DECIMAL(15, 2) DEFAULT 0,
+    NoiDungTuyenTruyen TEXT NULL,
+    HoatDongKhac TEXT NULL,
+    KeHoachThangToi TEXT NULL,
+    KienNghiNhaTruong TEXT NULL,
+    LinkMinhChung VARCHAR(500) NULL,
+    TuDanhGia VARCHAR(100) DEFAULT 'Hoàn thành tốt nhiệm vụ (Loại B)',
+    BtvXepLoai VARCHAR(100) DEFAULT 'Chờ duyệt',
+    TrangThai VARCHAR(20) DEFAULT 'Submitted',
+    NgayNop DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT FK_Reports_ToCongDoan FOREIGN KEY (MaToCongDoan) REFERENCES TO_CONG_DOAN(MaToCongDoan) ON DELETE CASCADE,
+    CONSTRAINT FK_Reports_NguoiBaoCao FOREIGN KEY (MaNguoiBaoCao) REFERENCES NHAN_SU(MaNhanSu)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 8. BẢNG SCHEDULES (Lịch hẹn giờ xuất bản đa kênh)
+CREATE TABLE SCHEDULES (
+    ScheduleId INT AUTO_INCREMENT PRIMARY KEY,
+    ArticleId INT NOT NULL,
+    KenhXuatBan VARCHAR(50) NOT NULL DEFAULT 'Website',
+    ThoiGianDang DATETIME NOT NULL,
+    TrangThai VARCHAR(20) DEFAULT 'Pending',
+    GhiChuLoi TEXT NULL,
+    NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT FK_Schedules_Articles FOREIGN KEY (ArticleId) REFERENCES ARTICLES(ArticleId) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =========================================================================
+-- NHÓM 2: 7 BẢNG BỔ TRỢ TƯƠNG TÁC, PHÚC LỢI & KIỂM TOÁN (INTERACTIVE PORTAL & WELFARE)
+-- =========================================================================
+
+-- 9. BẢNG USERS (Tài khoản xác thực & phân quyền 3 Role)
+CREATE TABLE USERS (
+    UserId INT AUTO_INCREMENT PRIMARY KEY,
+    MaNhanSu INT NULL,
+    Email VARCHAR(150) UNIQUE NOT NULL,
+    PasswordHash VARCHAR(255) NOT NULL,
+    HoTen VARCHAR(100) NOT NULL,
+    VaiTro VARCHAR(20) NOT NULL DEFAULT 'Contributor',
+    AvatarUrl VARCHAR(500) NULL,
+    LastLoginAt DATETIME NULL,
+    TrangThai TINYINT(1) DEFAULT 1,
+    NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT FK_Users_NhanSu FOREIGN KEY (MaNhanSu) REFERENCES NHAN_SU(MaNhanSu) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10. BẢNG ARTICLE_AUDITS (Lịch sử tác nghiệp & vết duyệt bài)
+CREATE TABLE ARTICLE_AUDITS (
+    AuditId INT AUTO_INCREMENT PRIMARY KEY,
+    ArticleId INT NOT NULL,
+    UserId INT NOT NULL,
+    HanhDong VARCHAR(100) NOT NULL,
+    GhiChu TEXT NULL,
+    IpAddress VARCHAR(45) NULL,
+    NgayThucHien DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT FK_Audits_Articles FOREIGN KEY (ArticleId) REFERENCES ARTICLES(ArticleId) ON DELETE CASCADE,
+    CONSTRAINT FK_Audits_Users FOREIGN KEY (UserId) REFERENCES USERS(UserId)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 11. BẢNG COMMENTS (Bình luận bài viết của đoàn viên)
+CREATE TABLE COMMENTS (
+    CommentId INT AUTO_INCREMENT PRIMARY KEY,
+    ArticleId INT NOT NULL,
+    HoTen VARCHAR(100) NOT NULL,
+    Email VARCHAR(100) NULL,
+    ChucVu VARCHAR(100) NULL,
+    NoiDung TEXT NOT NULL,
+    TrangThai VARCHAR(20) DEFAULT 'approved',
+    NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT FK_Comments_Articles FOREIGN KEY (ArticleId) REFERENCES ARTICLES(ArticleId) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 12. BẢNG BOOKMARKS (Tủ sách đọc sau cá nhân)
+CREATE TABLE BOOKMARKS (
+    BookmarkId INT AUTO_INCREMENT PRIMARY KEY,
+    UserId INT NULL,
+    MaCanBo VARCHAR(50) NULL,
+    ArticleId INT NOT NULL,
+    TieuDe VARCHAR(255) NULL,
+    GhiChu VARCHAR(255) NULL,
+    NgayLuu DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT FK_Bookmarks_Articles FOREIGN KEY (ArticleId) REFERENCES ARTICLES(ArticleId) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 13. BẢNG PHUC_LOI (Các gói chương trình phúc lợi đoàn viên)
+CREATE TABLE PHUC_LOI (
+    PhucLoiId INT AUTO_INCREMENT PRIMARY KEY,
+    MaPhucLoi VARCHAR(50) UNIQUE NOT NULL,
+    TieuDe VARCHAR(200) NOT NULL,
+    ChuyenMuc VARCHAR(50) DEFAULT 'le_tet',
+    DoiTuongHuong VARCHAR(200) NOT NULL,
+    MucHoTro VARCHAR(150) NOT NULL,
+    MoTa TEXT NULL,
+    Icon VARCHAR(50) DEFAULT 'fa-gift',
+    TrangThai VARCHAR(20) DEFAULT 'active',
+    NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 14. BẢNG DON_TRO_CAP (Đơn xin trợ cấp & chăm lo khó khăn)
+CREATE TABLE DON_TRO_CAP (
+    DonId INT AUTO_INCREMENT PRIMARY KEY,
+    MaNhanSu INT NULL,
+    HoTen VARCHAR(100) NOT NULL,
+    DonVi VARCHAR(150) NOT NULL,
+    LoaiTroCap VARCHAR(150) NOT NULL,
+    SoTienDeXuat DECIMAL(15, 2) DEFAULT 0,
+    LyDo TEXT NOT NULL,
+    TepMinhChung VARCHAR(500) NULL,
+    TrangThai VARCHAR(20) DEFAULT 'pending',
+    NguoiDuyet VARCHAR(100) NULL,
+    GhiChu TEXT NULL,
+    NgayNop DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 15. BẢNG INBOX_FEEDBACK (Hòm thư góp ý & phản ánh gửi BCH)
+CREATE TABLE INBOX_FEEDBACK (
+    FeedbackId INT AUTO_INCREMENT PRIMARY KEY,
+    HoTen VARCHAR(100) NOT NULL,
+    Email VARCHAR(100) NOT NULL,
+    SoDienThoai VARCHAR(20) NULL,
+    DonVi VARCHAR(150) NULL,
+    ChuDe VARCHAR(150) NOT NULL,
+    TieuDe VARCHAR(255) NOT NULL,
+    NoiDung TEXT NOT NULL,
+    TepDinhKem VARCHAR(500) NULL,
+    TrangThai VARCHAR(20) DEFAULT 'pending',
+    TraLoi TEXT NULL,
+    NgayGui DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET FOREIGN_KEY_CHECKS = 1;

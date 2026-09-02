@@ -74,52 +74,77 @@ Dự án giải quyết triệt để các bài toán thực tiễn của công 
 
 ---
 
-## 🗄️ 3. KIẾN TRÚC CƠ SỞ DỮ LIỆU CHUẨN 3NF (9 BẢNG HỢP NHẤT)
+## 🗄️ 3. KIẾN TRÚC CƠ SỞ DỮ LIỆU TOÀN DIỆN 15 BẢNG (15 TABLES 3NF ENTERPRISE SCHEMA)
 
-Cơ sở dữ liệu được chuẩn hóa ở mức **3NF** (Third Normal Form), toàn vẹn dữ liệu với các khóa ngoại `ON DELETE CASCADE` và `ON DELETE SET NULL`:
+Hệ thống được thiết kế theo chuẩn chuẩn hóa dữ liệu **3NF** (Third Normal Form), đảm bảo không dư thừa, tối ưu truy vấn và bảo đảm toàn vẹn tham chiếu với các ràng buộc khóa ngoại `ON DELETE CASCADE` và `ON DELETE SET NULL`.
+
+Toàn bộ hệ thống 15 bảng được cấu trúc thành **2 Nhóm chức năng** bổ trợ nhau hoàn chỉnh:
 
 ```
-                           +--------------------+
-                           |      TO_CHUC       |
-                           +--------------------+
-                                     | 1
-                                     |
-                                     | n
-+--------------------+ 1   n +--------------------+ 1    n +--------------------+
-|    TO_CONG_DOAN    |-------|      NHAN_SU       |--------|      TIN_TUC       |
-+--------------------+       +--------------------+        +--------------------+
-          | 1                          | 1                           | 1
-          |                            |                             |
-          | n                          | n                           | n
-+--------------------+       +--------------------+        +--------------------+
-|   BAO_CAO_THANG    |       |      VAN_BAN       |        |   LICH_XUAT_BAN    |
-+--------------------+       +--------------------+        +--------------------+
-                                       | 1
-                                       |
-                                       | n
-                             +--------------------+
-                             |    KHO_TU_LIEU     |
-                             +--------------------+
-                                       | 1
-                                       |
-                                       | n
-                             +--------------------+
-                             |      NHAT_KY       |
-                             +--------------------+
+                            +--------------------+
+                            |      TO_CHUC       |
+                            +--------------------+
+                                      | 1
+                                      |
+                                      | n
++--------------------+ 1    n +--------------------+ 1    n +--------------------+
+|    TO_CONG_DOAN    |--------|      NHAN_SU       |--------|      ARTICLES      |
++--------------------+        +--------------------+        +--------------------+
+          | 1                           | 1                   | 1     | 1     | 1
+          |                             |                     |       |       |
+          | n                           | n                   | n     | n     | n
++--------------------+        +--------------------+        +-----+ +-----+ +-----+
+|  MONTHLY_REPORTS   |        |     DOCUMENTS      |        | SCH | | COM | | BMK |
++--------------------+        +--------------------+        +-----+ +-----+ +-----+
+                                        | 1                    |       |       |
+                                        |                   Lịch   Bình    Tủ sách
+                                        | n                  đăng   luận   cá nhân
+                              +--------------------+
+                              |       USERS        |
+                              +--------------------+
+                                        | 1
+                                        | n
+                              +--------------------+
+                              |   ARTICLE_AUDITS   |
+                              +--------------------+
+
+             [ PHÂN HỆ CHĂM LO PHÚC LỢI & Ý KIẾN ĐOÀN VIÊN ]
+        +--------------------+ 1      n +--------------------+
+        |      PHUC_LOI      |----------|     DON_TRO_CAP    |
+        +--------------------+          +--------------------+
+                                                  |
+                                                  | (NhanSu / DoanVien)
+                                        +--------------------+
+                                        |   INBOX_FEEDBACK   |
+                                        +--------------------+
 ```
 
-### Danh mục 9 Bảng Dữ Liệu:
-| STT | Tên Bảng | Ý Nghĩa Nghiệp Vụ |
+### 🏛️ Nhóm 1: 8 Bảng Quản Trị Cốt Lõi (Core Governance & Media)
+| STT | Tên Bảng | Ý Nghĩa Nghiệp Vụ Trong Hệ Thống TDMU |
 |:---:|:---|:---|
-| **1** | `TO_CHUC` | 5 Ban chuyên môn cấp Trường (BTV, BCH, UBKT, Ban Nữ công, Ban Tuyên giáo). |
-| **2** | `TO_CONG_DOAN` | Danh mục **16 Tổ Công đoàn cơ sở trực thuộc** bám sát thực tế trường. |
-| **3** | `NHAN_SU` | Hồ sơ cán bộ, phân quyền 3 cấp (`Admin`, `Editor`, `Contributor`). |
-| **4** | `TIN_TUC` | Quản lý bài báo, nội dung đa kênh (Web, FB, Zalo, Video Script), cờ AI, lượt xem. |
-| **5** | `LICH_XUAT_BAN` | Lịch hẹn giờ xuất bản đa kênh tự động. |
-| **6** | `VAN_BAN` | Kho văn bản chỉ đạo, nghị quyết, quy chế và biểu mẫu đính kèm (PDF/DOCX). |
-| **7** | `BAO_CAO_THANG` | Dữ liệu báo cáo định kỳ 16 Tổ CĐ, tự đánh giá, BTV xếp loại (Loại A/B/C) và link minh chứng. |
-| **8** | `KHO_TU_LIEU` | Digital Asset Management (DAM): lưu trữ ảnh sự kiện, kỷ yếu NCKH, banner. |
-| **9** | `NHAT_KY` | Audit Trail: lưu vết thời gian, người thực hiện, hành động và địa chỉ IP. |
+| **1** | `TO_CHUC` | Quản lý 5 Ban chuyên môn cấp Trường (BTV, BCH, UBKT, Ban Nữ công, Ban Tuyên giáo). |
+| **2** | `TO_CONG_DOAN` | Danh mục **16 Tổ Công đoàn cơ sở trực thuộc** (Khối Hiệu bộ, Viện CNS, Trường Luật, Sư phạm...). |
+| **3** | `NHAN_SU` | Hồ sơ 13 cán bộ BCH, UBKT và giảng viên đoàn viên toàn trường. |
+| **4** | `CATEGORIES` | Danh mục chuyên đề bài viết (*Hoạt động phong trào, Thông báo, Gương sáng, Chăm lo, Nữ công*). |
+| **5** | `ARTICLES` | Quản lý bài báo, nội dung đa kênh AI (Web HTML, Facebook Caption, Zalo OA, Video 60s), cờ AI, lượt xem. |
+| **6** | `DOCUMENTS` | Kho văn bản chỉ đạo 4 loại (*Tuyên truyền, Kế hoạch, Luật Công đoàn, Quyết định*), file PDF/DOCX. |
+| **7** | `MONTHLY_REPORTS` | **Báo cáo định kỳ & Đánh giá thi đua 16 Tổ CĐ** (khớp 100% mẫu BM-02/CĐ và Google Forms thực tế). |
+| **8** | `SCHEDULES` | Lập lịch hẹn giờ Cronjob tự động & xuất bản đa kênh. |
+
+### 🌟 Nhóm 2: 7 Bảng Bổ Trợ Tương Tác, Phúc Lợi & Kiểm Toán (Interactive Portal & Welfare)
+| STT | Tên Bảng | Ý Nghĩa Nghiệp Vụ Trong Hệ Thống TDMU |
+|:---:|:---|:---|
+| **9** | `USERS` | Tài khoản xác thực & phân quyền 3 Role (`Admin`, `Editor`, `Contributor`). |
+| **10**| `ARTICLE_AUDITS`| Lịch sử tác nghiệp & vết duyệt bài (ai tạo, ai sửa, ai duyệt, IP tác nghiệp). |
+| **11**| `COMMENTS` | Ý kiến đóng góp, phản hồi và bình luận của đoàn viên dưới bài viết. |
+| **12**| `BOOKMARKS` | **Tủ sách đọc sau cá nhân** (lưu trữ bài viết yêu thích đọc offline qua PWA). |
+| **13**| `PHUC_LOI` | Danh mục các chương trình phúc lợi (*Quà tết, Hỗ trợ thai sản nữ công, Trợ cấp ốm đau, Vay CEP*). |
+| **14**| `DON_TRO_CAP` | Hồ sơ tiếp nhận đơn đề nghị trợ cấp khó khăn & theo dõi tiến độ giải ngân kinh phí. |
+| **15**| `INBOX_FEEDBACK`| Hòm thư tư liệu, phản ánh kiến nghị & đóng góp xây dựng Công đoàn gửi về BTV. |
+
+*File kịch bản SQL 15 bảng đã được cung cấp sẵn trong thư mục `database/`:*
+* `database/schema_15_tables_mssql.sql` & `database/seed_15_tables_mssql.sql` (Microsoft SQL Server / SSMS)
+* `database/schema_15_tables_mysql.sql` & `database/seed_15_tables_mysql.sql` (MySQL / MariaDB / phpMyAdmin)
 
 ---
 
@@ -154,11 +179,11 @@ GROQ_API_KEY=gsk_...
 
 ### Bước 4: Khởi tạo Cơ Sở Dữ Liệu (Tùy chọn MSSQL hoặc MySQL)
 * **Cách 1: Microsoft SQL Server (SSMS)**:
-  - Mở SSMS, mở và chạy file `database/schema_unified_9_tables_mssql.sql`.
-  - Chạy tiếp file nạp dữ liệu mẫu: `database/seed_mssql.sql`.
+  - Mở SSMS, mở và chạy file `database/schema_15_tables_mssql.sql`.
+  - Chạy tiếp file nạp dữ liệu mẫu: `database/seed_15_tables_mssql.sql`.
 * **Cách 2: MySQL / MariaDB (XAMPP / phpMyAdmin)**:
-  - Import file `database/schema_unified_9_tables_mysql.sql`.
-  - Import tiếp file nạp dữ liệu mẫu: `database/seed_mysql.sql`.
+  - Import file `database/schema_15_tables_mysql.sql`.
+  - Import tiếp file nạp dữ liệu mẫu: `database/seed_15_tables_mysql.sql`.
 * **Cách 3: Chế độ Tự Động (JSON Database Fallback)**:
   - Hệ thống tích hợp sẵn engine CSDL `server/database.json`. Nếu không cài SQL Server, hệ thống tự động chạy chế độ Offline NLP Fallback mà không gặp bất kỳ lỗi nào!
 
@@ -179,10 +204,12 @@ node server/server.js
 ```text
 tdmu-congdoan-web/
 ├── database/                                  # Cơ sở dữ liệu & Migrations
-│   ├── schema_unified_9_tables_mssql.sql      # Schema DDL chuẩn 3NF (Microsoft SQL Server)
-│   ├── seed_mssql.sql                         # Seed Data 16 tổ, 6 bài viết, báo cáo tháng (MSSQL)
-│   ├── schema_unified_9_tables_mysql.sql      # Schema DDL chuẩn (MySQL/MariaDB)
-│   ├── seed_mysql.sql                         # Seed Data chuẩn (MySQL)
+│   ├── schema_15_tables_mssql.sql             # Schema DDL 15 bảng chuẩn 3NF (Microsoft SQL Server)
+│   ├── seed_15_tables_mssql.sql               # Seed Data 15 bảng: 16 tổ, bài viết, phúc lợi (MSSQL)
+│   ├── schema_15_tables_mysql.sql             # Schema DDL 15 bảng chuẩn (MySQL/MariaDB)
+│   ├── seed_15_tables_mysql.sql               # Seed Data 15 bảng chuẩn (MySQL)
+│   ├── schema_unified_9_tables_mssql.sql      # Bản rút gọn 9 bảng cốt lõi (MSSQL)
+│   ├── schema_unified_9_tables_mysql.sql      # Bản rút gọn 9 bảng cốt lõi (MySQL)
 │   └── migrations/                            # Laravel Migrations
 ├── public/                                    # Giao diện người dùng & Portal
 │   ├── index.html                             # Trang chủ Portal truyền thông TDMU
