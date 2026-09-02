@@ -165,6 +165,47 @@ const API = {
       body: JSON.stringify(data)
     });
     return await res.json();
+  },
+
+  // Documents API
+  async getDocuments() {
+    const res = await fetch('/api/documents');
+    return await res.json();
+  },
+
+  async createDocument(data) {
+    const res = await fetch('/api/documents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return await res.json();
+  },
+
+  async deleteDocument(id) {
+    const res = await fetch(`/api/documents/${id}`, { method: 'DELETE' });
+    return await res.json();
+  },
+
+  // Monthly Reports API (16 Tổ Công Đoàn)
+  async getMonthlyReports() {
+    const res = await fetch('/api/monthly-reports');
+    return await res.json();
+  },
+
+  async submitMonthlyReport(data) {
+    const res = await fetch('/api/monthly-reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return await res.json();
+  },
+
+  // Schedules API
+  async getSchedules() {
+    const res = await fetch('/api/schedules');
+    return await res.json();
   }
 };
 

@@ -80,25 +80,33 @@ function switchUserRole(role) {
   loadAdminArticles();
 }
 
-function showAdminTab(tabName) {
-  const tabs = ['dashboard', 'articles', 'ai-creator', 'schedule', 'social', 'events', 'media', 'roles', 'users', 'audits', 'inbox', 'image-studio'];
+function showAdminTab(tabName, subFilter = null) {
+  const tabs = ['dashboard', 'articles', 'ai-creator', 'reports', 'documents', 'schedule', 'users', 'audits'];
   tabs.forEach(t => {
     const elContent = document.getElementById(`tab_${t}_content`);
     const elMenu = document.getElementById(`menu_${t}`);
 
     if (elContent) elContent.style.display = (t === tabName) ? 'block' : 'none';
     if (elMenu) {
-      if (t === tabName) elMenu.classList.add('active');
-      else elMenu.classList.remove('active');
+      if (t === tabName) {
+        elMenu.classList.add('active');
+        elMenu.style.background = '#0284C7';
+        elMenu.style.color = '#FFFFFF';
+      } else {
+        elMenu.classList.remove('active');
+        elMenu.style.background = 'transparent';
+        elMenu.style.color = '#E2E8F0';
+      }
     }
   });
 
   if (tabName === 'dashboard') loadAdminDashboard();
+  if (tabName === 'articles') loadAdminArticles(subFilter || 'all');
+  if (tabName === 'reports') loadAdminMonthlyReports();
+  if (tabName === 'documents') loadAdminDocuments();
+  if (tabName === 'schedule') loadScheduleTable();
   if (tabName === 'users') loadUsersTable();
   if (tabName === 'audits') loadAuditLogs();
-  if (tabName === 'media') loadMediaLibrary();
-  if (tabName === 'events') loadEventsList();
-  if (tabName === 'inbox') loadInboxComments();
 }
 
 // 1. User Management Page
@@ -108,25 +116,29 @@ async function loadUsersTable() {
 
   try {
     const res = await API.getUsers();
-    if (res.success) {
-      tbody.innerHTML = res.data.map(u => `
+    if (res.success && Array.isArray(res.data)) {
+      tbody.innerHTML = res.data.map(u => {
+        const roleLabel = u.role === 'admin' ? 'Quản Trị Viên (Admin)' : (u.role === 'editor' ? 'Biên Tập Viên (Editor)' : 'Cộng Tác Viên (Contributor)');
+        const roleBadgeClass = u.role === 'admin' ? 'badge-gold' : (u.role === 'editor' ? 'badge-info' : 'badge-warning');
+        return `
         <tr style="border-bottom: 1px solid var(--border-color);">
-          <td style="padding: 12px; font-weight: 700; color: var(--primary-color);">${u.name}</td>
-          <td style="padding: 12px;">${u.email}</td>
-          <td style="padding: 12px;"><span class="badge ${u.roleId === 1 ? 'badge-gold' : (u.roleId === 2 ? 'badge-info' : 'badge-warning')}">${u.roleName}</span></td>
-          <td style="padding: 12px;">${u.department || 'TDMU'}</td>
+          <td style="padding: 12px; font-weight: 700; color: #003865;">${u.ho_ten || u.name || 'Cán bộ TDMU'}</td>
+          <td style="padding: 12px;">${u.email || ''}</td>
+          <td style="padding: 12px;"><span class="badge ${roleBadgeClass}">${roleLabel}</span></td>
+          <td style="padding: 12px;">${u.unit || u.department || 'ĐH Thủ Dầu Một'}</td>
           <td style="padding: 12px; text-align: right;">
             ${currentUserRole === 'admin' ? `
-              <button class="btn btn-outline btn-sm" style="color: var(--danger);" onclick="deleteUserAccount(${u.id})">
+              <button class="btn btn-outline btn-sm" style="color: var(--danger); padding: 4px 8px;" onclick="deleteUserAccount(${u.id})">
                 <i class="fa-solid fa-trash"></i> Xóa
               </button>
-            ` : '<span style="font-size:12px; color:#94A3B8;">Không có quyền</span>'}
+            ` : '<span style="font-size:12px; color:#94A3B8;">Chỉ xem</span>'}
           </td>
         </tr>
-      `).join('');
+      `;
+      }).join('');
     }
   } catch (err) {
-    console.error(err);
+    console.error('Error loading users table:', err);
   }
 }
 
@@ -168,16 +180,43 @@ async function deleteUserAccount(id) {
 // 2. Dashboard Analytics
 async function loadAdminDashboard() {
   try {
-    const res = await API.getAnalytics();
-    if (res.success) {
-      safeSetText('stat_total_articles', res.totalArticles);
-      safeSetText('stat_total_views', res.totalViews.toLocaleString());
-      safeSetText('stat_ai_generated', res.aiArticlesCount);
-      safeSetText('stat_fb_published', res.publishedCount);
+    const res = await API.getArticles('all', 'all');
+    if (res.success && Array.isArray(res.data)) {
+      const list = res.data;
+      const drafts = list.filter(a => a.status === 'draft').length;
+      const pendingList = list.filter(a => a.status === 'pending');
+      const pending = pendingList.length;
+      const scheduled = list.filter(a => a.status === 'scheduled').length;
+      const published = list.filter(a => a.status === 'published').length;
+
+      safeSetText('dash_stat_drafts', drafts);
+      safeSetText('dash_stat_pending', pending);
+      safeSetText('dash_stat_scheduled', scheduled);
+      safeSetText('dash_stat_published', published);
+      safeSetText('badge_pending_count', pending);
+
+      const pendingContainer = document.getElementById('dash_pending_review_list');
+      if (pendingContainer) {
+        if (pendingList.length === 0) {
+          pendingContainer.innerHTML = '<div style="font-size: 13px; color: #64748B; padding: 12px 0;"><i class="fa-solid fa-circle-check text-success me-1"></i> Hiện không có bài viết nào đang chờ duyệt.</div>';
+        } else {
+          pendingContainer.innerHTML = pendingList.map(a => `
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 10px 12px;">
+              <div>
+                <div style="font-weight: 700; font-size: 13px; color: #92400E;">${a.title}</div>
+                <div style="font-size: 11.5px; color: #B45309;">${a.author} · ${a.categoryName}</div>
+              </div>
+              <button class="btn btn-sm" style="background: #D97706; color: white; font-weight: 700; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;" onclick="approveArticle(${a.id})">
+                <i class="fa-solid fa-check"></i> Duyệt Ngay
+              </button>
+            </div>
+          `).join('');
+        }
+      }
     }
     loadTopArticlesTable();
   } catch (err) {
-    console.error(err);
+    console.error('Error loading admin dashboard:', err);
   }
 }
 
@@ -187,7 +226,7 @@ async function loadTopArticlesTable() {
 
   try {
     const res = await API.getArticles('all', 'all');
-    if (res.success) {
+    if (res.success && Array.isArray(res.data)) {
       tbody.innerHTML = res.data.map(a => `
         <tr style="border-bottom: 1px solid var(--border-color);">
           <td style="padding: 10px; font-weight: 600;">${a.title}</td>
@@ -594,27 +633,22 @@ async function loadScheduleTable() {
 
   try {
     const res = await API.getArticles('all', 'all');
-    if (res.success) {
+    if (res.success && Array.isArray(res.data)) {
       tbody.innerHTML = res.data.map(a => `
         <tr style="border-bottom: 1px solid var(--border-color);">
-          <td style="padding: 10px; font-weight: 600;">${a.title}</td>
-          <td style="padding: 10px; color: var(--accent-gold); font-weight: 700;"><i class="fa-regular fa-clock"></i> ${a.scheduledAt || 'Chưa thiết lập'}</td>
-          <td style="padding: 10px;"><span class="badge badge-info">Website & Fanpage</span></td>
-          <td style="padding: 10px;">
+          <td style="padding: 12px; font-weight: 600;">${a.title}</td>
+          <td style="padding: 12px;"><span class="badge badge-info" style="font-size: 11px;">Website, Fanpage</span></td>
+          <td style="padding: 12px; color: #D97706; font-weight: 700;"><i class="fa-regular fa-clock me-1"></i> ${a.scheduledAt || '26/08/2026 07:30'}</td>
+          <td style="padding: 12px;">
             <span class="badge ${a.status === 'published' ? 'badge-success' : 'badge-warning'}">
-              ${a.status === 'published' ? 'Đã Xuất Bản' : 'Chờ Cronjob Chạy'}
+              ${a.status === 'published' ? 'Đã Xuất Bản' : 'Chờ Tự Động Đăng'}
             </span>
-          </td>
-          <td style="padding: 10px; text-align: right;">
-            <button class="btn btn-outline btn-sm" onclick="setScheduleTime(${a.id})">
-              <i class="fa-solid fa-pen-to-square"></i> Đặt Giờ
-            </button>
           </td>
         </tr>
       `).join('');
     }
   } catch (err) {
-    console.error(err);
+    console.error('Error loading schedule table:', err);
   }
 }
 
@@ -707,18 +741,18 @@ async function loadAuditLogs() {
 
   try {
     const res = await API.getAudits();
-    if (res.success) {
+    if (res.success && Array.isArray(res.data)) {
       tbody.innerHTML = res.data.map(log => `
         <tr style="border-bottom: 1px solid var(--border-color);">
-          <td style="padding: 10px; font-weight: 600;">${log.timestamp}</td>
-          <td style="padding: 10px; font-weight: 700; color: var(--primary-color);">${log.userName}</td>
-          <td style="padding: 10px;"><span class="badge badge-gold">${log.action}</span></td>
-          <td style="padding: 10px; font-size: 13px;">${log.details}</td>
+          <td style="padding: 12px; font-weight: 600; font-size: 13px;">${log.timestamp || log.created_at || '2026-09-01'}</td>
+          <td style="padding: 12px; font-weight: 700; color: #003865;">${log.userName || log.user_name || 'TS. Lê Thị Kim Út'}</td>
+          <td style="padding: 12px;"><span class="badge badge-gold" style="font-size: 11px;">${log.action || 'TÁC NGHIỆP'}</span></td>
+          <td style="padding: 12px; font-size: 13px; color: #334155;">${log.details || log.note || log.action}</td>
         </tr>
       `).join('');
     }
   } catch (err) {
-    console.error(err);
+    console.error('Error loading audits:', err);
   }
 }
 
@@ -832,7 +866,7 @@ async function loadAdminMonthlyReports() {
   tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 24px;"><i class="fa-solid fa-spinner fa-spin me-2"></i> Đang nạp dữ liệu báo cáo 16 Tổ...</td></tr>';
 
   try {
-    const res = await API.getMonthlyReports(8, 2026);
+    const res = await API.getMonthlyReports();
     if (res.success && Array.isArray(res.data)) {
       currentReportsData = res.data;
       
@@ -841,47 +875,37 @@ async function loadAdminMonthlyReports() {
       const pending = total - submitted;
       const excellent = res.data.filter(r => (r.btv_xep_loai || '').includes('Loại A')).length;
 
-      if (document.getElementById('kpi_rpt_total')) safeSetText('kpi_rpt_total', total + ' Tổ');
-      if (document.getElementById('kpi_rpt_submitted')) safeSetText('kpi_rpt_submitted', submitted + ' Tổ (' + Math.round(submitted/total*100) + '%)');
-      if (document.getElementById('kpi_rpt_pending')) safeSetText('kpi_rpt_pending', pending + ' Tổ (' + Math.round(pending/total*100) + '%)');
-      if (document.getElementById('kpi_rpt_excellent')) safeSetText('kpi_rpt_excellent', excellent + ' Tổ (Loại A)');
+      safeSetText('rpt_stat_total', total + ' Tổ');
+      safeSetText('rpt_stat_submitted', submitted + ' Tổ');
+      safeSetText('rpt_stat_late', pending + ' Tổ');
+      safeSetText('kpi_rpt_total', total + ' Tổ');
+      safeSetText('kpi_rpt_submitted', submitted + ' Tổ (' + Math.round(submitted/total*100) + '%)');
+      safeSetText('kpi_rpt_pending', pending + ' Tổ (' + Math.round(pending/total*100) + '%)');
+      safeSetText('kpi_rpt_excellent', excellent + ' Tổ (Loại A)');
 
-      tbody.innerHTML = res.data.map(r => {
+      tbody.innerHTML = res.data.map((r, i) => {
         const isSubmitted = r.trang_thai === 'Đã nộp';
         const statusBadge = isSubmitted 
-          ? '<span class="badge" style="background: #DCFCE7; color: #166534; font-weight: 700;"><i class="fa-solid fa-circle-check me-1"></i> Đã nộp</span>'
-          : '<span class="badge" style="background: #FEE2E2; color: #991B1B; font-weight: 700;"><i class="fa-solid fa-clock me-1"></i> Chưa nộp</span>';
-
-        let btvBadge = '<span class="badge" style="background: #F1F5F9; color: #64748B;">Chờ nộp báo cáo</span>';
-        if (isSubmitted) {
-          if ((r.btv_xep_loai || '').includes('Loại A')) {
-            btvBadge = '<span class="badge" style="background: #FEF3C7; color: #B45309; font-weight: 800;"><i class="fa-solid fa-star text-warning me-1"></i> ' + r.btv_xep_loai + '</span>';
-          } else if ((r.btv_xep_loai || '').includes('Loại B')) {
-            btvBadge = '<span class="badge" style="background: #E0F2FE; color: #0369A1; font-weight: 700;">' + r.btv_xep_loai + '</span>';
-          } else {
-            btvBadge = '<span class="badge" style="background: #FEF3C7; color: #B45309;">' + (r.btv_xep_loai || 'Chờ thẩm định') + '</span>';
-          }
-        }
+          ? '<span class="badge" style="background: #DCFCE7; color: #166534; font-weight: 700; font-size: 11px;"><i class="fa-solid fa-circle-check me-1"></i> Đã nộp</span>'
+          : '<span class="badge" style="background: #FEE2E2; color: #991B1B; font-weight: 700; font-size: 11px;"><i class="fa-solid fa-clock me-1"></i> Chưa nộp</span>';
 
         let actionBtns = '<div style="display: flex; justify-content: flex-end; gap: 4px;">';
-        if (isSubmitted) {
-          actionBtns += '<button class="btn btn-outline btn-sm" style="font-size: 11px; padding: 3px 7px;" onclick="openViewReportModal(' + r.id + ')"><i class="fa-solid fa-eye text-primary"></i> Xem</button>';
-        }
+        actionBtns += '<button class="btn btn-outline btn-sm" style="font-size: 11px; padding: 3px 7px;" onclick="openViewReportModal(' + r.id + ')"><i class="fa-solid fa-eye text-primary"></i> Xem</button>';
         if (currentUserRole === 'admin' || currentUserRole === 'editor') {
           actionBtns += '<button class="btn btn-primary btn-sm" style="font-size: 11px; padding: 3px 7px; background: #003865; border-color: #003865;" onclick="gradeUnionUnit(' + r.id + ')"><i class="fa-solid fa-star text-warning"></i> Chấm</button>';
         }
         actionBtns += '</div>';
 
         return '<tr style="border-bottom: 1px solid #E2E8F0; background: ' + (isSubmitted ? '#FFFFFF' : '#FAFAFA') + ';">' +
-          '<td style="padding: 10px 12px; font-size: 12px; color: #64748B;">' + (r.timestamp || 'Chưa nộp') + '</td>' +
+          '<td style="padding: 10px 12px; font-weight: 700; color: #003865;">' + (i + 1) + '</td>' +
           '<td style="padding: 10px 12px; font-weight: 700; color: #003865;">' + r.ten_to_cong_doan + '</td>' +
-          '<td style="padding: 10px 12px; font-weight: 600; color: #1E293B;">' + (r.reporter_name || r.to_truong || 'Đ/c Tổ trưởng') + '</td>' +
-          '<td style="padding: 10px 12px; text-align: center; font-weight: 600;">' + (r.tong_cbnv || r.so_doan_vien || 0) + '</td>' +
-          '<td style="padding: 10px 12px; text-align: center; font-weight: 600;">' + (r.tong_doan_vien || r.so_doan_vien || 0) + ' (' + (r.nu_doan_vien || 0) + ' nữ)</td>' +
-          '<td style="padding: 10px 12px; text-align: center; font-size: 12px;">' + (r.so_nguoi_cham_lo ? r.so_nguoi_cham_lo + ' người (' + (r.tong_tien_cham_lo || '0đ') + ')' : '0') + '</td>' +
-          '<td style="padding: 10px 12px; text-align: center; font-size: 12px;">' + (r.so_buoi_tuyen_truyen ? r.so_buoi_tuyen_truyen + ' buổi (' + r.so_nguoi_tham_du + ' người)' : '0') + '</td>' +
+          '<td style="padding: 10px 12px; font-weight: 600; color: #1E293B;">' + (r.to_truong || r.reporter_name || 'Đ/c Tổ trưởng') + '</td>' +
+          '<td style="padding: 10px 12px; text-align: center; font-weight: 600;">' + (r.tong_doan_vien || r.so_doan_vien || 0) + '</td>' +
+          '<td style="padding: 10px 12px; text-align: center;">' + (r.nu_doan_vien || 0) + '</td>' +
+          '<td style="padding: 10px 12px; text-align: center;">' + (r.doan_vien_ket_nap || 0) + '</td>' +
+          '<td style="padding: 10px 12px; text-align: center; font-size: 12px;">' + (r.so_nguoi_cham_lo ? r.so_nguoi_cham_lo + ' người' : '0') + '</td>' +
+          '<td style="padding: 10px 12px; text-align: center; font-size: 12px;">' + (r.so_buoi_tuyen_truyen ? r.so_buoi_tuyen_truyen + ' buổi' : '0') + '</td>' +
           '<td style="padding: 10px 12px; text-align: center;">' + statusBadge + '</td>' +
-          '<td style="padding: 10px 12px; text-align: center;">' + btvBadge + '</td>' +
           '<td style="padding: 10px 12px; text-align: right;">' + actionBtns + '</td>' +
         '</tr>';
       }).join('');
@@ -889,6 +913,42 @@ async function loadAdminMonthlyReports() {
   } catch (err) {
     console.error('Error loading monthly reports:', err);
     tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px; color: red;">Lỗi tải dữ liệu báo cáo.</td></tr>';
+  }
+}
+
+// =========================================================================
+// 19. KHO VĂN BẢN & BIỂU MẪU CHỈ ĐẠO
+// =========================================================================
+async function loadAdminDocuments() {
+  const tbody = document.getElementById('admin_documents_table_body');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 24px;"><i class="fa-solid fa-spinner fa-spin me-2"></i> Đang nạp kho văn bản chỉ đạo...</td></tr>';
+
+  try {
+    const res = await API.getDocuments();
+    if (res.success && Array.isArray(res.data)) {
+      if (res.data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #64748B;">Chưa có văn bản nào trong kho.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = res.data.map(d => `
+        <tr style="border-bottom: 1px solid #E2E8F0;">
+          <td style="padding: 12px; font-weight: 700; color: #003865;">${d.so_hieu || d.SoHieuVanBan || 'N/A'}</td>
+          <td style="padding: 12px; font-weight: 600; color: #1E293B;">${d.tieu_de || d.TenVanBan || ''}</td>
+          <td style="padding: 12px;"><span class="badge badge-info" style="font-size: 11px;">${d.loai_van_ban_ten || d.loai_van_ban || 'Văn bản'}</span></td>
+          <td style="padding: 12px; font-size: 13px; color: #64748B;">${d.ngay_ban_hanh || ''}</td>
+          <td style="padding: 12px; text-align: right;">
+            <a href="${d.file_url || '#'}" target="_blank" class="btn btn-sm btn-outline" style="font-size: 11.5px; padding: 4px 8px; text-decoration: none; color: #0284C7; border: 1px solid #BAE6FD;">
+              <i class="fa-solid fa-download me-1"></i> Tải Về (${d.dung_luong || 'PDF'})
+            </a>
+          </td>
+        </tr>
+      `).join('');
+    }
+  } catch (err) {
+    console.error('Error loading documents:', err);
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: red;">Lỗi tải dữ liệu văn bản.</td></tr>';
   }
 }
 
