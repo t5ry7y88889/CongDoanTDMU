@@ -1074,67 +1074,96 @@ function openViewReportModal(id) {
   safeSetHtml('modal_rpt_title', '<i class="fa-solid fa-file-invoice me-2 text-warning"></i> ' + r.ten_to_cong_doan + ' (Kỳ: Tháng ' + (r.month || 8) + '/2026)');
   
   safeSetHtml('modal_rpt_body', `
-    <!-- Header thông tin -->
-    <div style="background: #F8FAFC); border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+    <!-- Header thông tin chung -->
+    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px;">
-        <div><strong>Thời gian gửi:</strong> ${r.timestamp || '24/08/2026'}</div>
-        <div><strong>Người báo cáo:</strong> ${r.reporter_name || r.to_truong} (${r.email || 'N/A'})</div>
-        <div><strong>Tổng số CBNV:</strong> ${r.tong_cbnv || r.so_doan_vien} người</div>
-        <div><strong>Tổng số đoàn viên:</strong> ${r.tong_doan_vien || r.so_doan_vien} (${r.nu_doan_vien || 0} nữ)</div>
+        <div><strong>Timestamp:</strong> ${r.timestamp || '24/08/2026'}</div>
+        <div><strong>Tổ công đoàn:</strong> <span style="color: #003865; font-weight: 700;">${r.ten_to_cong_doan}</span></div>
+        <div><strong>Chọn tháng báo cáo:</strong> Tháng ${r.month || 8}/2026</div>
+        <div><strong>Họ Và Tên (người báo cáo):</strong> ${r.reporter_name || r.to_truong}</div>
+        <div style="grid-column: span 2;"><strong>Email Address:</strong> <a href="mailto:${r.email}" style="color: #0284C7;">${r.email || 'N/A'}</a></div>
       </div>
     </div>
 
-    <!-- 1. Tình hình nhân sự -->
+    <!-- I. Tình hình nhân sự & đoàn viên -->
     <div style="border: 1px solid #E2E8F0; border-radius: 6px; padding: 12px; margin-bottom: 14px;">
-      <h5 style="font-size: 13px; font-weight: 800; color: #003865; margin-bottom: 8px;">1. TÌNH HÌNH CÁN BỘ &amp; ĐOÀN VIÊN:</h5>
-      <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #334155; line-height: 1.6;">
-        <li>Đoàn viên kết nạp trong tháng: <strong>${r.doan_vien_ket_nap || 0}</strong></li>
-        <li>Đoàn viên giảm (nghỉ việc): <strong>${r.doan_vien_giam || 0}</strong></li>
-        <li>Đoàn viên ưu tú giới thiệu Đảng: <strong>${r.gioi_thieu_dang || 0}</strong></li>
-        <li>Đoàn viên được kết nạp Đảng: <strong>${r.ket_nap_dang || 0}</strong></li>
+      <h5 style="font-size: 13px; font-weight: 800; color: #003865; margin-bottom: 8px; text-transform: uppercase;">
+        <i class="fa-solid fa-users text-primary me-2"></i>I. TÌNH HÌNH CÁN BỘ &amp; ĐOÀN VIÊN:
+      </h5>
+      <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #334155; line-height: 1.7;">
+        <li>1. Tổng số cán bộ, nhân viên, người lao động: <strong>${r.tong_cbnv || r.so_doan_vien || 0}</strong></li>
+        <li>2. Tổng số đoàn viên công đoàn: <strong>${r.tong_doan_vien || r.so_doan_vien || 0}</strong></li>
+        <li>3. Tổng số nữ đoàn viên công đoàn: <strong>${r.nu_doan_vien || 0}</strong></li>
+        <li>4. Số đoàn viên công đoàn kết nạp trong tháng: <strong>${r.doan_vien_ket_nap || 0}</strong></li>
+        <li>5. Số đoàn viên công đoàn giảm (do nghỉ việc) so với kỳ trước: <strong>${r.doan_vien_giam || 0}</strong></li>
+        <li>6. Số đoàn viên ưu tú giới thiệu sang Đảng (học cảm tình Đảng): <strong>${r.gioi_thieu_dang || 0}</strong></li>
+        <li>7. Số đoàn viên công đoàn được kết nạp Đảng trong tháng: <strong>${r.ket_nap_dang || 0}</strong></li>
       </ul>
     </div>
 
-    <!-- 2. Chăm lo & An toàn -->
+    <!-- II. Chăm lo đời sống & an toàn lao động -->
     <div style="border: 1px solid #E2E8F0; border-radius: 6px; padding: 12px; margin-bottom: 14px;">
-      <h5 style="font-size: 13px; font-weight: 800; color: #003865; margin-bottom: 8px;">2. CHĂM LO ĐỜI SỐNG &amp; AN TOÀN LAO ĐỘNG:</h5>
-      <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #334155; line-height: 1.6;">
-        <li>Số người bị bệnh hiểm nghèo: <strong>${r.benh_hiem_ngheo || 0}</strong></li>
-        <li>Số người được chăm lo trong tháng: <strong>${r.so_nguoi_cham_lo || 0}</strong></li>
-        <li>Tổng kinh phí chăm lo: <strong style="color: #D97706;">${r.tong_tien_cham_lo || '0 VNĐ'}</strong></li>
-        <li>Tai nạn lao động: <strong>${r.tai_nan_lao_dong || 0}</strong> (Tử vong: ${r.tu_vong_tai_nan || 0})</li>
+      <h5 style="font-size: 13px; font-weight: 800; color: #003865; margin-bottom: 8px; text-transform: uppercase;">
+        <i class="fa-solid fa-heart-pulse text-danger me-2"></i>II. CHĂM LO ĐỜI SỐNG &amp; AN TOÀN LAO ĐỘNG:
+      </h5>
+      <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #334155; line-height: 1.7;">
+        <li>1. Số người lao động bị bệnh hiểm nghèo: <strong>${r.benh_hiem_ngheo || 0}</strong></li>
+        <li>2. Số người lao động được chăm lo trong tháng: <strong>${r.so_nguoi_cham_lo || 0}</strong></li>
+        <li>3. Tổng số tiền chăm lo cho người lao động trong tháng: <strong style="color: #D97706; font-size: 14px;">${r.tong_tien_cham_lo || '0 VNĐ'}</strong></li>
+        <li>4. Số vụ tai nạn lao động xảy ra trong tháng: <strong>${r.tai_nan_lao_dong || 0}</strong></li>
+        <li>6. Số người chết vì tai nạn lao động: <strong>${r.tu_vong_tai_nan || 0}</strong></li>
       </ul>
     </div>
 
-    <!-- 3. Tuyên truyền -->
+    <!-- III. Công tác kiểm tra & Tuyên truyền -->
     <div style="border: 1px solid #E2E8F0; border-radius: 6px; padding: 12px; margin-bottom: 14px;">
-      <h5 style="font-size: 13px; font-weight: 800; color: #003865; margin-bottom: 8px;">3. CÔNG TÁC TUYÊN TRUYỀN (Số buổi: ${r.so_buoi_tuyen_truyen || 0} | Tham dự: ${r.so_nguoi_tham_du || 0} người):</h5>
-      <div style="background: #F8FAFC; border-radius: 4px; padding: 10px; font-size: 13px; white-space: pre-line; color: #1E293B;">
+      <h5 style="font-size: 13px; font-weight: 800; color: #003865; margin-bottom: 8px; text-transform: uppercase;">
+        <i class="fa-solid fa-bullhorn text-warning me-2"></i>III. CÔNG TÁC TUYÊN TRUYỀN &amp; KIỂM TRA:
+      </h5>
+      <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #334155; line-height: 1.7; margin-bottom: 8px;">
+        <li>1. Số buổi kiểm tra trong tháng: <strong>${r.so_buoi_kiem_tra || 0}</strong> (Nội dung: ${r.noi_dung_kiem_tra || 'Không'} | Kết quả: ${r.ket_qua_kiem_tra || 'Tốt'})</li>
+        <li>1. Số buổi tuyên truyền: <strong>${r.so_buoi_tuyen_truyen || 0}</strong></li>
+        <li>2. Số người tham dự: <strong>${r.so_nguoi_tham_du || 0} người</strong></li>
+      </ul>
+      <div><strong>3. Nội dung tuyên truyền:</strong></div>
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 4px; padding: 10px; font-size: 13px; white-space: pre-line; color: #1E293B; margin-top: 4px;">
         ${r.noi_dung_tuyen_truyen || 'Không có nội dung'}
       </div>
     </div>
 
-    <!-- 4. Hoạt động khác & Minh chứng -->
+    <!-- IV. Hoạt động khác, Minh chứng & Kế hoạch -->
     <div style="border: 1px solid #E2E8F0; border-radius: 6px; padding: 12px; margin-bottom: 14px;">
-      <h5 style="font-size: 13px; font-weight: 800; color: #003865; margin-bottom: 8px;">4. HOẠT ĐỘNG KHÁC &amp; MINH CHỨNG:</h5>
-      <div style="background: #F8FAFC; border-radius: 4px; padding: 10px; font-size: 13px; white-space: pre-line; color: #1E293B; margin-bottom: 8px;">
-        ${r.hoat_dong_khac || 'Không'}
-      </div>
-      ${r.link_minh_chung ? '<div><strong>Minh chứng:</strong> <a href="' + r.link_minh_chung + '" target="_blank" class="btn btn-sm btn-outline-primary" style="font-size: 11px;"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Mở Thư Mục Minh Chứng (Drive)</a></div>' : ''}
-    </div>
-
-    <!-- 5. Kế hoạch & Kiến nghị -->
-    <div style="border: 1px solid #E2E8F0; border-radius: 6px; padding: 12px; margin-bottom: 16px;">
-      <h5 style="font-size: 13px; font-weight: 800; color: #003865; margin-bottom: 8px;">5. KẾ HOẠCH THÁNG TỚI &amp; KIẾN NGHỊ:</h5>
+      <h5 style="font-size: 13px; font-weight: 800; color: #003865; margin-bottom: 8px; text-transform: uppercase;">
+        <i class="fa-solid fa-folder-open text-primary me-2"></i>IV. HOẠT ĐỘNG KHÁC, MINH CHỨNG &amp; KẾ HOẠCH:
+      </h5>
       <div style="margin-bottom: 8px;">
-        <strong>Kế hoạch:</strong>
-        <div style="background: #F8FAFC; border-radius: 4px; padding: 10px; font-size: 13px; white-space: pre-line; color: #1E293B;">
+        <strong>1. Hoạt động khác trong tháng (tổ chức hoặc tham gia):</strong>
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 4px; padding: 8px 10px; font-size: 13px; white-space: pre-line; color: #1E293B; margin-top: 4px;">
+          ${r.hoat_dong_khac || 'Không'}
+        </div>
+      </div>
+      
+      <div style="margin-bottom: 8px;">
+        <strong>Gửi minh chứng các hoạt động nếu có:</strong>
+        <div style="margin-top: 4px;">
+          ${r.link_minh_chung && r.link_minh_chung.includes('http') ? `
+            <a href="${r.link_minh_chung}" target="_blank" class="btn btn-sm" style="background: #0284C7; color: white; text-decoration: none; font-weight: 700; padding: 6px 12px; border-radius: 4px; display: inline-flex; align-items: center; gap: 6px;">
+              <i class="fa-brands fa-google-drive"></i> Mở Thư Mục Minh Chứng (Google Drive) <i class="fa-solid fa-arrow-up-right-from-square ms-1" style="font-size: 10px;"></i>
+            </a>
+          ` : '<span style="color: #64748B; font-style: italic;">Không có đường dẫn minh chứng</span>'}
+        </div>
+      </div>
+
+      <div style="margin-bottom: 8px;">
+        <strong>2. Kế hoạch tháng tới:</strong>
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 4px; padding: 8px 10px; font-size: 13px; white-space: pre-line; color: #1E293B; margin-top: 4px;">
           ${r.ke_hoach_thang_toi || 'Không'}
         </div>
       </div>
+
       <div>
-        <strong>Kiến nghị:</strong>
-        <div style="background: #F8FAFC; border-radius: 4px; padding: 10px; font-size: 13px; color: #1E293B;">
+        <strong>3. Những vấn đề cần kiến nghị với Nhà trường và Công đoàn Trường:</strong>
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 4px; padding: 8px 10px; font-size: 13px; color: #1E293B; margin-top: 4px;">
           ${r.kien_nghi || 'Không'}
         </div>
       </div>
@@ -1142,7 +1171,12 @@ function openViewReportModal(id) {
 
     <!-- Ban Thường Vụ Xếp Loại -->
     <div style="background: #FEF3C7; border-left: 4px solid #F59E0B; border-radius: 4px; padding: 12px; margin-bottom: 20px;">
-      <strong>ĐÁNH GIÁ CỦA BAN THƯỜNG VỤ:</strong> ${r.btv_xep_loai || 'Chờ thẩm định xếp loại'}
+      <div style="font-size: 13px; font-weight: 800; color: #92400E;">
+        <i class="fa-solid fa-award me-1 text-warning"></i> ĐÁNH GIÁ CỦA BAN THƯỜNG VỤ CÔNG ĐOÀN TRƯỜNG:
+      </div>
+      <div style="font-size: 14px; font-weight: 700; color: #78350F; margin-top: 4px;">
+        ${r.btv_xep_loai || 'Chờ thẩm định xếp loại'}
+      </div>
     </div>
 
     <div style="display: flex; justify-content: flex-end; gap: 10px;">
