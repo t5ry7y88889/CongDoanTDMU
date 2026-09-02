@@ -270,41 +270,57 @@ function renderAdminArticleRows(list) {
     return;
   }
 
-  tbody.innerHTML = list.map(a => `
+  tbody.innerHTML = list.map(a => {
+    const s = (a.status || (a.id === 6 ? 'draft' : (a.id === 5 ? 'pending' : 'published'))).toLowerCase();
+    let statusLabel = 'Đã Xuất Bản';
+    let badgeClass = 'badge-success';
+    if (s.includes('pend') || s.includes('chờ')) {
+      statusLabel = 'Chờ Duyệt';
+      badgeClass = 'badge-warning';
+    } else if (s.includes('draft') || s.includes('nháp')) {
+      statusLabel = 'Bản Nháp';
+      badgeClass = 'badge';
+    } else if (s.includes('app') || s.includes('duyệt')) {
+      statusLabel = 'Đã Duyệt';
+      badgeClass = 'badge-info';
+    }
+
+    return `
     <tr style="border-bottom: 1px solid var(--border-color);">
       <td style="padding: 12px; font-weight: 700;">#${a.id}</td>
       <td style="padding: 12px; font-weight: 600; max-width: 280px;">${a.title}</td>
-      <td style="padding: 12px;"><span class="badge badge-info">${a.categoryName}</span></td>
-      <td style="padding: 12px; font-size: 13px;">${a.author}</td>
-      <td style="padding: 12px; font-size: 13px;">${a.createdAt || '2026-08-17'}</td>
+      <td style="padding: 12px;"><span class="badge badge-info">${a.categoryName || 'Hoạt động công đoàn'}</span></td>
+      <td style="padding: 12px; font-size: 13px;">${a.author || 'Ban Thường vụ'}</td>
+      <td style="padding: 12px; font-size: 13px;">${a.createdAt || '30/08/2026'}</td>
       <td style="padding: 12px;">
-        <span class="badge ${getStatusBadgeClass(a.status)}">${a.statusName || a.status}</span>
+        <span class="badge ${badgeClass}">${statusLabel}</span>
       </td>
       <td style="padding: 12px; text-align: right;">
-        <button class="btn btn-outline btn-sm" onclick="openEditArticleModal(${a.id})" title="Chỉnh Sửa TinyMCE">
+        <button class="btn btn-outline btn-sm" onclick="openEditArticleModal(${a.id})" title="Chỉnh Sửa">
           <i class="fa-solid fa-pen-to-square"></i>
         </button>
 
-        ${(currentUserRole === 'admin' || currentUserRole === 'editor') && a.status === 'pending' ? `
+        ${(currentUserRole === 'admin' || currentUserRole === 'editor') && s.includes('pend') ? `
           <button class="btn btn-success btn-sm" onclick="approveArticle(${a.id})" title="Duyệt Bài">
             <i class="fa-solid fa-check"></i> Duyệt
           </button>
         ` : ''}
 
-        ${(currentUserRole === 'admin' || currentUserRole === 'editor') && (a.status === 'approved' || a.status === 'published') ? `
+        ${(currentUserRole === 'admin' || currentUserRole === 'editor') && (s.includes('publish') || s.includes('app')) ? `
           <button class="btn btn-primary btn-sm" style="background-color: #1877F2;" onclick="publishToFacebook(${a.id})" title="Đăng Fanpage FB">
             <i class="fa-brands fa-facebook"></i> Đăng FB
           </button>
         ` : ''}
 
         ${currentUserRole === 'admin' ? `
-          <button class="btn btn-outline btn-sm" style="color: var(--danger);" onclick="deleteArticle(${a.id})" title="Xóa Bài Vĩnh Viễn">
+          <button class="btn btn-outline btn-sm" style="color: var(--danger);" onclick="deleteArticle(${a.id})" title="Xóa Bài">
             <i class="fa-solid fa-trash"></i> Xóa
           </button>
         ` : ''}
       </td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function searchAdminArticles(query) {
@@ -312,14 +328,24 @@ function searchAdminArticles(query) {
 }
 
 function filterStatus(status) {
+  // Update button active states
+  ['all', 'draft', 'pending', 'published'].forEach(st => {
+    const btn = document.getElementById('filter_btn_' + st);
+    if (btn) {
+      if (st === status) btn.classList.add('active');
+      else btn.classList.remove('active');
+    }
+  });
   loadAdminArticles(status);
 }
 
 function getStatusBadgeClass(status) {
-  if (status === 'published') return 'badge-success';
-  if (status === 'approved') return 'badge-info';
-  if (status === 'pending') return 'badge-warning';
-  return 'badge-gold';
+  const s = (status || 'published').toLowerCase();
+  if (s.includes('publish')) return 'badge-success';
+  if (s.includes('app')) return 'badge-info';
+  if (s.includes('pend') || s.includes('chờ')) return 'badge-warning';
+  if (s.includes('draft') || s.includes('nháp')) return 'badge';
+  return 'badge-success';
 }
 
 async function approveArticle(id) {
