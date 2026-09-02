@@ -1426,18 +1426,76 @@ function populatePackageToStudio(pkg) {
 
   switchPackageTab('web');
   updateMetrics();
+  
+  // KHỞI TẠO BỘ NHỚ LỊCH SỬ TIẾN / LÙI CHO BẢN GỐC AI TẠO
+  editorHistoryStack = [];
+  editorHistoryIndex = -1;
+  saveEditorState("Bản gốc do AI khởi tạo");
 }
 
-function handleToolbarAiAction(action) {
+async function handleToolbarAiAction(action) {
   const editor = document.getElementById('native_rich_editor');
   if (!editor || !editor.innerText.trim()) {
-    alert("Vui lòng nhập nội dung bài viết trước!");
+    alert("Vui lòng nhập hoặc bôi đen nội dung bài viết trước!");
     return;
   }
-  if (action === 'formal') {
-    alert("✨ AI đã chuẩn hóa văn phong hành chính cho toàn bài!");
-  } else if (action === 'expand') {
-    alert("✨ AI đã bổ sung thêm dẫn chứng và phân tích mở rộng!");
+
+  const selection = window.getSelection();
+  let textToProcess = selection.toString().trim();
+  let isSelection = true;
+
+  if (!textToProcess) {
+    textToProcess = editor.innerText.trim();
+    isSelection = false;
+  }
+
+  const actionName = action === 'formal' ? "Hành chính hóa" : "Mở rộng nội dung";
+
+  // 1. LƯU TRẠNG THÁI TRƯỚC KHI AI SỬA (ĐỂ CÓ THỂ LÙI / TIẾN BẤT CỨ LÚC NÀO)
+  saveEditorState("Trước khi " + actionName);
+
+  const promptMsg = action === 'formal'
+    ? "Viết lại đoạn văn sau theo văn phong chuẩn mực hành chính Công đoàn TDMU, trang nhã, đúng thể thức nghị định 30:\n\n" + textToProcess
+    : "Bổ sung các luận điểm sâu sắc, số liệu và dẫn chứng thực tế cho đoạn văn sau:\n\n" + textToProcess;
+
+  try {
+    const apiKey = localStorage.getItem('gemini_api_key') || "";
+    const groqApiKey = localStorage.getItem('groq_api_key') || "";
+    const title = document.getElementById('ai_final_title')?.value || "";
+
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: promptMsg,
+        history: [],
+        articleTitle: title,
+        articleContent: editor.innerHTML,
+        selectedText: isSelection ? textToProcess : "",
+        apiKey,
+        groqApiKey
+      })
+    }).then(r => r.json());
+
+    if (res.success && res.editContent) {
+      if (isSelection && currentManusSelectionRange) {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(currentManusSelectionRange);
+        document.execCommand('insertHTML', false, res.editContent);
+      } else {
+        editor.innerHTML = res.editContent;
+      }
+
+      // 2. LƯU TRẠNG THÁI SAU KHI AI SỬA ĐỒNG BỘ VÀO BỘ NHỚ LỊCH SỬ
+      saveEditorState("Sau khi " + actionName);
+      alert(`✨ AI đã ${actionName} thành công!\n(Sếp có thể bấm nút 'Lùi (Ctrl+Z)' trên thanh Ribbon để quay về bản trước bất kỳ lúc nào)`);
+    } else {
+      alert(res.reply || "✨ AI đã xử lý xong.");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Lỗi AI: " + err.message);
   }
 }
 
@@ -1570,7 +1628,7 @@ function updateAiStatusBadge() {
 }
 
 // =========================================================================
-// 22. SYNCHRONIZED UNDO / REDO (TIẾN & LÙI) ENGINE
+// 22. ADVANCED AI-SYNCHRONIZED UNDO / REDO (TIẾN & LÙI) & STATE MEMORY
 // =========================================================================
 const MAX_HISTORY_STEPS = 50;
 let editorHistoryStack = [];
@@ -1578,19 +1636,34 @@ let editorHistoryIndex = -1;
 let isRestoringHistory = false;
 let editorSaveTimeout = null;
 
-function saveEditorState() {
+/**
+ * Lưu snapshot trạng thái văn bản và đồng bộ hóa ngữ cảnh AI Copilot
+ * @param {string} actionLabel Mô tả hành động (VD: 'AI áp dụng đề xuất', 'Soạn thảo', 'AI hành chính hóa')
+ */
+function saveEditorState(actionLabel = "Soạn thảo") {
   if (isRestoringHistory) return;
   const editor = document.getElementById('native_rich_editor');
   if (!editor) return;
   
   const content = editor.innerHTML;
-  if (editorHistoryIndex >= 0 && editorHistoryStack[editorHistoryIndex] === content) return;
+  const title = document.getElementById('ai_final_title')?.value || "";
+
+  // Nếu nội dung không đổi so với đỉnh hiện tại thì bỏ qua
+  if (editorHistoryIndex >= 0 && editorHistoryStack[editorHistoryIndex].content === content) return;
   
+  // Cắt bỏ nhánh redo tương lai nếu người dùng tạo nhánh mới
   if (editorHistoryIndex < editorHistoryStack.length - 1) {
     editorHistoryStack = editorHistoryStack.slice(0, editorHistoryIndex + 1);
   }
   
-  editorHistoryStack.push(content);
+  editorHistoryStack.push({
+    content,
+    title,
+    actionLabel,
+    timestamp: new Date().toLocaleTimeString('vi-VN'),
+    copilotHistoryLength: copilotChatHistory.length
+  });
+
   if (editorHistoryStack.length > MAX_HISTORY_STEPS) {
     editorHistoryStack.shift();
   } else {
@@ -1598,158 +1671,110 @@ function saveEditorState() {
   }
   
   updateUndoRedoButtons();
-  saveVersionHistory(content);
 }
 
 function saveEditorStateDebounced() {
   clearTimeout(editorSaveTimeout);
-  editorSaveTimeout = setTimeout(saveEditorState, 400);
+  editorSaveTimeout = setTimeout(() => saveEditorState("Người dùng chỉnh sửa"), 400);
 }
 
+/**
+ * Lùi lại (Undo) - Đồng bộ hoàn toàn với cả thao tác gõ tay và các chỉnh sửa của AI Copilot
+ */
 function undoEditor() {
   if (editorHistoryIndex > 0) {
     isRestoringHistory = true;
     editorHistoryIndex--;
+    const state = editorHistoryStack[editorHistoryIndex];
+    
     const editor = document.getElementById('native_rich_editor');
-    if (editor) editor.innerHTML = editorHistoryStack[editorHistoryIndex];
+    if (editor && state) {
+      editor.innerHTML = state.content;
+      if (state.title) {
+        const titleInput = document.getElementById('ai_final_title');
+        if (titleInput) titleInput.value = state.title;
+      }
+    }
+
+    // ĐỒNG BỘ BỘ NHỚ AI COPILOT VỀ ĐÚNG NGỮ CẢNH TRƯỚC KHI CHỈNH SỬA
+    if (state && typeof state.copilotHistoryLength === 'number') {
+      copilotChatHistory = copilotChatHistory.slice(0, state.copilotHistoryLength);
+    }
+
+    // Cập nhật giao diện các khối sửa của Copilot nếu có
+    const allAppliedBadges = document.querySelectorAll('.copilot-applied-badge');
+    allAppliedBadges.forEach(el => {
+      el.innerHTML = '<span style="color: #92400E; font-size: 11px; font-weight: 700;"><i class="fa-solid fa-rotate-left me-1"></i> Đã hoàn tác về lúc trước khi sửa</span>';
+      if (el.parentElement) {
+        el.parentElement.style.background = '#FFFBEB';
+        el.parentElement.style.borderColor = '#FCD34D';
+      }
+    });
+
     isRestoringHistory = false;
     updateUndoRedoButtons();
+    console.log("⏪ [Undo] Đã lùi lại về trạng thái:", state ? state.actionLabel : "trước đó");
   }
 }
 
+/**
+ * Tiến tới (Redo) - Đồng bộ với các bước sửa tiếp theo
+ */
 function redoEditor() {
   if (editorHistoryIndex < editorHistoryStack.length - 1) {
     isRestoringHistory = true;
     editorHistoryIndex++;
+    const state = editorHistoryStack[editorHistoryIndex];
+
     const editor = document.getElementById('native_rich_editor');
-    if (editor) editor.innerHTML = editorHistoryStack[editorHistoryIndex];
+    if (editor && state) {
+      editor.innerHTML = state.content;
+      if (state.title) {
+        const titleInput = document.getElementById('ai_final_title');
+        if (titleInput) titleInput.value = state.title;
+      }
+    }
+
+    // Đồng bộ lại bộ nhớ Copilot
+    if (state && typeof state.copilotHistoryLength === 'number') {
+      copilotChatHistory = copilotChatHistory.slice(0, state.copilotHistoryLength);
+    }
+
     isRestoringHistory = false;
     updateUndoRedoButtons();
+    console.log("⏩ [Redo] Đã tiến tới trạng thái:", state ? state.actionLabel : "tiếp theo");
   }
 }
 
 function updateUndoRedoButtons() {
   const undoBtn = document.getElementById('btn_undo_editor');
   const redoBtn = document.getElementById('btn_redo_editor');
-  if (undoBtn) undoBtn.style.opacity = editorHistoryIndex > 0 ? '1' : '0.4';
-  if (redoBtn) redoBtn.style.opacity = editorHistoryIndex < editorHistoryStack.length - 1 ? '1' : '0.4';
+  if (undoBtn) {
+    const canUndo = editorHistoryIndex > 0;
+    undoBtn.style.opacity = canUndo ? '1' : '0.4';
+    undoBtn.style.cursor = canUndo ? 'pointer' : 'not-allowed';
+  }
+  if (redoBtn) {
+    const canRedo = editorHistoryIndex < editorHistoryStack.length - 1;
+    redoBtn.style.opacity = canRedo ? '1' : '0.4';
+    redoBtn.style.cursor = canRedo ? 'pointer' : 'not-allowed';
+  }
 }
 
-// Bắt phím tắt Ctrl+Z và Ctrl+Y
+// Bắt phím tắt chuẩn Word Ctrl+Z và Ctrl+Y trên toàn trang
 document.addEventListener('keydown', function(e) {
-  if (e.ctrlKey && e.key === 'z') {
+  if (e.ctrlKey && (e.key === 'z' || e.key === 'Z')) {
     e.preventDefault();
     undoEditor();
   }
-  if (e.ctrlKey && e.key === 'y') {
+  if (e.ctrlKey && (e.key === 'y' || e.key === 'Y')) {
     e.preventDefault();
     redoEditor();
   }
 });
 
 // =========================================================================
-// 23. VERSION HISTORY STACK & ROLLBACK SYSTEM
-// =========================================================================
-let versionHistoryStack = [];
-
-function saveVersionHistory(content) {
-  if (!content || content.trim().length < 10) return;
-  const timestamp = new Date().toLocaleTimeString('vi-VN');
-  
-  if (versionHistoryStack.length > 0 && versionHistoryStack[0].content === content) return;
-
-  versionHistoryStack.unshift({ timestamp, content });
-  if (versionHistoryStack.length > 8) versionHistoryStack.pop();
-
-  const select = document.getElementById('version_history_select');
-  if (select) {
-    select.innerHTML = versionHistoryStack.map((v, idx) => `
-      <option value="${idx}">Phiên bản ${versionHistoryStack.length - idx} (${v.timestamp})</option>
-    `).join('');
-  }
-}
-
-function restoreVersionHistory(index) {
-  const idx = parseInt(index, 10);
-  if (versionHistoryStack[idx]) {
-    const editor = document.getElementById('native_rich_editor');
-    if (editor) {
-      isRestoringHistory = true;
-      editor.innerHTML = versionHistoryStack[idx].content;
-      isRestoringHistory = false;
-      saveEditorState();
-      alert(`⏪ Đã ROLL BACK thành công về Phiên bản ${versionHistoryStack.length - idx} (${versionHistoryStack[idx].timestamp})!`);
-    }
-  }
-}
-
-// =========================================================================
-// 24. HỆ THỐNG CHÈN KHỐI / KÉO THẢ NỘI DUNG (BLOCKS)
-// =========================================================================
-function insertQuoteBlock() {
-  const quoteHtml = `
-    <blockquote style="border-left: 4px solid #F59E0B; padding: 12px 18px; background: #FFFBEB; margin: 18px 0; font-style: italic; color: #92400E; border-radius: 0 8px 8px 0; font-size: 14.5px;">
-      <i class="fa-solid fa-quote-left" style="color: #F59E0B; margin-right: 8px;"></i>
-      "Phát huy truyền thống đoàn kết, năng động và sáng tạo, Công đoàn Trường Đại học Thủ Dầu Một quyết tâm thực hiện thắng lợi các mục tiêu, nhiệm vụ năm 2026."
-    </blockquote><p></p>
-  `;
-  document.execCommand('insertHTML', false, quoteHtml);
-  saveEditorState();
-}
-
-function insertContactCardBlock() {
-  const contactHtml = `
-    <div style="background: #F8FAFC; border: 1px solid #CBD5E1; border-left: 4px solid #003865; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 18px 0; font-size: 13px; line-height: 1.6;">
-      <strong style="color: #003865; font-size: 13.5px;"><i class="fa-solid fa-address-card me-1"></i> THÔNG TIN LIÊN HỆ CÔNG ĐOÀN TRƯỜNG ĐH THỦ DẦU MỘT:</strong><br>
-      📍 <strong>Văn phòng:</strong> Lầu 1, Dãy A, Cổng 1, Số 06 Trần Văn Ơn, Phường Phú Lợi, TP. Thủ Dầu Một, Tỉnh Bình Dương<br>
-      📞 <strong>Điện thoại:</strong> (0274) 3815 184 &nbsp;|&nbsp; ✉️ <strong>Email:</strong> congdoan@tdmu.edu.vn
-    </div><p></p>
-  `;
-  document.execCommand('insertHTML', false, contactHtml);
-  saveEditorState();
-}
-
-function insertDataTableBlock() {
-  const tableHtml = `
-    <table style="width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13.5px; border: 1px solid #CBD5E1;">
-      <thead>
-        <tr style="background: #003865; color: white;">
-          <th style="padding: 8px 12px; border: 1px solid #CBD5E1;">STT</th>
-          <th style="padding: 8px 12px; border: 1px solid #CBD5E1;">Chỉ Tiêu Hoạt Động</th>
-          <th style="padding: 8px 12px; border: 1px solid #CBD5E1;">Tiến Độ Thực Hiện</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td style="padding: 8px 12px; border: 1px solid #CBD5E1; text-align: center;">01</td>
-          <td style="padding: 8px 12px; border: 1px solid #CBD5E1;">Hội thảo khoa học &amp; NCKH giảng viên</td>
-          <td style="padding: 8px 12px; border: 1px solid #CBD5E1; color: #059669; font-weight: 700;">Đạt 100% kế hoạch</td>
-        </tr>
-        <tr style="background: #F8FAFC;">
-          <td style="padding: 8px 12px; border: 1px solid #CBD5E1; text-align: center;">02</td>
-          <td style="padding: 8px 12px; border: 1px solid #CBD5E1;">Chăm lo đời sống đoàn viên &amp; NLĐ</td>
-          <td style="padding: 8px 12px; border: 1px solid #CBD5E1; color: #059669; font-weight: 700;">Hoàn thành xuất sắc</td>
-        </tr>
-      </tbody>
-    </table><p></p>
-  `;
-  document.execCommand('insertHTML', false, tableHtml);
-  saveEditorState();
-}
-
-function insertCalloutBlock() {
-  const calloutHtml = `
-    <div style="background: #FEF2F2; border: 1px solid #FECACA; border-left: 4px solid #EF4444; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 13.5px; color: #991B1B;">
-      <strong style="display: block; margin-bottom: 4px;"><i class="fa-solid fa-triangle-exclamation me-1"></i> LƯU Ý QUAN TRỌNG:</strong>
-      Toàn thể cán bộ, đoàn viên công đoàn chủ động nắm bắt kế hoạch và đăng ký tham gia đúng thời hạn quy định.
-    </div><p></p>
-  `;
-  document.execCommand('insertHTML', false, calloutHtml);
-  saveEditorState();
-}
-
-// =========================================================================
-// 25. HỆ THỐNG KIỂM TRA CHẤT LƯỢNG NỘI DUNG AI (AUDIT SCORECARD)
+// 23. HỆ THỐNG KIỂM TRA CHẤT LƯỢNG NỘI DUNG AI (AUDIT SCORECARD)
 // =========================================================================
 async function runAiQualityAudit() {
   const title = document.getElementById('ai_final_title')?.value || "Bài viết Công đoàn";
@@ -1853,7 +1878,7 @@ function closeAiQualityAuditModal() {
 }
 
 // =========================================================================
-// 26. MANUS AI COPILOT CONTINUOUS CHAT & DIRECT EDITING ENGINE
+// 24. MANUS AI COPILOT CONTINUOUS CHAT & DIRECT EDITING ENGINE
 // =========================================================================
 let copilotChatHistory = [];
 let pendingManusEdits = {};
@@ -2060,6 +2085,9 @@ function applyManusEdit(msgId) {
   const editor = document.getElementById('native_rich_editor');
   if (!editor) return;
 
+  // 1. LƯU TRẠNG THÁI TRƯỚC KHI COPILOT SỬA VÀO BỘ NHỚ LỊCH SỬ ĐỒNG BỘ
+  saveEditorState("Trước khi Copilot sửa");
+
   editor.focus();
   const sel = window.getSelection();
 
@@ -2073,13 +2101,19 @@ function applyManusEdit(msgId) {
     editor.innerHTML += `<div style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed #CBD5E1;">${editData.content}</div>`;
   }
 
-  saveEditorState();
+  // 2. LƯU TRẠNG THÁI SAU KHI COPILOT SỬA VÀO BỘ NHỚ LỊCH SỬ
+  saveEditorState("Sau khi Copilot áp dụng sửa");
   
   const block = document.getElementById(`edit_block_${msgId}`);
   if (block) {
     block.innerHTML = `
-      <div style="background: #ECFDF5; color: #047857; font-size: 11px; font-weight: 700; padding: 8px 10px; text-align: center;">
-        <i class="fa-solid fa-check-circle me-1"></i> Đã áp dụng thành công vào văn bản!
+      <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+        <span class="copilot-applied-badge" style="color: #047857; font-size: 11.5px; font-weight: 700;">
+          <i class="fa-solid fa-check-circle me-1"></i> Đã áp dụng vào bài
+        </span>
+        <button type="button" class="btn btn-sm" onclick="undoEditor()" style="background: white; border: 1px solid #CBD5E1; color: #92400E; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" title="Hoàn tác lùi về trạng thái trước khi AI chỉnh sửa">
+          <i class="fa-solid fa-rotate-left me-1"></i> Hoàn Tác (Lùi Lại)
+        </button>
       </div>
     `;
   }

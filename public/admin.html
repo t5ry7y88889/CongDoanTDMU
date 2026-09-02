@@ -345,55 +345,39 @@
                   <input type="text" id="ai_final_title" placeholder="Tiêu Đề Bài Báo..." style="width: 100%; font-size: 24px; font-weight: 800; color: #0F172A; border: none; outline: none; margin-bottom: 8px; line-height: 1.3;">
                   <input type="text" id="ai_final_subtitle" placeholder="Tiêu đề phụ súc tích tóm lược..." style="width: 100%; font-size: 14px; font-style: italic; color: #64748B; border: none; outline: none; margin-bottom: 18px; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px;">
 
-                  <!-- THANH CÔNG CỤ RIBBON WORD CHUYÊN NGHIỆP CÓ TIẾN/LÙI, ROLLBACK, CHÈN KHỐI, KIỂM TRA -->
-                  <div style="position: sticky; top: 0; z-index: 100; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 8px 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
-                    <!-- Nhóm 1: Tiến / Lùi & Định dạng -->
-                    <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
-                      <button type="button" id="btn_undo_editor" class="btn-word-tool" title="Hoàn tác / Lùi lại (Ctrl+Z)" onclick="undoEditor()" style="font-weight: 700; color: #003865;"><i class="fa-solid fa-rotate-left"></i> Lùi</button>
-                      <button type="button" id="btn_redo_editor" class="btn-word-tool" title="Tiến tới (Ctrl+Y)" onclick="redoEditor()" style="font-weight: 700; color: #003865;"><i class="fa-solid fa-rotate-right"></i> Tiến</button>
-                      <div style="width: 1px; height: 18px; background: #CBD5E1; margin: 0 2px;"></div>
+                  <!-- THANH CÔNG CỤ RIBBON CHUẨN MICROSOFT WORD: TIẾN / LÙI ĐỒNG BỘ AI & ĐỊNH DẠNG BÁO CHÍ -->
+                  <div style="position: sticky; top: 0; z-index: 100; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 8px 14px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                    <!-- Nhóm 1: Tiến & Lùi Đồng Bộ Với Cả Chỉnh Sửa Của AI (Ctrl+Z / Ctrl+Y) -->
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <button type="button" id="btn_undo_editor" class="btn-word-tool" title="Hoàn tác / Lùi lại (Ctrl+Z) - Đồng bộ với AI" onclick="undoEditor()" style="font-weight: 700; color: #003865; padding: 5px 12px; border-radius: 6px; background: #F8FAFC;">
+                        <i class="fa-solid fa-rotate-left me-1"></i> Lùi (Ctrl+Z)
+                      </button>
+                      <button type="button" id="btn_redo_editor" class="btn-word-tool" title="Tiến tới (Ctrl+Y) - Đồng bộ với AI" onclick="redoEditor()" style="font-weight: 700; color: #003865; padding: 5px 12px; border-radius: 6px; background: #F8FAFC;">
+                        <i class="fa-solid fa-rotate-right me-1"></i> Tiến (Ctrl+Y)
+                      </button>
+                      <div style="width: 1px; height: 22px; background: #CBD5E1; margin: 0 4px;"></div>
+                    </div>
+
+                    <!-- Nhóm 2: Định dạng văn bản báo chí chuẩn Word -->
+                    <div style="display: flex; align-items: center; gap: 4px;">
                       <button type="button" class="btn-word-tool fw-bold" onclick="document.execCommand('bold')" title="In đậm (Ctrl+B)"><strong>B</strong></button>
                       <button type="button" class="btn-word-tool fst-italic" onclick="document.execCommand('italic')" title="In nghiêng (Ctrl+I)"><em>I</em></button>
                       <button type="button" class="btn-word-tool text-decoration-underline" onclick="document.execCommand('underline')" title="Gạch chân (Ctrl+U)"><u>U</u></button>
-                      <div style="width: 1px; height: 18px; background: #CBD5E1; margin: 0 2px;"></div>
+                      <div style="width: 1px; height: 18px; background: #CBD5E1; margin: 0 4px;"></div>
                       <button type="button" class="btn-word-tool" onclick="document.execCommand('justifyLeft')" title="Căn trái"><i class="fa-solid fa-align-left"></i></button>
                       <button type="button" class="btn-word-tool" onclick="document.execCommand('justifyCenter')" title="Căn giữa"><i class="fa-solid fa-align-center"></i></button>
                       <button type="button" class="btn-word-tool" onclick="document.execCommand('justifyRight')" title="Căn phải"><i class="fa-solid fa-align-right"></i></button>
-                      <button type="button" class="btn-word-tool" onclick="document.execCommand('insertUnorderedList')" title="Danh sách"><i class="fa-solid fa-list-ul"></i></button>
+                      <button type="button" class="btn-word-tool" onclick="document.execCommand('insertUnorderedList')" title="Danh sách gạch đầu dòng"><i class="fa-solid fa-list-ul"></i></button>
                     </div>
 
-                    <!-- Nhóm 2: Chèn Khối Kéo Thả / Cấu Trúc -->
-                    <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
-                      <span style="font-size: 11px; color: #64748B; font-weight: 700;"><i class="fa-solid fa-cubes"></i> Chèn:</span>
-                      <button type="button" class="btn-word-tool" onclick="insertQuoteBlock()" title="Chèn trích dẫn lãnh đạo BTV"><i class="fa-solid fa-quote-left text-warning"></i> Trích Dẫn</button>
-                      <button type="button" class="btn-word-tool" onclick="insertContactCardBlock()" title="Chèn thẻ liên hệ Công đoàn TDMU"><i class="fa-solid fa-address-card text-primary"></i> Thẻ CĐ</button>
-                      <button type="button" class="btn-word-tool" onclick="insertDataTableBlock()" title="Chèn bảng biểu số liệu"><i class="fa-solid fa-table text-info"></i> Bảng</button>
-                      <button type="button" class="btn-word-tool" onclick="insertCalloutBlock()" title="Chèn hộp lưu ý quan trọng"><i class="fa-solid fa-circle-exclamation text-danger"></i> Lưu Ý</button>
-                    </div>
-
-                    <!-- Nhóm 3: Hệ Thống Roll Back & Kiểm Tra Chất Lượng -->
-                    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                      <!-- Rollback Version History Dropdown -->
-                      <div style="display: flex; align-items: center; gap: 4px; background: #FFFBEB; border: 1px solid #FCD34D; padding: 2px 6px; border-radius: 6px;">
-                        <i class="fa-solid fa-clock-rotate-left text-warning" style="font-size: 11px;"></i>
-                        <select id="version_history_select" style="font-size: 11px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 2px 4px; font-weight: 600; color: #92400E; outline: none;" onchange="restoreVersionHistory(this.value)">
-                          <option value="0">Bản gốc hiện tại</option>
-                        </select>
-                        <button type="button" class="btn-word-tool" style="font-size: 11px; padding: 2px 6px; background: #D97706; color: white; border: none; font-weight: 700;" onclick="restoreVersionHistory(document.getElementById('version_history_select').value)" title="Khôi phục lại phiên bản đã chọn">
-                          ⏪ Roll Back
-                        </button>
-                      </div>
-
-                      <!-- Hệ Thống Kiểm Tra AI -->
-                      <button type="button" class="btn-word-tool" style="background: #0284C7; color: white; border: none; font-weight: 700; font-size: 11px; padding: 4px 10px; border-radius: 4px;" onclick="runAiQualityAudit()">
+                    <!-- Nhóm 3: AI Chỉnh Sửa & Hệ Thống Kiểm Tra Chất Lượng AI -->
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span style="font-size: 11.5px; color: #0284C7; font-weight: 700;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Viết Lại:</span>
+                      <button type="button" class="btn-word-tool" style="font-size: 11.5px; padding: 4px 10px; color: #003865; font-weight: 700;" onclick="handleToolbarAiAction('formal')">🏛️ Hành Chính</button>
+                      <button type="button" class="btn-word-tool" style="font-size: 11.5px; padding: 4px 10px; color: #003865; font-weight: 700;" onclick="handleToolbarAiAction('expand')">✨ Mở Rộng</button>
+                      <button type="button" class="btn-word-tool" style="background: #0284C7; color: white; border: none; font-weight: 700; font-size: 11.5px; padding: 5px 12px; border-radius: 6px; margin-left: 6px;" onclick="runAiQualityAudit()">
                         <i class="fa-solid fa-shield-halved text-warning me-1"></i> Kiểm Tra AI (Audit)
                       </button>
-
-                      <!-- AI Viết Lại -->
-                      <div style="display: flex; align-items: center; gap: 4px;">
-                        <button type="button" class="btn-word-tool" style="font-size: 11px; padding: 3px 8px; color: #003865; font-weight: 600;" onclick="handleToolbarAiAction('formal')">🏛️ Hành Chính</button>
-                        <button type="button" class="btn-word-tool" style="font-size: 11px; padding: 3px 8px; color: #003865; font-weight: 600;" onclick="handleToolbarAiAction('expand')">✨ Mở Rộng</button>
-                      </div>
                     </div>
                   </div>
 
