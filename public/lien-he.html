@@ -3,50 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tổ Công Đoàn & Liên Hệ - Công Đoàn Trường ĐH Thủ Dầu Một</title>
+  <title>Liên Hệ &amp; 16 Tổ Công Đoàn - Trường ĐH Thủ Dầu Một</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    :root {
-      --tdmu-dark-blue: #003865;
-      --tdmu-blue: #005baa;
-      --tdmu-light-blue: #0088cc;
-      --tdmu-red: #d32f2f;
-      --tdmu-yellow: #f1c40f;
-      --bg-gray: #f4f6f9;
-      --text-dark: #2c3e50;
-    }
-    body { font-family: 'Segoe UI', Arial, sans-serif; color: var(--text-dark); background-color: var(--bg-gray); line-height: 1.5; font-size: 14px; }
-    
-    /* Top Brand Header */
-    .top-brand-header { background: #ffffff; padding: 12px 0; border-bottom: 2px solid var(--tdmu-dark-blue); }
-    .brand-title-main { color: var(--tdmu-dark-blue); font-size: 19px; font-weight: 800; text-transform: uppercase; margin: 0; }
-    .brand-sub-main { color: #e67e22; font-size: 12px; font-weight: 700; text-transform: uppercase; }
-
-    /* Navbar */
-    .navbar-tdmu { background-color: var(--tdmu-dark-blue); padding: 0; box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
-    .navbar-tdmu .nav-link { color: #ffffff !important; font-weight: 600; font-size: 13.5px; padding: 12px 14px !important; text-transform: uppercase; transition: all 0.2s; }
-    .navbar-tdmu .nav-link:hover, .navbar-tdmu .nav-link.active { background-color: #002240; color: var(--tdmu-yellow) !important; }
-    .navbar-tdmu .dropdown-menu { border-radius: 0; border: none; box-shadow: 0 6px 15px rgba(0,0,0,0.15); padding: 0; margin-top: 0; }
-    .navbar-tdmu .dropdown-item { padding: 10px 16px; font-size: 13px; font-weight: 500; border-bottom: 1px solid #edf2f7; color: #333; }
-    .navbar-tdmu .dropdown-item:hover { background-color: var(--tdmu-blue); color: white; }
-
-    /* Content & Panels */
-    .content-box { background: white; border-radius: 4px; border: 1px solid #e2e8f0; padding: 22px; margin-bottom: 20px; }
-    .tieudelon { font-size: 17px; font-weight: 800; color: var(--tdmu-dark-blue); text-transform: uppercase; border-bottom: 2px solid var(--tdmu-dark-blue); padding-bottom: 6px; margin-bottom: 16px; }
-    .panel-tdmu { background: white; border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
-    .panel-heading-tdmu { background: #f8fafc; border-bottom: 2px solid var(--tdmu-dark-blue); padding: 10px 14px; font-weight: 700; font-size: 13.5px; color: var(--tdmu-dark-blue); text-transform: uppercase; }
-    .list-group-tdmu .list-group-item { border: none; border-bottom: 1px dashed #e2e8f0; padding: 9px 12px; font-size: 13px; font-weight: 500; color: #2d3748; text-decoration: none; display: block; }
-    .list-group-tdmu .list-group-item:hover { background-color: #f7fafc; color: var(--tdmu-blue); padding-left: 16px; }
-    .breadcrumb-box { padding: 10px 0; font-size: 13px; }
-
-    /* Footer */
-    footer { background: #002240; color: #a0aec0; padding: 25px 0 15px; font-size: 13px; border-top: 3px solid var(--tdmu-yellow); }
-  </style>
+  <link rel="stylesheet" href="css/portal.css?v=20260901_v20">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#002855">
 </head>
 <body>
+  <div class="main-content-wrapper">
 
-  <!-- Top Brand Header (Single Clean Header) -->
+  <!-- Top Brand Header -->
   <header class="top-brand-header">
     <div class="container d-flex justify-content-between align-items-center">
       <div class="d-flex align-items-center gap-3">
@@ -57,16 +24,15 @@
         </div>
       </div>
       <div class="d-flex align-items-center gap-2">
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSelw4xZGXNz2fUHOy0wHZ9-rIt5N-gneVP005KjpjURduNvrg/viewform" target="_blank" class="btn btn-sm btn-danger fw-bold shadow-sm">
-          <i class="fa-solid fa-file-pen me-1"></i> Điền Báo Cáo Tháng (Google Form)
-        </a>
-        <a href="admin.html" class="btn btn-sm btn-outline-primary fw-bold">
-          <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Portal AI CMS
-        </a>
+          <span class="badge-hotline">
+            <i class="fa-solid fa-phone me-1 text-warning"></i> Hotline: (0274) 3.815.184
+          </span>
+          <a href="admin.html" class="btn-portal-access">
+            <i class="fa-solid fa-wand-magic-sparkles me-1 text-warning"></i> Quản lý website truyền thông công đoàn TDMU
+          </a>
+        </div>
       </div>
-    </div>
-  </header>
-
+    </header>
   <!-- Official Navigation Bar -->
   <nav class="navbar navbar-expand-lg navbar-tdmu sticky-top">
     <div class="container">
@@ -84,30 +50,29 @@
               Cơ Cấu Tổ Chức
             </a>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="co-cau-to-chuc.html#ban-thuong-vu"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban thường vụ</a></li>
-              <li><a class="dropdown-item" href="co-cau-to-chuc.html#ban-chap-hanh"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban chấp hành</a></li>
-              <li><a class="dropdown-item" href="co-cau-to-chuc.html#uy-ban-kiem-tra"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ủy ban kiểm tra</a></li>
-              <li><a class="dropdown-item" href="lien-he.html"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Công đoàn bộ phận & Tổ công đoàn</a></li>
-            </ul>
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=ban-thuong-vu"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban thường vụ</a></li>
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=ban-chap-hanh"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban chấp hành</a></li>
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=uy-ban-kiem-tra"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ủy ban kiểm tra</a></li>
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=16-to-cong-doan"><i class="fa-solid fa-caret-right me-1 text-primary"></i> 16 Tổ công đoàn cơ sở</a></li>
+              </ul>
           </li>
 
-          <li class="nav-item"><a class="nav-link " href="index.html#tintuc">Tin Tức</a></li>
+          <li class="nav-item"><a class="nav-link " href="tin-tuc.html">Tin Tức</a></li>
           <li class="nav-item"><a class="nav-link " href="phuc-loi-doan-vien.html">Phúc Lợi Đoàn Viên</a></li>
 
           <!-- Dropdown: Văn Bản -->
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle " href="#" data-bs-toggle="dropdown">
+            <a class="nav-link dropdown-toggle " href="van-ban.html" data-bs-toggle="dropdown">
               Văn Bản
             </a>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="van-ban.html#tuyen-truyen"><i class="fa-solid fa-file-lines me-1 text-primary"></i> Công văn tuyên truyền</a></li>
-              <li><a class="dropdown-item" href="van-ban.html#ke-hoach"><i class="fa-solid fa-calendar-check me-1 text-primary"></i> Kế hoạch hoạt động</a></li>
-              <li><a class="dropdown-item" href="van-ban.html#luat"><i class="fa-solid fa-scale-balanced me-1 text-primary"></i> Văn bản luật</a></li>
-              <li><a class="dropdown-item" href="van-ban.html#quyet-dinh"><i class="fa-solid fa-stamp me-1 text-primary"></i> Quyết định</a></li>
+              <li><a class="dropdown-item" href="van-ban.html#tuyen-truyen"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Công văn tuyên truyền</a></li>
+              <li><a class="dropdown-item" href="van-ban.html#ke-hoach"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Kế hoạch hoạt động</a></li>
+              <li><a class="dropdown-item" href="van-ban.html#luat"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Văn bản luật</a></li>
+              <li><a class="dropdown-item" href="van-ban.html#quyet-dinh"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Quyết định</a></li>
             </ul>
           </li>
 
-          <li class="nav-item"><a class="nav-link " href="bao-cao-thang.html"><i class="fa-solid fa-clipboard-check me-1 text-warning"></i> Báo Cáo Thi Đua</a></li>
           <li class="nav-item"><a class="nav-link " href="bieu-mau.html">Biểu Mẫu</a></li>
           <li class="nav-item"><a class="nav-link active" href="lien-he.html">Liên Hệ</a></li>
         </ul>
@@ -115,38 +80,87 @@
     </div>
   </nav>
 
-  
-  <div class="container my-4">
-    <div class="breadcrumb-box"><a href="index.html" class="text-decoration-none">Trang chủ</a> / <span class="text-muted">Danh bạ Tổ Công đoàn & Liên hệ</span></div>
+  <div class="container my-3">
+    <div class="breadcrumb-box"><a href="index.html">Trang chủ</a> / <span class="text-muted">Liên hệ &amp; 16 Tổ công đoàn</span></div>
     <div class="row g-4">
       <div class="col-lg-9">
         <div class="content-box">
-          <div class="tieudelon"><i class="fa-solid fa-building-user me-2"></i>DANH BẠ 16 TỔ CÔNG ĐOÀN TRỰC THUỘC TDMU</div>
-          <div class="row g-3">
-            <div class="col-md-6"><div class="p-3 border rounded bg-light"><span class="badge bg-primary">TCD_VCNS</span><h6 class="fw-bold text-primary mt-2 mb-1">Tổ CĐ Viện Công nghệ số</h6><small class="d-block text-dark"><strong>Tổ trưởng:</strong> ThS. Hồ Ngọc Trung Kiên (66 ĐVCĐ)</small><small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i> Phòng B1-204 | tcd_cns@tdmu.edu.vn</small></div></div>
-            <div class="col-md-6"><div class="p-3 border rounded bg-light"><span class="badge bg-primary">TCD_TLQL</span><h6 class="fw-bold text-primary mt-2 mb-1">Tổ CĐ Trường Luật & Quản lý</h6><small class="d-block text-dark"><strong>Tổ trưởng:</strong> ThS. Huỳnh Thị Lệ Kha (51 ĐVCĐ)</small><small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i> Phòng B3-101 | tcd_luat@tdmu.edu.vn</small></div></div>
-            <div class="col-md-6"><div class="p-3 border rounded bg-light"><span class="badge bg-primary">TCD_KTTC2</span><h6 class="fw-bold text-primary mt-2 mb-1">Tổ CĐ Kinh tế tài chính 2</h6><small class="d-block text-dark"><strong>Tổ trưởng:</strong> ThS. Nguyễn Thụy Bảo Khuyên (42 ĐVCĐ)</small><small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i> Phòng B2-102 | tcd_kttc2@tdmu.edu.vn</small></div></div>
-            <div class="col-md-6"><div class="p-3 border rounded bg-light"><span class="badge bg-primary">TCD_04</span><h6 class="fw-bold text-primary mt-2 mb-1">Tổ Công đoàn 4</h6><small class="d-block text-dark"><strong>Tổ trưởng:</strong> Đ/c Nguyễn Thị Hương (23 ĐVCĐ)</small><small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i> Phòng A1-104 | tcd04@tdmu.edu.vn</small></div></div>
-            
-            <div class="col-md-6"><div class="p-3 border rounded bg-light"><span class="badge bg-secondary">TCD_01</span><h6 class="fw-bold text-primary mt-2 mb-1">Tổ Công đoàn 1</h6><small class="d-block text-dark"><strong>Tổ trưởng:</strong> Đ/c Nguyễn Văn A (Khối phòng ban)</small></div></div>
-            <div class="col-md-6"><div class="p-3 border rounded bg-light"><span class="badge bg-secondary">TCD_02</span><h6 class="fw-bold text-primary mt-2 mb-1">Tổ Công đoàn 2</h6><small class="d-block text-dark"><strong>Tổ trưởng:</strong> Đ/c Trần Thị B (Khối phòng ban)</small></div></div>
-            <div class="col-md-6"><div class="p-3 border rounded bg-light"><span class="badge bg-secondary">TCD_03</span><h6 class="fw-bold text-primary mt-2 mb-1">Tổ Công đoàn 3</h6><small class="d-block text-dark"><strong>Tổ trưởng:</strong> Đ/c Lê Văn C (Khối trung tâm)</small></div></div>
-            <div class="col-md-6"><div class="p-3 border rounded bg-light"><span class="badge bg-secondary">TCD_KCNVH</span><h6 class="fw-bold text-primary mt-2 mb-1">Tổ CĐ Khoa CN Văn hóa</h6><small class="d-block text-dark"><strong>Tổ trưởng:</strong> Đ/c Phạm Văn D (Khối đào tạo)</small></div></div>
+          <div class="tieudelon"><i class="fa-solid fa-address-book me-2"></i>DANH BẠ 16 TỔ CÔNG ĐOÀN CƠ SỞ TDMU</div>
+          
+          <table class="table table-bordered table-hover align-middle" style="font-size: 13px;">
+            <thead class="table-primary">
+              <tr>
+                <th style="width: 60px;">STT</th>
+                <th>Tên Tổ Công Đoàn</th>
+                <th>Tổ Trưởng</th>
+                <th>Email Liên Hệ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td><strong>Tổ Công đoàn 1 - Khối Hiệu Bộ</strong></td><td>Đ/c Nguyễn Văn A</td><td>tcd01@tdmu.edu.vn</td></tr>
+              <tr><td>2</td><td><strong>Tổ Công đoàn 2 - Phòng Đào Tạo &amp; Khảo Thí</strong></td><td>Đ/c Trần Thị B</td><td>tcd02@tdmu.edu.vn</td></tr>
+              <tr><td>3</td><td><strong>Tổ Công đoàn 3 - Viện Công Nghệ Số</strong></td><td>Đ/c Lê Văn C</td><td>tcd03@tdmu.edu.vn</td></tr>
+              <tr><td>4</td><td><strong>Tổ Công đoàn 4 - Khoa Khoa Học Tự Nhiên</strong></td><td>Đ/c Nguyễn Thị Hương</td><td>tcd04@tdmu.edu.vn</td></tr>
+              <tr><td>5</td><td><strong>Tổ Công đoàn 5 - Khoa Khoa Học Xã Hội</strong></td><td>Đ/c Phạm Văn Dũng</td><td>tcd05@tdmu.edu.vn</td></tr>
+              <tr><td>6</td><td><strong>Tổ Công đoàn 6 - Khoa Kinh Tế</strong></td><td>Đ/c Hoàng Minh Tuấn</td><td>tcd06@tdmu.edu.vn</td></tr>
+              <tr><td>7</td><td><strong>Tổ Công đoàn 7 - Khoa Ngoại Ngữ</strong></td><td>Đ/c Vũ Thị Mai</td><td>tcd07@tdmu.edu.vn</td></tr>
+              <tr><td>8</td><td><strong>Tổ Công đoàn 8 - Khoa Kỹ Thuật Công Nghệ</strong></td><td>Đ/c Đặng Văn Long</td><td>tcd08@tdmu.edu.vn</td></tr>
+              <tr><td>9</td><td><strong>Tổ Công đoàn 9 - Khoa Kiến Trúc</strong></td><td>Đ/c Bùi Thị Lan</td><td>tcd09@tdmu.edu.vn</td></tr>
+              <tr><td>10</td><td><strong>Tổ Công đoàn 10 - Khoa Sư Phạm</strong></td><td>Đ/c Đỗ Văn Hùng</td><td>tcd10@tdmu.edu.vn</td></tr>
+              <tr><td>11</td><td><strong>Tổ Công đoàn 11 - Khoa Luật</strong></td><td>Đ/c Ngô Thị Bích</td><td>tcd11@tdmu.edu.vn</td></tr>
+              <tr><td>12</td><td><strong>Tổ Công đoàn 12 - Viện Đào Tạo Sau Đại Học</strong></td><td>Đ/c Dương Văn Nam</td><td>tcd12@tdmu.edu.vn</td></tr>
+              <tr><td>13</td><td><strong>Tổ Công đoàn 13 - Trung Tâm Học Liệu &amp; CNTT</strong></td><td>Đ/c Lý Thị Thu</td><td>tcd13@tdmu.edu.vn</td></tr>
+              <tr><td>14</td><td><strong>Tổ Công đoàn 14 - Phòng Công Tác Sinh Viên</strong></td><td>Đ/c Trịnh Văn Phát</td><td>tcd14@tdmu.edu.vn</td></tr>
+              <tr><td>15</td><td><strong>Tổ Công đoàn 15 - Phòng Quản Trị &amp; Cơ Sở Vật Chất</strong></td><td>Đ/c Mai Thị Ngọc</td><td>tcd15@tdmu.edu.vn</td></tr>
+              <tr><td>16</td><td><strong>Tổ Công đoàn 16 - Trung Tâm Ngoại Ngữ - Tin Học</strong></td><td>Đ/c Đoàn Văn Khải</td><td>tcd16@tdmu.edu.vn</td></tr>
+            </tbody>
+          </table>
+        
+          <!-- HỘP THƯ GÓP Ý & PHẢN ÁNH ĐOÀN VIÊN (LƯU TRỰC TIẾP VÀO CSDL) -->
+          <div class="content-box mt-4">
+            <div class="tieudelon">
+              <span><i class="fa-solid fa-envelope-open-text text-primary me-2"></i>HỘP THƯ GÓP Ý &amp; PHẢN ÁNH NGUYỆN VỌNG ĐOÀN VIÊN</span>
+            </div>
+            <p class="text-muted small mb-3">Mọi ý kiến đóng góp, đề xuất và phản ánh về chế độ chính sách sẽ được chuyển trực tiếp vào Cơ sở dữ liệu để Ban Chấp Hành &amp; UBKT tiếp nhận xử lý.</p>
 
-            <div class="col-md-6"><div class="p-3 border rounded bg-light"><span class="badge bg-secondary">TCD_KNN</span><h6 class="fw-bold text-primary mt-2 mb-1">Tổ CĐ Khoa Ngoại ngữ</h6><small class="d-block text-dark"><strong>Tổ trưởng:</strong> Đ/c Hoàng Thị E</small></div></div>
-            <div class="col-md-6"><div class="p-3 border rounded bg-light"><span class="badge bg-secondary">TCD_KKTXD</span><h6 class="fw-bold text-primary mt-2 mb-1">Tổ CĐ Khoa KT - Xây dựng</h6><small class="d-block text-dark"><strong>Tổ trưởng:</strong> Đ/c Vũ Văn F</small></div></div>
-            <div class="col-md-6"><div class="p-3 border rounded bg-light"><span class="badge bg-secondary">TCD_VKTCN</span><h6 class="fw-bold text-primary mt-2 mb-1">Tổ CĐ Viện Kỹ thuật công nghệ</h6><small class="d-block text-dark"><strong>Tổ trưởng:</strong> Đ/c Đặng Văn G</small></div></div>
-            <div class="col-md-6"><div class="p-3 border rounded bg-light"><span class="badge bg-secondary">TCD_VCNXBV</span><h6 class="fw-bold text-primary mt-2 mb-1">Tổ CĐ Viện CN Xanh & Bền vững</h6><small class="d-block text-dark"><strong>Tổ trưởng:</strong> Đ/c Bùi Thị H</small></div></div>
-
-            <div class="col-md-6"><div class="p-3 border rounded bg-light"><span class="badge bg-secondary">TCD_SP1</span><h6 class="fw-bold text-primary mt-2 mb-1">Tổ CĐ Sư phạm 1</h6><small class="d-block text-dark"><strong>Tổ trưởng:</strong> Đ/c Ngô Văn I</small></div></div>
-            <div class="col-md-6"><div class="p-3 border rounded bg-light"><span class="badge bg-secondary">TCD_SP2</span><h6 class="fw-bold text-primary mt-2 mb-1">Tổ CĐ Sư phạm 2</h6><small class="d-block text-dark"><strong>Tổ trưởng:</strong> Đ/c Đỗ Thị K</small></div></div>
-            <div class="col-md-6"><div class="p-3 border rounded bg-light"><span class="badge bg-secondary">TCD_KTTC1</span><h6 class="fw-bold text-primary mt-2 mb-1">Tổ CĐ Kinh tế tài chính 1</h6><small class="d-block text-dark"><strong>Tổ trưởng:</strong> Đ/c Trương Văn L</small></div></div>
-            <div class="col-md-6"><div class="p-3 border rounded bg-light"><span class="badge bg-secondary">TCD_KTTC3</span><h6 class="fw-bold text-primary mt-2 mb-1">Tổ CĐ Kinh tế tài chính 3</h6><small class="d-block text-dark"><strong>Tổ trưởng:</strong> Đ/c Phan Văn M</small></div></div>
+            <form id="feedbackForm" onsubmit="submitFeedback(event)">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold small text-secondary">Họ và Tên (*):</label>
+                  <input type="text" class="form-control" id="fbName" value="TS. Lê Thị Kim Út" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold small text-secondary">Đơn vị / Tổ Công đoàn (*):</label>
+                  <input type="text" class="form-control" id="fbUnit" value="Phòng Quản lý Khoa học" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold small text-secondary">Email nhận phản hồi (*):</label>
+                  <input type="email" class="form-control" id="fbEmail" value="utltk@tdmu.edu.vn" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold small text-secondary">Số điện thoại liên hệ:</label>
+                  <input type="tel" class="form-control" id="fbPhone" value="0918.370.363">
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-bold small text-secondary">Tiêu đề phản ánh / Góp ý (*):</label>
+                  <input type="text" class="form-control" id="fbTitle" placeholder="Ví dụ: Đề xuất cải thiện cơ sở vật chất khu sinh hoạt công đoàn..." required>
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-bold small text-secondary">Nội dung chi tiết (*):</label>
+                  <textarea class="form-control" id="fbContent" rows="4" placeholder="Nhập chi tiết nội dung ý kiến hoặc nguyện vọng..." required></textarea>
+                </div>
+                <div class="col-12 text-end">
+                  <button type="submit" class="btn btn-primary fw-bold" id="btnSubmitFeedback">
+                    <i class="fa-solid fa-paper-plane me-1"></i> Gửi Ý Kiến Tới Ban Chấp Hành
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
+
         </div>
       </div>
-      
-        <!-- RIGHT SIDEBAR (3 PHẦN) -->
+      <!-- RIGHT COLUMN (3 PHẦN): LIÊN KẾT WEBSITE -->
         <div class="col-lg-3">
           <div class="panel-tdmu">
             <div class="panel-heading-tdmu"><i class="fa-solid fa-link me-2 text-primary"></i>Liên kết website</div>
@@ -160,34 +174,104 @@
             </div>
           </div>
 
-          <!-- Banner Google Form -->
-          <div class="p-3 bg-white border rounded text-center shadow-sm">
-            <i class="fa-brands fa-google text-danger fa-2x mb-2"></i>
-            <h6 class="fw-bold text-danger mb-1">NỘP BÁO CÁO THÁNG CỦA TỔ CÔNG ĐOÀN</h6>
-            <p class="small text-muted mb-2">Dành cho các Tổ Công đoàn gửi báo cáo định kỳ</p>
-            <a href="https://docs.google.com/forms/d/e/1FAIpQLSelw4xZGXNz2fUHOy0wHZ9-rIt5N-gneVP005KjpjURduNvrg/viewform" target="_blank" class="btn btn-danger btn-sm w-100 fw-bold mb-2">
-              <i class="fa-solid fa-file-pen me-1"></i> Mở Google Form
-            </a>
-            <a href="bao-cao-thang.html" class="btn btn-outline-primary btn-sm w-100 fw-bold">
-              <i class="fa-solid fa-ranking-star me-1"></i> Bảng Thi Đua 16 Tổ
-            </a>
+          <!-- Thống Kê Truy Cập Widget -->
+          <div class="panel-tdmu">
+            <div class="panel-heading-tdmu"><i class="fa-solid fa-chart-simple me-2 text-warning"></i>Thống kê truy cập</div>
+            <div class="p-3" style="font-size: 13px;">
+              <p class="mb-2"><i class="fa-solid fa-users text-primary me-2"></i> Đang trực tuyến: <strong>12</strong></p>
+              <p class="mb-0"><i class="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong>811,221</strong></p>
+            </div>
           </div>
         </div>
+    </div>
+  </div>
 
+  </div>
+
+  <!-- Footer -->
+    <!-- Footer (Chuẩn 2 Cột Thực Tế: Cơ Quan & Nhóm Đồ Án) -->
+  <footer>
+    <div class="container">
+      <div class="row gy-3">
+        <div class="col-md-7 text-start">
+          <h6 class="fw-bold text-white mb-2">CÔNG ĐOÀN CƠ SỞ TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h6>
+          <p class="mb-1"><i class="fa-solid fa-location-dot me-2 text-warning"></i> Địa chỉ: Lầu 1, Dãy A, Cổng 1, Số 06 Trần Văn Ơn, P. Phú Lợi, TP. Thủ Dầu Một, Bình Dương</p>
+          <p class="mb-1"><i class="fa-solid fa-phone me-2 text-warning"></i> Điện thoại: (0274) 3.815.184 | <i class="fa-solid fa-envelope ms-2 me-1 text-warning"></i> Email: congdoan@tdmu.edu.vn</p>
+          <p class="mb-0"><i class="fa-solid fa-globe me-2 text-warning"></i> Website: congdoan.tdmu.edu.vn</p>
+        </div>
+        <div class="col-md-5 text-md-end text-start">
+          <h6 class="fw-bold text-warning mb-2">HỆ THỐNG TRUYỀN THÔNG TÍCH HỢP AI</h6>
+          <p class="mb-1">Đề tài NCKH Sinh viên / Đồ án Cơ sở ngành - Viện Công nghệ số</p>
+          <p class="mb-0 text-light text-opacity-75">Nhóm 2: Nguyễn Bình Dương - Trần Hồng Thanh - Phạm Anh Tuấn</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/bookmarks.js?v=20260901_v23"></script>
+
+  <!-- OFFCANVAS TỦ SÁCH ĐỌC SAU (SAVED ARTICLES DRAWER) -->
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="bookmarksOffcanvas" style="width: 380px;">
+    <div class="offcanvas-header" style="background: #002855; color: white;">
+      <h5 class="offcanvas-title fw-bold" style="font-size: 16px;">
+        <i class="fa-solid fa-bookmark text-warning me-2"></i> Tủ Sách Đọc Sau (<span class="bookmark-badge-count">2</span>)
+      </h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-3 bg-light" id="bookmarksListContainerDrawer">
+      <!-- Rendered dynamically from bookmarks.js -->
+    </div>
+    <div class="p-3 bg-white border-top text-center">
+      <small class="text-muted"><i class="fa-solid fa-shield-halved text-success me-1"></i> Danh sách lưu trữ an toàn trên thiết bị của bạn</small>
     </div>
   </div>
 
 
-  <!-- Footer -->
-  <footer>
-    <div class="container text-center">
-      <p class="mb-1 fw-bold text-white">© 2026 - CÔNG ĐOÀN - TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</p>
-      <p class="mb-1"><i class="fa-solid fa-location-dot me-1"></i> Lầu 1, Dãy A, Cổng 1, Số 06, Trần Văn Ơn, Phường Phú Lợi, TP. Thủ Dầu Một, Bình Dương</p>
-      <p class="mb-0"><i class="fa-solid fa-phone me-1"></i> (0274) 3.815.184 &nbsp;|&nbsp; <i class="fa-solid fa-envelope me-1"></i> congdoan@tdmu.edu.vn</p>
-    </div>
-  </footer>
+  <script>
+    async function submitFeedback(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSubmitFeedback');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Đang gửi dữ liệu...';
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  
+      const payload = {
+        sender_name: document.getElementById('fbName').value,
+        unit: document.getElementById('fbUnit').value,
+        email: document.getElementById('fbEmail').value,
+        phone: document.getElementById('fbPhone').value,
+        title: document.getElementById('fbTitle').value,
+        content: document.getElementById('fbContent').value
+      };
+
+      try {
+        const res = await fetch('/api/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          alert('✅ ' + json.message);
+          document.getElementById('fbTitle').value = '';
+          document.getElementById('fbContent').value = '';
+        } else {
+          alert('❌ ' + json.error);
+        }
+      } catch (err) {
+        alert('❌ Lỗi kết nối tới máy chủ!');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane me-1"></i> Gửi Ý Kiến Tới Ban Chấp Hành';
+      }
+    }
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
+
 </html>

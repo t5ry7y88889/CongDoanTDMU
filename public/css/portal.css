@@ -1,0 +1,576 @@
+/* =========================================================================
+   MASTER ENTERPRISE DESIGN SYSTEM - CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT (TDMU)
+   Chuẩn hóa Toàn Diện: Màu sắc Thể chế Sắc nét, Bố cục Chống Tràn, Sticky Footer
+   ========================================================================= */
+
+:root {
+  --tdmu-navy: #002855;
+  --tdmu-blue: #005696;
+  --tdmu-light-blue: #0284C7;
+  --tdmu-gold: #D97706;
+  --tdmu-yellow: #F59E0B;
+  --tdmu-red: #DC2626;
+  
+  --bg-body: #F4F6F9;
+  --bg-card: #FFFFFF;
+  --border-subtle: #E2E8F0;
+  --border-card: #CBD5E1;
+  
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+  
+  --shadow-card: 0 4px 18px rgba(0, 40, 85, 0.06);
+  --shadow-hover: 0 8px 24px rgba(0, 40, 85, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
+body {
+  min-height: 100%;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+  color: var(--text-primary);
+  background-color: var(--bg-body);
+  line-height: 1.6;
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content-wrapper {
+  flex: 1 0 auto;
+}
+
+/* 1. TOP BRAND HEADER */
+.top-brand-header {
+  background: #FFFFFF;
+  padding: 14px 0;
+  border-bottom: 3px solid var(--tdmu-navy);
+  box-shadow: 0 2px 8px rgba(0, 40, 85, 0.06);
+}
+.brand-title-main {
+  color: var(--tdmu-navy);
+  font-size: 20px;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin: 0;
+  line-height: 1.2;
+}
+.brand-sub-main {
+  color: var(--tdmu-gold);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: block;
+  margin-top: 3px;
+  letter-spacing: 0.5px;
+}
+
+.badge-hotline {
+  background: #EFF6FF;
+  color: var(--tdmu-blue);
+  border: 1px solid #BFDBFE;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-portal-access {
+  background: linear-gradient(135deg, var(--tdmu-navy), var(--tdmu-blue));
+  color: #FFFFFF !important;
+  border: none;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 40, 85, 0.25);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+}
+.btn-portal-access:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 40, 85, 0.35);
+  color: var(--tdmu-yellow) !important;
+}
+
+/* 2. NAVBAR */
+.navbar-tdmu {
+  background-color: var(--tdmu-navy);
+  padding: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.navbar-tdmu .nav-link {
+  color: #FFFFFF !important;
+  font-weight: 700;
+  font-size: 13.5px;
+  padding: 13px 16px !important;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.navbar-tdmu .nav-link:hover, 
+.navbar-tdmu .nav-link.active {
+  background-color: #001A38;
+  color: var(--tdmu-yellow) !important;
+}
+.navbar-tdmu .dropdown-menu {
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  padding: 6px 0;
+  margin-top: 0;
+}
+.navbar-tdmu .dropdown-item {
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid #F1F5F9;
+  color: #334155;
+  transition: all 0.15s ease;
+}
+.navbar-tdmu .dropdown-item:hover {
+  background-color: #F0F7FF;
+  color: var(--tdmu-blue);
+  padding-left: 22px;
+}
+
+/* 3. BREADCRUMBS */
+.breadcrumb-box {
+  padding: 14px 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.breadcrumb-box a {
+  color: var(--tdmu-blue);
+  text-decoration: none;
+  font-weight: 700;
+}
+.breadcrumb-box a:hover {
+  text-decoration: underline;
+}
+
+/* 4. CONTENT CARDS */
+.content-box {
+  background: var(--bg-card);
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  padding: 26px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-card);
+}
+.tieudelon {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--tdmu-navy);
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--tdmu-navy);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.tieudelon a {
+  font-size: 13px;
+  color: var(--tdmu-blue);
+  text-transform: none;
+  font-weight: 600;
+  text-decoration: none;
+}
+.tieudelon a:hover {
+  text-decoration: underline;
+}
+
+/* 5. NEWS ITEMS */
+.new_item {
+  margin-bottom: 24px;
+}
+.new_item_title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.45;
+  margin-bottom: 8px;
+}
+.new_item_title a {
+  color: var(--tdmu-navy);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.new_item_title a:hover {
+  color: var(--tdmu-blue);
+  text-decoration: underline;
+}
+.new_item_img {
+  width: 100%;
+  height: 175px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-subtle);
+  transition: transform 0.3s ease;
+}
+.new_item_img:hover {
+  transform: scale(1.02);
+}
+.new_item_time {
+  font-size: 12px;
+  color: #64748B;
+  display: block;
+  margin-bottom: 6px;
+}
+.new_item_desc {
+  font-size: 13.5px;
+  color: #475569;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 6. PILL FILTER TABS (CHỐNG TRÀN VÀ LỆCH CHỮ) */
+.doc-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.doc-tab-btn {
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+.doc-tab-btn:hover {
+  background: #E2E8F0;
+  color: var(--tdmu-navy);
+}
+.doc-tab-btn.active {
+  background: var(--tdmu-navy);
+  color: #FFFFFF;
+  border-color: var(--tdmu-navy);
+  box-shadow: 0 2px 8px rgba(0, 40, 85, 0.25);
+}
+
+/* 7. DOCUMENT ROW CARDS */
+.doc-card-item {
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--tdmu-blue);
+  border-radius: 6px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+  gap: 16px;
+}
+.doc-card-item:hover {
+  border-color: var(--tdmu-light-blue);
+  border-left-color: var(--tdmu-gold);
+  transform: translateX(4px);
+  box-shadow: var(--shadow-card);
+}
+.doc-card-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--tdmu-navy);
+  margin-bottom: 5px;
+  line-height: 1.4;
+}
+.doc-card-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.btn-doc-download {
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  color: var(--tdmu-blue);
+  padding: 7px 16px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+.btn-doc-download:hover {
+  background: var(--tdmu-navy);
+  color: #FFFFFF;
+  border-color: var(--tdmu-navy);
+}
+
+/* 8. RIGHT SIDEBAR PANELS */
+.panel-tdmu {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  margin-bottom: 20px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+.panel-heading-tdmu {
+  background: linear-gradient(to right, #F8FAFC, #EFF6FF);
+  border-bottom: 2px solid var(--tdmu-navy);
+  padding: 12px 18px;
+  font-weight: 800;
+  font-size: 13.5px;
+  color: var(--tdmu-navy);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+}
+.list-group-tdmu .list-group-item {
+  border: none;
+  border-bottom: 1px dashed var(--border-subtle);
+  padding: 11px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  text-decoration: none;
+  display: block;
+  transition: all 0.15s ease;
+}
+.list-group-tdmu .list-group-item:hover {
+  background-color: #F0F7FF;
+  color: var(--tdmu-blue);
+  padding-left: 20px;
+}
+
+/* 9. SECTION TB (SECTION SÁNG TRANG NHÃ - HÀNG VĂN BẢN ĐỘC LẬP) */
+#sectionTB {
+  background: #FFFFFF;
+  border-top: 3px solid var(--tdmu-navy);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 32px 0;
+  margin-top: 36px;
+}
+.tieudelon-section {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--tdmu-navy);
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--tdmu-navy);
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+.list-group-vb {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.list-group-vb-item {
+  background: #FFFFFF !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-left: 4px solid var(--tdmu-blue) !important;
+  border-radius: 6px !important;
+  padding: 12px 18px !important;
+  text-decoration: none !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 13.5px !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  transition: all 0.2s ease;
+  width: 100%;
+}
+.list-group-vb-item:hover {
+  background: #F0F7FF !important;
+  border-left-color: var(--tdmu-gold) !important;
+  border-color: var(--tdmu-light-blue) !important;
+  color: var(--tdmu-navy) !important;
+  transform: translateX(4px);
+  box-shadow: var(--shadow-card);
+}
+.notice-quick-box {
+  background: #F8FAFC;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* 10. AUTHENTIC 2-COLUMN STICKY FOOTER */
+footer {
+  background: #001A38;
+  color: #94A3B8;
+  padding: 32px 0 24px;
+  font-size: 13px;
+  border-top: 3px solid var(--tdmu-yellow);
+  flex-shrink: 0;
+}
+footer h6 {
+  font-size: 14.5px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+footer p {
+  line-height: 1.6;
+}
+footer a {
+  color: #CBD5E1;
+  text-decoration: none;
+}
+footer a:hover {
+  color: var(--tdmu-yellow);
+}
+
+
+/* ENHANCED BOOKMARK PILL IN HEADER (RÕ RÀNG, TƯƠNG PHẢN CAO) */
+.btn-bookmark-header {
+  background: #FFFBEB;
+  color: #B45309;
+  border: 1.5px solid #FCD34D;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(217, 119, 6, 0.1);
+}
+.btn-bookmark-header:hover {
+  background: #002855;
+  color: #FEF08A;
+  border-color: #002855;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 40, 85, 0.25);
+}
+.btn-bookmark-header:hover .badge-count-pill {
+  background: #DC2626;
+  color: #FFFFFF;
+}
+.badge-count-pill {
+  background: #D97706;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+/* ENHANCED PILL FILTER TABS (HOVER NỔI BẬT KHÔNG TRÙNG NỀN) */
+.doc-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.doc-tab-btn {
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  color: #334155;
+  padding: 7px 15px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.doc-tab-btn:hover {
+  background: #EFF6FF;
+  border-color: #0284C7;
+  color: #005696;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(2, 132, 199, 0.18);
+}
+.doc-tab-btn.active {
+  background: #002855;
+  color: #FFFFFF;
+  border-color: #002855;
+  box-shadow: 0 3px 10px rgba(0, 40, 85, 0.3);
+}
+
+
+/* FULLY CLICKABLE MAGAZINE CARD */
+.magazine-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 40, 85, 0.05);
+  margin-bottom: 20px;
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  cursor: pointer;
+  position: relative;
+}
+.magazine-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 40, 85, 0.12);
+  border-color: #005696;
+}
+.magazine-card:hover .magazine-thumb {
+  transform: scale(1.06);
+}
+.magazine-thumb-wrap {
+  position: relative;
+  height: 190px;
+  overflow: hidden;
+}
+.magazine-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.ban-to-badge {
+  color: #002855;
+  font-weight: 700;
+  font-size: 11.5px;
+  background: #F0F7FF;
+  border: 1px solid #BAE6FD;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}

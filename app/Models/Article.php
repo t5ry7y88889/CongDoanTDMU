@@ -3,83 +3,25 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Article extends Model
 {
-    use HasFactory;
-
-    protected $table = 'Articles';
-
+    protected $table = "articles";
     protected $fillable = [
-        'title',
-        'slug',
-        'categoryId',
-        'authorId',
-        'eventId',
-        'summary',
-        'content',
-        'image',
-        'status',
-        'isAiGenerated',
-        'viewsCount',
-        'likesCount',
-        'sharesCount',
-        'scheduledAt',
-        'createdAt',
-        'updatedAt'
+        "user_id", "tieu_de", "slug", "category_id", "tom_tat",
+        "noi_dung_web", "noi_dung_fb", "noi_dung_zalo", "video_script",
+        "hinh_anh_url", "trang_thai", "scheduled_at", "published_at",
+        "fb_post_id", "fb_published_at", "is_ai_generated", "ai_prompt", "luot_xem"
+    ];
+    protected $casts = [
+        "scheduled_at" => "datetime",
+        "published_at" => "datetime",
+        "fb_published_at" => "datetime",
+        "is_ai_generated" => "boolean"
     ];
 
-    public $timestamps = false;
-
-    // Normalization Accessors (Zero Redundancy in DB)
-    public function getCategoryNameAttribute()
-    {
-        return $this->category ? $this->category->name : 'Thông Báo';
-    }
-
-    public function getAuthorNameAttribute()
-    {
-        return $this->author ? $this->author->name : 'Ban Thường Vụ TDMU';
-    }
-
-    public function getStatusNameAttribute()
-    {
-        $map = [
-            'draft' => 'Bản Nháp',
-            'pending_review' => 'Chờ Duyệt',
-            'approved' => 'Đã Duyệt',
-            'published' => 'Đã Xuất Bản',
-            'scheduled' => 'Đã Lên Lịch',
-            'rejected' => 'Từ Chối',
-            'archived' => 'Lưu Trữ'
-        ];
-        return $map[$this->status] ?? 'Đã Xuất Bản';
-    }
-
-    // Relationships
-    public function category()
-    {
-        return $this->belongsTo(Category::class, 'categoryId', 'id');
-    }
-
-    public function author()
-    {
-        return $this->belongsTo(User::class, 'authorId', 'id');
-    }
-
-    public function event()
-    {
-        return $this->belongsTo(Event::class, 'eventId', 'id');
-    }
-
-    public function versions()
-    {
-        return $this->hasMany(ArticleVersion::class, 'articleId', 'id')->orderBy('versionNumber', 'desc');
-    }
-
-    public function comments()
-    {
-        return $this->hasMany(Comment::class, 'articleId', 'id')->orderBy('createdAt', 'desc');
-    }
+    public function author() { return $this->belongsTo(User::class, "user_id"); }
+    public function category() { return $this->belongsTo(Category::class, "category_id"); }
+    public function audits() { return $this->hasMany(ArticleAudit::class, "article_id"); }
+    public function schedules() { return $this->hasMany(Schedule::class, "article_id"); }
 }

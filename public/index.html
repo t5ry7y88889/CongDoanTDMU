@@ -3,64 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Công Đoàn - Trường Đại Học Thủ Dầu Một</title>
+  <title>Cổng Thông Tin Truyền Thông Công Đoàn - Trường Đại Học Thủ Dầu Một</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-  :root {
-    --tdmu-dark-blue: #003865;
-    --tdmu-blue: #005baa;
-    --tdmu-light-blue: #0088cc;
-    --tdmu-red: #d32f2f;
-    --tdmu-yellow: #f1c40f;
-    --bg-gray: #f4f6f9;
-    --text-dark: #2c3e50;
-  }
-  body { font-family: 'Segoe UI', Arial, sans-serif; color: var(--text-dark); background-color: var(--bg-gray); line-height: 1.5; font-size: 14px; }
-  
-  /* Top Banner Header */
-  .top-brand-header { background: #ffffff; padding: 12px 0; border-bottom: 2px solid var(--tdmu-dark-blue); }
-  .brand-title-main { color: var(--tdmu-dark-blue); font-size: 19px; font-weight: 800; text-transform: uppercase; margin: 0; }
-  .brand-sub-main { color: #e67e22; font-size: 12px; font-weight: 700; text-transform: uppercase; }
-
-  /* Navbar */
-  .navbar-tdmu { background-color: var(--tdmu-dark-blue); padding: 0; box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
-  .navbar-tdmu .nav-link { color: #ffffff !important; font-weight: 600; font-size: 13.5px; padding: 12px 14px !important; text-transform: uppercase; transition: all 0.2s; }
-  .navbar-tdmu .nav-link:hover, .navbar-tdmu .nav-link.active { background-color: #002240; color: var(--tdmu-yellow) !important; }
-  .navbar-tdmu .dropdown-menu { border-radius: 0; border: none; box-shadow: 0 6px 15px rgba(0,0,0,0.15); padding: 0; margin-top: 0; }
-  .navbar-tdmu .dropdown-item { padding: 10px 16px; font-size: 13px; font-weight: 500; border-bottom: 1px solid #edf2f7; color: #333; }
-  .navbar-tdmu .dropdown-item:hover { background-color: var(--tdmu-blue); color: white; }
-
-  /* Section Titles */
-  .tieudelon { font-size: 18px; font-weight: 800; color: var(--tdmu-dark-blue); text-transform: uppercase; border-bottom: 2px solid var(--tdmu-dark-blue); padding-bottom: 6px; margin-bottom: 18px; }
-  .tieudelon-white { font-size: 18px; font-weight: 800; color: #ffffff; text-transform: uppercase; border-bottom: 2px solid var(--tdmu-yellow); padding-bottom: 6px; margin-bottom: 18px; }
-  
-  /* News Cards (Grid 2 cols) */
-  .new_item { margin-bottom: 24px; }
-  .new_item_title a { font-size: 14.5px; font-weight: 700; color: #1a202c; text-decoration: none; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
-  .new_item_title a:hover { color: var(--tdmu-blue); }
-  .new_item_img { width: 100%; height: 165px; object-fit: cover; border-radius: 4px; margin-top: 6px; margin-bottom: 6px; }
-  .new_item_time { font-size: 11.5px; color: #718096; margin-bottom: 6px; display: inline-block; }
-  .new_item_desc { font-size: 13px; color: #4a5568; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-
-  /* Right Sidebar Panels */
-  .panel-tdmu { background: white; border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
-  .panel-heading-tdmu { background: #f8fafc; border-bottom: 2px solid var(--tdmu-dark-blue); padding: 10px 14px; font-weight: 700; font-size: 14px; color: var(--tdmu-dark-blue); text-transform: uppercase; }
-  .panel-body-tdmu { padding: 12px 14px; }
-  .list-group-tdmu .list-group-item { border: none; border-bottom: 1px dashed #e2e8f0; padding: 9px 12px; font-size: 13px; font-weight: 500; color: #2d3748; text-decoration: none; display: block; }
-  .list-group-tdmu .list-group-item:hover { background-color: #f7fafc; color: var(--tdmu-blue); padding-left: 16px; }
-  
-  /* Section Văn Bản (Dark Background like real site) */
-  #sectionTB { background: #003865; color: white; padding: 30px 0; margin-top: 30px; }
-  .list-group-vb .list-group-item { background: transparent; border: none; border-bottom: 1px dashed rgba(255,255,255,0.2); color: #edf2f7; padding: 10px 0; font-size: 13.5px; text-decoration: none; display: block; }
-  .list-group-vb .list-group-item:hover { color: var(--tdmu-yellow); padding-left: 6px; }
-
-  /* Footer */
-  footer { background: #002240; color: #a0aec0; padding: 25px 0 15px; font-size: 13px; border-top: 3px solid var(--tdmu-yellow); }
-</style>
+  <link rel="stylesheet" href="css/portal.css?v=1788276464341">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#002855">
 </head>
 <body>
-
+  <div class="main-content-wrapper">
 
   <!-- Top Brand Header -->
   <header class="top-brand-header">
@@ -73,17 +24,16 @@
         </div>
       </div>
       <div class="d-flex align-items-center gap-2">
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSelw4xZGXNz2fUHOy0wHZ9-rIt5N-gneVP005KjpjURduNvrg/viewform" target="_blank" class="btn btn-sm btn-danger fw-bold shadow-sm">
-          <i class="fa-solid fa-file-pen me-1"></i> Điền Báo Cáo Tháng (Google Form)
-        </a>
-        <a href="admin.html" class="btn btn-sm btn-outline-primary fw-bold">
-          <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Portal AI CMS
-        </a>
+          <span class="badge-hotline">
+            <i class="fa-solid fa-phone me-1 text-warning"></i> Hotline: (0274) 3.815.184
+          </span>
+          <a href="admin.html" class="btn-portal-access">
+            <i class="fa-solid fa-wand-magic-sparkles me-1 text-warning"></i> Quản lý website truyền thông công đoàn TDMU
+          </a>
+        </div>
       </div>
-    </div>
-  </header>
-
-  <!-- Official Navigation Bar (Dropdowns match real congdoan.tdmu.edu.vn 100%) -->
+    </header>
+  <!-- Official Navigation Bar -->
   <nav class="navbar navbar-expand-lg navbar-tdmu sticky-top">
     <div class="container">
       <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse" data-bs-target="#tdmuNavbar">
@@ -100,30 +50,29 @@
               Cơ Cấu Tổ Chức
             </a>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="co-cau-to-chuc.html#ban-thuong-vu"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban thường vụ</a></li>
-              <li><a class="dropdown-item" href="co-cau-to-chuc.html#ban-chap-hanh"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban chấp hành</a></li>
-              <li><a class="dropdown-item" href="co-cau-to-chuc.html#uy-ban-kiem-tra"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ủy ban kiểm tra</a></li>
-              <li><a class="dropdown-item" href="lien-he.html"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Công đoàn bộ phận & Tổ công đoàn</a></li>
-            </ul>
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=ban-thuong-vu"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban thường vụ</a></li>
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=ban-chap-hanh"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban chấp hành</a></li>
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=uy-ban-kiem-tra"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ủy ban kiểm tra</a></li>
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=16-to-cong-doan"><i class="fa-solid fa-caret-right me-1 text-primary"></i> 16 Tổ công đoàn cơ sở</a></li>
+              </ul>
           </li>
 
-          <li class="nav-item"><a class="nav-link " href="index.html#tintuc">Tin Tức</a></li>
+          <li class="nav-item"><a class="nav-link " href="tin-tuc.html">Tin Tức</a></li>
           <li class="nav-item"><a class="nav-link " href="phuc-loi-doan-vien.html">Phúc Lợi Đoàn Viên</a></li>
 
           <!-- Dropdown: Văn Bản -->
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle " href="#" data-bs-toggle="dropdown">
+            <a class="nav-link dropdown-toggle " href="van-ban.html" data-bs-toggle="dropdown">
               Văn Bản
             </a>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="van-ban.html#tuyen-truyen"><i class="fa-solid fa-file-lines me-1 text-primary"></i> Công văn tuyên truyền</a></li>
-              <li><a class="dropdown-item" href="van-ban.html#ke-hoach"><i class="fa-solid fa-calendar-check me-1 text-primary"></i> Kế hoạch hoạt động</a></li>
-              <li><a class="dropdown-item" href="van-ban.html#luat"><i class="fa-solid fa-scale-balanced me-1 text-primary"></i> Văn bản luật</a></li>
-              <li><a class="dropdown-item" href="van-ban.html#quyet-dinh"><i class="fa-solid fa-stamp me-1 text-primary"></i> Quyết định</a></li>
+              <li><a class="dropdown-item" href="van-ban.html#tuyen-truyen"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Công văn tuyên truyền</a></li>
+              <li><a class="dropdown-item" href="van-ban.html#ke-hoach"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Kế hoạch hoạt động</a></li>
+              <li><a class="dropdown-item" href="van-ban.html#luat"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Văn bản luật</a></li>
+              <li><a class="dropdown-item" href="van-ban.html#quyet-dinh"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Quyết định</a></li>
             </ul>
           </li>
 
-          <li class="nav-item"><a class="nav-link " href="bao-cao-thang.html"><i class="fa-solid fa-clipboard-check me-1 text-warning"></i> Báo Cáo Thi Đua</a></li>
           <li class="nav-item"><a class="nav-link " href="bieu-mau.html">Biểu Mẫu</a></li>
           <li class="nav-item"><a class="nav-link " href="lien-he.html">Liên Hệ</a></li>
         </ul>
@@ -131,64 +80,72 @@
     </div>
   </nav>
 
-
-  <!-- Section Carousel Slide (Chứa các Banner Sự kiện thực tế) -->
+  <!-- Section Hero Carousel -->
   <section id="sectionslide" class="my-3">
     <div class="container">
-      <div id="carouselTDMU" class="carousel slide rounded overflow-hidden shadow-sm" data-bs-ride="carousel">
+      <div id="heroCarousel" class="carousel slide shadow-sm" data-bs-ride="carousel">
         <div class="carousel-indicators">
-          <button type="button" data-bs-target="#carouselTDMU" data-bs-slide-to="0" class="active"></button>
-          <button type="button" data-bs-target="#carouselTDMU" data-bs-slide-to="1"></button>
-          <button type="button" data-bs-target="#carouselTDMU" data-bs-slide-to="2"></button>
+          <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
+          <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
+          <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
         </div>
-        <div class="carousel-inner" style="max-height: 340px;">
+        <div class="carousel-inner rounded" style="max-height: 380px;">
           <div class="carousel-item active">
-            <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200" class="d-block w-100" style="object-fit: cover; height: 340px;" alt="Banner 1">
-            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 p-2 rounded">
-              <h5>ĐẠI HỘI ĐẠI BIỂU CÔNG ĐOÀN CƠ SỞ TDMU NHIỆM KỲ 2023 - 2028</h5>
-              <p class="small mb-0">Xây dựng tổ chức công đoàn vững mạnh, đổi mới sáng tạo và chuyển đổi số.</p>
+            <img src="images/banner.jpg" class="d-block w-100" alt="Đại hội Công đoàn TDMU" style="height: 380px; object-fit: cover;">
+            <div class="carousel-caption d-none d-md-block" style="background: rgba(0, 34, 64, 0.75); border-radius: 4px; padding: 12px 20px;">
+              <h5 class="fw-bold text-warning">ĐẠI HỘI CÔNG ĐOÀN CƠ SỞ TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h5>
+              <p class="mb-0">Đổi mới - Dân chủ - Đoàn kết - Phát triển vì quyền lợi đoàn viên</p>
             </div>
           </div>
           <div class="carousel-item">
-            <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200" class="d-block w-100" style="object-fit: cover; height: 340px;" alt="Banner 2">
-            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 p-2 rounded">
-              <h5>PHONG TRÀO THI ĐUA LAO ĐỘNG GIỎI - LAO ĐỘNG SÁNG TẠO NĂM HỌC 2026</h5>
+            <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1200" class="d-block w-100" alt="Hoạt động chăm lo" style="height: 380px; object-fit: cover;">
+            <div class="carousel-caption d-none d-md-block" style="background: rgba(0, 34, 64, 0.75); border-radius: 4px; padding: 12px 20px;">
+              <h5 class="fw-bold text-warning">CHĂM LO ĐỜI SỐNG &amp; BẢO VỆ QUYỀN LỢI ĐOÀN VIÊN</h5>
+              <p class="mb-0">Triển khai nhiều chương trình phúc lợi, trợ cấp khó khăn và khám sức khỏe định kỳ</p>
             </div>
           </div>
           <div class="carousel-item">
-            <img src="https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=1200" class="d-block w-100" style="object-fit: cover; height: 340px;" alt="Banner 3">
-            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 p-2 rounded">
-              <h5>CHĂM LO ĐỜI SỐNG & PHÚC LỢI ĐOÀN VIÊN TOÀN TRƯỜNG</h5>
+            <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200" class="d-block w-100" alt="Phong trào thi đua" style="height: 380px; object-fit: cover;">
+            <div class="carousel-caption d-none d-md-block" style="background: rgba(0, 34, 64, 0.75); border-radius: 4px; padding: 12px 20px;">
+              <h5 class="fw-bold text-warning">PHONG TRÀO THI ĐUA DẠY TỐT - HỌC TỐT - NGHIÊN CỨU TỐT</h5>
+              <p class="mb-0">Phát huy tinh thần sáng tạo của cán bộ, giảng viên trong kỷ nguyên số</p>
             </div>
           </div>
         </div>
-        <button class="carousel-control-prev" type="button" data-bs-target="#carouselTDMU" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span></button>
-        <button class="carousel-control-next" type="button" data-bs-target="#carouselTDMU" data-bs-slide="next"><span class="carousel-control-next-icon"></span></button>
+        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+          <span class="carousel-control-next-icon"></span>
+        </button>
       </div>
     </div>
   </section>
 
-  <!-- Section Body: Layout 9/3 chuẩn congdoan.tdmu.edu.vn -->
-  <section id="sectionbody" class="my-4">
+  <!-- Main Content: Tin Tức (9 phần) & Liên Kết (3 phần) -->
+  <section class="my-3" id="tintuc">
     <div class="container">
       <div class="row g-4">
         
-        <!-- LEFT COLUMN (9 PHẦN): TIN TỨC (LƯỚI 2 CỘT NHƯ TRANG THẬT) -->
-        <div class="col-lg-9" id="tintuc">
-          <div class="tieudelon"><i class="fa-solid fa-newspaper me-2"></i>TIN TỨC</div>
-          
+        <!-- LEFT COLUMN (9 PHẦN): HOẠT ĐỘNG CÔNG ĐOÀN -->
+        <div class="col-lg-9">
+          <div class="tieudelon">
+            <span><i class="fa-solid fa-newspaper me-2"></i>HOẠT ĐỘNG CÔNG ĐOÀN</span>
+            <a href="tin-tuc.html" class="fw-bold" style="color: #005696; text-decoration: none;">Xem tất cả <i class="fa-solid fa-angle-right ms-1"></i></a>
+          </div>
+
           <div class="row" id="article_container">
-            <!-- Article Item 1 (Tin thực tế từ web TDMU) -->
+            <!-- Article Item 1 -->
             <div class="col-md-6 new_item">
-              <h3 class="new_item_title"><a href="#">Tọa đàm "Dinh dưỡng lành mạnh vì sức khỏe gia đình" lan tỏa giá trị xây dựng mái ấm hạnh phúc</a></h3>
-              <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=500" class="new_item_img" alt="Tin 1">
+              <h3 class="new_item_title"><a href="javascript:void(0)" onclick="openStaticArticle(1)">Tọa đàm "Dinh dưỡng lành mạnh vì sức khỏe gia đình"</a></h3>
+              <img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500" class="new_item_img" alt="Tin 1">
               <span class="new_item_time"><i class="fa-regular fa-clock me-1"></i> 26/06/2026 12:56 &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> 147 lượt xem</span>
               <span class="new_item_desc">Hướng tới kỷ niệm Ngày Gia đình Việt Nam, Công đoàn Trường Đại học Thủ Dầu Một đã tổ chức tọa đàm với chủ đề "Dinh dưỡng lành mạnh vì sức khỏe gia đình", nâng cao nhận thức đoàn viên...</span>
             </div>
 
             <!-- Article Item 2 -->
             <div class="col-md-6 new_item">
-              <h3 class="new_item_title"><a href="#">Chào mừng Đại hội XIV Công đoàn Việt Nam nhiệm kỳ 2026 – 2031</a></h3>
+              <h3 class="new_item_title"><a href="javascript:void(0)" onclick="openStaticArticle(2)">Chào mừng Đại hội XIV Công đoàn Việt Nam nhiệm kỳ 2026 – 2031</a></h3>
               <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500" class="new_item_img" alt="Tin 2">
               <span class="new_item_time"><i class="fa-regular fa-clock me-1"></i> 01/06/2026 21:06 &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> 140 lượt xem</span>
               <span class="new_item_desc">Đại hội XIV Công đoàn Việt Nam là sự kiện chính trị quan trọng của giai cấp công nhân và tổ chức Công đoàn Việt Nam, đánh dấu giai đoạn phát triển mới...</span>
@@ -196,7 +153,7 @@
 
             <!-- Article Item 3 -->
             <div class="col-md-6 new_item">
-              <h3 class="new_item_title"><a href="#">Đại học Thủ Dầu Một được tuyên dương điển hình tiên tiến trong học tập và làm theo Bác</a></h3>
+              <h3 class="new_item_title"><a href="javascript:void(0)" onclick="openStaticArticle(3)">Đại học Thủ Dầu Một được tuyên dương điển hình tiên tiến trong học tập và làm theo Bác</a></h3>
               <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=500" class="new_item_img" alt="Tin 3">
               <span class="new_item_time"><i class="fa-regular fa-clock me-1"></i> 08/05/2026 21:41 &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> 306 lượt xem</span>
               <span class="new_item_desc">Trường Đại học Thủ Dầu Một vinh dự được trao tặng Bằng khen dành cho tập thể điển hình tiên tiến có thành tích tiêu biểu giai đoạn 2021–2026...</span>
@@ -204,7 +161,7 @@
 
             <!-- Article Item 4 -->
             <div class="col-md-6 new_item">
-              <h3 class="new_item_title"><a href="#">Phiên chợ Tết “Ngựa ô đón Tết – Rước lộc về dinh” chào xuân 2026</a></h3>
+              <h3 class="new_item_title"><a href="javascript:void(0)" onclick="openStaticArticle(4)">Phiên chợ Tết “Ngựa ô đón Tết – Rước lộc về dinh” chào xuân 2026</a></h3>
               <img src="https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=500" class="new_item_img" alt="Tin 4">
               <span class="new_item_time"><i class="fa-regular fa-clock me-1"></i> 30/01/2026 11:56 &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> 911 lượt xem</span>
               <span class="new_item_desc">Trong không khí rộn ràng đón Tết, Công đoàn TDMU tổ chức Phiên chợ Tết với nhiều gian hàng ẩm thực, quà tết ưu đãi cho cán bộ, giảng viên và sinh viên...</span>
@@ -212,7 +169,7 @@
           </div>
         </div>
 
-        <!-- RIGHT COLUMN (3 PHẦN): LIÊN KẾT WEBSITE (CHUẨN WEB TDMU THẬT) -->
+        <!-- RIGHT COLUMN (3 PHẦN): LIÊN KẾT WEBSITE -->
         <div class="col-lg-3">
           <div class="panel-tdmu">
             <div class="panel-heading-tdmu"><i class="fa-solid fa-link me-2 text-primary"></i>Liên kết website</div>
@@ -226,17 +183,13 @@
             </div>
           </div>
 
-          <!-- Banner Google Form Nộp Báo Cáo Tháng -->
-          <div class="p-3 bg-white border rounded text-center shadow-sm">
-            <i class="fa-brands fa-google text-danger fa-2x mb-2"></i>
-            <h6 class="fw-bold text-danger mb-1">NỘP BÁO CÁO THÁNG CỦA TỔ CÔNG ĐOÀN</h6>
-            <p class="small text-muted mb-2">Dành cho 16 Tổ Công đoàn gửi báo cáo định kỳ</p>
-            <a href="https://docs.google.com/forms/d/e/1FAIpQLSelw4xZGXNz2fUHOy0wHZ9-rIt5N-gneVP005KjpjURduNvrg/viewform" target="_blank" class="btn btn-danger btn-sm w-100 fw-bold mb-2">
-              <i class="fa-solid fa-file-pen me-1"></i> Mở Google Form
-            </a>
-            <a href="bao-cao-thang.html" class="btn btn-outline-primary btn-sm w-100 fw-bold">
-              <i class="fa-solid fa-ranking-star me-1"></i> Bảng Thi Đua 16 Tổ
-            </a>
+          <!-- Thống Kê Truy Cập Widget -->
+          <div class="panel-tdmu">
+            <div class="panel-heading-tdmu"><i class="fa-solid fa-chart-simple me-2 text-warning"></i>Thống kê truy cập</div>
+            <div class="p-3" style="font-size: 13px;">
+              <p class="mb-2"><i class="fa-solid fa-users text-primary me-2"></i> Đang trực tuyến: <strong>12</strong></p>
+              <p class="mb-0"><i class="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong>811,221</strong></p>
+            </div>
           </div>
         </div>
 
@@ -244,41 +197,168 @@
     </div>
   </section>
 
-  <!-- Section VĂN BẢN (KHỐI NỀN TỐI CHUẨN SECTION TB CỦA WEB CÔNG ĐOÀN TDMU THẬT) -->
+    <!-- Section VĂN BẢN (KHỐI SÁNG THANH LỊCH - PHÂN ĐỊNH RÕ RÀNG VỚI FOOTER) -->
   <section id="sectionTB">
     <div class="container">
       <div class="row g-4">
         <div class="col-lg-9">
-          <div class="tieudelon-white"><i class="fa-solid fa-folder-open me-2 text-warning"></i>VĂN BẢN CHỈ ĐẠO & ĐIỀU HÀNH</div>
+          <div class="tieudelon-section">
+            <i class="fa-solid fa-folder-open me-2 text-danger"></i>VĂN BẢN CHỈ ĐẠO &amp; ĐIỀU HÀNH
+          </div>
           <div class="list-group-vb">
-            <a href="van-ban.html" class="list-group-item"><i class="fa-regular fa-file-pdf text-danger me-2"></i> Vận động ủng hộ đồng bào bị thiệt hại do bão số 3</a>
-            <a href="van-ban.html" class="list-group-item"><i class="fa-regular fa-file-pdf text-danger me-2"></i> Công văn số 1630 của Ban Tuyên giáo Tỉnh ủy Bình Dương về việc phát động tham gia cuộc thi trực tuyến</a>
-            <a href="van-ban.html" class="list-group-item"><i class="fa-regular fa-file-pdf text-danger me-2"></i> Kế hoạch tổ chức giải Bóng đá truyền thống "Công đoàn trường ĐH Thủ Dầu Một" lần thứ X</a>
-            <a href="van-ban.html" class="list-group-item"><i class="fa-regular fa-file-pdf text-danger me-2"></i> Kế hoạch tổ chức cuộc thi ảnh "Gia đình trong tôi là ..."</a>
-            <a href="van-ban.html" class="list-group-item"><i class="fa-regular fa-file-pdf text-danger me-2"></i> Quyết định số 82/QĐ-LĐLĐ về việc ban hành Quy chế Khen thưởng của tổ chức công đoàn</a>
+            <a href="van-ban.html#tuyen-truyen" class="list-group-vb-item">
+              <span><i class="fa-regular fa-file-pdf text-danger me-2 fa-lg"></i> <strong>[18/CV-CĐCS]</strong> Vận động ủng hộ đồng bào bị thiệt hại do bão số 3</span>
+              <span class="badge bg-light text-primary border"><i class="fa-solid fa-download me-1"></i> 1.2 MB</span>
+            </a>
+            <a href="van-ban.html#tuyen-truyen" class="list-group-vb-item">
+              <span><i class="fa-regular fa-file-pdf text-danger me-2 fa-lg"></i> <strong>[1630/CV-BTG]</strong> Công văn số 1630 của Ban Tuyên giáo Tỉnh ủy Bình Dương: Cuộc thi trực tuyến Tìm hiểu Nghị quyết TW 8</span>
+              <span class="badge bg-light text-primary border"><i class="fa-solid fa-download me-1"></i> 2.4 MB</span>
+            </a>
+            <a href="van-ban.html#ke-hoach" class="list-group-vb-item">
+              <span><i class="fa-regular fa-file-pdf text-danger me-2 fa-lg"></i> <strong>[25/KH-CĐCS]</strong> Kế hoạch tổ chức giải Bóng đá truyền thống "Công đoàn trường ĐH Thủ Dầu Một" lần thứ X</span>
+              <span class="badge bg-light text-primary border"><i class="fa-solid fa-download me-1"></i> 3.1 MB</span>
+            </a>
+            <a href="van-ban.html#luat" class="list-group-vb-item">
+              <span><i class="fa-regular fa-file-pdf text-danger me-2 fa-lg"></i> <strong>[12/2012/QH13]</strong> Luật Công đoàn số 12/2012/QH13 của Quốc hội nước CHXHCN Việt Nam</span>
+              <span class="badge bg-light text-primary border"><i class="fa-solid fa-download me-1"></i> 5.2 MB</span>
+            </a>
+            <a href="van-ban.html#quyet-dinh" class="list-group-vb-item">
+              <span><i class="fa-regular fa-file-pdf text-danger me-2 fa-lg"></i> <strong>[82/QĐ-LĐLĐ]</strong> Quyết định số 82/QĐ-LĐLĐ về việc ban hành Quy chế Khen thưởng của tổ chức công đoàn</span>
+              <span class="badge bg-light text-primary border"><i class="fa-solid fa-download me-1"></i> 2.1 MB</span>
+            </a>
           </div>
         </div>
 
         <div class="col-lg-3">
-          <div class="tieudelon-white"><i class="fa-solid fa-chart-simple me-2 text-warning"></i>Thống kê truy cập</div>
-          <div class="p-3 bg-white text-dark rounded">
-            <p class="mb-2"><i class="fa-solid fa-users text-primary me-2"></i> Đang trực tuyến: <strong>12</strong></p>
-            <p class="mb-0"><i class="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong>811,221</strong></p>
+          <div class="tieudelon-section">
+            <i class="fa-solid fa-bell me-2 text-warning"></i>THÔNG BÁO NHANH
+          </div>
+          <div class="notice-quick-box">
+            <p class="mb-2"><i class="fa-solid fa-circle-info text-primary me-1"></i> <strong>Hội nghị Cán bộ, Viên chức:</strong> Năm học 2026 - 2027 dự kiến tổ chức vào tháng 10/2026.</p>
+            <p class="mb-0"><i class="fa-solid fa-circle-check text-success me-1"></i> <strong>Khám sức khỏe:</strong> 100% đoàn viên tham gia khám sức khỏe định kỳ năm 2026.</p>
           </div>
         </div>
       </div>
     </div>
   </section>
 
+  </div>
+
   <!-- Footer -->
+    <!-- Footer (Chuẩn 2 Cột Thực Tế: Cơ Quan & Nhóm Đồ Án) -->
   <footer>
-    <div class="container text-center">
-      <p class="mb-1 fw-bold text-white">© 2026 - CÔNG ĐOÀN - TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</p>
-      <p class="mb-1"><i class="fa-solid fa-location-dot me-1"></i> Lầu 1, Dãy A, Cổng 1, Số 06, Trần Văn Ơn, Phường Phú Lợi, TP. Thủ Dầu Một, Bình Dương</p>
-      <p class="mb-0"><i class="fa-solid fa-phone me-1"></i> (0274) 3.815.184 &nbsp;|&nbsp; <i class="fa-solid fa-envelope me-1"></i> congdoan@tdmu.edu.vn</p>
+    <div class="container">
+      <div class="row gy-3">
+        <div class="col-md-7 text-start">
+          <h6 class="fw-bold text-white mb-2">CÔNG ĐOÀN CƠ SỞ TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h6>
+          <p class="mb-1"><i class="fa-solid fa-location-dot me-2 text-warning"></i> Địa chỉ: Lầu 1, Dãy A, Cổng 1, Số 06 Trần Văn Ơn, P. Phú Lợi, TP. Thủ Dầu Một, Bình Dương</p>
+          <p class="mb-1"><i class="fa-solid fa-phone me-2 text-warning"></i> Điện thoại: (0274) 3.815.184 | <i class="fa-solid fa-envelope ms-2 me-1 text-warning"></i> Email: congdoan@tdmu.edu.vn</p>
+          <p class="mb-0"><i class="fa-solid fa-globe me-2 text-warning"></i> Website: congdoan.tdmu.edu.vn</p>
+        </div>
+        <div class="col-md-5 text-md-end text-start">
+          <h6 class="fw-bold text-warning mb-2">HỆ THỐNG TRUYỀN THÔNG TÍCH HỢP AI</h6>
+          <p class="mb-1">Đề tài NCKH Sinh viên / Đồ án Cơ sở ngành - Viện Công nghệ số</p>
+          <p class="mb-0 text-light text-opacity-75">Nhóm 2: Nguyễn Bình Dương - Trần Hồng Thanh - Phạm Anh Tuấn</p>
+        </div>
+      </div>
     </div>
   </footer>
 
+  <!-- MODAL XEM BÀI VIẾT -->
+  <div class="modal fade" id="articleDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content" style="border-radius: 6px;">
+        <div class="modal-header" style="background: #003865; color: white;">
+          <h5 class="modal-title fw-bold" id="modalArticleTitle">Chi Tiết Bài Báo</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4" id="modalArticleBody">
+          <!-- Content rendered dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const staticArticles = {
+      1: {
+        title: 'Tọa đàm "Dinh dưỡng lành mạnh vì sức khỏe gia đình"',
+        date: '26/06/2026',
+        views: 147,
+        author: 'Ban Nữ công Công đoàn TDMU',
+        image: 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=800',
+        content: '<p>Hướng tới kỷ niệm Ngày Gia đình Việt Nam, Công đoàn Trường Đại học Thủ Dầu Một đã tổ chức tọa đàm với chủ đề "Dinh dưỡng lành mạnh vì sức khỏe gia đình", thu hút đông đảo nữ cán bộ, giảng viên tham gia thảo luận về chế độ ăn uống khoa học và cân bằng cuộc sống.</p>'
+      },
+      2: {
+        title: 'Chào mừng Đại hội XIV Công đoàn Việt Nam nhiệm kỳ 2026 – 2031',
+        date: '01/06/2026',
+        views: 140,
+        author: 'Ban Thường Vụ',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800',
+        content: '<p>Đại hội XIV Công đoàn Việt Nam là sự kiện chính trị quan trọng của giai cấp công nhân và tổ chức Công đoàn Việt Nam. Toàn thể đoàn viên TDMU ra sức thi đua lập thành tích xuất sắc chào mừng ngày hội lớn.</p>'
+      },
+      3: {
+        title: 'Đại học Thủ Dầu Một được tuyên dương điển hình tiên tiến trong học tập và làm theo Bác',
+        date: '08/05/2026',
+        views: 306,
+        author: 'Ban Tuyên giáo',
+        image: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800',
+        content: '<p>Trường Đại học Thủ Dầu Một vinh dự được trao tặng Bằng khen dành cho tập thể điển hình tiên tiến có thành tích tiêu biểu giai đoạn 2021–2026 trong phong trào học tập và làm theo tư tưởng, đạo đức, phong cách Hồ Chí Minh.</p>'
+      },
+      4: {
+        title: 'Phiên chợ Tết “Ngựa ô đón Tết – Rước lộc về dinh” chào xuân 2026',
+        date: '30/01/2026',
+        views: 911,
+        author: 'Ban Thường Vụ',
+        image: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800',
+        content: '<p>Trong không khí rộn ràng đón Tết, Công đoàn TDMU tổ chức Phiên chợ Tết với nhiều gian hàng ẩm thực, quà tết ưu đãi cho cán bộ, giảng viên và sinh viên có hoàn cảnh khó khăn.</p>'
+      }
+    };
+
+    function openStaticArticle(id) {
+      const a = staticArticles[id];
+      if (!a) return;
+      document.getElementById('modalArticleTitle').innerText = a.title;
+      document.getElementById('modalArticleBody').innerHTML = `
+        <div class="mb-3 d-flex align-items-center gap-3 text-muted small border-bottom pb-2">
+          <span><i class="fa-regular fa-calendar me-1 text-primary"></i> ${a.date}</span>
+          <span><i class="fa-solid fa-user-pen me-1 text-primary"></i> ${a.author}</span>
+          <span><i class="fa-regular fa-eye me-1 text-success"></i> ${a.views} lượt xem</span>
+        </div>
+        <img src="${a.image}" class="img-fluid rounded mb-3 w-100" style="max-height: 360px; object-fit: cover;">
+        <div style="font-size: 14.5px; line-height: 1.8; color: #2d3748;">
+          ${a.content}
+        </div>
+      `;
+      const modal = new bootstrap.Modal(document.getElementById('articleDetailModal'));
+      modal.show();
+    }
+  </script>
+  <script src="js/bookmarks.js?v=20260901_v23"></script>
+
+  <!-- OFFCANVAS TỦ SÁCH ĐỌC SAU (SAVED ARTICLES DRAWER) -->
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="bookmarksOffcanvas" style="width: 380px;">
+    <div class="offcanvas-header" style="background: #002855; color: white;">
+      <h5 class="offcanvas-title fw-bold" style="font-size: 16px;">
+        <i class="fa-solid fa-bookmark text-warning me-2"></i> Tủ Sách Đọc Sau (<span class="bookmark-badge-count">2</span>)
+      </h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-3 bg-light" id="bookmarksListContainerDrawer">
+      <!-- Rendered dynamically from bookmarks.js -->
+    </div>
+    <div class="p-3 bg-white border-top text-center">
+      <small class="text-muted"><i class="fa-solid fa-shield-halved text-success me-1"></i> Danh sách lưu trữ an toàn trên thiết bị của bạn</small>
+    </div>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>

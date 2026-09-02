@@ -1,0 +1,16 @@
+{
+  "name": "Công Đoàn Trường Đại Học Thủ Dầu Một",
+  "short_name": "Công Đoàn TDMU",
+  "description": "Cổng Thông Tin Truyền Thông & Quản Trị Công Đoàn Cơ Sở Đại Học Thủ Dầu Một",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#002855",
+  "theme_color": "#002855",
+  "icons": [
+    {
+      "src": "https://congdoan.tdmu.edu.vn/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

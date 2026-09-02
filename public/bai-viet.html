@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="pageMetaTitle">Chi Tiết Bài Báo - Công Đoàn Trường ĐH Thủ Dầu Một</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/portal.css?v=20260901_v23">
+  <style>
+    .article-main-container {
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 36px 44px;
+      box-shadow: var(--shadow-card);
+      margin-bottom: 30px;
+    }
+    .article-headline {
+      font-size: 24px;
+      font-weight: 800;
+      color: #002855;
+      line-height: 1.35;
+      margin-bottom: 16px;
+      letter-spacing: -0.3px;
+    }
+    .article-meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 14px;
+      margin-bottom: 22px;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 13px;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .article-lead {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1E293B;
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+    .article-lead::first-letter {
+      font-size: 46px;
+      float: left;
+      font-weight: 800;
+      line-height: 0.8;
+      padding-right: 10px;
+      padding-top: 4px;
+      color: #002855;
+      font-family: 'Times New Roman', serif;
+    }
+    .article-content {
+      font-size: 15.5px;
+      line-height: 1.85;
+      color: #2D3748;
+    }
+    .article-content p {
+      margin-bottom: 18px;
+    }
+    .editorial-quote {
+      border-left: 4px solid var(--tdmu-yellow);
+      background: #F8FAFC;
+      padding: 18px 24px;
+      margin: 24px 0;
+      font-style: italic;
+      color: #1E293B;
+      font-size: 15px;
+      line-height: 1.65;
+      border-radius: 0 8px 8px 0;
+    }
+    .quote-icon {
+      color: var(--tdmu-gold);
+      margin-right: 8px;
+      font-size: 18px;
+    }
+    
+    .audio-narration-card {
+      background: linear-gradient(135deg, #EFF6FF 0%, #F8FAFC 100%);
+      border: 1px solid #BFDBFE;
+      border-radius: 8px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .ai-takeaways-card {
+      background: #F0FDF4;
+      border: 1px solid #BBF7D0;
+      border-left: 4px solid #16A34A;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 22px;
+    }
+    .ai-takeaways-card h6 {
+      color: #15803D;
+      font-weight: 800;
+      font-size: 13px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .reaction-pill {
+      background: #F8FAFC;
+      border: 1px solid #CBD5E1;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .reaction-pill:hover {
+      background: #EFF6FF;
+      color: #005696;
+      transform: translateY(-1px);
+    }
+    .reaction-pill.liked {
+      background: #FEE2E2;
+      border-color: #EF4444;
+      color: #DC2626;
+    }
+  </style>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#002855">
+</head>
+<body>
+
+  <div class="main-content-wrapper">
+    <!-- Top Brand Header -->
+    <header class="top-brand-header">
+      <div class="container d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+          <i class="fa-solid fa-graduation-cap fa-3x" style="color: #002855;"></i>
+          <div>
+            <h1 class="brand-title-main">CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h1>
+            <span class="brand-sub-main">THU DAU MOT UNIVERSITY TRADE UNION</span>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge-hotline">
+            <i class="fa-solid fa-phone me-1 text-warning"></i> Hotline: (0274) 3.815.184
+          </span>
+          <a href="admin.html" class="btn-portal-access">
+            <i class="fa-solid fa-wand-magic-sparkles me-1 text-warning"></i> Quản lý website truyền thông công đoàn TDMU
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Official Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-tdmu sticky-top">
+      <div class="container">
+        <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse" data-bs-target="#tdmuNavbar">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="tdmuNavbar">
+          <ul class="navbar-nav mx-auto">
+            <li class="nav-item"><a class="nav-link" href="index.html">Trang Chủ</a></li>
+            <li class="nav-item"><a class="nav-link" href="gioi-thieu.html">Giới Thiệu</a></li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Cơ Cấu Tổ Chức</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=ban-thuong-vu"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban thường vụ</a></li>
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=ban-chap-hanh"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban chấp hành</a></li>
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=uy-ban-kiem-tra"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ủy ban kiểm tra</a></li>
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=16-to-cong-doan"><i class="fa-solid fa-caret-right me-1 text-primary"></i> 16 Tổ công đoàn cơ sở</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a class="nav-link active" href="tin-tuc.html">Tin Tức</a></li>
+            <li class="nav-item"><a class="nav-link" href="phuc-loi-doan-vien.html">Phúc Lợi Đoàn Viên</a></li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="van-ban.html" data-bs-toggle="dropdown">Văn Bản</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="van-ban.html#tuyen-truyen"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Công văn tuyên truyền</a></li>
+                <li><a class="dropdown-item" href="van-ban.html#ke-hoach"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Kế hoạch hoạt động</a></li>
+                <li><a class="dropdown-item" href="van-ban.html#luat"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Văn bản luật</a></li>
+                <li><a class="dropdown-item" href="van-ban.html#quyet-dinh"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Quyết định</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a class="nav-link" href="bieu-mau.html">Biểu Mẫu</a></li>
+            <li class="nav-item"><a class="nav-link" href="lien-he.html">Liên Hệ</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content Body -->
+    <div class="container my-4">
+      <div class="breadcrumb-box">
+        <a href="index.html">Trang chủ</a> / <a href="tin-tuc.html">Tin tức &amp; Sự kiện</a> / <span class="text-muted" id="breadcrumbCategory">Hoạt động công đoàn</span>
+      </div>
+
+      <div class="row g-4">
+        
+        <!-- LEFT COLUMN (9 PHẦN): TOÀN VĂN BÀI BÁO PHÓNG KHOÁNG -->
+        <div class="col-lg-9">
+          <article class="article-main-container">
+            
+            <!-- Category Badge & Headline -->
+            <div class="mb-2">
+              <span class="badge" style="background: #002855; color: #FEF08A; font-weight: 700; font-size: 11.5px; padding: 6px 12px;" id="artCategory">
+                HOẠT ĐỘNG CÔNG ĐOÀN
+              </span>
+            </div>
+            <h1 class="article-headline" id="artTitle">
+              Tọa đàm "Dinh dưỡng lành mạnh vì sức khỏe gia đình" lan tỏa giá trị xây dựng mái ấm hạnh phúc
+            </h1>
+
+            <!-- Meta Bar -->
+            <div class="article-meta-bar">
+              <div class="d-flex align-items-center gap-3">
+                <span><i class="fa-solid fa-user-pen text-primary me-1"></i> <strong id="artAuthor">Ban Nữ công &amp; Ban Biên Tập</strong></span>
+                <span><i class="fa-regular fa-calendar text-primary me-1"></i> <span id="artDate">26/06/2026 12:56</span></span>
+              </div>
+              <div class="d-flex align-items-center gap-3">
+                <span><i class="fa-regular fa-clock me-1 text-warning"></i> <span id="artReadingTime">3 phút đọc</span></span>
+                <span><i class="fa-regular fa-eye me-1 text-success"></i> <span id="artViews">162</span> lượt xem</span>
+                <span><i class="fa-regular fa-comment-dots me-1 text-primary"></i> <span id="artCommentsCount">14</span> bình luận</span>
+              </div>
+            </div>
+
+            <!-- AUDIO VOICE NARRATION PLAYER -->
+            <div class="audio-narration-card">
+              <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-primary rounded-circle" id="btnAudioArticle" onclick="toggleFullPageAudio()" style="width: 44px; height: 44px; background: #002855; border-color: #002855;">
+                  <i class="fa-solid fa-play" id="audioArtIcon"></i>
+                </button>
+                <div>
+                  <div class="fw-bold text-dark" id="audioArtTitle">Nghe Bản Tin Bằng Giọng Đọc AI</div>
+                  <div class="text-muted small">Phát thanh tự động tiếng Việt chuẩn truyền cảm</div>
+                </div>
+              </div>
+              <span class="badge bg-white text-primary border p-2"><i class="fa-solid fa-volume-high me-1"></i> Trực tuyến</span>
+            </div>
+
+            <!-- AI 30s KEY TAKEAWAYS -->
+            <div class="ai-takeaways-card">
+              <h6><i class="fa-solid fa-wand-magic-sparkles me-2 text-success"></i> AI 30s Key Takeaways (Tóm tắt nhanh)</h6>
+              <ul class="mb-0 ps-3 text-secondary small" style="line-height: 1.6;" id="artTakeaways">
+                <li>Hưởng ứng kỷ niệm 25 năm Ngày Gia đình Việt Nam (28/6/2001 – 28/6/2026).</li>
+                <li>PGS.TS. Lê Tuấn Anh (Bí thư Đảng ủy) và TS. Lê Thị Kim Út (Chủ tịch CĐ) chủ trì tọa đàm.</li>
+                <li>Chuyên gia Viện Y Dược TDMU chia sẻ giải pháp dinh dưỡng tăng cường đề kháng cho gia đình.</li>
+              </ul>
+            </div>
+
+            <!-- Article Body Content -->
+            <div class="article-content" id="artContent">
+              <!-- Rendered dynamically -->
+            </div>
+
+            <!-- Engagement & Reaction Bar -->
+            <div class="border-top border-bottom py-3 my-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div class="d-flex gap-2">
+                <button class="reaction-pill" id="btnLikeArt" onclick="toggleArtReaction('like')">
+                  <i class="fa-solid fa-heart text-danger"></i> <span id="artLikeCount">128</span> Thích
+                </button>
+                <button class="reaction-pill" id="btnClapArt" onclick="toggleArtReaction('clap')">
+                  <i class="fa-solid fa-hands-clapping text-warning"></i> <span id="artClapCount">64</span> Vỗ tay
+                </button>
+                <button class="reaction-pill" id="btnBookmarkArt" onclick="toggleArticleBookmark(currentArticle ? currentArticle.id : 1)">
+                  <i class="fa-regular fa-bookmark text-primary"></i> Lưu đọc sau
+                </button>
+              </div>
+              <div>
+                <button class="btn btn-sm btn-outline-primary fw-bold" onclick="copyFullArticleLink()">
+                  <i class="fa-solid fa-share-nodes me-1"></i> Chia sẻ bài viết
+                </button>
+              </div>
+            </div>
+
+            <!-- PHÂN HỆ BÌNH LUẬN & Ý KIẾN ĐOÀN VIÊN (COMMENTS SECTION) -->
+            <section class="mt-4 pt-3" id="commentsSection">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold m-0" style="color: #002855; font-size: 18px;">
+                  <i class="fa-solid fa-comments text-primary me-2"></i> Ý Kiến &amp; Bình Luận Đoàn Viên (<span id="totalCommentsHeader">2</span>)
+                </h4>
+                <span class="text-muted small">Quy chế trao đổi văn minh &amp; xây dựng</span>
+              </div>
+
+                            <!-- Comment Input Box (Tự động nhận diện danh tính cán bộ từ hệ thống) -->
+              <div class="p-3 bg-light rounded border mb-4 shadow-sm">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 12px;" id="userCommentAvatar">
+                      U
+                    </div>
+                    <div style="font-size: 13px;">
+                      Đang bình luận với tư cách: <strong class="text-primary" id="userCommentName">TS. Lê Thị Kim Út</strong>
+                      <span class="badge bg-white text-secondary border ms-1" id="userCommentUnit">Tổ CĐ Viện Công nghệ số</span>
+                    </div>
+                  </div>
+                  <span class="text-muted" style="font-size: 11px;"><i class="fa-solid fa-shield-halved text-success me-1"></i> Xác thực tài khoản TDMU</span>
+                </div>
+                <div class="mb-2">
+                  <textarea id="inputCommentText" class="form-control" rows="3" placeholder="Nhập ý kiến thảo luận hoặc cảm nhận của bạn về bài viết này..." style="font-size: 13.5px;"></textarea>
+                </div>
+                <div class="d-flex justify-content-end">
+                  <button class="btn btn-sm btn-primary fw-bold px-4 py-2" onclick="submitUserComment()" style="background: #002855; border-color: #002855; border-radius: 6px;">
+                    <i class="fa-solid fa-paper-plane me-1 text-warning"></i> Gửi Bình Luận
+                  </button>
+                </div>
+              </div>
+
+              <!-- List of Comments -->
+              <div id="commentsListContainer">
+                <div class="d-flex gap-3 mb-3 p-3 bg-white border rounded shadow-sm">
+                  <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 42px; height: 42px; flex-shrink: 0;">
+                    VL
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <div>
+                        <strong class="text-dark">ThS. Võ Quốc Lương</strong>
+                        <span class="badge bg-light text-primary border ms-2 small">Tổ CĐ Viện Công nghệ số</span>
+                      </div>
+                      <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> 26/06/2026 14:20</small>
+                    </div>
+                    <p class="mb-0 text-secondary" style="font-size: 13.5px; line-height: 1.5;">
+                      Chương trình tọa đàm rất bổ ích và thiết thực cho cán bộ giảng viên trong trường. Cảm ơn Ban Nữ công đã tổ chức chu đáo!
+                    </p>
+                  </div>
+                </div>
+
+                <div class="d-flex gap-3 mb-3 p-3 bg-white border rounded shadow-sm">
+                  <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold" style="width: 42px; height: 42px; flex-shrink: 0;">
+                    LK
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <div>
+                        <strong class="text-dark">Đ/c Huỳnh Thị Lệ Kha</strong>
+                        <span class="badge bg-light text-primary border ms-2 small">Tổ CĐ Trường Luật &amp; Quản lý</span>
+                      </div>
+                      <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> 26/06/2026 15:05</small>
+                    </div>
+                    <p class="mb-0 text-secondary" style="font-size: 13.5px; line-height: 1.5;">
+                      Nhiều kiến thức dinh dưỡng khoa học rất hữu ích để áp dụng vào bữa cơm gia đình hàng ngày. Mong Công đoàn tiếp tục duy trì các chuyên đề như thế này!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Related Next Article -->
+            <div class="p-3 bg-light rounded border mt-4">
+              <div class="text-muted small fw-bold text-uppercase mb-2"><i class="fa-solid fa-arrow-right text-primary me-1"></i> Bài viết tiếp theo cùng chuyên mục:</div>
+              <h5 class="fw-bold mb-1" id="nextArtTitle"><a href="bai-viet.html?id=2" class="text-decoration-none text-primary">Chào mừng Đại hội XIV Công đoàn Việt Nam nhiệm kỳ 2026 – 2031</a></h5>
+              <div class="text-muted small">Phong trào thi đua | 4 phút đọc</div>
+            </div>
+
+          </article>
+        </div>
+
+        <!-- RIGHT COLUMN (3 PHẦN): SIDEBAR BÀI ĐỌC NHIỀU NHẤT -->
+        <div class="col-lg-3">
+          
+          <!-- Sticky Widget: Bài đọc nhiều nhất -->
+          <div class="panel-tdmu">
+            <div class="panel-heading-tdmu"><i class="fa-solid fa-fire me-2 text-danger"></i>Đọc nhiều nhất</div>
+            <div class="list-group-tdmu" id="popular_articles_sidebar">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Widget Liên Kết -->
+          <div class="panel-tdmu">
+            <div class="panel-heading-tdmu"><i class="fa-solid fa-link me-2 text-primary"></i>Liên kết website</div>
+            <div class="list-group-tdmu">
+              <a href="http://tdmu.edu.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Đại học Thủ Dầu Một</a>
+              <a href="http://danguy.tdmu.edu.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Đảng Bộ Đại học TDMU</a>
+              <a href="http://www.congdoan.vn" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Tổng LĐLĐ Việt Nam</a>
+              <a href="http://congdoanbinhduong.org.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> LĐLĐ Tỉnh Bình Dương</a>
+              <a href="http://lib.tdmu.edu.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> TT Học Liệu ĐH TDMU</a>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer (Chuẩn 2 Cột Thực Tế: Cơ Quan & Nhóm Đồ Án) -->
+  <footer>
+    <div class="container">
+      <div class="row gy-3">
+        <div class="col-md-7 text-start">
+          <h6 class="fw-bold text-white mb-2">CÔNG ĐOÀN CƠ SỞ TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h6>
+          <p class="mb-1"><i class="fa-solid fa-location-dot me-2 text-warning"></i> Địa chỉ: Lầu 1, Dãy A, Cổng 1, Số 06 Trần Văn Ơn, P. Phú Lợi, TP. Thủ Dầu Một, Bình Dương</p>
+          <p class="mb-1"><i class="fa-solid fa-phone me-2 text-warning"></i> Điện thoại: (0274) 3.815.184 | <i class="fa-solid fa-envelope ms-2 me-1 text-warning"></i> Email: congdoan@tdmu.edu.vn</p>
+          <p class="mb-0"><i class="fa-solid fa-globe me-2 text-warning"></i> Website: congdoan.tdmu.edu.vn</p>
+        </div>
+        <div class="col-md-5 text-md-end text-start">
+          <h6 class="fw-bold text-warning mb-2">HỆ THỐNG TRUYỀN THÔNG TÍCH HỢP AI</h6>
+          <p class="mb-1">Đề tài NCKH Sinh viên / Đồ án Cơ sở ngành - Viện Công nghệ số</p>
+          <p class="mb-0 text-light text-opacity-75">Nhóm 2: Nguyễn Bình Dương - Trần Hồng Thanh - Phạm Anh Tuấn</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/api.js?v=20260901_v23"></script>
+  <script>
+    let currentArticle = null;
+    let isFullSpeaking = false;
+
+    async function loadFullArticle() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const articleId = urlParams.get('id') || 1;
+
+      try {
+        const res = await API.getArticles('all');
+        if (res.success && Array.isArray(res.data)) {
+          const a = res.data.find(item => item.id == articleId) || res.data[0];
+          currentArticle = a;
+
+          document.title = (a.title || a.TieuDe) + ' - Công Đoàn TDMU';
+          document.getElementById('breadcrumbCategory').innerText = a.categoryName || a.ChuyenMuc || 'Tin tức';
+          document.getElementById('artCategory').innerText = (a.categoryName || a.ChuyenMuc || 'TIN TỨC').toUpperCase();
+          document.getElementById('artTitle').innerText = a.title || a.TieuDe;
+          document.getElementById('artAuthor').innerText = a.author || a.TacGia || 'Ban Tuyên giáo';
+          document.getElementById('artDate').innerText = (a.createdAt || '26/06/2026 12:56');
+          document.getElementById('artReadingTime').innerText = (a.readingTime || '3 phút') + ' đọc';
+          document.getElementById('artViews').innerText = a.viewsCount || a.LuotXem || 162;
+          document.getElementById('artCommentsCount').innerText = a.commentsCount || 14;
+          document.getElementById('artContent').innerHTML = a.content || a.NoiDung || ('<p>' + (a.summary || a.TomTat) + '</p>');
+
+          if (a.ai_takeaways && a.ai_takeaways.length > 0) {
+            document.getElementById('artTakeaways').innerHTML = a.ai_takeaways.map(t => '<li>' + t + '</li>').join('');
+          }
+
+          // Render sidebar top articles
+          const sideList = document.getElementById('popular_articles_sidebar');
+          sideList.innerHTML = res.data.slice(0, 5).map(item => `
+            <a href="bai-viet.html?id=${item.id}" class="list-group-item ${item.id == articleId ? 'fw-bold text-primary bg-light' : ''}">
+              <i class="fa-solid fa-angle-right me-1 text-muted small"></i> ${item.title || item.TieuDe}
+            </a>
+          `).join('');
+
+          // Next article
+          const next = res.data.find(item => item.id != articleId);
+          if (next) {
+            document.getElementById('nextArtTitle').innerHTML = '<a href="bai-viet.html?id=' + next.id + '" class="text-decoration-none text-primary">' + (next.title || next.TieuDe) + '</a>';
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function toggleFullPageAudio() {
+      if ('speechSynthesis' in window) {
+        if (isFullSpeaking) {
+          window.speechSynthesis.cancel();
+          isFullSpeaking = false;
+          document.getElementById('audioArtIcon').className = 'fa-solid fa-play';
+          document.getElementById('audioArtTitle').innerText = 'Nghe Bản Tin Bằng Giọng Đọc AI';
+        } else {
+          const textToRead = document.getElementById('artTitle').innerText + '. ' + (currentArticle ? (currentArticle.summary || currentArticle.TomTat) : '');
+          const utterance = new SpeechSynthesisUtterance(textToRead);
+          utterance.lang = 'vi-VN';
+          utterance.rate = 1.0;
+          utterance.onend = () => {
+            isFullSpeaking = false;
+            document.getElementById('audioArtIcon').className = 'fa-solid fa-play';
+            document.getElementById('audioArtTitle').innerText = 'Đã hoàn thành phát thanh';
+          };
+          window.speechSynthesis.speak(utterance);
+          isFullSpeaking = true;
+          document.getElementById('audioArtIcon').className = 'fa-solid fa-pause text-warning';
+          document.getElementById('audioArtTitle').innerText = 'Đang phát thanh bản tin...';
+        }
+      } else {
+        alert('Trình duyệt chưa hỗ trợ Web Speech API.');
+      }
+    }
+
+    function toggleArtReaction(type) {
+      if (type === 'like') {
+        const btn = document.getElementById('btnLikeArt');
+        const count = document.getElementById('artLikeCount');
+        btn.classList.toggle('liked');
+        count.innerText = parseInt(count.innerText) + (btn.classList.contains('liked') ? 1 : -1);
+      } else if (type === 'clap') {
+        const count = document.getElementById('artClapCount');
+        count.innerText = parseInt(count.innerText) + 1;
+      }
+    }
+
+    const currentLoggedUser = {
+      name: 'TS. Lê Thị Kim Út',
+      unit: 'Tổ CĐ Viện Công nghệ số',
+      initials: 'KU',
+      role: 'Chủ tịch Công đoàn'
+    };
+
+    function submitUserComment() {
+      const text = document.getElementById('inputCommentText').value.trim();
+
+      if (!text) {
+        alert('Vui lòng nhập nội dung bình luận!');
+        document.getElementById('inputCommentText').focus();
+        return;
+      }
+
+      const list = document.getElementById('commentsListContainer');
+      const now = new Date().toLocaleString('vi-VN');
+
+      const newCommentEl = document.createElement('div');
+      newCommentEl.className = 'd-flex gap-3 mb-3 p-3 bg-white border rounded shadow-sm';
+      newCommentEl.innerHTML = `
+        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 42px; height: 42px; flex-shrink: 0;">
+          ${currentLoggedUser.initials}
+        </div>
+        <div class="flex-grow-1">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <div>
+              <strong class="text-dark">${currentLoggedUser.name}</strong>
+              <span class="badge bg-light text-primary border ms-2 small">${currentLoggedUser.unit}</span>
+            </div>
+            <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> ${now}</small>
+          </div>
+          <p class="mb-0 text-secondary" style="font-size: 13.5px; line-height: 1.5;">
+            ${text}
+          </p>
+        </div>
+      `;
+
+      list.prepend(newCommentEl);
+      document.getElementById('inputCommentText').value = '';
+      const totalHeader = document.getElementById('totalCommentsHeader');
+      totalHeader.innerText = parseInt(totalHeader.innerText) + 1;
+      alert('Đã gửi ý kiến bình luận của bạn thành công!');
+    }
+
+    function copyFullArticleLink() {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Đã sao chép liên kết bài viết vào bộ nhớ tạm!');
+    }
+
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      loadFullArticle();
+      const urlParams = new URLSearchParams(window.location.search);
+      const articleId = urlParams.get('id') || 1;
+      setTimeout(() => updateArticleBookmarkButtonState(articleId), 200);
+    });
+
+  </script>
+  <script src="js/bookmarks.js?v=20260901_v23"></script>
+
+  <!-- OFFCANVAS TỦ SÁCH ĐỌC SAU (SAVED ARTICLES DRAWER) -->
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="bookmarksOffcanvas" style="width: 380px;">
+    <div class="offcanvas-header" style="background: #002855; color: white;">
+      <h5 class="offcanvas-title fw-bold" style="font-size: 16px;">
+        <i class="fa-solid fa-bookmark text-warning me-2"></i> Tủ Sách Đọc Sau (<span class="bookmark-badge-count">2</span>)
+      </h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-3 bg-light" id="bookmarksListContainerDrawer">
+      <!-- Rendered dynamically from bookmarks.js -->
+    </div>
+    <div class="p-3 bg-white border-top text-center">
+      <small class="text-muted"><i class="fa-solid fa-shield-halved text-success me-1"></i> Danh sách lưu trữ an toàn trên thiết bị của bạn</small>
+    </div>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

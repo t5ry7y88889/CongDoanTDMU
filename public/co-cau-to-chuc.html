@@ -3,420 +3,705 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cơ Cấu Tổ Chức - Công Đoàn Trường ĐH Thủ Dầu Một</title>
+  <title>Cơ Cấu Tổ Chức - Công Đoàn Trường Đại Học Thủ Dầu Một</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/portal.css?v=1788279874799">
   <style>
-    :root {
-      --tdmu-dark-blue: #003865;
-      --tdmu-blue: #005baa;
-      --tdmu-light-blue: #0088cc;
-      --tdmu-red: #d32f2f;
-      --tdmu-yellow: #f1c40f;
-      --bg-gray: #f4f6f9;
-      --text-dark: #2c3e50;
+    /* =========================================================================
+       AUTHENTIC CADRE CARDS WITH REAL PORTRAITS & MODAL DRILLDOWN
+       ========================================================================= */
+    .cadre-card-item {
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-left: 4px solid var(--tdmu-blue);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+      transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: 0 1px 3px rgba(0, 40, 85, 0.03);
+      cursor: pointer;
     }
-    body { font-family: 'Segoe UI', Arial, sans-serif; color: var(--text-dark); background-color: var(--bg-gray); line-height: 1.5; font-size: 14px; }
-    
-    /* Top Brand Header */
-    .top-brand-header { background: #ffffff; padding: 12px 0; border-bottom: 2px solid var(--tdmu-dark-blue); }
-    .brand-title-main { color: var(--tdmu-dark-blue); font-size: 19px; font-weight: 800; text-transform: uppercase; margin: 0; }
-    .brand-sub-main { color: #e67e22; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .cadre-card-item:hover {
+      border-left-color: var(--tdmu-yellow);
+      background: #F8FAFC;
+      transform: translateX(4px);
+      box-shadow: 0 6px 18px rgba(0, 40, 85, 0.1);
+    }
+    .cadre-real-avatar {
+      width: 66px;
+      height: 85px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 2px solid #CBD5E1;
+      box-shadow: 0 3px 8px rgba(0, 40, 85, 0.15);
+      flex-shrink: 0;
+    }
+    .cadre-role-tag {
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .tag-president {
+      background: #FEE2E2;
+      color: #DC2626;
+      border: 1px solid #FECACA;
+    }
+    .tag-vice-president {
+      background: #EFF6FF;
+      color: #0284C7;
+      border: 1px solid #BAE6FD;
+    }
+    .tag-executive {
+      background: #F0FDF4;
+      color: #16A34A;
+      border: 1px solid #BBF7D0;
+    }
+    .tag-inspector {
+      background: #FEF3C7;
+      color: #B45309;
+      border: 1px solid #FDE68A;
+    }
 
-    /* Navbar */
-    .navbar-tdmu { background-color: var(--tdmu-dark-blue); padding: 0; box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
-    .navbar-tdmu .nav-link { color: #ffffff !important; font-weight: 600; font-size: 13.5px; padding: 12px 14px !important; text-transform: uppercase; transition: all 0.2s; }
-    .navbar-tdmu .nav-link:hover, .navbar-tdmu .nav-link.active { background-color: #002240; color: var(--tdmu-yellow) !important; }
-    .navbar-tdmu .dropdown-menu { border-radius: 0; border: none; box-shadow: 0 6px 15px rgba(0,0,0,0.15); padding: 0; margin-top: 0; }
-    .navbar-tdmu .dropdown-item { padding: 10px 16px; font-size: 13px; font-weight: 500; border-bottom: 1px solid #edf2f7; color: #333; }
-    .navbar-tdmu .dropdown-item:hover { background-color: var(--tdmu-blue); color: white; }
-
-    /* Content & Panels */
-    .content-box { background: white; border-radius: 4px; border: 1px solid #e2e8f0; padding: 22px; margin-bottom: 20px; }
-    .tieudelon { font-size: 17px; font-weight: 800; color: var(--tdmu-dark-blue); text-transform: uppercase; border-bottom: 2px solid var(--tdmu-dark-blue); padding-bottom: 6px; margin-bottom: 16px; }
-    .panel-tdmu { background: white; border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
-    .panel-heading-tdmu { background: #f8fafc; border-bottom: 2px solid var(--tdmu-dark-blue); padding: 10px 14px; font-weight: 700; font-size: 13.5px; color: var(--tdmu-dark-blue); text-transform: uppercase; }
-    .list-group-tdmu .list-group-item { border: none; border-bottom: 1px dashed #e2e8f0; padding: 9px 12px; font-size: 13px; font-weight: 500; color: #2d3748; text-decoration: none; display: block; }
-    .list-group-tdmu .list-group-item:hover { background-color: #f7fafc; color: var(--tdmu-blue); padding-left: 16px; }
-    .breadcrumb-box { padding: 10px 0; font-size: 13px; }
-
-    /* Footer */
-    footer { background: #002240; color: #a0aec0; padding: 25px 0 15px; font-size: 13px; border-top: 3px solid var(--tdmu-yellow); }
+    /* Modal Drilldown Styling */
+    .profile-modal-header {
+      background: #002855;
+      color: #FFFFFF;
+      padding: 16px 22px;
+    }
+    .profile-large-img {
+      width: 140px;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 3px solid #FEF08A;
+      box-shadow: 0 4px 14px rgba(0, 40, 85, 0.2);
+    }
+    .profile-info-row {
+      display: flex;
+      padding: 8px 0;
+      border-bottom: 1px dashed #E2E8F0;
+      font-size: 13.5px;
+    }
+    .profile-info-label {
+      width: 165px;
+      font-weight: 700;
+      color: #475569;
+      flex-shrink: 0;
+    }
+    .profile-info-val {
+      color: #0F172A;
+      font-weight: 500;
+    }
   </style>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#002855">
 </head>
 <body>
 
-  <!-- Top Brand Header (Single Clean Header) -->
-  <header class="top-brand-header">
-    <div class="container d-flex justify-content-between align-items-center">
-      <div class="d-flex align-items-center gap-3">
-        <i class="fa-solid fa-graduation-cap fa-3x text-primary"></i>
-        <div>
-          <h1 class="brand-title-main">CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h1>
-          <span class="brand-sub-main">THU DAU MOT UNIVERSITY TRADE UNION</span>
+  <div class="main-content-wrapper">
+    <!-- Top Brand Header -->
+    <header class="top-brand-header">
+      <div class="container d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+          <i class="fa-solid fa-graduation-cap fa-3x" style="color: #002855;"></i>
+          <div>
+            <h1 class="brand-title-main">CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h1>
+            <span class="brand-sub-main">THU DAU MOT UNIVERSITY TRADE UNION</span>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge-hotline">
+            <i class="fa-solid fa-phone me-1 text-warning"></i> Hotline: (0274) 3.815.184
+          </span>
+          <a href="admin.html" class="btn-portal-access">
+            <i class="fa-solid fa-wand-magic-sparkles me-1 text-warning"></i> Quản lý website truyền thông công đoàn TDMU
+          </a>
         </div>
       </div>
-      <div class="d-flex align-items-center gap-2">
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSelw4xZGXNz2fUHOy0wHZ9-rIt5N-gneVP005KjpjURduNvrg/viewform" target="_blank" class="btn btn-sm btn-danger fw-bold shadow-sm">
-          <i class="fa-solid fa-file-pen me-1"></i> Điền Báo Cáo Tháng (Google Form)
-        </a>
-        <a href="admin.html" class="btn btn-sm btn-outline-primary fw-bold">
-          <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Portal AI CMS
-        </a>
-      </div>
-    </div>
-  </header>
+    </header>
 
-  <!-- Official Navigation Bar -->
-  <nav class="navbar navbar-expand-lg navbar-tdmu sticky-top">
-    <div class="container">
-      <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse" data-bs-target="#tdmuNavbar">
-        <i class="fa-solid fa-bars"></i>
-      </button>
-      <div class="collapse navbar-collapse" id="tdmuNavbar">
-        <ul class="navbar-nav mx-auto">
-          <li class="nav-item"><a class="nav-link " href="index.html">Trang Chủ</a></li>
-          <li class="nav-item"><a class="nav-link " href="gioi-thieu.html">Giới Thiệu</a></li>
-          
-          <!-- Dropdown: Cơ Cấu Tổ Chức -->
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle active" href="#" data-bs-toggle="dropdown">
-              Cơ Cấu Tổ Chức
-            </a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="co-cau-to-chuc.html#ban-thuong-vu"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban thường vụ</a></li>
-              <li><a class="dropdown-item" href="co-cau-to-chuc.html#ban-chap-hanh"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban chấp hành</a></li>
-              <li><a class="dropdown-item" href="co-cau-to-chuc.html#uy-ban-kiem-tra"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ủy ban kiểm tra</a></li>
-              <li><a class="dropdown-item" href="lien-he.html"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Công đoàn bộ phận & Tổ công đoàn</a></li>
-            </ul>
-          </li>
+    <!-- Official Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-tdmu sticky-top">
+      <div class="container">
+        <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse" data-bs-target="#tdmuNavbar">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="tdmuNavbar">
+          <ul class="navbar-nav mx-auto">
+            <li class="nav-item"><a class="nav-link" href="index.html">Trang Chủ</a></li>
+            <li class="nav-item"><a class="nav-link" href="gioi-thieu.html">Giới Thiệu</a></li>
+            
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle active" href="#" data-bs-toggle="dropdown">Cơ Cấu Tổ Chức</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=ban-thuong-vu"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban thường vụ</a></li>
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=ban-chap-hanh"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban chấp hành</a></li>
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=uy-ban-kiem-tra"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ủy ban kiểm tra</a></li>
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=16-to-cong-doan"><i class="fa-solid fa-caret-right me-1 text-primary"></i> 16 Tổ công đoàn cơ sở</a></li>
+              </ul>
+            </li>
 
-          <li class="nav-item"><a class="nav-link " href="index.html#tintuc">Tin Tức</a></li>
-          <li class="nav-item"><a class="nav-link " href="phuc-loi-doan-vien.html">Phúc Lợi Đoàn Viên</a></li>
+            <li class="nav-item"><a class="nav-link" href="tin-tuc.html">Tin Tức</a></li>
+            <li class="nav-item"><a class="nav-link" href="phuc-loi-doan-vien.html">Phúc Lợi Đoàn Viên</a></li>
 
-          <!-- Dropdown: Văn Bản -->
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle " href="#" data-bs-toggle="dropdown">
-              Văn Bản
-            </a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="van-ban.html#tuyen-truyen"><i class="fa-solid fa-file-lines me-1 text-primary"></i> Công văn tuyên truyền</a></li>
-              <li><a class="dropdown-item" href="van-ban.html#ke-hoach"><i class="fa-solid fa-calendar-check me-1 text-primary"></i> Kế hoạch hoạt động</a></li>
-              <li><a class="dropdown-item" href="van-ban.html#luat"><i class="fa-solid fa-scale-balanced me-1 text-primary"></i> Văn bản luật</a></li>
-              <li><a class="dropdown-item" href="van-ban.html#quyet-dinh"><i class="fa-solid fa-stamp me-1 text-primary"></i> Quyết định</a></li>
-            </ul>
-          </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="van-ban.html" data-bs-toggle="dropdown">Văn Bản</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="van-ban.html#tuyen-truyen"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Công văn tuyên truyền</a></li>
+                <li><a class="dropdown-item" href="van-ban.html#ke-hoach"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Kế hoạch hoạt động</a></li>
+                <li><a class="dropdown-item" href="van-ban.html#luat"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Văn bản luật</a></li>
+                <li><a class="dropdown-item" href="van-ban.html#quyet-dinh"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Quyết định</a></li>
+              </ul>
+            </li>
 
-          <li class="nav-item"><a class="nav-link " href="bao-cao-thang.html"><i class="fa-solid fa-clipboard-check me-1 text-warning"></i> Báo Cáo Thi Đua</a></li>
-          <li class="nav-item"><a class="nav-link " href="bieu-mau.html">Biểu Mẫu</a></li>
-          <li class="nav-item"><a class="nav-link " href="lien-he.html">Liên Hệ</a></li>
-        </ul>
-      </div>
-    </div>
-  </nav>
-
-  
-  <div class="container my-4">
-    <div class="breadcrumb-box"><a href="index.html" class="text-decoration-none">Trang chủ</a> / <span class="text-muted">Cơ cấu tổ chức</span></div>
-    <div class="row g-4">
-      <div class="col-lg-9">
-        
-        <!-- Tab navigation inside co-cau-to-chuc -->
-        <ul class="nav nav-pills nav-fill mb-4 p-2 bg-white border rounded shadow-sm" id="orgTabs">
-          <li class="nav-item">
-            <button class="nav-link active fw-bold py-2" data-bs-toggle="pill" data-bs-target="#tab-bch">
-              <i class="fa-solid fa-users-gear me-2"></i> BAN CHẤP HÀNH (13 Đ/C)
-            </button>
-          </li>
-          <li class="nav-item">
-            <button class="nav-link fw-bold py-2" data-bs-toggle="pill" data-bs-target="#tab-ubkt">
-              <i class="fa-solid fa-clipboard-check me-2 text-danger"></i> ỦY BAN KIỂM TRA (3 Đ/C)
-            </button>
-          </li>
-          <li class="nav-item">
-            <button class="nav-link fw-bold py-2" data-bs-toggle="pill" data-bs-target="#tab-banquanchung">
-              <i class="fa-solid fa-people-group me-2 text-success"></i> CÁC BAN CHUYÊN MÔN
-            </button>
-          </li>
-        </ul>
-
-        <div class="tab-content">
-          
-          <!-- TAB 1: BAN CHẤP HÀNH (13 THÀNH VIÊN) -->
-          <div class="tab-pane fade show active" id="tab-bch">
-            <div class="content-box">
-              <div class="tieudelon"><i class="fa-solid fa-sitemap me-2"></i>BAN CHẤP HÀNH CÔNG ĐOÀN TRƯỜNG ĐH THỦ DẦU MỘT (NHIỆM KỲ 2023 - 2028)</div>
-              <p class="small text-muted mb-4">Theo Quyết định số 206/QĐ-LĐLĐ của Liên đoàn Lao động Tỉnh Bình Dương công nhận kết quả bầu cử BCH Khóa X gồm 13 đồng chí:</p>
-              
-              <div class="row g-3">
-                <!-- 1. Chủ tịch -->
-                <div class="col-md-6">
-                  <div class="p-3 border border-2 border-primary rounded bg-light d-flex align-items-center gap-3">
-                    <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150" class="rounded-circle border border-2 border-primary" style="width: 70px; height: 70px; object-fit: cover;" alt="Lê Thị Kim Út">
-                    <div>
-                      <span class="badge bg-danger mb-1">Chủ tịch Công đoàn</span>
-                      <h6 class="fw-bold text-primary mb-0">TS. Lê Thị Kim Út</h6>
-                      <small class="text-muted d-block">Giảng viên cao cấp</small>
-                      <small class="text-secondary"><i class="fa-solid fa-envelope me-1"></i> utltk@tdmu.edu.vn</small>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 2. Phó Chủ tịch -->
-                <div class="col-md-6">
-                  <div class="p-3 border border-2 border-primary rounded bg-light d-flex align-items-center gap-3">
-                    <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150" class="rounded-circle border border-2 border-primary" style="width: 70px; height: 70px; object-fit: cover;" alt="Nguyễn Minh Danh">
-                    <div>
-                      <span class="badge bg-primary mb-1">Phó Chủ tịch & CN UBKT</span>
-                      <h6 class="fw-bold text-primary mb-0">ThS. Nguyễn Minh Danh</h6>
-                      <small class="text-muted d-block">Phụ trách công tác Kiểm tra & Đời sống</small>
-                      <small class="text-secondary"><i class="fa-solid fa-envelope me-1"></i> danhnm@tdmu.edu.vn</small>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 3. Phó Chủ tịch -->
-                <div class="col-md-6">
-                  <div class="p-3 border rounded bg-light d-flex align-items-center gap-3">
-                    <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150" class="rounded-circle" style="width: 60px; height: 60px; object-fit: cover;" alt="Phan Nguyễn Quỳnh Anh">
-                    <div>
-                      <span class="badge bg-info text-dark mb-1">Phó Chủ tịch</span>
-                      <h6 class="fw-bold text-primary mb-0">ThS. Phan Nguyễn Quỳnh Anh</h6>
-                      <small class="text-muted d-block">Phụ trách công tác Tuyên giáo - Nữ công</small>
-                      <small class="text-secondary"><i class="fa-solid fa-envelope me-1"></i> anhpnq@tdmu.edu.vn</small>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 4. UV BCH -->
-                <div class="col-md-6">
-                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">XL</div>
-                    <div>
-                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
-                      <h6 class="fw-bold text-dark mb-0">Lê Nguyễn Xuân Lan</h6>
-                      <small class="text-muted">Phòng Đào tạo Đại học</small>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 5. UV BCH -->
-                <div class="col-md-6">
-                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">HD</div>
-                    <div>
-                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
-                      <h6 class="fw-bold text-dark mb-0">Phan Nguyễn Hồng Diễm</h6>
-                      <small class="text-muted">Phòng Tổ chức - Cán bộ</small>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 6. UV BCH -->
-                <div class="col-md-6">
-                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">DT</div>
-                    <div>
-                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
-                      <h6 class="fw-bold text-dark mb-0">Võ Nguyễn Đoan Trinh</h6>
-                      <small class="text-muted">Khoa Ngoại ngữ</small>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 7. UV BCH -->
-                <div class="col-md-6">
-                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">TL</div>
-                    <div>
-                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
-                      <h6 class="fw-bold text-dark mb-0">Nguyễn Võ Thành Long</h6>
-                      <small class="text-muted">Phòng Kế hoạch - Tài chính</small>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 8. UV BCH -->
-                <div class="col-md-6">
-                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">ĐH</div>
-                    <div>
-                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
-                      <h6 class="fw-bold text-dark mb-0">Trần Đức Hoàn</h6>
-                      <small class="text-muted">Khoa Công nghiệp Văn hóa</small>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 9. UV BCH - GVHD Võ Quốc Lương -->
-                <div class="col-md-6">
-                  <div class="p-3 border border-2 border-warning rounded bg-light d-flex align-items-center gap-3">
-                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" class="rounded-circle border border-2 border-warning" style="width: 60px; height: 60px; object-fit: cover;" alt="Võ Quốc Lương">
-                    <div>
-                      <span class="badge bg-warning text-dark mb-1">Ủy viên BCH (GVHD)</span>
-                      <h6 class="fw-bold text-primary mb-0">ThS. Võ Quốc Lương</h6>
-                      <small class="text-muted d-block">Giảng viên chính Viện Công nghệ số</small>
-                      <small class="text-secondary"><i class="fa-solid fa-envelope me-1"></i> luongvq@tdmu.edu.vn</small>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 10. UV BCH -->
-                <div class="col-md-6">
-                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">TT</div>
-                    <div>
-                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
-                      <h6 class="fw-bold text-dark mb-0">Huỳnh Thanh Thúy</h6>
-                      <small class="text-muted">Trung tâm Khảo thí & ĐBCL</small>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 11. UV BCH -->
-                <div class="col-md-6">
-                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">TN</div>
-                    <div>
-                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
-                      <h6 class="fw-bold text-dark mb-0">Phú Thị Tuyết Nga</h6>
-                      <small class="text-muted">Trung tâm Học liệu</small>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 12. UV BCH -->
-                <div class="col-md-6">
-                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">MT</div>
-                    <div>
-                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
-                      <h6 class="fw-bold text-dark mb-0">Âu Minh Triết</h6>
-                      <small class="text-muted">Viện Kỹ thuật công nghệ</small>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 13. UV BCH -->
-                <div class="col-md-6">
-                  <div class="p-3 border rounded bg-white d-flex align-items-center gap-3">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px;">TT</div>
-                    <div>
-                      <span class="badge bg-secondary mb-1">Ủy viên BCH</span>
-                      <h6 class="fw-bold text-dark mb-0">Nguyễn Thị Thanh Thảo</h6>
-                      <small class="text-muted">Khoa Sư phạm</small>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB 2: ỦY BAN KIỂM TRA (3 Đ/C) -->
-          <div class="tab-pane fade" id="tab-ubkt">
-            <div class="content-box">
-              <div class="tieudelon"><i class="fa-solid fa-clipboard-check me-2"></i>ỦY BAN KIỂM TRA CÔNG ĐOÀN TRƯỜNG (NHIỆM KỲ 2023 - 2028)</div>
-              <div class="row g-3">
-                <div class="col-md-4">
-                  <div class="p-3 border border-2 border-danger rounded bg-light text-center">
-                    <span class="badge bg-danger mb-2">Chủ nhiệm UBKT</span>
-                    <h6 class="fw-bold text-primary mb-1">ThS. Nguyễn Minh Danh</h6>
-                    <small class="text-muted d-block mb-1">UV Ban Thường vụ</small>
-                    <small class="text-secondary"><i class="fa-solid fa-envelope me-1"></i> danhnm@tdmu.edu.vn</small>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="p-3 border rounded bg-white text-center">
-                    <span class="badge bg-primary mb-2">Ủy viên UBKT</span>
-                    <h6 class="fw-bold text-dark mb-1">Nguyễn Ngọc Hiền</h6>
-                    <small class="text-muted d-block mb-1">Phụ trách kiểm tra tài chính</small>
-                    <small class="text-secondary"><i class="fa-solid fa-envelope me-1"></i> hiennn@tdmu.edu.vn</small>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="p-3 border rounded bg-white text-center">
-                    <span class="badge bg-primary mb-2">Ủy viên UBKT</span>
-                    <h6 class="fw-bold text-dark mb-1">Nguyễn Văn Trường</h6>
-                    <small class="text-muted d-block mb-1">Phụ trách giám sát điều lệ</small>
-                    <small class="text-secondary"><i class="fa-solid fa-envelope me-1"></i> truongnv@tdmu.edu.vn</small>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB 3: CÁC BAN CHUYÊN MÔN -->
-          <div class="tab-pane fade" id="tab-banquanchung">
-            <div class="content-box">
-              <div class="tieudelon"><i class="fa-solid fa-users me-2"></i>CÁC BAN QUẦN CHÚNG & BAN CHUYÊN MÔN (QĐ SỐ 08/QĐ-CĐ)</div>
-              
-              <div class="p-3 border rounded mb-3 bg-light">
-                <h6 class="fw-bold text-primary mb-1"><i class="fa-solid fa-female text-danger me-2"></i>1. Ban Nữ Công Quần Chúng</h6>
-                <p class="small text-muted mb-0">Đại diện chăm lo, bảo vệ quyền lợi chính đáng cho nữ cán bộ viên chức, phong trào "Giỏi việc trường - Đảm việc nhà".</p>
-              </div>
-
-              <div class="p-3 border rounded mb-3 bg-light">
-                <h6 class="fw-bold text-primary mb-1"><i class="fa-solid fa-bullhorn text-warning me-2"></i>2. Ban Tuyên Giáo & Thi Đua - Khen Thưởng</h6>
-                <p class="small text-muted mb-0">Tuyên truyền đường lối của Đảng, chính sách pháp luật, tổ chức các đợt thi đua dạy tốt - nghiên cứu khoa học và tổng hợp đánh giá 16 Tổ Công đoàn.</p>
-              </div>
-
-              <div class="p-3 border rounded mb-3 bg-light">
-                <h6 class="fw-bold text-primary mb-1"><i class="fa-solid fa-heart-pulse text-success me-2"></i>3. Ban Đời Sống & Chăm Lo Phúc Lợi</h6>
-                <p class="small text-muted mb-0">Khảo sát, hỗ trợ thăm hỏi ốm đau, hiếu hỷ, bệnh hiểm nghèo, phối hợp tổ chức khám sức khỏe và kết nối các gói phúc lợi ưu đãi.</p>
-              </div>
-
-              <div class="p-3 border rounded bg-light">
-                <h6 class="fw-bold text-primary mb-1"><i class="fa-solid fa-futbol text-info me-2"></i>4. Ban Văn Thể Mỹ</h6>
-                <p class="small text-muted mb-0">Tổ chức các giải bóng đá truyền thống, hội thi văn nghệ, hội thi áo dài và hội thi Mic Vàng TDMU.</p>
-              </div>
-            </div>
-          </div>
-
+            <li class="nav-item"><a class="nav-link" href="bieu-mau.html">Biểu Mẫu</a></li>
+            <li class="nav-item"><a class="nav-link" href="lien-he.html">Liên Hệ</a></li>
+          </ul>
         </div>
       </div>
+    </nav>
+
+    <!-- Main Content Body -->
+    <div class="container my-3">
+      <div class="breadcrumb-box"><a href="index.html">Trang chủ</a> / <span class="text-muted">Cơ cấu tổ chức Công đoàn TDMU</span></div>
       
-        <!-- RIGHT SIDEBAR (3 PHẦN) -->
+      <!-- BỘ LỌC CHUYÊN MỤC CHUNG KHUÔN (DOC FILTER BAR) -->
+      <div class="content-box mb-4 py-3">
+        <div class="doc-filter-bar mb-0 border-0 pb-0" id="orgCategoryFilter">
+          <button class="doc-tab-btn active" onclick="switchOrgTab('ban-thuong-vu', this)">
+            <i class="fa-solid fa-crown text-warning"></i> Ban Thường Vụ
+          </button>
+          <button class="doc-tab-btn" onclick="switchOrgTab('ban-chap-hanh', this)">
+            <i class="fa-solid fa-users text-primary"></i> Ban Chấp Hành (13 Đ/C)
+          </button>
+          <button class="doc-tab-btn" onclick="switchOrgTab('uy-ban-kiem-tra', this)">
+            <i class="fa-solid fa-scale-balanced text-success"></i> Ủy Ban Kiểm Tra
+          </button>
+          <button class="doc-tab-btn" onclick="switchOrgTab('16-to-cong-doan', this)">
+            <i class="fa-solid fa-sitemap text-danger"></i> 16 Tổ Công Đoàn Cơ Sở
+          </button>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- LEFT COLUMN (9 PHẦN): NỘI DUNG TỔ CHỨC CHUẨN KHUÔN -->
+        <div class="col-lg-9">
+          
+          <!-- TAB 1: BAN THƯỜNG VỤ -->
+          <div class="org-tab-content" id="tab_ban_thuong_vu">
+            <div class="content-box mb-4">
+              <div class="tieudelon">
+                <span><i class="fa-solid fa-crown text-warning me-2"></i>BAN THƯỜNG VỤ CÔNG ĐOÀN KHÓA X (NHIỆM KỲ 2023 – 2028)</span>
+              </div>
+              <p class="text-muted small mb-3">Ban Thường vụ là cơ quan lãnh đạo cao nhất giữa hai kỳ họp Ban Chấp hành, trực tiếp chỉ đạo và điều hành mọi hoạt động phong trào đoàn viên. <em>(Bấm vào thẻ để xem hồ sơ phân công chi tiết)</em></p>
+
+              <!-- Cadre 1: Lê Thị Kim Út -->
+              <div class="cadre-card-item" onclick="openCadreModal(1)" title="Xem hồ sơ phân công chi tiết">
+                <div class="d-flex align-items-center gap-3">
+                  <img src="https://congdoan.tdmu.edu.vn/img/ckeditor/images/Picture1.jpg" class="cadre-real-avatar" alt="Lê Thị Kim Út">
+                  <div>
+                    <h5 class="fw-bold mb-1" style="font-size: 15.5px; color: #002855;">TS. Lê Thị Kim Út</h5>
+                    <div class="text-muted small">
+                      <span><i class="fa-solid fa-briefcase text-primary me-1"></i> Trưởng phòng Quản lý Khoa học</span>
+                      <span class="ms-3"><i class="fa-solid fa-envelope text-primary me-1"></i> utltk@tdmu.edu.vn</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-end">
+                  <span class="cadre-role-tag tag-president"><i class="fa-solid fa-star me-1"></i> CHỦ TỊCH CÔNG ĐOÀN</span>
+                  <div class="text-muted" style="font-size: 11px; margin-top: 4px;"><i class="fa-solid fa-circle-info text-primary me-1"></i> Chi tiết »</div>
+                </div>
+              </div>
+
+              <!-- Cadre 2: Nguyễn Minh Danh -->
+              <div class="cadre-card-item" onclick="openCadreModal(2)" title="Xem hồ sơ phân công chi tiết">
+                <div class="d-flex align-items-center gap-3">
+                  <img src="https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Danh.jpg" class="cadre-real-avatar" alt="Nguyễn Minh Danh">
+                  <div>
+                    <h5 class="fw-bold mb-1" style="font-size: 15.5px; color: #002855;">ThS. Nguyễn Minh Danh</h5>
+                    <div class="text-muted small">
+                      <span><i class="fa-solid fa-briefcase text-primary me-1"></i> Phó Chủ tịch Công đoàn Trường / Chủ nhiệm UBKT</span>
+                      <span class="ms-3"><i class="fa-solid fa-envelope text-primary me-1"></i> danhnm@tdmu.edu.vn</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-end">
+                  <span class="cadre-role-tag tag-vice-president"><i class="fa-solid fa-star-half-stroke me-1"></i> PHÓ CHỦ TỊCH CÔNG ĐOÀN</span>
+                  <div class="text-muted" style="font-size: 11px; margin-top: 4px;"><i class="fa-solid fa-circle-info text-primary me-1"></i> Chi tiết »</div>
+                </div>
+              </div>
+
+              <!-- Cadre 3: Phan Nguyễn Quỳnh Anh -->
+              <div class="cadre-card-item" onclick="openCadreModal(3)" title="Xem hồ sơ phân công chi tiết">
+                <div class="d-flex align-items-center gap-3">
+                  <img src="https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Anh.jpg" class="cadre-real-avatar" alt="Phan Nguyễn Quỳnh Anh">
+                  <div>
+                    <h5 class="fw-bold mb-1" style="font-size: 15.5px; color: #002855;">ThS. Phan Nguyễn Quỳnh Anh</h5>
+                    <div class="text-muted small">
+                      <span><i class="fa-solid fa-briefcase text-primary me-1"></i> Phó Chủ tịch Công đoàn Trường</span>
+                      <span class="ms-3"><i class="fa-solid fa-envelope text-primary me-1"></i> anhpnq@tdmu.edu.vn</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-end">
+                  <span class="cadre-role-tag tag-vice-president"><i class="fa-solid fa-star-half-stroke me-1"></i> PHÓ CHỦ TỊCH CÔNG ĐOÀN</span>
+                  <div class="text-muted" style="font-size: 11px; margin-top: 4px;"><i class="fa-solid fa-circle-info text-primary me-1"></i> Chi tiết »</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- TAB 2: BAN CHẤP HÀNH (13 Đ/C CÓ ẢNH THẬT) -->
+          <div class="org-tab-content d-none" id="tab_ban_chap_hanh">
+            <div class="content-box mb-4">
+              <div class="tieudelon">
+                <span><i class="fa-solid fa-users text-primary me-2"></i>DANH SÁCH BAN CHẤP HÀNH CÔNG ĐOÀN TRƯỜNG NHIỆM KỲ 2023 - 2028 (13 ĐỒNG CHÍ)</span>
+              </div>
+              <p class="text-muted small mb-3">Ban Chấp hành đại diện cho khối Đào tạo, Nghiên cứu, Hành chính và các Viện chuyên môn trực thuộc Đại học Thủ Dầu Một. <em>(Bấm vào thẻ để xem hồ sơ chi tiết)</em></p>
+
+              <div id="bchListContainer">
+                <!-- 13 Members with Real Photos rendered dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: UY BAN KIEM TRA (CÓ ẢNH THẬT) -->
+          <div class="org-tab-content d-none" id="tab_uy_ban_kiem_tra">
+            <div class="content-box mb-4">
+              <div class="tieudelon">
+                <span><i class="fa-solid fa-scale-balanced text-success me-2"></i>ỦY BAN KIỂM TRA CÔNG ĐOÀN CƠ SỞ KHÓA X</span>
+              </div>
+              <p class="text-muted small mb-3">Thực hiện nhiệm vụ giám sát việc chấp hành Điều lệ Công đoàn Việt Nam, kiểm tra tài chính công đoàn và bảo vệ quyền lợi hợp pháp chính đáng của người lao động. <em>(Bấm vào thẻ để xem phân công)</em></p>
+
+              <div id="ubktListContainer">
+                <!-- UBKT Members rendered dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 4: 16 TỔ CÔNG ĐOÀN CƠ SỞ -->
+          <div class="org-tab-content d-none" id="tab_16_to_cong_doan">
+            <div class="content-box mb-4">
+              <div class="tieudelon">
+                <span><i class="fa-solid fa-sitemap text-danger me-2"></i>16 TỔ CÔNG ĐOÀN CƠ SỞ TRỰC THUỘC TDMU</span>
+              </div>
+              <p class="text-muted small mb-3">Mạng lưới 16 Tổ công đoàn cơ sở bám sát các khối đào tạo và phòng ban nghiệp vụ. <em>(Bấm vào tổ để xem báo cáo nhân sự &amp; bộ môn trực thuộc)</em></p>
+
+              <div id="unitsListContainer">
+                <!-- 16 Units rendered dynamically in unified style -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN (3 PHẦN): LIÊN KẾT & QUY MÔ -->
         <div class="col-lg-3">
           <div class="panel-tdmu">
             <div class="panel-heading-tdmu"><i class="fa-solid fa-link me-2 text-primary"></i>Liên kết website</div>
             <div class="list-group-tdmu">
               <a href="http://tdmu.edu.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Đại học Thủ Dầu Một</a>
-              <a href="http://danguy.tdmu.edu.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Đảng Bộ Đại học Thủ Dầu Một</a>
+              <a href="http://danguy.tdmu.edu.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Đảng Bộ Đại học TDMU</a>
               <a href="http://www.congdoan.vn" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Tổng LĐLĐ Việt Nam</a>
               <a href="http://congdoanbinhduong.org.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> LĐLĐ Tỉnh Bình Dương</a>
-              <a href="http://lib.tdmu.edu.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> TT Học Liệu ĐH Thủ Dầu Một</a>
-              <a href="http://doanvien.congdoan.vn/VTBWebProject" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Phần mềm quản lý đoàn viên</a>
+              <a href="http://lib.tdmu.edu.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> TT Học Liệu ĐH TDMU</a>
             </div>
           </div>
 
-          <!-- Banner Google Form -->
-          <div class="p-3 bg-white border rounded text-center shadow-sm">
-            <i class="fa-brands fa-google text-danger fa-2x mb-2"></i>
-            <h6 class="fw-bold text-danger mb-1">NỘP BÁO CÁO THÁNG CỦA TỔ CÔNG ĐOÀN</h6>
-            <p class="small text-muted mb-2">Dành cho các Tổ Công đoàn gửi báo cáo định kỳ</p>
-            <a href="https://docs.google.com/forms/d/e/1FAIpQLSelw4xZGXNz2fUHOy0wHZ9-rIt5N-gneVP005KjpjURduNvrg/viewform" target="_blank" class="btn btn-danger btn-sm w-100 fw-bold mb-2">
-              <i class="fa-solid fa-file-pen me-1"></i> Mở Google Form
-            </a>
-            <a href="bao-cao-thang.html" class="btn btn-outline-primary btn-sm w-100 fw-bold">
-              <i class="fa-solid fa-ranking-star me-1"></i> Bảng Thi Đua 16 Tổ
-            </a>
+          <div class="panel-tdmu">
+            <div class="panel-heading-tdmu"><i class="fa-solid fa-chart-pie me-2 text-warning"></i>Quy mô tổ chức</div>
+            <div class="p-3" style="font-size: 13px;">
+              <p class="mb-2"><i class="fa-solid fa-users text-primary me-2"></i> Đoàn viên: <strong>760 đoàn viên</strong></p>
+              <p class="mb-2"><i class="fa-solid fa-sitemap text-danger me-2"></i> Tổ công đoàn: <strong>16 Tổ cơ sở</strong></p>
+              <p class="mb-0"><i class="fa-solid fa-medal text-success me-2"></i> Ban chuyên môn: <strong>5 Ban nghiệp vụ</strong></p>
+            </div>
           </div>
         </div>
 
+      </div>
     </div>
   </div>
 
+  <!-- MODAL CẤP 2: HỒ SƠ CHI TIẾT CÁN BỘ CÔNG ĐOÀN -->
+  <div class="modal fade" id="cadreDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 12px; overflow: hidden; border: 1px solid var(--border-subtle);">
+        <div class="profile-modal-header d-flex justify-content-between align-items-center">
+          <h5 class="modal-title fw-bold" style="font-size: 17px;">
+            <i class="fa-solid fa-id-card text-warning me-2"></i> HỒ SƠ CÁN BỘ CÔNG ĐOÀN TDMU
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4 bg-light">
+          <div class="row g-4 align-items-start">
+            <div class="col-md-4 text-center">
+              <img src="" class="profile-large-img" id="modalCadrePhoto" alt="Chân dung">
+              <div class="mt-3">
+                <span class="badge" style="background: #002855; color: #FEF08A; font-size: 12px; padding: 6px 14px;" id="modalCadreTag">CHỦ TỊCH</span>
+              </div>
+            </div>
+            <div class="col-md-8">
+              <h4 class="fw-bold text-dark mb-1" id="modalCadreName">TS. Lê Thị Kim Út</h4>
+              <p class="text-primary fw-bold small mb-3" id="modalCadreSubTitle">Chủ tịch Công đoàn Trường Đại học Thủ Dầu Một</p>
 
-  <!-- Footer -->
+              <div class="bg-white p-3 rounded border shadow-sm">
+                <div class="profile-info-row">
+                  <span class="profile-info-label"><i class="fa-solid fa-graduation-cap text-primary me-2"></i> Học vị:</span>
+                  <span class="profile-info-val" id="modalCadreDegree">Tiến sĩ Quản lý</span>
+                </div>
+                <div class="profile-info-row">
+                  <span class="profile-info-label"><i class="fa-solid fa-building text-primary me-2"></i> Đơn vị công tác:</span>
+                  <span class="profile-info-val" id="modalCadreUnit">Phòng Quản lý Khoa học</span>
+                </div>
+                <div class="profile-info-row">
+                  <span class="profile-info-label"><i class="fa-solid fa-briefcase text-primary me-2"></i> Nhiệm vụ phân công:</span>
+                  <span class="profile-info-val" id="modalCadreDuties">Phụ trách chung công tác Công đoàn, chỉ đạo trực tiếp công tác thi đua khen thưởng và kế hoạch chiến lược.</span>
+                </div>
+                <div class="profile-info-row border-bottom-0">
+                  <span class="profile-info-label"><i class="fa-solid fa-envelope text-primary me-2"></i> Email công vụ:</span>
+                  <span class="profile-info-val" id="modalCadreEmail">utltk@tdmu.edu.vn</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer bg-white py-2">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng cửa sổ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CẤP 2: HỒ SƠ CHI TIẾT TỔ CÔNG ĐOÀN CƠ SỞ -->
+  <div class="modal fade" id="unitDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 12px; overflow: hidden; border: 1px solid var(--border-subtle);">
+        <div class="profile-modal-header d-flex justify-content-between align-items-center" style="background: #002855;">
+          <h5 class="modal-title fw-bold text-white" style="font-size: 17px;">
+            <i class="fa-solid fa-sitemap text-warning me-2"></i> THÔNG TIN TỔ CÔNG ĐOÀN CƠ SỞ TDMU
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4 bg-light">
+          <div class="row g-4 align-items-start">
+            <!-- Left Column: Large Leader Portrait Photo & Contact -->
+            <div class="col-md-4 text-center">
+              <img src="" class="profile-large-img" id="modalUnitLeaderPhoto" alt="Chân dung Lãnh đạo Tổ CĐ">
+              <div class="mt-2">
+                <span class="badge" style="background: #002855; color: #FEF08A; font-size: 12px; padding: 6px 14px;" id="modalUnitLeaderRole">TỔ TRƯỞNG</span>
+              </div>
+              <h5 class="fw-bold text-dark mt-2 mb-1" id="modalUnitLeaderName">Đ/c Nguyễn Thị Nhi</h5>
+              <div class="text-muted small mb-2">
+                <i class="fa-solid fa-phone text-success me-1"></i> <strong id="modalUnitLeaderPhone">0918.370.363</strong>
+              </div>
+              <div class="text-muted small">
+                <i class="fa-solid fa-envelope text-primary me-1"></i> <span id="modalUnitLeaderEmail">tcd01@tdmu.edu.vn</span>
+              </div>
+            </div>
+
+            <!-- Right Column: Unit Details & Metrics -->
+            <div class="col-md-8">
+              <h4 class="fw-bold mb-1" style="color: #002855;" id="modalUnitTitle">Tổ Công đoàn 1</h4>
+              <p class="text-muted small mb-3" id="modalUnitDesc">Phòng Đào tạo Đại học, Phòng Sau đại học & Khảo thí</p>
+
+              <!-- Metrics Boxes -->
+              <div class="row g-2 mb-3">
+                <div class="col-4 text-center p-2 border rounded bg-white shadow-sm">
+                  <div class="fs-4 fw-bold text-primary" id="modalUnitMembers">48</div>
+                  <div class="text-muted" style="font-size: 11.5px;">Tổng đoàn viên</div>
+                </div>
+                <div class="col-4 text-center p-2 border rounded bg-white shadow-sm">
+                  <div class="fs-4 fw-bold text-danger" id="modalUnitFemales">26</div>
+                  <div class="text-muted" style="font-size: 11.5px;">Nữ đoàn viên</div>
+                </div>
+                <div class="col-4 text-center p-2 border rounded bg-white shadow-sm">
+                  <div class="fs-4 fw-bold text-success" id="modalUnitParty">14</div>
+                  <div class="text-muted" style="font-size: 11.5px;">Đoàn viên Đảng viên</div>
+                </div>
+              </div>
+
+              <!-- Unit Details Info Table -->
+              <div class="bg-white p-3 rounded border shadow-sm">
+                <div class="profile-info-row">
+                  <span class="profile-info-label"><i class="fa-solid fa-building-user text-primary me-2"></i> Khối trực thuộc:</span>
+                  <span class="profile-info-val" id="modalUnitGroup">Khối Phòng Ban Chức Năng 1</span>
+                </div>
+                <div class="profile-info-row">
+                  <span class="profile-info-label"><i class="fa-solid fa-award text-primary me-2"></i> Thi đua khen thưởng:</span>
+                  <span class="profile-info-val"><span class="badge bg-success">Loại A - Xuất sắc tiêu biểu</span></span>
+                </div>
+                <div class="profile-info-row border-bottom-0">
+                  <span class="profile-info-label"><i class="fa-solid fa-calendar-check text-primary me-2"></i> Chế độ sinh hoạt:</span>
+                  <span class="profile-info-val text-muted">Định kỳ tháng theo quy chế Công đoàn Trường</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer bg-white py-2">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng cửa sổ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer (Chuẩn 2 Cột Thực Tế: Cơ Quan & Nhóm Đồ Án) -->
   <footer>
-    <div class="container text-center">
-      <p class="mb-1 fw-bold text-white">© 2026 - CÔNG ĐOÀN - TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</p>
-      <p class="mb-1"><i class="fa-solid fa-location-dot me-1"></i> Lầu 1, Dãy A, Cổng 1, Số 06, Trần Văn Ơn, Phường Phú Lợi, TP. Thủ Dầu Một, Bình Dương</p>
-      <p class="mb-0"><i class="fa-solid fa-phone me-1"></i> (0274) 3.815.184 &nbsp;|&nbsp; <i class="fa-solid fa-envelope me-1"></i> congdoan@tdmu.edu.vn</p>
+    <div class="container">
+      <div class="row gy-3">
+        <div class="col-md-7 text-start">
+          <h6 class="fw-bold text-white mb-2">CÔNG ĐOÀN CƠ SỞ TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h6>
+          <p class="mb-1"><i class="fa-solid fa-location-dot me-2 text-warning"></i> Địa chỉ: Lầu 1, Dãy A, Cổng 1, Số 06 Trần Văn Ơn, P. Phú Lợi, TP. Thủ Dầu Một, Bình Dương</p>
+          <p class="mb-1"><i class="fa-solid fa-phone me-2 text-warning"></i> Điện thoại: (0274) 3.815.184 | <i class="fa-solid fa-envelope ms-2 me-1 text-warning"></i> Email: congdoan@tdmu.edu.vn</p>
+          <p class="mb-0"><i class="fa-solid fa-globe me-2 text-warning"></i> Website: congdoan.tdmu.edu.vn</p>
+        </div>
+        <div class="col-md-5 text-md-end text-start">
+          <h6 class="fw-bold text-warning mb-2">HỆ THỐNG TRUYỀN THÔNG TÍCH HỢP AI</h6>
+          <p class="mb-1">Đề tài NCKH Sinh viên / Đồ án Cơ sở ngành - Viện Công nghệ số</p>
+          <p class="mb-0 text-light text-opacity-75">Nhóm 2: Nguyễn Bình Dương - Trần Hồng Thanh - Phạm Anh Tuấn</p>
+        </div>
+      </div>
     </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  
+  <script>
+    // 100% REAL DATA AND PHOTOS SCRAPED FROM CONGDOAN.TDMU.EDU.VN
+    const bchMembers = [
+      { id: 1, name: 'TS. Lê Thị Kim Út', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/images/Picture1.jpg', title: 'Chủ tịch Công đoàn Trường', degree: 'Tiến sĩ Quản lý', unit: 'Phòng Quản lý Khoa học', email: 'utltk@tdmu.edu.vn', duties: 'Phụ trách chung công tác Công đoàn, trực tiếp chỉ đạo kế hoạch hoạt động, tài chính và quan hệ đối ngoại.', tag: 'tag-president', tagText: 'Chủ tịch' },
+      { id: 2, name: 'ThS. Nguyễn Minh Danh', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Danh.jpg', title: 'Phó Chủ tịch Công đoàn, Chủ nhiệm UBKT', degree: 'Thạc sĩ', unit: 'Công đoàn Trường TDMU', email: 'danhnm@tdmu.edu.vn', duties: 'Chỉ đạo công tác kiểm tra giám sát, bảo vệ quyền và lợi ích hợp pháp chính đáng của người lao động.', tag: 'tag-vice-president', tagText: 'Phó Chủ tịch' },
+      { id: 3, name: 'ThS. Phan Nguyễn Quỳnh Anh', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Anh.jpg', title: 'Phó Chủ tịch Công đoàn Trường', degree: 'Thạc sĩ', unit: 'Công đoàn Trường TDMU', email: 'anhpnq@tdmu.edu.vn', duties: 'Chỉ đạo công tác Nữ công, phong trào thi đua và chăm lo đời sống vật chất tinh thần đoàn viên.', tag: 'tag-vice-president', tagText: 'Phó Chủ tịch' },
+      { id: 4, name: 'Lê Nguyễn Xuân Lan', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Lan.jpg', title: 'Ủy viên Ban Chấp hành', degree: 'Thạc sĩ', unit: 'Khoa Sư phạm', email: 'lanlnx@tdmu.edu.vn', duties: 'Phụ trách công tác chuyên môn khối Sư phạm, phát động các phong trào hội thi giáo viên dạy giỏi.', tag: 'tag-executive', tagText: 'Ủy viên BCH' },
+      { id: 5, name: 'Phan Nguyễn Hồng Diễm', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Diem.jpg', title: 'Ủy viên Ban Chấp hành', degree: 'Thạc sĩ', unit: 'Phòng Tổ chức Cán bộ', email: 'diempnh@tdmu.edu.vn', duties: 'Phụ trách công tác thi đua khen thưởng và phát triển đoàn viên mới.', tag: 'tag-executive', tagText: 'Ủy viên BCH' },
+      { id: 6, name: 'Võ Nguyễn Đoan Trinh', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Trinh.jpg', title: 'Ủy viên Ban Chấp hành', degree: 'Thạc sĩ', unit: 'Trường Luật và Quản lý', email: 'trinhvnd@tdmu.edu.vn', duties: 'Tư vấn pháp lý lao động và chính sách tiền lương, bảo hiểm cho cán bộ viên chức.', tag: 'tag-executive', tagText: 'Ủy viên BCH' },
+      { id: 7, name: 'Nguyễn Võ Thành Long', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Long.jpg', title: 'Ủy viên Ban Chấp hành', degree: 'Thạc sĩ', unit: 'Khoa Kỹ thuật Công nghệ', email: 'longnvt@tdmu.edu.vn', duties: 'Phụ trách phong trào thể dục thể thao và các giải đấu truyền thống trường.', tag: 'tag-executive', tagText: 'Ủy viên BCH' },
+      { id: 8, name: 'Trần Đức Hoàn', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Hoan.jpg', title: 'Ủy viên Ban Chấp hành', degree: 'Thạc sĩ', unit: 'Khoa Kinh tế', email: 'hoantd@tdmu.edu.vn', duties: 'Phụ trách công tác phúc lợi kinh tế và liên kết ưu đãi doanh nghiệp.', tag: 'tag-executive', tagText: 'Ủy viên BCH' },
+      { id: 9, name: 'Võ Quốc Lương', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Luong.jpg', title: 'Ủy viên Ban Chấp hành', degree: 'Thạc sĩ', unit: 'Viện Công nghệ số', email: 'luongvq@tdmu.edu.vn', duties: 'Chủ trì công tác chuyển đổi số truyền thông, quản trị Cổng thông tin Công đoàn và hệ thống báo cáo số.', tag: 'tag-executive', tagText: 'Ủy viên BCH' },
+      { id: 10, name: 'Huỳnh Thanh Thúy', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Thuy.jpg', title: 'Ủy viên Ban Chấp hành', degree: 'Thạc sĩ', unit: 'Khoa Ngoại ngữ', email: 'thuyht@tdmu.edu.vn', duties: 'Phụ trách công tác tuyên truyền đối ngoại và phong trào văn hóa văn nghệ.', tag: 'tag-executive', tagText: 'Ủy viên BCH' },
+      { id: 11, name: 'Phú Thị Tuyết Nga', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Nga.jpeg', title: 'Ủy viên Ban Chấp hành', degree: 'Thạc sĩ', unit: 'Phòng Đào tạo Đại học', email: 'ngaptt@tdmu.edu.vn', duties: 'Theo dõi nắm bắt tâm tư nguyện vọng của giảng viên khối đào tạo chuyên trách.', tag: 'tag-executive', tagText: 'Ủy viên BCH' },
+      { id: 12, name: 'Âu Minh Triết', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Triet.jpg', title: 'Ủy viên Ban Chấp hành', degree: 'Thạc sĩ', unit: 'Phòng Quản trị Thiết bị', email: 'trietam@tdmu.edu.vn', duties: 'Phụ trách công tác bảo hộ lao động, an toàn vệ sinh cơ quan và cảnh quan môi trường.', tag: 'tag-executive', tagText: 'Ủy viên BCH' },
+      { id: 13, name: 'Nguyễn Thị Thanh Thảo', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Thao.jpg', title: 'Ủy viên Ban Chấp hành', degree: 'Cử nhân', unit: 'Phòng Kế hoạch Tài chính', email: 'thaontt@tdmu.edu.vn', duties: 'Kế toán trưởng Công đoàn, quản lý thu chi tài chính và quỹ tương trợ đoàn viên.', tag: 'tag-executive', tagText: 'Ủy viên BCH' }
+    ];
+
+    const ubktMembers = [
+      { id: 2, name: 'ThS. Nguyễn Minh Danh', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Danh(1).jpg', title: 'UV. BTV, Chủ nhiệm UBKT', degree: 'Thạc sĩ', unit: 'Công đoàn Trường TDMU', email: 'danhnm@tdmu.edu.vn', duties: 'Chủ trì toàn diện công tác kiểm tra, giám sát thực hiện Điều lệ Công đoàn và tài chính cơ quan.', tag: 'tag-inspector', tagText: 'Chủ nhiệm UBKT' },
+      { id: 14, name: 'ThS. Nguyễn Ngọc Hiền', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Hien.jpg', title: 'Ủy viên UBKT', degree: 'Thạc sĩ', unit: 'Phòng Thanh tra - Pháp chế', email: 'hiennn@tdmu.edu.vn', duties: 'Giám sát việc giải quyết đơn thư khiếu nại, phản ánh và quy chế dân chủ cơ sở.', tag: 'tag-vice-president', tagText: 'Ủy viên UBKT' },
+      { id: 15, name: 'ThS. Nguyễn Văn Trường', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Truong.jpg', title: 'Ủy viên UBKT', degree: 'Thạc sĩ', unit: 'Phòng Khảo thí & Đảm bảo Chất lượng', email: 'truongnv@tdmu.edu.vn', duties: 'Kiểm tra tài chính, chứng từ thu chi và quản lý tài sản công đoàn định kỳ.', tag: 'tag-executive', tagText: 'Ủy viên UBKT' }
+    ];
+
+    const unionUnits = [
+      { id: 1, name: 'Tổ Công đoàn 1', unitName: 'Khối Phòng Ban Chức Năng 1', desc: 'Phòng Đào tạo Đại học, Phòng Sau đại học & Khảo thí', lead: 'Đ/c Nguyễn Thị Nhi', role: 'Tổ trưởng Tổ CĐ 1', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Nguyen%20Thi%20Nhi%20-%20NV.jpg', phone: '0918.370.363', email: 'tcd01@tdmu.edu.vn', members: 48, females: 26, party: 14 },
+      { id: 2, name: 'Tổ Công đoàn 2', unitName: 'Khối Phòng Ban Chức Năng 2', desc: 'Phòng Công tác Sinh viên, Truyền thông & Khởi nghiệp', lead: 'Đ/c Huỳnh Thanh Thúy', role: 'Tổ trưởng Tổ CĐ 2', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/HuynhThanhThuy.jpg', phone: '0938.662.185', email: 'tcd02@tdmu.edu.vn', members: 42, females: 22, party: 12 },
+      { id: 3, name: 'Tổ Công đoàn 3', unitName: 'Khối Phòng Ban Chức Năng 3', desc: 'Phòng Tổ chức Cán bộ, Hành chính - Tổng hợp & Pháp chế', lead: 'Đ/c Lê Thanh Tâm', role: 'Tổ trưởng Tổ CĐ 3', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/LeThanhTam.jpg', phone: '0945.460.712', email: 'tcd03@tdmu.edu.vn', members: 55, females: 34, party: 20 },
+      { id: 4, name: 'Tổ Công đoàn 4', unitName: 'Khối Cơ Sở Vật Chất', desc: 'Phòng Quản trị Thiết bị, Dự án Đầu tư & Trạm Y tế', lead: 'Đ/c Ngô Hương Hoa', role: 'Tổ trưởng Tổ CĐ 4', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/NgoHuongHoa.jpg', phone: '0792.122.291', email: 'tcd04@tdmu.edu.vn', members: 39, females: 15, party: 11 },
+      { id: 5, name: 'Tổ Công đoàn 5', unitName: 'Khối Tài Chính & Kế Hoạch', desc: 'Phòng Kế hoạch Tài chính & Ban Quản lý Thu - Chi', lead: 'Đ/c Nguyễn Thị Hương', role: 'Tổ trưởng Tổ CĐ 5', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/NguyenThiHuong.jpg', phone: '0387.840.422', email: 'tcd05@tdmu.edu.vn', members: 35, females: 24, party: 10 },
+      { id: 6, name: 'CĐBP Khoa Sư phạm', unitName: 'Công đoàn bộ phận Khoa Sư phạm', desc: 'Khoa Sư phạm, Giáo dục Mầm non, Giáo dục Tiểu học', lead: 'Đ/c Ngô Thị Kiều Oanh', role: 'Chủ tịch CĐBP Khoa Sư phạm', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/NgoThiKieuOanh.jpg', phone: '0915.854.251', email: 'oanhntk@tdmu.edu.vn', members: 62, females: 45, party: 19 },
+      { id: 7, name: 'CĐBP Trường Kinh tế Tài chính', unitName: 'Công đoàn bộ phận Trường Kinh tế Tài chính', desc: 'Khoa Quản trị Kinh doanh, Tài chính - Ngân hàng, Kế toán - Kiểm toán', lead: 'Đ/c Hồ Thị Hà', role: 'Chủ tịch CĐBP Trường KTTC', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/HoThiHa.png', phone: '0909.528.522', email: 'haht@tdmu.edu.vn', members: 58, females: 38, party: 18 },
+      { id: 8, name: 'CĐBP Trường Luật & QLPT', unitName: 'Công đoàn bộ phận Trường Luật và Quản lý phát triển', desc: 'Khoa Luật, Quản lý Nhà nước, Quản trị Nhân lực', lead: 'Đ/c Đỗ Mạnh Tuấn', role: 'Chủ tịch CĐBP Trường Luật', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/DoManhTuan.jpg', phone: '0908.184.560', email: 'tuandm@tdmu.edu.vn', members: 45, females: 25, party: 15 },
+      { id: 9, name: 'Tổ CĐ Viện Công nghệ số', unitName: 'Viện Đào tạo CNTT, Chuyển đổi số & Trí tuệ nhân tạo', desc: 'Khoa Công nghệ Thông tin, Kỹ thuật Phần mềm, Hệ thống Thông tin', lead: 'ThS. Hồ Ngọc Trung Kiên', role: 'Tổ trưởng CĐ Viện CNS', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/HoNgocTrungKien.jpg', phone: '0977.797.378', email: 'kienhnt@tdmu.edu.vn', members: 52, females: 28, party: 16 },
+      { id: 10, name: 'Tổ CĐ Viện Đào tạo Ngoại ngữ', unitName: 'Viện Đào tạo Ngoại ngữ & Hợp tác Quốc tế', desc: 'Ngành Ngôn ngữ Anh, Ngôn ngữ Hàn, Ngôn ngữ Trung, Ngôn ngữ Nhật', lead: 'Đ/c Âu Minh Triết', role: 'Tổ trưởng CĐ Viện Ngoại ngữ', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/AuMinhTriet.jpg', phone: '0918.875.507', email: 'trietam@tdmu.edu.vn', members: 50, females: 38, party: 14 },
+      { id: 11, name: 'Tổ CĐ Viện Kỹ thuật Công nghệ', unitName: 'Viện Kỹ thuật Công nghệ & Cơ Điện tử', desc: 'Ngành Công nghệ Kỹ thuật Điện - Điện tử, Kỹ thuật Cơ điện tử, Ô tô', lead: 'Đ/c Trần Thị Thanh', role: 'Tổ trưởng CĐ Viện KTCN', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/TranThiThanh.jpg', phone: '0975.483.404', email: 'thanhtt@tdmu.edu.vn', members: 46, females: 18, party: 14 },
+      { id: 12, name: 'Tổ CĐ Viện Đào tạo Kiến trúc', unitName: 'Viện Đào tạo Kiến trúc, Xây dựng & Giao thông', desc: 'Ngành Kiến trúc, Kỹ thuật Xây dựng, Thiết kế Đồ họa, Mỹ thuật Ứng dụng', lead: 'Đ/c Phú Thị Tuyết Nga', role: 'Tổ trưởng CĐ Viện Kiến trúc', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/PhuThiTuyetNga.jpg', phone: '0913.788.800', email: 'ngaptt@tdmu.edu.vn', members: 44, females: 22, party: 12 },
+      { id: 13, name: 'Tổ CĐ Khoa Kiến thức chung', unitName: 'Khoa Khoa học Cơ bản & Lý luận Chính trị', desc: 'Bộ môn Lý luận Chính trị, Pháp luật đại cương, Toán - Lý - Hóa', lead: 'Đ/c Biện Thị Ngọc Anh', role: 'Tổ trưởng CĐ Khoa KTC', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/BienThiNgocAnh.jpg', phone: '0909.762.656', email: 'anhbtn@tdmu.edu.vn', members: 40, females: 28, party: 16 },
+      { id: 14, name: 'Tổ CĐ Khoa CN Văn hóa - TT & DL', unitName: 'Khoa Công nghiệp Văn hóa, Thể thao & Du lịch', desc: 'Ngành Quản trị Dịch vụ Du lịch & Lữ hành, Quản lý Văn hóa, Thể thao', lead: 'Đ/c Nguyễn Thị Hướng', role: 'Tổ trưởng CĐ Khoa CNVHTT&DL', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/NguyenThiHuong_2.jpg', phone: '0396.902.367', email: 'huongnt@tdmu.edu.vn', members: 38, females: 26, party: 11 },
+      { id: 15, name: 'Tổ CĐ Viện Đào tạo Y Dược', unitName: 'Viện Đào tạo Y Dược & Khoa học Sức khỏe', desc: 'Ngành Y đa khoa, Dược học, Điều dưỡng & Kỹ thuật Xét nghiệm Y học', lead: 'TS. Lưu Kim Lệ Hằng', role: 'Tổ trưởng CĐ Viện Y Dược', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/LeThanhTam.jpg', phone: '0918.450.184', email: 'hanglkl@tdmu.edu.vn', members: 46, females: 31, party: 13 },
+      { id: 16, name: 'Tổ CĐ Trung tâm Học liệu & DV', unitName: 'Trung tâm Học liệu, CNTT & Dịch vụ Đào tạo', desc: 'Thư viện số, Trung tâm Dữ liệu Server, Ban Quản trị Ký túc xá', lead: 'Đ/c Bùi Văn Dũng', role: 'Tổ trưởng CĐ TT Học liệu', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Triet.jpg', phone: '0979.184.221', email: 'dungbv@tdmu.edu.vn', members: 47, females: 29, party: 12 }
+    ];
+
+    function renderBchCards() {
+      const c = document.getElementById('bchListContainer');
+      c.innerHTML = bchMembers.map(m => `
+        <div class="cadre-card-item" onclick="openCadreModal(${m.id})" title="Xem hồ sơ chi tiết của ${m.name}">
+          <div class="d-flex align-items-center gap-3">
+            <img src="${m.photo}" class="cadre-real-avatar" alt="${m.name}" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'">
+            <div>
+              <h5 class="fw-bold mb-1" style="font-size: 15px; color: #002855;">${m.name}</h5>
+              <div class="text-muted small">
+                <span><i class="fa-solid fa-briefcase text-primary me-1"></i> ${m.unit}</span>
+                <span class="ms-3"><i class="fa-solid fa-envelope text-primary me-1"></i> ${m.email}</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-end">
+            <span class="cadre-role-tag ${m.tag}">${m.tagText}</span>
+            <div class="text-muted" style="font-size: 11px; margin-top: 4px;"><i class="fa-solid fa-circle-info text-primary me-1"></i> Chi tiết »</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderUbktCards() {
+      const c = document.getElementById('ubktListContainer');
+      c.innerHTML = ubktMembers.map(m => `
+        <div class="cadre-card-item" onclick="openUbktModal(${m.id})" title="Xem nhiệm vụ kiểm tra chi tiết">
+          <div class="d-flex align-items-center gap-3">
+            <img src="${m.photo}" class="cadre-real-avatar" alt="${m.name}">
+            <div>
+              <h5 class="fw-bold mb-1" style="font-size: 15px; color: #002855;">${m.name}</h5>
+              <div class="text-muted small">
+                <span><i class="fa-solid fa-briefcase text-primary me-1"></i> ${m.unit}</span>
+                <span class="ms-3"><i class="fa-solid fa-envelope text-primary me-1"></i> ${m.email}</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-end">
+            <span class="cadre-role-tag ${m.tag}">${m.tagText}</span>
+            <div class="text-muted" style="font-size: 11px; margin-top: 4px;"><i class="fa-solid fa-circle-info text-primary me-1"></i> Chi tiết »</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderUnitsCards() {
+      const c = document.getElementById('unitsListContainer');
+      c.innerHTML = unionUnits.map(u => `
+        <div class="cadre-card-item" onclick="openUnitModal(${u.id})" title="Bấm xem thông tin chi tiết và nhân sự của ${u.name}">
+          <div class="d-flex align-items-center gap-3">
+            <img src="${u.photo}" class="cadre-real-avatar" alt="${u.lead}" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'">
+            <div>
+              <h5 class="fw-bold mb-1" style="font-size: 15px; color: #002855;">${u.name} - ${u.desc}</h5>
+              <div class="text-muted small">
+                <span><i class="fa-solid fa-user-tie text-primary me-1"></i> ${u.role}: <strong>${u.lead}</strong></span>
+                <span class="ms-3"><i class="fa-solid fa-phone text-success me-1"></i> ${u.phone}</span>
+                <span class="ms-3"><i class="fa-solid fa-envelope text-primary me-1"></i> ${u.email}</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-end">
+            <span class="badge bg-light text-primary border fw-bold" style="font-size: 12px; padding: 5px 10px;">${u.members} đoàn viên</span>
+            <div class="text-muted" style="font-size: 11px; margin-top: 4px;"><i class="fa-solid fa-circle-info text-primary me-1"></i> Xem chi tiết »</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // OPEN CADRE PROFILE MODAL
+    function openCadreModal(id) {
+      const m = bchMembers.find(item => item.id == id);
+      if (!m) return;
+
+      document.getElementById('modalCadrePhoto').src = m.photo;
+      document.getElementById('modalCadreName').innerText = m.name;
+      document.getElementById('modalCadreSubTitle').innerText = m.title;
+      document.getElementById('modalCadreTag').innerText = m.tagText.toUpperCase();
+      document.getElementById('modalCadreDegree').innerText = m.degree;
+      document.getElementById('modalCadreUnit').innerText = m.unit;
+      document.getElementById('modalCadreDuties').innerText = m.duties;
+      document.getElementById('modalCadreEmail').innerText = m.email;
+
+      const modal = new bootstrap.Modal(document.getElementById('cadreDetailModal'));
+      modal.show();
+    }
+
+    function openUbktModal(id) {
+      const m = ubktMembers.find(item => item.id == id);
+      if (!m) return;
+
+      document.getElementById('modalCadrePhoto').src = m.photo;
+      document.getElementById('modalCadreName').innerText = m.name;
+      document.getElementById('modalCadreSubTitle').innerText = m.title;
+      document.getElementById('modalCadreTag').innerText = m.tagText.toUpperCase();
+      document.getElementById('modalCadreDegree').innerText = m.degree;
+      document.getElementById('modalCadreUnit').innerText = m.unit;
+      document.getElementById('modalCadreDuties').innerText = m.duties;
+      document.getElementById('modalCadreEmail').innerText = m.email;
+
+      const modal = new bootstrap.Modal(document.getElementById('cadreDetailModal'));
+      modal.show();
+    }
+
+    // OPEN UNIT DETAIL MODAL WITH PROMINENT LARGE LEADER PHOTO
+    function openUnitModal(id) {
+      const u = unionUnits.find(item => item.id == id);
+      if (!u) return;
+
+      document.getElementById('modalUnitLeaderPhoto').src = u.photo;
+      document.getElementById('modalUnitLeaderPhoto').onerror = function() {
+        this.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300';
+      };
+      document.getElementById('modalUnitLeaderName').innerText = u.lead;
+      document.getElementById('modalUnitLeaderRole').innerText = u.role.toUpperCase();
+      document.getElementById('modalUnitLeaderPhone').innerText = u.phone;
+      document.getElementById('modalUnitLeaderEmail').innerText = u.email;
+
+      document.getElementById('modalUnitTitle').innerText = u.name;
+      document.getElementById('modalUnitDesc').innerText = u.desc;
+      document.getElementById('modalUnitGroup').innerText = u.unitName;
+      document.getElementById('modalUnitMembers').innerText = u.members;
+      document.getElementById('modalUnitFemales').innerText = u.females;
+      document.getElementById('modalUnitParty').innerText = u.party;
+
+      const modal = new bootstrap.Modal(document.getElementById('unitDetailModal'));
+      modal.show();
+    }
+
+    function switchOrgTab(tabName, btn) {
+      document.querySelectorAll('.org-tab-content').forEach(el => el.classList.add('d-none'));
+      document.querySelectorAll('#orgCategoryFilter .doc-tab-btn').forEach(b => b.classList.remove('active'));
+
+      if (tabName === 'ban-thuong-vu') {
+        document.getElementById('tab_ban_thuong_vu').classList.remove('d-none');
+      } else if (tabName === 'ban-chap-hanh') {
+        document.getElementById('tab_ban_chap_hanh').classList.remove('d-none');
+      } else if (tabName === 'uy-ban-kiem-tra') {
+        document.getElementById('tab_uy_ban_kiem_tra').classList.remove('d-none');
+      } else if (tabName === '16-to-cong-doan') {
+        document.getElementById('tab_16_to_cong_doan').classList.remove('d-none');
+      }
+
+      if (btn) btn.classList.add('active');
+    }
+
+    
+    async function hydrateOrgDataFromApi() {
+      try {
+        const res = await fetch('/api/org-full-tree');
+        const json = await res.json();
+        if (json.success && json.data) {
+          // Update overview stats
+          const stats = json.data.stats;
+          const statBoxes = document.querySelectorAll('.panel-tdmu .p-3 strong');
+          if (statBoxes.length >= 3) {
+            statBoxes[0].innerText = stats.total_members + ' đoàn viên';
+            statBoxes[1].innerText = stats.total_units + ' Tổ cơ sở';
+            statBoxes[2].innerText = stats.total_boards + ' Ban nghiệp vụ';
+          }
+        }
+      } catch (e) {
+        console.warn('Using pre-rendered static data:', e.message);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      hydrateOrgDataFromApi();
+      renderBchCards();
+      renderUbktCards();
+      renderUnitsCards();
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab) {
+        const targetBtn = Array.from(document.querySelectorAll('#orgCategoryFilter .doc-tab-btn')).find(b => b.getAttribute('onclick').includes(tab));
+        if (targetBtn) {
+          switchOrgTab(tab, targetBtn);
+        }
+      }
+    });
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>

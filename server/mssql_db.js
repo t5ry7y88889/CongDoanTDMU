@@ -85,12 +85,34 @@ async function getArticlesFromDb(category = 'all', status = 'all', search = '') 
   }
 
   const db = loadDB();
-  let list = db.articles || [];
-  if (category && category !== 'all') list = list.filter(a => a.categoryName === category || a.categoryId == category);
-  if (status && status !== 'all') list = list.filter(a => a.status === status);
+  let list = db.articles || db.tin_tuc || [];
+  if (category && category !== 'all') list = list.filter(a => (a.categoryName === category || a.categoryId == category || a.ChuyenMuc === category));
+  if (status && status !== 'all') {
+    const sLower = status.toLowerCase();
+    list = list.filter(a => {
+      const artStatus = (a.status || a.TrangThai || '').toLowerCase();
+      if (sLower === 'pending' || sLower === 'pending_review') {
+        return artStatus.includes('pending') || artStatus.includes('cho') || artStatus.includes('chờ');
+      }
+      if (sLower === 'published') {
+        return artStatus.includes('publish') || artStatus.includes('xuat') || artStatus.includes('xuất');
+      }
+      if (sLower === 'draft') {
+        return artStatus.includes('draft') || artStatus.includes('nhap') || artStatus.includes('nháp');
+      }
+      if (sLower === 'approved') {
+        return artStatus.includes('approved') || artStatus.includes('duyet') || artStatus.includes('duyệt');
+      }
+      return artStatus === sLower;
+    });
+  }
   if (search) {
     const q = search.toLowerCase();
-    list = list.filter(a => a.title.toLowerCase().includes(q) || (a.summary && a.summary.toLowerCase().includes(q)));
+    list = list.filter(a => {
+      const titleText = (a.title || a.TieuDe || '').toLowerCase();
+      const summaryText = (a.summary || a.TomTat || '').toLowerCase();
+      return titleText.includes(q) || summaryText.includes(q);
+    });
   }
   return list;
 }

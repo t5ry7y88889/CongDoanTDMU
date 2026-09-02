@@ -2,28 +2,23 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
 
-class User extends Model
+class User extends Authenticatable
 {
-    protected $table = 'Users';
+    use HasApiTokens, Notifiable;
 
-    protected $fillable = ['name', 'email', 'passwordHash', 'roleId', 'department', 'createdAt'];
-    protected $hidden = ['passwordHash'];
-    public $timestamps = false;
+    protected $table = "users";
+    protected $fillable = ["ho_ten", "email", "password", "vai_tro", "to_cong_doan", "avatar_url", "last_login_at"];
+    protected $hidden = ["password"];
+    protected $casts = ["last_login_at" => "datetime"];
 
-    public function role()
-    {
-        return $this->belongsTo(Role::class, 'roleId', 'id');
-    }
-
-    public function articles()
-    {
-        return $this->hasMany(Article::class, 'authorId', 'id');
-    }
-
-    public function versions()
-    {
-        return $this->hasMany(ArticleVersion::class, 'createdBy', 'id');
-    }
+    public function articles() { return $this->hasMany(Article::class, "user_id"); }
+    public function audits() { return $this->hasMany(ArticleAudit::class, "user_id"); }
+    public function isAdmin(): bool { return $this->vai_tro === "admin"; }
+    public function isEditor(): bool { return $this->vai_tro === "editor"; }
+    public function isContributor(): bool { return $this->vai_tro === "contributor"; }
+    public function canPublish(): bool { return in_array($this->vai_tro, ["admin", "editor"]); }
 }

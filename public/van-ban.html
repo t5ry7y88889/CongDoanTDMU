@@ -6,298 +6,105 @@
   <title>Văn Bản Chỉ Đạo - Công Đoàn Trường ĐH Thủ Dầu Một</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    :root {
-      --tdmu-dark-blue: #003865;
-      --tdmu-blue: #005baa;
-      --tdmu-light-blue: #0088cc;
-      --tdmu-red: #d32f2f;
-      --tdmu-yellow: #f1c40f;
-      --bg-gray: #f4f6f9;
-      --text-dark: #2c3e50;
-    }
-    body { font-family: 'Segoe UI', Arial, sans-serif; color: var(--text-dark); background-color: var(--bg-gray); line-height: 1.5; font-size: 14px; }
-    
-    /* Top Brand Header */
-    .top-brand-header { background: #ffffff; padding: 12px 0; border-bottom: 2px solid var(--tdmu-dark-blue); }
-    .brand-title-main { color: var(--tdmu-dark-blue); font-size: 19px; font-weight: 800; text-transform: uppercase; margin: 0; }
-    .brand-sub-main { color: #e67e22; font-size: 12px; font-weight: 700; text-transform: uppercase; }
-
-    /* Navbar */
-    .navbar-tdmu { background-color: var(--tdmu-dark-blue); padding: 0; box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
-    .navbar-tdmu .nav-link { color: #ffffff !important; font-weight: 600; font-size: 13.5px; padding: 12px 14px !important; text-transform: uppercase; transition: all 0.2s; }
-    .navbar-tdmu .nav-link:hover, .navbar-tdmu .nav-link.active { background-color: #002240; color: var(--tdmu-yellow) !important; }
-    .navbar-tdmu .dropdown-menu { border-radius: 0; border: none; box-shadow: 0 6px 15px rgba(0,0,0,0.15); padding: 0; margin-top: 0; }
-    .navbar-tdmu .dropdown-item { padding: 10px 16px; font-size: 13px; font-weight: 500; border-bottom: 1px solid #edf2f7; color: #333; }
-    .navbar-tdmu .dropdown-item:hover { background-color: var(--tdmu-blue); color: white; }
-
-    /* Content & Panels */
-    .content-box { background: white; border-radius: 4px; border: 1px solid #e2e8f0; padding: 22px; margin-bottom: 20px; }
-    .tieudelon { font-size: 17px; font-weight: 800; color: var(--tdmu-dark-blue); text-transform: uppercase; border-bottom: 2px solid var(--tdmu-dark-blue); padding-bottom: 6px; margin-bottom: 16px; }
-    .panel-tdmu { background: white; border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
-    .panel-heading-tdmu { background: #f8fafc; border-bottom: 2px solid var(--tdmu-dark-blue); padding: 10px 14px; font-weight: 700; font-size: 13.5px; color: var(--tdmu-dark-blue); text-transform: uppercase; }
-    .list-group-tdmu .list-group-item { border: none; border-bottom: 1px dashed #e2e8f0; padding: 9px 12px; font-size: 13px; font-weight: 500; color: #2d3748; text-decoration: none; display: block; }
-    .list-group-tdmu .list-group-item:hover { background-color: #f7fafc; color: var(--tdmu-blue); padding-left: 16px; }
-    .breadcrumb-box { padding: 10px 0; font-size: 13px; }
-
-    /* Footer */
-    footer { background: #002240; color: #a0aec0; padding: 25px 0 15px; font-size: 13px; border-top: 3px solid var(--tdmu-yellow); }
-  </style>
+  <link rel="stylesheet" href="css/portal.css?v=20260901_v20">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#002855">
 </head>
 <body>
 
-  <!-- Top Brand Header (Single Clean Header) -->
-  <header class="top-brand-header">
-    <div class="container d-flex justify-content-between align-items-center">
-      <div class="d-flex align-items-center gap-3">
-        <i class="fa-solid fa-graduation-cap fa-3x text-primary"></i>
-        <div>
-          <h1 class="brand-title-main">CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h1>
-          <span class="brand-sub-main">THU DAU MOT UNIVERSITY TRADE UNION</span>
+  <div class="main-content-wrapper">
+    <!-- Top Brand Header -->
+    <header class="top-brand-header">
+      <div class="container d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+          <i class="fa-solid fa-graduation-cap fa-3x" style="color: #002855;"></i>
+          <div>
+            <h1 class="brand-title-main">CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h1>
+            <span class="brand-sub-main">THU DAU MOT UNIVERSITY TRADE UNION</span>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge-hotline">
+            <i class="fa-solid fa-phone me-1 text-warning"></i> Hotline: (0274) 3.815.184
+          </span>
+          <a href="admin.html" class="btn-portal-access">
+            <i class="fa-solid fa-wand-magic-sparkles me-1 text-warning"></i> Quản lý website truyền thông công đoàn TDMU
+          </a>
         </div>
       </div>
-      <div class="d-flex align-items-center gap-2">
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSelw4xZGXNz2fUHOy0wHZ9-rIt5N-gneVP005KjpjURduNvrg/viewform" target="_blank" class="btn btn-sm btn-danger fw-bold shadow-sm">
-          <i class="fa-solid fa-file-pen me-1"></i> Điền Báo Cáo Tháng (Google Form)
-        </a>
-        <a href="admin.html" class="btn btn-sm btn-outline-primary fw-bold">
-          <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Portal AI CMS
-        </a>
-      </div>
-    </div>
-  </header>
+    </header>
 
-  <!-- Official Navigation Bar -->
-  <nav class="navbar navbar-expand-lg navbar-tdmu sticky-top">
-    <div class="container">
-      <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse" data-bs-target="#tdmuNavbar">
-        <i class="fa-solid fa-bars"></i>
-      </button>
-      <div class="collapse navbar-collapse" id="tdmuNavbar">
-        <ul class="navbar-nav mx-auto">
-          <li class="nav-item"><a class="nav-link " href="index.html">Trang Chủ</a></li>
-          <li class="nav-item"><a class="nav-link " href="gioi-thieu.html">Giới Thiệu</a></li>
-          
-          <!-- Dropdown: Cơ Cấu Tổ Chức -->
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle " href="#" data-bs-toggle="dropdown">
-              Cơ Cấu Tổ Chức
-            </a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="co-cau-to-chuc.html#ban-thuong-vu"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban thường vụ</a></li>
-              <li><a class="dropdown-item" href="co-cau-to-chuc.html#ban-chap-hanh"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban chấp hành</a></li>
-              <li><a class="dropdown-item" href="co-cau-to-chuc.html#uy-ban-kiem-tra"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ủy ban kiểm tra</a></li>
-              <li><a class="dropdown-item" href="lien-he.html"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Công đoàn bộ phận & Tổ công đoàn</a></li>
-            </ul>
-          </li>
+    <!-- Official Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-tdmu sticky-top">
+      <div class="container">
+        <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse" data-bs-target="#tdmuNavbar">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="tdmuNavbar">
+          <ul class="navbar-nav mx-auto">
+            <li class="nav-item"><a class="nav-link" href="index.html">Trang Chủ</a></li>
+            <li class="nav-item"><a class="nav-link" href="gioi-thieu.html">Giới Thiệu</a></li>
+            
+            <!-- Dropdown: Cơ Cấu Tổ Chức -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                Cơ Cấu Tổ Chức
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=ban-thuong-vu"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban thường vụ</a></li>
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=ban-chap-hanh"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ban chấp hành</a></li>
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=uy-ban-kiem-tra"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Ủy ban kiểm tra</a></li>
+                <li><a class="dropdown-item" href="co-cau-to-chuc.html?tab=16-to-cong-doan"><i class="fa-solid fa-caret-right me-1 text-primary"></i> 16 Tổ công đoàn cơ sở</a></li>
+              </ul>
+            </li>
 
-          <li class="nav-item"><a class="nav-link " href="index.html#tintuc">Tin Tức</a></li>
-          <li class="nav-item"><a class="nav-link " href="phuc-loi-doan-vien.html">Phúc Lợi Đoàn Viên</a></li>
+            <li class="nav-item"><a class="nav-link" href="tin-tuc.html">Tin Tức</a></li>
+            <li class="nav-item"><a class="nav-link" href="phuc-loi-doan-vien.html">Phúc Lợi Đoàn Viên</a></li>
 
-          <!-- Dropdown: Văn Bản -->
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle active" href="#" data-bs-toggle="dropdown">
-              Văn Bản
-            </a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="van-ban.html#tuyen-truyen"><i class="fa-solid fa-file-lines me-1 text-primary"></i> Công văn tuyên truyền</a></li>
-              <li><a class="dropdown-item" href="van-ban.html#ke-hoach"><i class="fa-solid fa-calendar-check me-1 text-primary"></i> Kế hoạch hoạt động</a></li>
-              <li><a class="dropdown-item" href="van-ban.html#luat"><i class="fa-solid fa-scale-balanced me-1 text-primary"></i> Văn bản luật</a></li>
-              <li><a class="dropdown-item" href="van-ban.html#quyet-dinh"><i class="fa-solid fa-stamp me-1 text-primary"></i> Quyết định</a></li>
-            </ul>
-          </li>
+            <!-- Dropdown: Văn Bản -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle active" href="van-ban.html" data-bs-toggle="dropdown">
+                Văn Bản
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="van-ban.html#tuyen-truyen"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Công văn tuyên truyền</a></li>
+                <li><a class="dropdown-item" href="van-ban.html#ke-hoach"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Kế hoạch hoạt động</a></li>
+                <li><a class="dropdown-item" href="van-ban.html#luat"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Văn bản luật</a></li>
+                <li><a class="dropdown-item" href="van-ban.html#quyet-dinh"><i class="fa-solid fa-caret-right me-1 text-primary"></i> Quyết định</a></li>
+              </ul>
+            </li>
 
-          <li class="nav-item"><a class="nav-link " href="bao-cao-thang.html"><i class="fa-solid fa-clipboard-check me-1 text-warning"></i> Báo Cáo Thi Đua</a></li>
-          <li class="nav-item"><a class="nav-link " href="bieu-mau.html">Biểu Mẫu</a></li>
-          <li class="nav-item"><a class="nav-link " href="lien-he.html">Liên Hệ</a></li>
-        </ul>
-      </div>
-    </div>
-  </nav>
-
-  
-  <div class="container my-4">
-    <div class="breadcrumb-box"><a href="index.html" class="text-decoration-none">Trang chủ</a> / <span class="text-muted">Kho văn bản chỉ đạo</span></div>
-    <div class="row g-4">
-      <div class="col-lg-9">
-        
-        <!-- Tab navigation for 4 Document Categories -->
-        <ul class="nav nav-pills nav-fill mb-4 p-2 bg-white border rounded shadow-sm" id="docTabs">
-          <li class="nav-item">
-            <button class="nav-link active fw-bold py-2" data-bs-toggle="pill" data-bs-target="#tab-tuyentruyen">
-              <i class="fa-solid fa-bullhorn me-1 text-primary"></i> 1. CÔNG VĂN TUYÊN TRUYỀN
-            </button>
-          </li>
-          <li class="nav-item">
-            <button class="nav-link fw-bold py-2" data-bs-toggle="pill" data-bs-target="#tab-kehoach">
-              <i class="fa-solid fa-calendar-check me-1 text-success"></i> 2. KẾ HOẠCH HOẠT ĐỘNG
-            </button>
-          </li>
-          <li class="nav-item">
-            <button class="nav-link fw-bold py-2" data-bs-toggle="pill" data-bs-target="#tab-luat">
-              <i class="fa-solid fa-scale-balanced me-1 text-warning"></i> 3. VĂN BẢN LUẬT
-            </button>
-          </li>
-          <li class="nav-item">
-            <button class="nav-link fw-bold py-2" data-bs-toggle="pill" data-bs-target="#tab-quyetdinh">
-              <i class="fa-solid fa-stamp me-1 text-danger"></i> 4. QUYẾT ĐỊNH
-            </button>
-          </li>
-        </ul>
-
-        <div class="tab-content">
-          
-          <!-- TAB 1: CÔNG VĂN TUYÊN TRUYỀN -->
-          <div class="tab-pane fade show active" id="tab-tuyentruyen">
-            <div class="content-box">
-              <div class="tieudelon"><i class="fa-solid fa-file-lines me-2"></i>CÔNG VĂN TUYÊN TRUYỀN CHÍNH THỨC CỦA CÔNG ĐOÀN TDMU</div>
-              <div class="list-group">
-                <div class="list-group-item p-3 mb-2 border rounded d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 class="fw-bold text-primary mb-1"><i class="fa-regular fa-file-pdf text-danger me-2"></i>Vận động ủng hộ đồng bào bị thiệt hại do bão số 3</h6>
-                    <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> Ngày đăng: 12/09/2024 &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> 2,524 lượt xem</small>
-                  </div>
-                  <a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download me-1"></i> Tải về</a>
-                </div>
-
-                <div class="list-group-item p-3 mb-2 border rounded d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 class="fw-bold text-primary mb-1"><i class="fa-regular fa-file-pdf text-danger me-2"></i>Công văn số 1630 của Ban Tuyên giáo Tỉnh ủy Bình Dương: Cuộc thi trực tuyến "Tìm hiểu Nghị quyết TW 8 khóa XIII"</h6>
-                    <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> Ngày đăng: 01/03/2024 &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> 3,915 lượt xem</small>
-                  </div>
-                  <a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download me-1"></i> Tải về</a>
-                </div>
-
-                <div class="list-group-item p-3 mb-2 border rounded d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 class="fw-bold text-primary mb-1"><i class="fa-regular fa-file-pdf text-danger me-2"></i>Kế hoạch số 41/KH-CĐCS về tuyên truyền, phổ biến pháp luật năm 2023: Chuyên đề "Pháp luật người lao động"</h6>
-                    <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> Ngày đăng: 06/09/2023 &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> 3,041 lượt xem</small>
-                  </div>
-                  <a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download me-1"></i> Tải về</a>
-                </div>
-
-                <div class="list-group-item p-3 mb-2 border rounded d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 class="fw-bold text-primary mb-1"><i class="fa-regular fa-file-pdf text-danger me-2"></i>Thông báo số 06/TB-CĐ: Phát động Chương trình "01 triệu sáng kiến - nỗ lực vượt khó, sáng tạo"</h6>
-                    <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> Ngày đăng: 20/05/2022 &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> 2,685 lượt xem</small>
-                  </div>
-                  <a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download me-1"></i> Tải về</a>
-                </div>
-
-                <div class="list-group-item p-3 border rounded d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 class="fw-bold text-primary mb-1"><i class="fa-regular fa-file-pdf text-danger me-2"></i>Công văn số 135 của LĐLĐ Tỉnh về việc hưởng ứng phong trào hiến máu tình nguyện</h6>
-                    <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> Ngày đăng: 06/04/2021 &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> 2,746 lượt xem</small>
-                  </div>
-                  <a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download me-1"></i> Tải về</a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB 2: KẾ HOẠCH HOẠT ĐỘNG -->
-          <div class="tab-pane fade" id="tab-kehoach">
-            <div class="content-box">
-              <div class="tieudelon"><i class="fa-solid fa-calendar-days me-2"></i>KẾ HOẠCH HOẠT ĐỘNG CÔNG ĐOÀN CƠ SỞ TDMU</div>
-              <div class="list-group">
-                <div class="list-group-item p-3 mb-2 border rounded d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 class="fw-bold text-primary mb-1"><i class="fa-regular fa-file-pdf text-danger me-2"></i>Kế hoạch tổ chức giải Bóng đá truyền thống "Công đoàn trường ĐH Thủ Dầu Một" lần thứ X</h6>
-                    <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> Ngày đăng: 29/05/2025 &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> 1,478 lượt xem</small>
-                  </div>
-                  <a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download me-1"></i> Tải về</a>
-                </div>
-
-                <div class="list-group-item p-3 mb-2 border rounded d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 class="fw-bold text-primary mb-1"><i class="fa-regular fa-file-pdf text-danger me-2"></i>Kế hoạch tổ chức cuộc thi ảnh "Gia đình trong tôi là ..."</h6>
-                    <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> Ngày đăng: 28/05/2025 &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> 1,507 lượt xem</small>
-                  </div>
-                  <a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download me-1"></i> Tải về</a>
-                </div>
-
-                <div class="list-group-item p-3 mb-2 border rounded d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 class="fw-bold text-primary mb-1"><i class="fa-regular fa-file-pdf text-danger me-2"></i>Kế hoạch tổ chức tết Trung thu "Vui hội trăng rằm"</h6>
-                    <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> Ngày đăng: 30/08/2024 &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> 5,505 lượt xem</small>
-                  </div>
-                  <a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download me-1"></i> Tải về</a>
-                </div>
-
-                <div class="list-group-item p-3 border rounded d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 class="fw-bold text-primary mb-1"><i class="fa-regular fa-file-pdf text-danger me-2"></i>CHƯƠNG TRÌNH HOẠT ĐỘNG CÔNG ĐOÀN NĂM HỌC 2024 - 2025</h6>
-                    <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> Ngày đăng: 30/08/2024 &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> 2,712 lượt xem</small>
-                  </div>
-                  <a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download me-1"></i> Tải về</a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB 3: VĂN BẢN LUẬT -->
-          <div class="tab-pane fade" id="tab-luat">
-            <div class="content-box">
-              <div class="tieudelon"><i class="fa-solid fa-scale-balanced me-2"></i>HỆ THỐNG VĂN BẢN QUY PHẠM PHÁP LUẬT & ĐIỀU LỆ CÔNG ĐOÀN</div>
-              <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                  <thead class="table-light"><tr><th>Tên Văn Bản</th><th>Lĩnh Vực</th><th>Ngày Đăng</th><th class="text-center">Tải</th></tr></thead>
-                  <tbody>
-                    <tr><td><strong>Bộ luật Lao động (sửa đổi)</strong></td><td><span class="badge bg-primary">Luật Nhà nước</span></td><td>24/10/2018</td><td class="text-center"><a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download"></i></a></td></tr>
-                    <tr><td><strong>Luật Công đoàn Việt Nam</strong></td><td><span class="badge bg-danger">Điều lệ CĐ</span></td><td>24/10/2018</td><td class="text-center"><a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download"></i></a></td></tr>
-                    <tr><td><strong>Luật Viên chức và Luật Giáo dục Đại học</strong></td><td><span class="badge bg-success">Ngành GD</span></td><td>24/10/2018</td><td class="text-center"><a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download"></i></a></td></tr>
-                    <tr><td><strong>Luật Bảo hiểm xã hội & Bảo hiểm y tế</strong></td><td><span class="badge bg-info text-dark">Chính sách</span></td><td>24/10/2018</td><td class="text-center"><a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download"></i></a></td></tr>
-                    <tr><td><strong>Luật An toàn vệ sinh lao động</strong></td><td><span class="badge bg-secondary">ATLĐ</span></td><td>24/10/2018</td><td class="text-center"><a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download"></i></a></td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB 4: QUYẾT ĐỊNH -->
-          <div class="tab-pane fade" id="tab-quyetdinh">
-            <div class="content-box">
-              <div class="tieudelon"><i class="fa-solid fa-stamp me-2"></i>CÁC QUYẾT ĐỊNH BAN HÀNH CÔNG NHẬN & QUY CHẾ</div>
-              <div class="list-group">
-                <div class="list-group-item p-3 mb-2 border rounded d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 class="fw-bold text-primary mb-1"><i class="fa-regular fa-file-pdf text-danger me-2"></i>Quyết định số 16/QĐ-LĐLĐ: Công nhận CĐCS ĐH Thủ Dầu Một hoàn thành xuất sắc nhiệm vụ</h6>
-                    <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> Ngày đăng: 25/10/2023 &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> 3,069 lượt xem</small>
-                  </div>
-                  <a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download me-1"></i> Tải về</a>
-                </div>
-
-                <div class="list-group-item p-3 mb-2 border rounded d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 class="fw-bold text-primary mb-1"><i class="fa-regular fa-file-pdf text-danger me-2"></i>Quyết định số 08/QĐ-CĐ: Thành lập các ban quần chúng thuộc CĐCS ĐH Thủ Dầu Một nhiệm kỳ 2023 - 2028</h6>
-                    <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> Ngày đăng: 05/08/2023 &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> 2,887 lượt xem</small>
-                  </div>
-                  <a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download me-1"></i> Tải về</a>
-                </div>
-
-                <div class="list-group-item p-3 mb-2 border rounded d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 class="fw-bold text-primary mb-1"><i class="fa-regular fa-file-pdf text-danger me-2"></i>Quyết định số 07/QĐ-CĐ: Công nhận kết quả bầu cử Tổ trưởng 16 Tổ Công đoàn nhiệm kỳ 2023 - 2028</h6>
-                    <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> Ngày đăng: 05/08/2023 &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> 2,897 lượt xem</small>
-                  </div>
-                  <a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download me-1"></i> Tải về</a>
-                </div>
-
-                <div class="list-group-item p-3 border rounded d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 class="fw-bold text-primary mb-1"><i class="fa-regular fa-file-pdf text-danger me-2"></i>Quyết định 206/QĐ-LĐLĐ: Công nhận kết quả bầu cử Ban Chấp Hành CĐCS ĐH Thủ Dầu Một Lần thứ X (13 đ/c)</h6>
-                    <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> Ngày đăng: 05/08/2023 &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> 2,906 lượt xem</small>
-                  </div>
-                  <a href="#" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-download me-1"></i> Tải về</a>
-                </div>
-              </div>
-            </div>
-          </div>
-
+            <li class="nav-item"><a class="nav-link" href="bieu-mau.html">Biểu Mẫu</a></li>
+            <li class="nav-item"><a class="nav-link" href="lien-he.html">Liên Hệ</a></li>
+          </ul>
         </div>
       </div>
-      
-        <!-- RIGHT SIDEBAR (3 PHẦN) -->
+    </nav>
+
+    <!-- Main Body -->
+    <div class="container my-3">
+      <div class="breadcrumb-box"><a href="index.html">Trang chủ</a> / <span class="text-muted">Văn bản chỉ đạo</span></div>
+      <div class="row g-4">
+        <div class="col-lg-9">
+          <div class="content-box">
+            <div class="tieudelon"><i class="fa-solid fa-folder-open me-2 text-danger"></i>VĂN BẢN CHỈ ĐẠO &amp; ĐIỀU HÀNH</div>
+            
+            <!-- Category Tabs Pill Format (Không bị lùn hay nhảy chữ) -->
+            <div class="doc-filter-bar" id="docCategoryTabs">
+              <button class="doc-tab-btn active" onclick="filterDocs('all', this)"><i class="fa-solid fa-list"></i> Tất cả văn bản</button>
+              <button class="doc-tab-btn" onclick="filterDocs('tuyentruyen', this)"><i class="fa-solid fa-bullhorn text-warning"></i> Công văn tuyên truyền</button>
+              <button class="doc-tab-btn" onclick="filterDocs('kehoach', this)"><i class="fa-solid fa-calendar-check text-success"></i> Kế hoạch hoạt động</button>
+              <button class="doc-tab-btn" onclick="filterDocs('luat', this)"><i class="fa-solid fa-scale-balanced text-primary"></i> Văn bản luật</button>
+              <button class="doc-tab-btn" onclick="filterDocs('quyetdinh', this)"><i class="fa-solid fa-stamp text-danger"></i> Quyết định</button>
+            </div>
+
+            <div id="document_list_container">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN (3 PHẦN): LIÊN KẾT WEBSITE -->
         <div class="col-lg-3">
           <div class="panel-tdmu">
             <div class="panel-heading-tdmu"><i class="fa-solid fa-link me-2 text-primary"></i>Liên kết website</div>
@@ -311,34 +118,116 @@
             </div>
           </div>
 
-          <!-- Banner Google Form -->
-          <div class="p-3 bg-white border rounded text-center shadow-sm">
-            <i class="fa-brands fa-google text-danger fa-2x mb-2"></i>
-            <h6 class="fw-bold text-danger mb-1">NỘP BÁO CÁO THÁNG CỦA TỔ CÔNG ĐOÀN</h6>
-            <p class="small text-muted mb-2">Dành cho các Tổ Công đoàn gửi báo cáo định kỳ</p>
-            <a href="https://docs.google.com/forms/d/e/1FAIpQLSelw4xZGXNz2fUHOy0wHZ9-rIt5N-gneVP005KjpjURduNvrg/viewform" target="_blank" class="btn btn-danger btn-sm w-100 fw-bold mb-2">
-              <i class="fa-solid fa-file-pen me-1"></i> Mở Google Form
-            </a>
-            <a href="bao-cao-thang.html" class="btn btn-outline-primary btn-sm w-100 fw-bold">
-              <i class="fa-solid fa-ranking-star me-1"></i> Bảng Thi Đua 16 Tổ
-            </a>
+          <!-- Thống Kê Truy Cập Widget -->
+          <div class="panel-tdmu">
+            <div class="panel-heading-tdmu"><i class="fa-solid fa-chart-simple me-2 text-warning"></i>Thống kê truy cập</div>
+            <div class="p-3" style="font-size: 13px;">
+              <p class="mb-2"><i class="fa-solid fa-users text-primary me-2"></i> Đang trực tuyến: <strong>12</strong></p>
+              <p class="mb-0"><i class="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong>811,221</strong></p>
+            </div>
           </div>
         </div>
 
+      </div>
     </div>
   </div>
 
-
-  <!-- Footer -->
+  <!-- Footer (Chuẩn 2 Cột Thực Tế: Cơ Quan & Nhóm Đồ Án) -->
   <footer>
-    <div class="container text-center">
-      <p class="mb-1 fw-bold text-white">© 2026 - CÔNG ĐOÀN - TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</p>
-      <p class="mb-1"><i class="fa-solid fa-location-dot me-1"></i> Lầu 1, Dãy A, Cổng 1, Số 06, Trần Văn Ơn, Phường Phú Lợi, TP. Thủ Dầu Một, Bình Dương</p>
-      <p class="mb-0"><i class="fa-solid fa-phone me-1"></i> (0274) 3.815.184 &nbsp;|&nbsp; <i class="fa-solid fa-envelope me-1"></i> congdoan@tdmu.edu.vn</p>
+    <div class="container">
+      <div class="row gy-3">
+        <div class="col-md-7 text-start">
+          <h6 class="fw-bold text-white mb-2">CÔNG ĐOÀN CƠ SỞ TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h6>
+          <p class="mb-1"><i class="fa-solid fa-location-dot me-2 text-warning"></i> Địa chỉ: Lầu 1, Dãy A, Cổng 1, Số 06 Trần Văn Ơn, P. Phú Lợi, TP. Thủ Dầu Một, Bình Dương</p>
+          <p class="mb-1"><i class="fa-solid fa-phone me-2 text-warning"></i> Điện thoại: (0274) 3.815.184 | <i class="fa-solid fa-envelope ms-2 me-1 text-warning"></i> Email: congdoan@tdmu.edu.vn</p>
+          <p class="mb-0"><i class="fa-solid fa-globe me-2 text-warning"></i> Website: congdoan.tdmu.edu.vn</p>
+        </div>
+        <div class="col-md-5 text-md-end text-start">
+          <h6 class="fw-bold text-warning mb-2">HỆ THỐNG TRUYỀN THÔNG TÍCH HỢP AI</h6>
+          <p class="mb-1">Đề tài NCKH Sinh viên / Đồ án Cơ sở ngành - Viện Công nghệ số</p>
+          <p class="mb-0 text-light text-opacity-75">Nhóm 2: Nguyễn Bình Dương - Trần Hồng Thanh - Phạm Anh Tuấn</p>
+        </div>
+      </div>
     </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  
+  <script src="js/api.js?v=20260901_v18"></script>
+  <script>
+    let allDocuments = [];
+
+    async function loadPortalDocuments() {
+      const container = document.getElementById('document_list_container');
+      container.innerHTML = '<div class="text-center p-4"><i class="fa-solid fa-spinner fa-spin"></i> Đang nạp danh mục văn bản...</div>';
+      try {
+        const res = await API.getDocuments('all');
+        if (res.success && Array.isArray(res.data)) {
+          allDocuments = res.data;
+          renderDocs(allDocuments);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderDocs(docs) {
+      const container = document.getElementById('document_list_container');
+      if (docs.length === 0) {
+        container.innerHTML = '<div class="text-center p-4 text-muted">Không tìm thấy văn bản nào trong mục này.</div>';
+        return;
+      }
+      container.innerHTML = docs.map(d => `
+        <div class="doc-card-item">
+          <div class="d-flex align-items-center gap-3">
+            <i class="fa-regular fa-file-pdf text-danger fa-2x"></i>
+            <div>
+              <div class="doc-card-title">[${d.so_hieu || 'Văn bản'}] ${d.tieu_de}</div>
+              <div class="doc-card-meta"><i class="fa-regular fa-building me-1"></i> ${d.co_quan_ban_hanh || 'Ban Thường Vụ Công Đoàn TDMU'} &nbsp;|&nbsp; <i class="fa-regular fa-calendar me-1"></i> ${d.ngay_ban_hanh || '2026-08-30'}</div>
+            </div>
+          </div>
+          <a href="${d.file_url || '#'}" target="_blank" class="btn-doc-download">
+            <i class="fa-solid fa-download me-1"></i> Tải về (${d.dung_luong || '1.5 MB'})
+          </a>
+        </div>
+      `).join('');
+    }
+
+    function filterDocs(cat, btn) {
+      document.querySelectorAll('#docCategoryTabs button').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      if (cat === 'all') {
+        renderDocs(allDocuments);
+      } else {
+        renderDocs(allDocuments.filter(d => d.loai_van_ban === cat || d.category === cat));
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadPortalDocuments);
+  </script>
+  <script src="js/bookmarks.js?v=20260901_v23"></script>
+
+  <!-- OFFCANVAS TỦ SÁCH ĐỌC SAU (SAVED ARTICLES DRAWER) -->
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="bookmarksOffcanvas" style="width: 380px;">
+    <div class="offcanvas-header" style="background: #002855; color: white;">
+      <h5 class="offcanvas-title fw-bold" style="font-size: 16px;">
+        <i class="fa-solid fa-bookmark text-warning me-2"></i> Tủ Sách Đọc Sau (<span class="bookmark-badge-count">2</span>)
+      </h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-3 bg-light" id="bookmarksListContainerDrawer">
+      <!-- Rendered dynamically from bookmarks.js -->
+    </div>
+    <div class="p-3 bg-white border-top text-center">
+      <small class="text-muted"><i class="fa-solid fa-shield-halved text-success me-1"></i> Danh sách lưu trữ an toàn trên thiết bị của bạn</small>
+    </div>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>

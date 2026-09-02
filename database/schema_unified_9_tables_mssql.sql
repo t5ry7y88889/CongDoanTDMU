@@ -1,0 +1,181 @@
+-- =========================================================================
+-- CƠ SỞ DỮ LIỆU HỢP NHẤT TOÀN DIỆN (UNIFIED MASTER SCHEMA - 9 BẢNG 3NF)
+-- MICROSOFT SQL SERVER 2020 / SSMS | Server: RTX-ON\MSSQLVESE
+-- Database: TDMU_TradeUnion_DB
+-- =========================================================================
+
+IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'TDMU_TradeUnion_DB')
+BEGIN
+    CREATE DATABASE TDMU_TradeUnion_DB;
+END
+GO
+
+USE TDMU_TradeUnion_DB;
+GO
+
+-- Xóa các bảng cũ theo thứ tự ràng buộc khóa ngoại
+IF OBJECT_ID('dbo.NHAT_KY', 'U') IS NOT NULL DROP TABLE dbo.NHAT_KY;
+IF OBJECT_ID('dbo.KHO_TU_LIEU', 'U') IS NOT NULL DROP TABLE dbo.KHO_TU_LIEU;
+IF OBJECT_ID('dbo.LICH_XUAT_BAN', 'U') IS NOT NULL DROP TABLE dbo.LICH_XUAT_BAN;
+IF OBJECT_ID('dbo.BAO_CAO_THANG', 'U') IS NOT NULL DROP TABLE dbo.BAO_CAO_THANG;
+IF OBJECT_ID('dbo.VAN_BAN', 'U') IS NOT NULL DROP TABLE dbo.VAN_BAN;
+IF OBJECT_ID('dbo.TIN_TUC', 'U') IS NOT NULL DROP TABLE dbo.TIN_TUC;
+IF OBJECT_ID('dbo.NHAN_SU', 'U') IS NOT NULL DROP TABLE dbo.NHAN_SU;
+IF OBJECT_ID('dbo.TO_CONG_DOAN', 'U') IS NOT NULL DROP TABLE dbo.TO_CONG_DOAN;
+IF OBJECT_ID('dbo.TO_CHUC', 'U') IS NOT NULL DROP TABLE dbo.TO_CHUC;
+GO
+
+-- 1. BẢNG TO_CHUC
+CREATE TABLE dbo.TO_CHUC (
+    MaToChuc INT IDENTITY(1,1) PRIMARY KEY,
+    TenToChuc NVARCHAR(150) NOT NULL,
+    NhiemKy NVARCHAR(50) NOT NULL DEFAULT N'Nhiệm kỳ 2023 - 2028',
+    MoTaChucNang NVARCHAR(MAX) NULL,
+    ThuTuHienThi INT DEFAULT 1,
+    TrangThai BIT DEFAULT 1,
+    NgayTao DATETIME2 DEFAULT SYSDATETIME()
+);
+
+-- 2. BẢNG TO_CONG_DOAN (16 Tổ)
+CREATE TABLE dbo.TO_CONG_DOAN (
+    MaToCongDoan INT IDENTITY(1,1) PRIMARY KEY,
+    MaDinhDanh VARCHAR(50) UNIQUE NOT NULL,
+    TenToCongDoan NVARCHAR(150) NOT NULL,
+    ToTruong NVARCHAR(100) NULL,
+    EmailLienHe VARCHAR(100) NULL,
+    SoDienThoai VARCHAR(20) NULL,
+    DiaChiVanPhong NVARCHAR(150) NULL,
+    TrangThai BIT DEFAULT 1,
+    NgayTao DATETIME2 DEFAULT SYSDATETIME()
+);
+
+-- 3. BẢNG NHAN_SU (3 Role)
+CREATE TABLE dbo.NHAN_SU (
+    MaNhanSu INT IDENTITY(1,1) PRIMARY KEY,
+    MaToCongDoan INT NOT NULL,
+    MaToChuc INT NULL,
+    MaCanBo VARCHAR(50) UNIQUE NOT NULL,
+    HoVaTen NVARCHAR(100) NOT NULL,
+    GioiTinh NVARCHAR(10) DEFAULT N'Nam',
+    NgaySinh DATE NULL,
+    Email VARCHAR(100) UNIQUE NOT NULL,
+    SoDienThoai VARCHAR(20) NULL,
+    MatKhau VARCHAR(255) NULL,
+    HocHamHocVi NVARCHAR(50) NULL,
+    ChucVuCongDoan NVARCHAR(100) DEFAULT N'Đoàn viên',
+    ChucVuChuyenMon NVARCHAR(100) NULL,
+    VaiTroHeThong VARCHAR(20) DEFAULT 'Contributor',
+    TrangThai BIT DEFAULT 1,
+    NgayTao DATETIME2 DEFAULT SYSDATETIME(),
+    CONSTRAINT FK_NhanSu_ToCongDoan FOREIGN KEY (MaToCongDoan) REFERENCES dbo.TO_CONG_DOAN(MaToCongDoan),
+    CONSTRAINT FK_NhanSu_ToChuc FOREIGN KEY (MaToChuc) REFERENCES dbo.TO_CHUC(MaToChuc) ON DELETE SET NULL
+);
+
+-- 4. BẢNG TIN_TUC (Nội dung đa kênh AI)
+CREATE TABLE dbo.TIN_TUC (
+    MaTinTuc INT IDENTITY(1,1) PRIMARY KEY,
+    MaTacGia INT NOT NULL,
+    TieuDe NVARCHAR(255) NOT NULL,
+    Slug VARCHAR(255) UNIQUE NOT NULL,
+    ChuyenMuc NVARCHAR(100) NOT NULL,
+    TomTat NVARCHAR(MAX) NULL,
+    NoiDung NVARCHAR(MAX) NOT NULL,
+    HinhAnhDaiDien VARCHAR(500) NULL,
+    NoiDungFB NVARCHAR(MAX) NULL,
+    NoiDungZalo NVARCHAR(MAX) NULL,
+    VideoScript NVARCHAR(MAX) NULL,
+    IsAiGenerated BIT DEFAULT 0,
+    AiPrompt NVARCHAR(MAX) NULL,
+    TrangThai VARCHAR(20) DEFAULT 'Draft',
+    LuotXem INT DEFAULT 0,
+    LuotThich INT DEFAULT 0,
+    NgayXuatBan DATETIME2 NULL,
+    NgayTao DATETIME2 DEFAULT SYSDATETIME(),
+    NgayCapNhat DATETIME2 DEFAULT SYSDATETIME(),
+    CONSTRAINT FK_TinTuc_TacGia FOREIGN KEY (MaTacGia) REFERENCES dbo.NHAN_SU(MaNhanSu)
+);
+
+-- 5. BẢNG LICH_XUAT_BAN
+CREATE TABLE dbo.LICH_XUAT_BAN (
+    MaLichDang INT IDENTITY(1,1) PRIMARY KEY,
+    MaTinTuc INT NOT NULL,
+    KenhXuatBan VARCHAR(50) NOT NULL DEFAULT 'Website',
+    ThoiGianDang DATETIME2 NOT NULL,
+    TrangThai VARCHAR(20) DEFAULT 'Pending',
+    GhiChuLoi NVARCHAR(MAX) NULL,
+    NgayTao DATETIME2 DEFAULT SYSDATETIME(),
+    CONSTRAINT FK_LichDang_TinTuc FOREIGN KEY (MaTinTuc) REFERENCES dbo.TIN_TUC(MaTinTuc) ON DELETE CASCADE
+);
+
+-- 6. BẢNG VAN_BAN
+CREATE TABLE dbo.VAN_BAN (
+    MaVanBan INT IDENTITY(1,1) PRIMARY KEY,
+    MaNguoiDang INT NOT NULL,
+    SoHieuVanBan VARCHAR(100) NOT NULL,
+    TenVanBan NVARCHAR(255) NOT NULL,
+    LoaiVanBan VARCHAR(50) NOT NULL DEFAULT 'tuyentruyen',
+    CoQuanBanHanh NVARCHAR(150) NOT NULL DEFAULT N'Ban Thường Vụ Công Đoàn TDMU',
+    NgayBanHanh DATE NOT NULL,
+    NguoiKy NVARCHAR(100) NULL,
+    TepDinhKem VARCHAR(500) NOT NULL,
+    DungLuong VARCHAR(50) DEFAULT '1.5 MB',
+    LuotTai INT DEFAULT 0,
+    GhiChu NVARCHAR(MAX) NULL,
+    NgayDang DATETIME2 DEFAULT SYSDATETIME(),
+    CONSTRAINT FK_VanBan_NguoiDang FOREIGN KEY (MaNguoiDang) REFERENCES dbo.NHAN_SU(MaNhanSu)
+);
+
+-- 7. BẢNG BAO_CAO_THANG
+CREATE TABLE dbo.BAO_CAO_THANG (
+    MaBaoCao INT IDENTITY(1,1) PRIMARY KEY,
+    MaToCongDoan INT NOT NULL,
+    MaNguoiBaoCao INT NOT NULL,
+    ThangBaoCao INT NOT NULL,
+    NamBaoCao INT NOT NULL DEFAULT 2026,
+    TongSoCBNV INT DEFAULT 0,
+    TongSoDoanVien INT DEFAULT 0,
+    TongSoNuDoanVien INT DEFAULT 0,
+    SoDoanVienKetNap INT DEFAULT 0,
+    SoDoanVienUuTuSangDang INT DEFAULT 0,
+    SoNguoiDuocChamLo INT DEFAULT 0,
+    TongTienChamLo DECIMAL(15, 2) DEFAULT 0,
+    NoiDungTuyenTruyen NVARCHAR(MAX) NULL,
+    HoatDongKhac NVARCHAR(MAX) NULL,
+    KeHoachThangToi NVARCHAR(MAX) NULL,
+    KienNghiNhaTruong NVARCHAR(MAX) NULL,
+    LinkMinhChung VARCHAR(500) NULL,
+    TuDanhGia NVARCHAR(100) DEFAULT N'Hoàn thành tốt nhiệm vụ (Loại B)',
+    BtvXepLoai NVARCHAR(100) DEFAULT N'Chờ duyệt',
+    TrangThai VARCHAR(20) DEFAULT 'Submitted',
+    NgayNop DATETIME2 DEFAULT SYSDATETIME(),
+    CONSTRAINT FK_BaoCao_ToCongDoan FOREIGN KEY (MaToCongDoan) REFERENCES dbo.TO_CONG_DOAN(MaToCongDoan) ON DELETE CASCADE,
+    CONSTRAINT FK_BaoCao_NguoiBaoCao FOREIGN KEY (MaNguoiBaoCao) REFERENCES dbo.NHAN_SU(MaNhanSu) ON DELETE CASCADE
+);
+
+-- 8. BẢNG KHO_TU_LIEU (Digital Assets DAM)
+CREATE TABLE dbo.KHO_TU_LIEU (
+    MaTuLieu INT IDENTITY(1,1) PRIMARY KEY,
+    MaNguoiNop INT NOT NULL,
+    TenFile NVARCHAR(255) NOT NULL,
+    DuongDan VARCHAR(500) NOT NULL,
+    LoaiFile VARCHAR(50) NOT NULL DEFAULT 'image/jpeg',
+    DungLuong VARCHAR(50) DEFAULT '2.0 MB',
+    ChuDeTag NVARCHAR(150) NULL,
+    AiTriageScore INT DEFAULT 85,
+    TrangThai VARCHAR(20) DEFAULT 'Active',
+    NgayTaiLen DATETIME2 DEFAULT SYSDATETIME(),
+    CONSTRAINT FK_KhoTuLieu_NguoiNop FOREIGN KEY (MaNguoiNop) REFERENCES dbo.NHAN_SU(MaNhanSu)
+);
+
+-- 9. BẢNG NHAT_KY
+CREATE TABLE dbo.NHAT_KY (
+    MaNhatKy INT IDENTITY(1,1) PRIMARY KEY,
+    MaNhanSu INT NULL,
+    HanhDong VARCHAR(100) NOT NULL,
+    ChiTiet NVARCHAR(MAX) NULL,
+    IpAddress VARCHAR(45) NULL,
+    TenTacGia NVARCHAR(100) NULL,
+    ThoiGian DATETIME2 DEFAULT SYSDATETIME(),
+    CONSTRAINT FK_NhatKy_NhanSu FOREIGN KEY (MaNhanSu) REFERENCES dbo.NHAN_SU(MaNhanSu) ON DELETE SET NULL
+);
+GO
