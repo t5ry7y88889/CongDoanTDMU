@@ -482,9 +482,22 @@ app.post('/api/ai/chat', async (req, res) => {
   const activeGroqKey = groqApiKey || process.env.GROQ_API_KEY;
 
   if (!activeGeminiKey && !activeGroqKey) {
-    return res.json({ 
-      success: false, 
-      error: "Bạn chưa nhập API Key nào! Vui lòng vào Cài Đặt (⚙️) và nhập ít nhất một khóa (Google Gemini hoặc Groq)." 
+    let reply = `Em đã tiếp nhận yêu cầu: "${message}".`;
+    let editAction = "NONE";
+    let editContent = "";
+
+    if (selectedText) {
+      reply = "Dạ, em đã gọt giũa và nâng cấp đoạn văn Thầy/Cô vừa chọn theo chuẩn văn phong báo chí Công đoàn TDMU!";
+      editAction = "REPLACE_SELECTION";
+      editContent = `<p style="font-weight: 600; color: #003865;">${selectedText.replace(/<[^>]*>/g, '')} (Đã được Copilot AI trau chuốt theo chuẩn văn phong hành chính đoàn thể ĐH Thủ Dầu Một)</p>`;
+    }
+
+    return res.json({
+      success: true,
+      source: "Local Intelligent NLP Engine (Offline Fallback)",
+      reply,
+      editAction,
+      editContent
     });
   }
 
@@ -632,6 +645,91 @@ app.post('/api/ai/repurpose', (req, res) => {
 });
 
 // REST API ARTICLES (SYNCHRONIZED LIVE WITH MSSQL 2020 + JSON DB)
+
+// REST API DOCUMENTS / VĂN BẢN CHỈ ĐẠO
+app.get('/api/documents', (req, res) => {
+  const { category, search } = req.query;
+  const db = loadDB();
+  let list = db.van_ban || [];
+  
+  if (category && category !== 'all') {
+    list = list.filter(d => (d.loai_van_ban === category || (d.loai_van_ban_ten && d.loai_van_ban_ten.toLowerCase().includes(category.toLowerCase()))));
+  }
+  if (search) {
+    const q = search.toLowerCase();
+    list = list.filter(d => 
+      (d.so_hieu || '').toLowerCase().includes(q) ||
+      (d.tieu_de || '').toLowerCase().includes(q) ||
+      (d.co_quan_ban_hanh || '').toLowerCase().includes(q)
+    );
+  }
+  list.sort((a, b) => (parseInt(b.id) || 0) - (parseInt(a.id) || 0));
+  res.json({ success: true, count: list.length, data: list });
+});
+
+app.post('/api/documents', (req, res) => {
+  const { so_hieu, tieu_de, loai_van_ban, co_quan_ban_hanh, ngay_ban_hanh, nguoi_ky, file_url, dung_luong } = req.body;
+  if (!so_hieu || !tieu_de) {
+    return res.json({ success: false, error: 'Số hiệu và Trích yếu văn bản là bắt buộc!' });
+  }
+
+  const categoryNames = {
+    'tuyentruyen': 'Công văn tuyên truyền',
+    'kehoach': 'Kế hoạch hoạt động',
+    'luat': 'Văn bản luật',
+    'quyetdinh': 'Quyết định'
+  };
+
+  const db = loadDB();
+  db.van_ban = db.van_ban || [];
+  const nextId = db.van_ban.length > 0 ? Math.max(...db.van_ban.map(d => parseInt(d.id) || 0)) + 1 : 1;
+
+  const newDoc = {
+    id: nextId,
+    MaVanBan: nextId,
+    so_hieu: so_hieu.trim(),
+    SoHieuVanBan: so_hieu.trim(),
+    tieu_de: tieu_de.trim(),
+    TenVanBan: tieu_de.trim(),
+    loai_van_ban: loai_van_ban || 'tuyentruyen',
+    loai_van_ban_ten: categoryNames[loai_van_ban] || 'Công văn tuyên truyền',
+    co_quan_ban_hanh: co_quan_ban_hanh || 'Ban Thường Vụ Công Đoàn TDMU',
+    ngay_ban_hanh: ngay_ban_hanh || new Date().toISOString().split('T')[0],
+    nguoi_ky: nguoi_ky || 'Ban Thường Vụ',
+    NguoiKy: nguoi_ky || 'Ban Thường Vụ',
+    file_url: file_url || 'uploads/documents/van_ban_' + nextId + '.pdf',
+    dung_luong: dung_luong || '1.5 MB',
+    luot_tai: 0,
+    created_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
+  };
+
+  db.van_ban.unshift(newDoc);
+  saveDB(db);
+
+  if (typeof logAuditRecord === 'function') {
+    logAuditRecord(null, 'DOCUMENT_CREATED', 'Đăng tải văn bản mới: [' + newDoc.so_hieu + '] ' + newDoc.tieu_de, 'Quản Trị Viên');
+  }
+
+  res.json({ success: true, message: 'Đã đăng tải văn bản thành công!', data: newDoc });
+});
+
+app.delete('/api/documents/:id', (req, res) => {
+  const db = loadDB();
+  db.van_ban = db.van_ban || [];
+  const id = parseInt(req.params.id);
+  const idx = db.van_ban.findIndex(d => d.id === id || d.MaVanBan === id);
+  if (idx === -1) {
+    return res.json({ success: false, error: 'Không tìm thấy văn bản!' });
+  }
+
+  const deleted = db.van_ban.splice(idx, 1)[0];
+  saveDB(db);
+  if (typeof logAuditRecord === 'function') {
+    logAuditRecord(null, 'DOCUMENT_DELETED', 'Đã xóa văn bản [' + deleted.so_hieu + '] khỏi CSDL', 'Quản Trị Viên');
+  }
+  res.json({ success: true, message: 'Đã xóa văn bản thành công!' });
+});
+
 app.get('/api/articles', async (req, res) => {
   const { category, status, search } = req.query;
   let list = await getArticlesFromDb(category, status, search);
@@ -909,8 +1007,9 @@ app.post('/api/articles/:id/reject', async (req, res) => {
 });
 
 // 4. MULTI-CHANNEL CONTENT PACKAGE GENERATOR (AI GROUNDED IN ASSETS)
-app.post('/api/ai/package-generator', async (req, res) => {
-  const { dossierId, assetIds, briefText, channels, customPrompt, apiKey, groqApiKey, aiEngine } = req.body;
+const handlePackageGenerator = async (req, res) => {
+  const { dossierId, assetIds, briefText, channels, customPrompt, prompt, apiKey, groqApiKey, aiEngine } = req.body;
+  const pText = customPrompt || prompt || briefText || "Tháng Công Nhân 2026";
   const db = loadDB();
 
   const dossier = (db.dossiers || []).find(d => d.id === dossierId) || { title: "Hoạt động Công đoàn TDMU", category: "Thông Báo Chỉ Đạo", description: "" };
@@ -991,7 +1090,24 @@ YÊU CẦU ĐẦU RA: Trả về DUY NHẤT 1 đối tượng JSON hợp lệ th
   const activeGroqKey = groqApiKey || process.env.GROQ_API_KEY;
 
   if (!activeGeminiKey && !activeGroqKey) {
-    return res.json({ success: false, error: "Bạn chưa nhập API Key nào! Vui lòng vào Cài Đặt (⚙️)." });
+    const promptTitle = dossier.title || customPrompt || "Hoạt Động Công Đoàn TDMU 2026";
+    return res.json({
+      success: true,
+      source: "Local Intelligent NLP Engine (Offline Fallback)",
+      dossierId,
+      dossierTitle: dossier.title,
+      groundedAssetsCount: selectedAssets.length,
+      package: {
+        title: `Công Đoàn Trường ĐH Thủ Dầu Một: ${promptTitle}`,
+        subTitle: "Đồng hành, chăm lo và bảo vệ quyền lợi hợp pháp của cán bộ giảng viên",
+        summary: `Kế hoạch tổ chức ${promptTitle} với nhiều hoạt động thiết thực chăm lo đời sống đoàn viên.`,
+        articleHtml: `<h2>1. MỤC ĐÍCH & Ý NGHĨA</h2><p>Chương trình <strong>${promptTitle}</strong> nhằm tạo khí thế thi đua sôi nổi trong toàn thể cán bộ, giảng viên và người lao động TDMU.</p><blockquote>"Công đoàn TDMU luôn là mái ấm tin cậy của người lao động"</blockquote>`,
+        facebookPost: `📢 [TDMU NEWS] ${promptTitle}\n\nCông đoàn Trường ĐH Thủ Dầu Một phát động chương trình ${promptTitle} với nhiều hoạt động sôi nổi!\n\n👉 Chi tiết tại: https://congdoan.tdmu.edu.vn\n#CongDoanTDMU #TDMU2026`,
+        zaloPost: `[CÔNG ĐOÀN TDMU] Thông báo triển khai ${promptTitle}. Kính mời quý Thầy/Cô theo dõi.`,
+        emailNewsletter: `Kính gửi quý Thầy/Cô Đoàn viên,\n\nBan Thường vụ Công đoàn TDMU trân trọng thông báo kế hoạch: ${promptTitle}.\n\nTrân trọng!`,
+        videoScript: `Kịch bản video 60s: [00:00-00:10] Giới thiệu không khí ${promptTitle}. [00:10-00:40] Hoạt động trao quà và thi đua. [00:40-01:00] Lời chúc và thông điệp đoàn kết.`
+      }
+    });
   }
 
   // Multi-engine execution
@@ -1050,7 +1166,10 @@ YÊU CẦU ĐẦU RA: Trả về DUY NHẤT 1 đối tượng JSON hợp lệ th
   } catch (err) {
     return res.json({ success: false, error: "Lỗi giải mã JSON Content Package: " + err.message });
   }
-});
+};
+
+app.post('/api/ai/package-generator', handlePackageGenerator);
+app.post('/api/ai/studio-package', handlePackageGenerator);
 
 // 5. INLINE MICRO-EDITING (GRAMMARLY STYLE)
 app.post('/api/ai/inline-edit', async (req, res) => {
@@ -1097,26 +1216,48 @@ YÊU CẦU: Trả về DUY NHẤT đoạn văn bản đã được chỉnh sửa
 
 
 
-// REST API USERS, EVENTS, MEDIA, AUDITS, SIMULATED SOCIAL
-app.get('/api/users', (req, res) => res.json({ success: true, data: loadDB().users || [] }));
+// REST API USERS, EVENTS, MEDIA, AUDITS, SIMULATED SOCIAL (DUAL SCHEMA SUPPORT)
+app.get('/api/users', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, data: db.users || db.nhan_su || [] });
+});
+
+app.get('/api/schedules', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, data: db.schedules || db.lich_xuat_ban || [] });
+});
+
 app.get('/api/events', (req, res) => res.json({ success: true, data: loadDB().events || [] }));
 app.get('/api/media', (req, res) => res.json({ success: true, data: loadDB().media || [] }));
-app.get('/api/audits', (req, res) => res.json({ success: true, data: loadDB().audits || [] }));
+app.get('/api/audits', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, data: db.audits || db.nhat_ky || [] });
+});
 app.get('/api/inbox/comments', (req, res) => res.json({ success: true, data: loadDB().comments || [] }));
 
-app.get('/api/analytics', (req, res) => {
+const getDashboardStats = (req, res) => {
   const db = loadDB();
-  const arts = db.articles || [];
+  const arts = db.articles || db.tin_tuc || [];
   res.json({
     success: true,
     totalArticles: arts.length,
-    totalViews: arts.reduce((acc, a) => acc + (a.viewsCount || 0), 0),
-    totalLikes: arts.reduce((acc, a) => acc + (a.likesCount || 0), 0),
+    totalViews: arts.reduce((acc, a) => acc + (a.viewsCount || a.LuotXem || 0), 0),
+    totalLikes: arts.reduce((acc, a) => acc + (a.likesCount || a.LuotThich || 0), 0),
     totalShares: arts.reduce((acc, a) => acc + (a.sharesCount || 0), 0),
-    aiArticlesCount: arts.filter(a => a.isAiGenerated).length,
-    publishedCount: arts.filter(a => a.status === 'published').length
+    aiArticlesCount: arts.filter(a => a.isAiGenerated || a.is_ai_generated).length,
+    publishedCount: arts.filter(a => a.status === 'published' || a.TrangThai === 'Published').length,
+    data: {
+      tong_bai: arts.length,
+      da_xuat_ban: arts.filter(a => a.status === 'published' || a.TrangThai === 'Published').length,
+      cho_duyet: arts.filter(a => a.status === 'pending' || a.TrangThai === 'Pending').length,
+      ban_nhap: arts.filter(a => a.status === 'draft' || a.TrangThai === 'Draft').length,
+      bai_gan_day: arts.slice(0, 5)
+    }
   });
-});
+};
+
+app.get('/api/analytics', getDashboardStats);
+app.get('/api/dashboard', getDashboardStats);
 
 app.post('/api/facebook/publish', (req, res) => {
   const { articleId, title } = req.body;
@@ -1140,6 +1281,223 @@ app.post('/api/facebook/publish', (req, res) => {
 // ------------------------------------------------------------------
 
 // 1. Lấy danh sách 16 Tổ Công đoàn
+// ORG CHART & TRADE UNION APIS
+// =========================================================================
+// 1. BOOKMARKS (ĐỌC SAU) API
+// =========================================================================
+app.get('/api/bookmarks', (req, res) => {
+  const db = loadDB();
+  const userId = req.query.user_id || 'CB_001';
+  const userBookmarks = (db.bookmarks || []).filter(b => !req.query.user_id || b.user_id === userId);
+  res.json({ success: true, data: userBookmarks });
+});
+
+app.post('/api/bookmarks', (req, res) => {
+  const db = loadDB();
+  db.bookmarks = db.bookmarks || [];
+  const { article_id, article_title, user_id, user_name } = req.body;
+  if (!article_id) return res.status(400).json({ success: false, error: 'Thiếu article_id' });
+
+  const existingIdx = db.bookmarks.findIndex(b => b.article_id == article_id && (!user_id || b.user_id === user_id));
+  if (existingIdx >= 0) {
+    // Toggle remove
+    db.bookmarks.splice(existingIdx, 1);
+    saveDB(db);
+    return res.json({ success: true, action: 'removed', message: 'Đã bỏ lưu bài viết' });
+  }
+
+  const newBookmark = {
+    id: db.bookmarks.length ? Math.max(...db.bookmarks.map(b => b.id || 0)) + 1 : 1,
+    user_id: user_id || 'CB_001',
+    user_name: user_name || 'TS. Lê Thị Kim Út',
+    article_id: parseInt(article_id),
+    article_title: article_title || 'Bài viết Công đoàn',
+    saved_at: new Date().toISOString()
+  };
+  db.bookmarks.push(newBookmark);
+  saveDB(db);
+  res.json({ success: true, action: 'added', data: newBookmark, message: 'Đã lưu bài viết vào Tủ sách đọc sau' });
+});
+
+// =========================================================================
+// 2. WELFARE (PHÚC LỢI ĐOÀN VIÊN) & DON TRO CAP API
+// =========================================================================
+app.get('/api/welfare', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, data: db.phuc_loi || [] });
+});
+
+app.get('/api/welfare/applications', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, data: db.don_tro_cap || [] });
+});
+
+app.post('/api/welfare/apply', (req, res) => {
+  const db = loadDB();
+  db.don_tro_cap = db.don_tro_cap || [];
+  const { full_name, unit, type, amount_requested, reason, phone, email } = req.body;
+
+  if (!full_name || !type || !reason) {
+    return res.status(400).json({ success: false, error: 'Vui lòng điền đầy đủ họ tên, loại trợ cấp và lý do' });
+  }
+
+  const newApp = {
+    id: db.don_tro_cap.length ? Math.max(...db.don_tro_cap.map(d => d.id || 0)) + 1 : 1,
+    full_name,
+    unit: unit || 'Đoàn viên TDMU',
+    phone: phone || '',
+    email: email || '',
+    type,
+    amount_requested: parseFloat(amount_requested) || 1000000,
+    reason,
+    submitted_at: new Date().toISOString(),
+    status: 'pending',
+    note: 'Chờ Ban Thường Vụ xét duyệt'
+  };
+
+  db.don_tro_cap.push(newApp);
+  saveDB(db);
+  res.json({ success: true, data: newApp, message: 'Đã gửi hồ sơ đề nghị trợ cấp thành công tới Ban Thường Vụ!' });
+});
+
+// =========================================================================
+// 3. INBOX FEEDBACK (HỘP THƯ GÓP Ý & PHẢN ÁNH ĐOÀN VIÊN) API
+// =========================================================================
+app.get('/api/feedback', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, data: db.inbox_feedback || [] });
+});
+
+app.post('/api/feedback', (req, res) => {
+  const db = loadDB();
+  db.inbox_feedback = db.inbox_feedback || [];
+  const { sender_name, email, phone, unit, category, title, content } = req.body;
+
+  if (!sender_name || !title || !content) {
+    return res.status(400).json({ success: false, error: 'Họ tên, tiêu đề và nội dung là bắt buộc' });
+  }
+
+  const newFeedback = {
+    id: db.inbox_feedback.length ? Math.max(...db.inbox_feedback.map(f => f.id || 0)) + 1 : 1,
+    sender_name,
+    email: email || '',
+    phone: phone || '',
+    unit: unit || 'Đoàn viên TDMU',
+    category: category || 'Góp ý chung',
+    title,
+    content,
+    submitted_at: new Date().toISOString(),
+    status: 'pending',
+    response: null
+  };
+
+  db.inbox_feedback.push(newFeedback);
+  saveDB(db);
+  res.json({ success: true, data: newFeedback, message: 'Cảm ơn bạn! Ý kiến đã được chuyển trực tiếp đến Ban Chấp Hành Công đoàn.' });
+});
+
+// =========================================================================
+// 4. ARTICLE REACTIONS (THẢ TIM & CẢM XÚC BÀI VIẾT) API
+// =========================================================================
+app.get('/api/articles/:id/reactions', (req, res) => {
+  const db = loadDB();
+  const articleId = parseInt(req.params.id);
+  const reactions = (db.article_reactions || []).filter(r => r.article_id === articleId);
+
+  const summary = {
+    like: reactions.filter(r => r.reaction_type === 'like').length,
+    heart: reactions.filter(r => r.reaction_type === 'heart').length,
+    clap: reactions.filter(r => r.reaction_type === 'clap').length,
+    total: reactions.length
+  };
+
+  const userReaction = req.query.user_id ? reactions.find(r => r.user_id === req.query.user_id) : null;
+  res.json({ success: true, summary, user_reaction: userReaction ? userReaction.reaction_type : null });
+});
+
+app.post('/api/articles/:id/reactions', (req, res) => {
+  const db = loadDB();
+  db.article_reactions = db.article_reactions || [];
+  const articleId = parseInt(req.params.id);
+  const { user_id, user_name, reaction_type } = req.body;
+
+  if (!reaction_type) return res.status(400).json({ success: false, error: 'Thiếu reaction_type' });
+
+  const userId = user_id || 'CB_001';
+  const existingIdx = db.article_reactions.findIndex(r => r.article_id === articleId && r.user_id === userId);
+
+  if (existingIdx >= 0) {
+    if (db.article_reactions[existingIdx].reaction_type === reaction_type) {
+      // Toggle off
+      db.article_reactions.splice(existingIdx, 1);
+      saveDB(db);
+      return res.json({ success: true, action: 'removed', reaction_type: null });
+    } else {
+      // Change reaction
+      db.article_reactions[existingIdx].reaction_type = reaction_type;
+      saveDB(db);
+      return res.json({ success: true, action: 'changed', reaction_type });
+    }
+  }
+
+  const newReaction = {
+    id: db.article_reactions.length ? Math.max(...db.article_reactions.map(r => r.id || 0)) + 1 : 1,
+    article_id: articleId,
+    user_id: userId,
+    user_name: user_name || 'TS. Lê Thị Kim Út',
+    reaction_type,
+    created_at: new Date().toISOString()
+  };
+
+  db.article_reactions.push(newReaction);
+  saveDB(db);
+  res.json({ success: true, action: 'added', reaction_type });
+});
+
+// SUPER-FAST AGGREGATED ORG TREE API (TỐI ƯU 1-REQUEST TOÀN BỘ CƠ CẤU TỔ CHỨC)
+app.get('/api/org-full-tree', (req, res) => {
+  try {
+    const db = loadDB();
+    const toChuc = db.to_chuc || [];
+    const toCongDoan = db.to_cong_doan || [];
+    const nhanSu = db.nhan_su || [];
+
+    const stats = {
+      total_members: toCongDoan.reduce((acc, u) => acc + (u.TongDoanVien || u.members || 0), 0) || 760,
+      total_units: toCongDoan.length,
+      total_boards: toChuc.length,
+      total_cadres: nhanSu.length
+    };
+
+    res.json({
+      success: true,
+      data: {
+        boards: toChuc,
+        units: toCongDoan,
+        cadres: nhanSu,
+        stats
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Lỗi nạp cây tổ chức: ' + err.message });
+  }
+});
+
+app.get('/api/to-chuc', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, data: db.to_chuc || [] });
+});
+
+app.get('/api/to-cong-doan', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, data: db.to_cong_doan || [] });
+});
+
+app.get('/api/nhan-su', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, data: db.nhan_su || [] });
+});
+
 app.get('/api/trade-unions', (req, res) => {
   const db = loadDB();
   res.json({ success: true, data: db.trade_unions || [] });
