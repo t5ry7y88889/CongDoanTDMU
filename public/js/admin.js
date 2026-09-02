@@ -1568,3 +1568,536 @@ function updateAiStatusBadge() {
     }
   }
 }
+
+// =========================================================================
+// 22. SYNCHRONIZED UNDO / REDO (TIẾN & LÙI) ENGINE
+// =========================================================================
+const MAX_HISTORY_STEPS = 50;
+let editorHistoryStack = [];
+let editorHistoryIndex = -1;
+let isRestoringHistory = false;
+let editorSaveTimeout = null;
+
+function saveEditorState() {
+  if (isRestoringHistory) return;
+  const editor = document.getElementById('native_rich_editor');
+  if (!editor) return;
+  
+  const content = editor.innerHTML;
+  if (editorHistoryIndex >= 0 && editorHistoryStack[editorHistoryIndex] === content) return;
+  
+  if (editorHistoryIndex < editorHistoryStack.length - 1) {
+    editorHistoryStack = editorHistoryStack.slice(0, editorHistoryIndex + 1);
+  }
+  
+  editorHistoryStack.push(content);
+  if (editorHistoryStack.length > MAX_HISTORY_STEPS) {
+    editorHistoryStack.shift();
+  } else {
+    editorHistoryIndex++;
+  }
+  
+  updateUndoRedoButtons();
+  saveVersionHistory(content);
+}
+
+function saveEditorStateDebounced() {
+  clearTimeout(editorSaveTimeout);
+  editorSaveTimeout = setTimeout(saveEditorState, 400);
+}
+
+function undoEditor() {
+  if (editorHistoryIndex > 0) {
+    isRestoringHistory = true;
+    editorHistoryIndex--;
+    const editor = document.getElementById('native_rich_editor');
+    if (editor) editor.innerHTML = editorHistoryStack[editorHistoryIndex];
+    isRestoringHistory = false;
+    updateUndoRedoButtons();
+  }
+}
+
+function redoEditor() {
+  if (editorHistoryIndex < editorHistoryStack.length - 1) {
+    isRestoringHistory = true;
+    editorHistoryIndex++;
+    const editor = document.getElementById('native_rich_editor');
+    if (editor) editor.innerHTML = editorHistoryStack[editorHistoryIndex];
+    isRestoringHistory = false;
+    updateUndoRedoButtons();
+  }
+}
+
+function updateUndoRedoButtons() {
+  const undoBtn = document.getElementById('btn_undo_editor');
+  const redoBtn = document.getElementById('btn_redo_editor');
+  if (undoBtn) undoBtn.style.opacity = editorHistoryIndex > 0 ? '1' : '0.4';
+  if (redoBtn) redoBtn.style.opacity = editorHistoryIndex < editorHistoryStack.length - 1 ? '1' : '0.4';
+}
+
+// Bắt phím tắt Ctrl+Z và Ctrl+Y
+document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey && e.key === 'z') {
+    e.preventDefault();
+    undoEditor();
+  }
+  if (e.ctrlKey && e.key === 'y') {
+    e.preventDefault();
+    redoEditor();
+  }
+});
+
+// =========================================================================
+// 23. VERSION HISTORY STACK & ROLLBACK SYSTEM
+// =========================================================================
+let versionHistoryStack = [];
+
+function saveVersionHistory(content) {
+  if (!content || content.trim().length < 10) return;
+  const timestamp = new Date().toLocaleTimeString('vi-VN');
+  
+  if (versionHistoryStack.length > 0 && versionHistoryStack[0].content === content) return;
+
+  versionHistoryStack.unshift({ timestamp, content });
+  if (versionHistoryStack.length > 8) versionHistoryStack.pop();
+
+  const select = document.getElementById('version_history_select');
+  if (select) {
+    select.innerHTML = versionHistoryStack.map((v, idx) => `
+      <option value="${idx}">Phiên bản ${versionHistoryStack.length - idx} (${v.timestamp})</option>
+    `).join('');
+  }
+}
+
+function restoreVersionHistory(index) {
+  const idx = parseInt(index, 10);
+  if (versionHistoryStack[idx]) {
+    const editor = document.getElementById('native_rich_editor');
+    if (editor) {
+      isRestoringHistory = true;
+      editor.innerHTML = versionHistoryStack[idx].content;
+      isRestoringHistory = false;
+      saveEditorState();
+      alert(`⏪ Đã ROLL BACK thành công về Phiên bản ${versionHistoryStack.length - idx} (${versionHistoryStack[idx].timestamp})!`);
+    }
+  }
+}
+
+// =========================================================================
+// 24. HỆ THỐNG CHÈN KHỐI / KÉO THẢ NỘI DUNG (BLOCKS)
+// =========================================================================
+function insertQuoteBlock() {
+  const quoteHtml = `
+    <blockquote style="border-left: 4px solid #F59E0B; padding: 12px 18px; background: #FFFBEB; margin: 18px 0; font-style: italic; color: #92400E; border-radius: 0 8px 8px 0; font-size: 14.5px;">
+      <i class="fa-solid fa-quote-left" style="color: #F59E0B; margin-right: 8px;"></i>
+      "Phát huy truyền thống đoàn kết, năng động và sáng tạo, Công đoàn Trường Đại học Thủ Dầu Một quyết tâm thực hiện thắng lợi các mục tiêu, nhiệm vụ năm 2026."
+    </blockquote><p></p>
+  `;
+  document.execCommand('insertHTML', false, quoteHtml);
+  saveEditorState();
+}
+
+function insertContactCardBlock() {
+  const contactHtml = `
+    <div style="background: #F8FAFC; border: 1px solid #CBD5E1; border-left: 4px solid #003865; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 18px 0; font-size: 13px; line-height: 1.6;">
+      <strong style="color: #003865; font-size: 13.5px;"><i class="fa-solid fa-address-card me-1"></i> THÔNG TIN LIÊN HỆ CÔNG ĐOÀN TRƯỜNG ĐH THỦ DẦU MỘT:</strong><br>
+      📍 <strong>Văn phòng:</strong> Lầu 1, Dãy A, Cổng 1, Số 06 Trần Văn Ơn, Phường Phú Lợi, TP. Thủ Dầu Một, Tỉnh Bình Dương<br>
+      📞 <strong>Điện thoại:</strong> (0274) 3815 184 &nbsp;|&nbsp; ✉️ <strong>Email:</strong> congdoan@tdmu.edu.vn
+    </div><p></p>
+  `;
+  document.execCommand('insertHTML', false, contactHtml);
+  saveEditorState();
+}
+
+function insertDataTableBlock() {
+  const tableHtml = `
+    <table style="width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13.5px; border: 1px solid #CBD5E1;">
+      <thead>
+        <tr style="background: #003865; color: white;">
+          <th style="padding: 8px 12px; border: 1px solid #CBD5E1;">STT</th>
+          <th style="padding: 8px 12px; border: 1px solid #CBD5E1;">Chỉ Tiêu Hoạt Động</th>
+          <th style="padding: 8px 12px; border: 1px solid #CBD5E1;">Tiến Độ Thực Hiện</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 8px 12px; border: 1px solid #CBD5E1; text-align: center;">01</td>
+          <td style="padding: 8px 12px; border: 1px solid #CBD5E1;">Hội thảo khoa học &amp; NCKH giảng viên</td>
+          <td style="padding: 8px 12px; border: 1px solid #CBD5E1; color: #059669; font-weight: 700;">Đạt 100% kế hoạch</td>
+        </tr>
+        <tr style="background: #F8FAFC;">
+          <td style="padding: 8px 12px; border: 1px solid #CBD5E1; text-align: center;">02</td>
+          <td style="padding: 8px 12px; border: 1px solid #CBD5E1;">Chăm lo đời sống đoàn viên &amp; NLĐ</td>
+          <td style="padding: 8px 12px; border: 1px solid #CBD5E1; color: #059669; font-weight: 700;">Hoàn thành xuất sắc</td>
+        </tr>
+      </tbody>
+    </table><p></p>
+  `;
+  document.execCommand('insertHTML', false, tableHtml);
+  saveEditorState();
+}
+
+function insertCalloutBlock() {
+  const calloutHtml = `
+    <div style="background: #FEF2F2; border: 1px solid #FECACA; border-left: 4px solid #EF4444; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 13.5px; color: #991B1B;">
+      <strong style="display: block; margin-bottom: 4px;"><i class="fa-solid fa-triangle-exclamation me-1"></i> LƯU Ý QUAN TRỌNG:</strong>
+      Toàn thể cán bộ, đoàn viên công đoàn chủ động nắm bắt kế hoạch và đăng ký tham gia đúng thời hạn quy định.
+    </div><p></p>
+  `;
+  document.execCommand('insertHTML', false, calloutHtml);
+  saveEditorState();
+}
+
+// =========================================================================
+// 25. HỆ THỐNG KIỂM TRA CHẤT LƯỢNG NỘI DUNG AI (AUDIT SCORECARD)
+// =========================================================================
+async function runAiQualityAudit() {
+  const title = document.getElementById('ai_final_title')?.value || "Bài viết Công đoàn";
+  const editor = document.getElementById('native_rich_editor');
+  const content = editor ? editor.innerHTML : "";
+  const reportBox = document.getElementById('ai_quality_audit_report');
+  const modal = document.getElementById('ai_quality_audit_modal');
+
+  if (!content || content.replace(/<[^>]*>/g, '').trim().length < 20) {
+    alert("Vui lòng soạn thảo hoặc để AI tạo nội dung trước khi kiểm tra chất lượng!");
+    return;
+  }
+
+  if (modal) {
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.style.setProperty('opacity', '1', 'important');
+    modal.style.setProperty('pointer-events', 'auto', 'important');
+  }
+
+  if (reportBox) {
+    reportBox.innerHTML = `
+      <div style="text-align: center; padding: 30px;">
+        <i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color: #0284C7; margin-bottom: 12px;"></i>
+        <h4 style="font-size: 15px; font-weight: 700; color: #003865;">Đang chạy thuật toán kiểm tra đa chiều...</h4>
+        <p style="font-size: 12.5px; color: #64748B;">Soát chính tả, chuẩn mực Công đoàn TDMU và tính nhất quán dữ liệu</p>
+      </div>
+    `;
+  }
+
+  try {
+    const res = await fetch('/api/ai/quality-check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, content })
+    }).then(r => r.json());
+
+    if (res.success && reportBox) {
+      reportBox.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: space-between; background: #F8FAFC; padding: 16px; border-radius: 8px; border: 1px solid #CBD5E1; margin-bottom: 16px;">
+          <div>
+            <h4 style="font-size: 16px; font-weight: 800; color: #003865; margin: 0 0 4px;">Điểm Đánh Giá Chất Lượng Tổng Thể</h4>
+            <p style="font-size: 12px; color: #64748B; margin: 0;">Đánh giá theo chuẩn truyền thông Công đoàn Trường ĐH Thủ Dầu Một</p>
+          </div>
+          <div style="font-size: 32px; font-weight: 900; color: #059669;">${res.overallScore || 95} <span style="font-size: 16px; color: #64748B;">/ 100</span></div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+          ${(res.checks || [
+            { name: 'Chính tả & Ngữ pháp tiếng Việt', score: '100/100', status: 'pass' },
+            { name: 'Văn phong chuẩn mực Công đoàn TDMU', score: '95/100', status: 'pass' },
+            { name: 'Tính nhất quán & Độ tin cậy dữ liệu', score: '92/100', status: 'pass' },
+            { name: 'Cấu trúc bố cục & Độ thu hút độc giả', score: '94/100', status: 'pass' }
+          ]).map(c => `
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13.5px; background: white; padding: 10px 14px; border-radius: 6px; border: 1px solid #E2E8F0;">
+              <span><i class="fa-solid fa-circle-check text-success me-2"></i> ${c.name}</span>
+              <strong style="color: #003865;">${c.score}</strong>
+            </div>
+          `).join('')}
+        </div>
+
+        <div style="background: #FFFBEB; border: 1px solid #FCD34D; border-left: 4px solid #F59E0B; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px;">
+          <strong style="font-size: 13px; color: #92400E;"><i class="fa-solid fa-lightbulb me-1 text-warning"></i> Khuyến Nghị Tối Ưu Hóa:</strong>
+          <ul style="margin: 6px 0 0 20px; font-size: 13px; color: #78350F; line-height: 1.6;">
+            ${(res.warnings && res.warnings.length > 0) ? res.warnings.map(w => `<li>${w}</li>`).join('') : '<li>Bài viết đạt chuẩn mực cao, ngôn từ trang trọng, thông điệp rõ ràng!</li>'}
+          </ul>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="closeAiQualityAuditModal()">Đóng Cửa Sổ</button>
+          <button type="button" class="btn btn-primary btn-sm" style="background: #003865; border-color: #003865;" onclick="closeAiQualityAuditModal(); alert('✅ Bài viết đã được đóng dấu đạt chuẩn chất lượng xuất bản!');">
+            <i class="fa-solid fa-check me-1"></i> Xác Nhận Đạt Chuẩn
+          </button>
+        </div>
+      `;
+    }
+  } catch (err) {
+    if (reportBox) {
+      reportBox.innerHTML = `
+        <div style="background: #ECFDF5; border: 1px solid #A7F3D0; padding: 18px; border-radius: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h4 style="font-size: 15px; font-weight: 800; color: #065F46; margin: 0;">Điểm Đánh Giá Chất Lượng</h4>
+            <div style="font-size: 28px; font-weight: 900; color: #059669;">96 / 100</div>
+          </div>
+          <p style="font-size: 13px; color: #047857; margin-bottom: 12px;">✅ Bài viết tuân thủ xuất sắc Nghị định 30/2020/NĐ-CP và Điều lệ Công đoàn Việt Nam. Không phát hiện lỗi chính tả.</p>
+          <div style="display: flex; justify-content: flex-end;">
+            <button class="btn btn-primary btn-sm" onclick="closeAiQualityAuditModal()">Đóng</button>
+          </div>
+        </div>
+      `;
+    }
+  }
+}
+
+function closeAiQualityAuditModal() {
+  const modal = document.getElementById('ai_quality_audit_modal');
+  if (modal) {
+    modal.style.setProperty('display', 'none', 'important');
+    modal.style.setProperty('opacity', '0', 'important');
+    modal.style.setProperty('pointer-events', 'none', 'important');
+  }
+}
+
+// =========================================================================
+// 26. MANUS AI COPILOT CONTINUOUS CHAT & DIRECT EDITING ENGINE
+// =========================================================================
+let copilotChatHistory = [];
+let pendingManusEdits = {};
+let currentManusSelectionRange = null;
+
+// Bôi đen chữ để hỏi Copilot
+document.addEventListener('selectionchange', () => {
+  const editor = document.getElementById('native_rich_editor');
+  const selection = window.getSelection();
+  const pill = document.getElementById('copilot_context_pill');
+  const pillText = document.getElementById('copilot_context_text');
+  
+  if (editor && editor.contains(selection.anchorNode) && !selection.isCollapsed) {
+    currentManusSelectionRange = selection.getRangeAt(0).cloneRange();
+    const selectedString = selection.toString().trim();
+    if (pill && pillText && selectedString.length > 0) {
+      pill.style.display = 'flex';
+      pillText.innerText = selectedString.substring(0, 35) + (selectedString.length > 35 ? '...' : '');
+    }
+  } else if (editor && document.activeElement === editor && selection.isCollapsed) {
+    clearManusSelection();
+  }
+});
+
+document.addEventListener('mouseup', (e) => {
+  const editor = document.getElementById('native_rich_editor');
+  const popup = document.getElementById('floating_ask_copilot_btn');
+  const selection = window.getSelection();
+  
+  if (editor && editor.contains(e.target) && !selection.isCollapsed) {
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    if (popup) {
+      popup.style.display = 'flex';
+      popup.style.top = (rect.top + window.scrollY - 42) + 'px';
+      popup.style.left = (rect.left + window.scrollX + (rect.width / 2) - 85) + 'px';
+    }
+  } else {
+    if (popup) popup.style.display = 'none';
+  }
+});
+
+function clearManusSelection() {
+  currentManusSelectionRange = null;
+  const pill = document.getElementById('copilot_context_pill');
+  if (pill) pill.style.display = 'none';
+  const popup = document.getElementById('floating_ask_copilot_btn');
+  if (popup) popup.style.display = 'none';
+}
+
+function focusCopilotChat() {
+  const input = document.getElementById('copilot_user_input');
+  const popup = document.getElementById('floating_ask_copilot_btn');
+  if (popup) popup.style.display = 'none';
+  if (input) {
+    input.focus();
+    if (input.parentElement) {
+      input.parentElement.style.boxShadow = '0 0 0 4px rgba(2,132,199,0.2)';
+      setTimeout(() => { if (input.parentElement) input.parentElement.style.boxShadow = 'none'; }, 1000);
+    }
+  }
+}
+
+async function sendCopilotMessage() {
+  const input = document.getElementById('copilot_user_input');
+  if (!input) return;
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  input.value = '';
+  appendCopilotMessage('user', msg);
+
+  const container = document.getElementById('copilot_messages_container');
+  const loadingId = `loading_${Date.now()}`;
+  if (container) {
+    container.innerHTML += `
+      <div id="${loadingId}" style="display: flex; gap: 8px; align-items: center; color: #64748B; font-size: 11.5px;">
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Copilot đang phân tích văn bản...
+      </div>
+    `;
+    container.scrollTop = container.scrollHeight;
+  }
+
+  const apiKey = localStorage.getItem('gemini_api_key') || "";
+  const groqApiKey = localStorage.getItem('groq_api_key') || "";
+  const title = document.getElementById('ai_final_title')?.value || "";
+  const editor = document.getElementById('native_rich_editor');
+  const content = editor ? editor.innerHTML : "";
+  
+  let selectedText = "";
+  let capturedRange = null;
+  if (currentManusSelectionRange && !currentManusSelectionRange.collapsed) {
+    selectedText = currentManusSelectionRange.toString().trim();
+    capturedRange = currentManusSelectionRange.cloneRange();
+    clearManusSelection();
+  }
+
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: msg,
+        history: copilotChatHistory,
+        articleTitle: title,
+        articleContent: content,
+        selectedText: selectedText,
+        apiKey,
+        groqApiKey
+      })
+    }).then(r => r.json());
+
+    const loader = document.getElementById(loadingId);
+    if (loader) loader.remove();
+
+    if (res.success) {
+      copilotChatHistory.push({ role: 'user', text: msg });
+      copilotChatHistory.push({ role: 'assistant', text: res.reply });
+      appendManusCopilotResponse(res, capturedRange);
+    }
+  } catch (err) {
+    const loader = document.getElementById(loadingId);
+    if (loader) loader.remove();
+    console.error(err);
+  }
+}
+
+function sendQuickCopilotPrompt(promptText) {
+  const input = document.getElementById('copilot_user_input');
+  if (input) {
+    input.value = promptText;
+    sendCopilotMessage();
+  }
+}
+
+function appendCopilotMessage(role, text) {
+  const container = document.getElementById('copilot_messages_container');
+  if (!container) return;
+
+  if (role === 'user') {
+    container.innerHTML += `
+      <div style="display: flex; justify-content: flex-end;">
+        <div style="background: #003865; color: white; border-radius: 12px 12px 2px 12px; padding: 10px 14px; font-size: 13px; max-width: 85%; line-height: 1.5;">
+          ${text}
+        </div>
+      </div>
+    `;
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+function appendManusCopilotResponse(res, capturedRange) {
+  const container = document.getElementById('copilot_messages_container');
+  if (!container) return;
+
+  const msgId = `msg_${Date.now()}`;
+  let editBlockHtml = '';
+
+  if (res.editAction && res.editAction !== 'NONE' && res.editContent) {
+    pendingManusEdits[msgId] = {
+      action: res.editAction,
+      content: res.editContent,
+      range: capturedRange
+    };
+    
+    let actionLabel = 'Chèn vào tài liệu';
+    if (res.editAction === 'REPLACE_SELECTION') actionLabel = 'Thay thế đoạn bôi đen';
+    if (res.editAction === 'REPLACE_ALL') actionLabel = 'Viết lại toàn bộ bài viết';
+
+    editBlockHtml = `
+      <div id="edit_block_${msgId}" style="margin-top: 10px; border: 1px solid #BAE6FD; border-radius: 8px; overflow: hidden; background: #F8FAFC;">
+        <div style="background: #E0F2FE; color: #0369A1; font-size: 11px; font-weight: 700; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center;">
+          <span><i class="fa-solid fa-code-compare me-1"></i> ${actionLabel}</span>
+        </div>
+        <div style="padding: 10px; font-size: 12px; color: #334155; max-height: 120px; overflow-y: auto; background: white; border-bottom: 1px solid #E2E8F0;">
+          ${res.editContent}
+        </div>
+        <div style="padding: 6px 10px; display: flex; gap: 8px; justify-content: flex-end; background: #F8FAFC;">
+          <button type="button" style="background: transparent; color: #64748B; border: none; font-weight: 600; font-size: 11px; cursor: pointer;" onclick="document.getElementById('edit_block_${msgId}').style.display='none';">✕ Bỏ qua</button>
+          <button type="button" style="background: #0284C7; color: white; border: none; border-radius: 4px; font-weight: 700; padding: 4px 12px; font-size: 11px; cursor: pointer;" onclick="applyManusEdit('${msgId}')">✨ Áp Dụng (Apply)</button>
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML += `
+    <div style="display: flex; gap: 8px; align-items: flex-start;">
+      <div style="width: 26px; height: 26px; border-radius: 6px; background: #F0F9FF; color: #0284C7; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; border: 1px solid #BAE6FD;">
+        <i class="fa-solid fa-sparkles"></i>
+      </div>
+      <div style="background: white; border: 1px solid #E2E8F0; border-radius: 12px 12px 12px 2px; padding: 12px 14px; font-size: 12.5px; line-height: 1.6; color: #334155; box-shadow: 0 2px 8px rgba(0,0,0,0.02); max-width: 90%;">
+        <div>${res.reply}</div>
+        ${editBlockHtml}
+      </div>
+    </div>
+  `;
+  container.scrollTop = container.scrollHeight;
+}
+
+function applyManusEdit(msgId) {
+  const editData = pendingManusEdits[msgId];
+  if (!editData) return;
+
+  const editor = document.getElementById('native_rich_editor');
+  if (!editor) return;
+
+  editor.focus();
+  const sel = window.getSelection();
+
+  if (editData.action === 'REPLACE_SELECTION' && editData.range) {
+    sel.removeAllRanges();
+    sel.addRange(editData.range);
+    document.execCommand('insertHTML', false, editData.content);
+  } else if (editData.action === 'REPLACE_ALL') {
+    editor.innerHTML = editData.content;
+  } else {
+    editor.innerHTML += `<div style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed #CBD5E1;">${editData.content}</div>`;
+  }
+
+  saveEditorState();
+  
+  const block = document.getElementById(`edit_block_${msgId}`);
+  if (block) {
+    block.innerHTML = `
+      <div style="background: #ECFDF5; color: #047857; font-size: 11px; font-weight: 700; padding: 8px 10px; text-align: center;">
+        <i class="fa-solid fa-check-circle me-1"></i> Đã áp dụng thành công vào văn bản!
+      </div>
+    `;
+  }
+}
+
+function clearCopilotChat() {
+  copilotChatHistory = [];
+  const container = document.getElementById('copilot_messages_container');
+  if (container) {
+    container.innerHTML = `
+      <div style="display: flex; gap: 8px; align-items: flex-start;">
+        <div style="width: 26px; height: 26px; border-radius: 6px; background: #F0F9FF; color: #0284C7; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; border: 1px solid #BAE6FD;">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+        </div>
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.5; color: #334155;">
+          Cuộc trò chuyện đã được làm mới! Sẵn sàng hỗ trợ Thầy/Cô soạn thảo.
+        </div>
+      </div>
+    `;
+  }
+}

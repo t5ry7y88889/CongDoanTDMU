@@ -337,55 +337,126 @@
             </div>
 
             <!-- TAB 1: WEBSITE CANVAS (WORD CANVAS + RIBBON TOOLBAR) -->
+            <!-- TAB 1: WEBSITE CANVAS (WORD CANVAS + RIBBON TOOLBAR + MANUS COPILOT) -->
             <div id="pkg_view_web" style="padding: 24px;">
-              <div style="display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start;">
+              <div style="display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start;">
                 <!-- CỘT TRÁI: SOẠN THẢO CHUẨN MICROSOFT WORD -->
                 <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 12px; padding: 28px 36px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); position: relative;">
                   <input type="text" id="ai_final_title" placeholder="Tiêu Đề Bài Báo..." style="width: 100%; font-size: 24px; font-weight: 800; color: #0F172A; border: none; outline: none; margin-bottom: 8px; line-height: 1.3;">
                   <input type="text" id="ai_final_subtitle" placeholder="Tiêu đề phụ súc tích tóm lược..." style="width: 100%; font-size: 14px; font-style: italic; color: #64748B; border: none; outline: none; margin-bottom: 18px; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px;">
 
-                  <!-- THANH CÔNG CỤ RIBBON WORD 365 -->
-                  <div style="position: sticky; top: 0; z-index: 100; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 8px 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                  <!-- THANH CÔNG CỤ RIBBON WORD CHUYÊN NGHIỆP CÓ TIẾN/LÙI, ROLLBACK, CHÈN KHỐI, KIỂM TRA -->
+                  <div style="position: sticky; top: 0; z-index: 100; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 8px 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                    <!-- Nhóm 1: Tiến / Lùi & Định dạng -->
                     <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
-                      <button type="button" class="btn-word-tool" title="Hoàn tác (Ctrl+Z)" onclick="document.execCommand('undo')"><i class="fa-solid fa-rotate-left"></i></button>
-                      <button type="button" class="btn-word-tool" title="Tiến tới (Ctrl+Y)" onclick="document.execCommand('redo')"><i class="fa-solid fa-rotate-right"></i></button>
-                      <button type="button" class="btn-word-tool fw-bold" onclick="document.execCommand('bold')"><strong>B</strong></button>
-                      <button type="button" class="btn-word-tool fst-italic" onclick="document.execCommand('italic')"><em>I</em></button>
-                      <button type="button" class="btn-word-tool text-decoration-underline" onclick="document.execCommand('underline')"><u>U</u></button>
-                      <button type="button" class="btn-word-tool" onclick="document.execCommand('justifyLeft')"><i class="fa-solid fa-align-left"></i></button>
-                      <button type="button" class="btn-word-tool" onclick="document.execCommand('justifyCenter')"><i class="fa-solid fa-align-center"></i></button>
-                      <button type="button" class="btn-word-tool" onclick="document.execCommand('justifyRight')"><i class="fa-solid fa-align-right"></i></button>
-                      <button type="button" class="btn-word-tool" onclick="document.execCommand('insertUnorderedList')"><i class="fa-solid fa-list-ul"></i></button>
+                      <button type="button" id="btn_undo_editor" class="btn-word-tool" title="Hoàn tác / Lùi lại (Ctrl+Z)" onclick="undoEditor()" style="font-weight: 700; color: #003865;"><i class="fa-solid fa-rotate-left"></i> Lùi</button>
+                      <button type="button" id="btn_redo_editor" class="btn-word-tool" title="Tiến tới (Ctrl+Y)" onclick="redoEditor()" style="font-weight: 700; color: #003865;"><i class="fa-solid fa-rotate-right"></i> Tiến</button>
+                      <div style="width: 1px; height: 18px; background: #CBD5E1; margin: 0 2px;"></div>
+                      <button type="button" class="btn-word-tool fw-bold" onclick="document.execCommand('bold')" title="In đậm (Ctrl+B)"><strong>B</strong></button>
+                      <button type="button" class="btn-word-tool fst-italic" onclick="document.execCommand('italic')" title="In nghiêng (Ctrl+I)"><em>I</em></button>
+                      <button type="button" class="btn-word-tool text-decoration-underline" onclick="document.execCommand('underline')" title="Gạch chân (Ctrl+U)"><u>U</u></button>
+                      <div style="width: 1px; height: 18px; background: #CBD5E1; margin: 0 2px;"></div>
+                      <button type="button" class="btn-word-tool" onclick="document.execCommand('justifyLeft')" title="Căn trái"><i class="fa-solid fa-align-left"></i></button>
+                      <button type="button" class="btn-word-tool" onclick="document.execCommand('justifyCenter')" title="Căn giữa"><i class="fa-solid fa-align-center"></i></button>
+                      <button type="button" class="btn-word-tool" onclick="document.execCommand('justifyRight')" title="Căn phải"><i class="fa-solid fa-align-right"></i></button>
+                      <button type="button" class="btn-word-tool" onclick="document.execCommand('insertUnorderedList')" title="Danh sách"><i class="fa-solid fa-list-ul"></i></button>
                     </div>
 
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                      <span style="font-size: 11.5px; color: #0284C7; font-weight: 700;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Viết Lại:</span>
-                      <button type="button" class="btn-word-tool" style="font-size: 11px; padding: 2px 8px;" onclick="handleToolbarAiAction('formal')">Hành Chính</button>
-                      <button type="button" class="btn-word-tool" style="font-size: 11px; padding: 2px 8px;" onclick="handleToolbarAiAction('expand')">Mở Rộng</button>
+                    <!-- Nhóm 2: Chèn Khối Kéo Thả / Cấu Trúc -->
+                    <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                      <span style="font-size: 11px; color: #64748B; font-weight: 700;"><i class="fa-solid fa-cubes"></i> Chèn:</span>
+                      <button type="button" class="btn-word-tool" onclick="insertQuoteBlock()" title="Chèn trích dẫn lãnh đạo BTV"><i class="fa-solid fa-quote-left text-warning"></i> Trích Dẫn</button>
+                      <button type="button" class="btn-word-tool" onclick="insertContactCardBlock()" title="Chèn thẻ liên hệ Công đoàn TDMU"><i class="fa-solid fa-address-card text-primary"></i> Thẻ CĐ</button>
+                      <button type="button" class="btn-word-tool" onclick="insertDataTableBlock()" title="Chèn bảng biểu số liệu"><i class="fa-solid fa-table text-info"></i> Bảng</button>
+                      <button type="button" class="btn-word-tool" onclick="insertCalloutBlock()" title="Chèn hộp lưu ý quan trọng"><i class="fa-solid fa-circle-exclamation text-danger"></i> Lưu Ý</button>
+                    </div>
+
+                    <!-- Nhóm 3: Hệ Thống Roll Back & Kiểm Tra Chất Lượng -->
+                    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                      <!-- Rollback Version History Dropdown -->
+                      <div style="display: flex; align-items: center; gap: 4px; background: #FFFBEB; border: 1px solid #FCD34D; padding: 2px 6px; border-radius: 6px;">
+                        <i class="fa-solid fa-clock-rotate-left text-warning" style="font-size: 11px;"></i>
+                        <select id="version_history_select" style="font-size: 11px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 2px 4px; font-weight: 600; color: #92400E; outline: none;" onchange="restoreVersionHistory(this.value)">
+                          <option value="0">Bản gốc hiện tại</option>
+                        </select>
+                        <button type="button" class="btn-word-tool" style="font-size: 11px; padding: 2px 6px; background: #D97706; color: white; border: none; font-weight: 700;" onclick="restoreVersionHistory(document.getElementById('version_history_select').value)" title="Khôi phục lại phiên bản đã chọn">
+                          ⏪ Roll Back
+                        </button>
+                      </div>
+
+                      <!-- Hệ Thống Kiểm Tra AI -->
+                      <button type="button" class="btn-word-tool" style="background: #0284C7; color: white; border: none; font-weight: 700; font-size: 11px; padding: 4px 10px; border-radius: 4px;" onclick="runAiQualityAudit()">
+                        <i class="fa-solid fa-shield-halved text-warning me-1"></i> Kiểm Tra AI (Audit)
+                      </button>
+
+                      <!-- AI Viết Lại -->
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <button type="button" class="btn-word-tool" style="font-size: 11px; padding: 3px 8px; color: #003865; font-weight: 600;" onclick="handleToolbarAiAction('formal')">🏛️ Hành Chính</button>
+                        <button type="button" class="btn-word-tool" style="font-size: 11px; padding: 3px 8px; color: #003865; font-weight: 600;" onclick="handleToolbarAiAction('expand')">✨ Mở Rộng</button>
+                      </div>
                     </div>
                   </div>
 
                   <!-- KHUNG NỘI DUNG TỜ GIẤY A4 -->
-                  <div id="native_rich_editor" contenteditable="true" style="min-height: 450px; outline: none; font-size: 15px; line-height: 1.8; color: #1E293B;" placeholder="Nội dung bài viết sẽ hiển thị tại đây..."></div>
+                  <div id="native_rich_editor" contenteditable="true" style="min-height: 480px; outline: none; font-size: 15px; line-height: 1.8; color: #1E293B;" placeholder="Nội dung bài viết sẽ hiển thị tại đây..." oninput="saveEditorStateDebounced()"></div>
+                  
+                  <!-- Ẩn field summary để đảm bảo tính toàn vẹn code -->
+                  <textarea id="ai_final_summary" style="display: none;"></textarea>
                 </div>
 
-                <!-- CỘT PHẢI: TÓM TẮT & METRICS -->
-                <div style="display: flex; flex-direction: column; gap: 16px;">
-                  <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px;">
-                    <h5 style="font-size: 13px; font-weight: 800; color: #003865; margin-bottom: 8px;">
-                      <i class="fa-solid fa-pen-nib text-primary me-1"></i> TÓM TẮT SAPO BÀI VIẾT:
-                    </h5>
-                    <textarea id="ai_final_summary" rows="4" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px; font-size: 13px;" placeholder="Đoạn mở đầu súc tích..."></textarea>
+                <!-- CỘT PHẢI: TRỢ LÝ MANUS AI COPILOT TRỰC TUYẾN (THAY THẾ TOÀN BỘ THANH TÓM TẮT/METRICS CŨ) -->
+                <div style="background: white; border: 1px solid #BAE6FD; border-radius: 12px; display: flex; flex-direction: column; height: 640px; box-shadow: 0 4px 20px rgba(2,132,199,0.08); overflow: hidden; position: sticky; top: 80px;">
+                  <!-- Copilot Header -->
+                  <div style="background: linear-gradient(135deg, #003865, #0284C7); color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 15px;">
+                        <i class="fa-solid fa-robot text-warning"></i>
+                      </div>
+                      <div>
+                        <div style="font-weight: 800; font-size: 14px; line-height: 1.2;">Manus AI Copilot</div>
+                        <div style="font-size: 11px; color: #BAE6FD;"><i class="fa-solid fa-circle text-success" style="font-size: 8px;"></i> Sẵn sàng hỗ trợ &amp; sửa trực tiếp</div>
+                      </div>
+                    </div>
+                    <button type="button" onclick="clearCopilotChat()" style="background: none; border: none; color: #E2E8F0; cursor: pointer; font-size: 13px;" title="Làm mới cuộc trò chuyện">
+                      <i class="fa-solid fa-rotate-right"></i>
+                    </button>
                   </div>
 
-                  <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px;">
-                    <h5 style="font-size: 13px; font-weight: 800; color: #003865; margin-bottom: 8px;">
-                      <i class="fa-solid fa-chart-line text-success me-1"></i> ĐỘ DÀI &amp; THỜI GIAN ĐỌC:
-                    </h5>
-                    <div style="font-size: 12.5px; color: #475569; display: flex; flex-direction: column; gap: 4px;">
-                      <span id="metric_char_count">0 ký tự</span>
-                      <span id="metric_word_count">0 từ</span>
-                      <span id="metric_read_time">~0 phút đọc</span>
+                  <!-- Quick Suggestion Chips -->
+                  <div style="background: #F8FAFC; padding: 8px 12px; border-bottom: 1px solid #E2E8F0; display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button type="button" class="btn-word-tool" style="font-size: 11px; border-radius: 14px; padding: 3px 8px;" onclick="sendQuickCopilotPrompt('Phân tích và gợi ý cải thiện bài viết này')">💡 Đánh giá bài</button>
+                    <button type="button" class="btn-word-tool" style="font-size: 11px; border-radius: 14px; padding: 3px 8px;" onclick="sendQuickCopilotPrompt('Viết thêm đoạn kết kêu gọi đoàn viên hưởng ứng')">✍️ Viết Kết Bài</button>
+                    <button type="button" class="btn-word-tool" style="font-size: 11px; border-radius: 14px; padding: 3px 8px;" onclick="sendQuickCopilotPrompt('Kiểm tra và sửa lỗi chính tả, ngữ pháp tiếng Việt')">🔍 Soát Chính Tả</button>
+                    <button type="button" class="btn-word-tool" style="font-size: 11px; border-radius: 14px; padding: 3px 8px;" onclick="sendQuickCopilotPrompt('Viết lại đoạn văn theo văn phong hành chính Công đoàn trang trọng')">🏛️ Hành Chính Hóa</button>
+                  </div>
+
+                  <!-- Chat Messages Container -->
+                  <div id="copilot_messages_container" style="flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #FFFFFF;">
+                    <div style="display: flex; gap: 8px; align-items: flex-start;">
+                      <div style="width: 26px; height: 26px; border-radius: 6px; background: #F0F9FF; color: #0284C7; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; border: 1px solid #BAE6FD;">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                      </div>
+                      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.5; color: #334155;">
+                        Xin chào! Em là <strong>Manus AI Copilot</strong>. Em có thể viết tiếp nội dung, tạo bảng biểu, hoặc <strong>sửa trực tiếp bất kỳ đoạn văn nào</strong> Thầy/Cô bôi đen bên trái nhé!
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Context Pill (when text is highlighted) -->
+                  <div id="copilot_context_pill" style="display: none; align-items: center; gap: 6px; background: #EFF6FF; border-top: 1px solid #BAE6FD; padding: 6px 12px; font-size: 11.5px; color: #0369A1;">
+                    <i class="fa-solid fa-quote-left" style="font-size: 10px;"></i>
+                    <span style="font-weight: 700;">Đang chọn:</span>
+                    <span id="copilot_context_text" style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">...</span>
+                    <button type="button" onclick="clearManusSelection()" style="background: none; border: none; color: #0369A1; cursor: pointer; font-size: 11px;">✕</button>
+                  </div>
+
+                  <!-- Input Bar -->
+                  <div style="padding: 10px 12px; border-top: 1px solid #E2E8F0; background: #F8FAFC;">
+                    <div style="display: flex; gap: 6px; background: white; border: 1px solid #CBD5E1; border-radius: 8px; padding: 6px 8px;">
+                      <input type="text" id="copilot_user_input" placeholder="Hỏi Copilot hoặc yêu cầu sửa..." style="flex: 1; border: none; outline: none; font-size: 12.5px; font-family: inherit;" onkeydown="if(event.key==='Enter') sendCopilotMessage()">
+                      <button type="button" onclick="sendCopilotMessage()" style="background: #0284C7; color: white; border: none; border-radius: 6px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                        <i class="fa-solid fa-arrow-up" style="font-size: 12px;"></i>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -789,6 +860,24 @@
         <span style="font-size: 12px; color: #64748B;">Hỗ trợ: .pdf, .docx, .doc, .png, .jpg</span>
         <input type="file" id="studio_file_input" style="display: none;" onchange="handleStudioFileUpload(this)">
       </div>
+    </div>
+  </div>
+
+  <!-- FLOATING TOOLTIP FOR CURSOR SELECTION -->
+  <div id="floating_ask_copilot_btn" style="display: none; position: absolute; background: #0F172A; color: white; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.3); z-index: 10000; align-items: center; gap: 6px;" onclick="focusCopilotChat()">
+    <i class="fa-solid fa-wand-magic-sparkles text-warning"></i> Hỏi Copilot sửa đoạn này
+  </div>
+
+  <!-- MODAL KIỂM TRA CHẤT LƯỢNG NỘI DUNG AI (AUDIT SCORECARD) -->
+  <div id="ai_quality_audit_modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); align-items: center; justify-content: center; z-index: 999999; backdrop-filter: blur(4px);">
+    <div style="background: white; border-radius: 12px; width: 95%; max-width: 700px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);">
+      <div style="background: #003865; color: white; border-radius: 12px 12px 0 0; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10;">
+        <h3 style="font-size: 16px; font-weight: 800; color: white; margin: 0;">
+          <i class="fa-solid fa-shield-halved text-warning me-2"></i> HỆ THỐNG KIỂM TRA CHẤT LƯỢNG NỘI DUNG (AI AUDIT)
+        </h3>
+        <button type="button" onclick="closeAiQualityAuditModal()" style="background: none; border: none; font-size: 26px; color: white; cursor: pointer; line-height: 1;">&times;</button>
+      </div>
+      <div id="ai_quality_audit_report" style="padding: 24px;"></div>
     </div>
   </div>
 
