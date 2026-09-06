@@ -1363,20 +1363,10 @@ async function generateGroundedContentPackage() {
   if (btn) btn.disabled = true;
   if (spinner) spinner.style.display = 'block';
 
-  // Tiến trình 3 bước trực quan
-  const stepMessages = [
-    '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> <strong>Bước 1/3:</strong> Đọc tư liệu và bóc tách 5W1H (Who, What, When, Where, Why, How)...',
-    '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> <strong>Bước 2/3:</strong> Chấp bút bài báo Kim Tự Tháp Ngược (Sapo, Thân bài, Trích dẫn)...',
-    '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> <strong>Bước 3/3:</strong> Chuyển thể đa kênh (Facebook, Zalo OA, Kịch bản Video 60s, Infographic)...'
-  ];
+  // Tiến trình 3 bước trực quan - Sẽ được đè bởi SSE
   let currentStep = 0;
-  if (statusText) statusText.innerHTML = stepMessages[0];
-  const progressTimer = setInterval(() => {
-    currentStep++;
-    if (currentStep < stepMessages.length) {
-      if (statusText) statusText.innerHTML = stepMessages[currentStep];
-    }
-  }, 2200);
+  if (statusText) statusText.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> <strong>Khởi tạo...</strong> Đang kết nối AI Multi-Pass Pipeline...';
+  const progressTimer = setInterval(() => {}, 2200);
 
   const genre = document.getElementById('studio_genre_selector')?.value || 'tin_hoat_dong';
   const channels = [];
@@ -1398,93 +1388,106 @@ async function generateGroundedContentPackage() {
   };
 
   try {
-    const res = await fetch('/api/ai/package-generator', {
+    const res = await fetch('/api/ai/package-stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    const json = await res.json();
 
     clearInterval(progressTimer);
 
-    if (json.success && json.package) {
-      populatePackageToStudio(json.package);
-      if (statusText) statusText.innerHTML = '<i class="fa-solid fa-check text-success me-2"></i> <strong>Hoàn tất!</strong> Đã sản xuất trọn bộ nội dung đa kênh chuẩn báo chí.';
-      setTimeout(() => { if (spinner) spinner.style.display = 'none'; }, 2000);
-    } else {
-      throw new Error(json.error || "Không thể sinh Content Package");
+    if (!res.ok) throw new Error("Lỗi kết nối Stream Pipeline");
+
+    const editor = document.getElementById('native_rich_editor');
+    if (editor) editor.innerHTML = "";
+
+    let fbContent = "";
+    let zaloContent = "";
+    let videoContent = "";
+    let infoContent = "";
+    let imagePrompt = "";
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      buffer += decoder.decode(value, { stream: true });
+      let lines = buffer.split('\n\n');
+      buffer = lines.pop(); // giữ lại phần chưa hoàn chỉnh
+
+      for (let line of lines) {
+        if (line.startsWith('data: ')) {
+          const jsonStr = line.substring(6).trim();
+          if (!jsonStr) continue;
+          
+          try {
+            const data = JSON.parse(jsonStr);
+            if (data.error) throw new Error(data.error);
+
+            if (data.step === 'status' && statusText) {
+              statusText.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin me-2"></i> <strong>${data.message}</strong>`;
+            } else if (data.step === 'web_chunk' && editor) {
+              // Typewriter Effect
+              editor.innerHTML += data.chunk;
+            } else if (data.step === 'social_done') {
+              fbContent = data.facebook;
+              zaloContent = data.zalo;
+              videoContent = data.video;
+              infoContent = data.infographic;
+            } else if (data.step === 'image_prompt') {
+              imagePrompt = data.prompt;
+            } else if (data.step === 'all_done') {
+              if (statusText) statusText.innerHTML = '<i class="fa-solid fa-check text-success me-2"></i> <strong>Hoàn tất!</strong> Đã sản xuất trọn bộ nội dung đa kênh chuẩn báo chí.';
+            }
+          } catch(e) {
+            console.error("Lỗi parse SSE:", e);
+          }
+        }
+      }
     }
+
+    // Populate data back to UI
+    if (document.getElementById('fb_caption_input')) safeSetVal('fb_caption_input', fbContent);
+    if (document.getElementById('preview_fb_text')) safeSetText('preview_fb_text', fbContent);
+    
+    if (document.getElementById('zalo_caption_input')) safeSetVal('zalo_caption_input', zaloContent);
+    if (document.getElementById('preview_zalo_text')) safeSetText('preview_zalo_text', zaloContent);
+    
+    if (document.getElementById('video_script_output')) safeSetVal('video_script_output', videoContent);
+    if (document.getElementById('img_modal_prompt')) safeSetVal('img_modal_prompt', imagePrompt);
+
+    const infoDiv = document.getElementById('infographic_content_display');
+    if (infoDiv) {
+      infoDiv.innerHTML = `
+        <div style="font-size: 16px; font-weight: 800; margin-bottom: 12px; color: #065F46; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-chart-pie"></i> ĐIỂM NHẤN SỰ KIỆN
+        </div>
+        <div style="font-weight: 600; color: #064E3B; white-space: pre-wrap;">${infoContent}</div>
+      `;
+    }
+
+    switchPackageTab('web');
+    updateMetrics();
+    
+    // KHỞI TẠO BỘ NHỚ LỊCH SỬ TIẾN / LÙI CHO BẢN GỐC AI TẠO
+    editorHistoryStack = [];
+    editorHistoryIndex = -1;
+    saveEditorState("Bản gốc AI (Multi-Pass Streaming)");
+
+    setTimeout(() => { if (spinner) spinner.style.display = 'none'; }, 2000);
+
   } catch (err) {
     clearInterval(progressTimer);
-    console.error('Lỗi Package:', err);
+    console.error('Lỗi Package Stream:', err);
     if (statusText) statusText.innerHTML = '<span class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> ' + err.message + '</span>';
     alert("❌ " + err.message);
   } finally {
-    clearInterval(progressTimer);
     if (btn) btn.disabled = false;
   }
-}
-
-function populatePackageToStudio(pkg) {
-  const webTitle = pkg.website?.title || pkg.title || "Bài Viết Truyền Thông Công Đoàn TDMU";
-  const webSapo = pkg.website?.sapo || pkg.summary || "";
-  const webContent = pkg.website?.content || pkg.articleHtml || "";
-
-  if (document.getElementById('ai_final_title')) safeSetVal('ai_final_title', webTitle);
-  if (document.getElementById('ai_final_summary')) safeSetVal('ai_final_summary', webSapo);
-  const editor = document.getElementById('native_rich_editor');
-  if (editor) editor.innerHTML = webContent;
-
-  const fbCaption = pkg.facebook?.caption || pkg.facebookPost || ("📢 [TDMU NEWS] " + webTitle + "\n\n" + webSapo + "\n\n👉 Chi tiết: https://congdoan.tdmu.edu.vn\n#CongDoanTDMU #TDMU2026");
-  if (document.getElementById('fb_caption_input')) safeSetVal('fb_caption_input', fbCaption);
-  if (document.getElementById('preview_fb_text')) safeSetText('preview_fb_text', fbCaption);
-
-  const zaloBody = pkg.zalo?.broadcastBody || pkg.zaloPost || ("[CÔNG ĐOÀN TDMU THÔNG BÁO]\n" + webTitle + "\n\n" + webSapo);
-  if (document.getElementById('zalo_caption_input')) safeSetVal('zalo_caption_input', zaloBody);
-  if (document.getElementById('preview_zalo_text')) safeSetText('preview_zalo_text', zaloBody);
-
-  let videoText = pkg.videoScript || "";
-  if (pkg.video?.scenes) {
-    videoText = pkg.video.scenes.map(s => "[Phân cảnh " + s.scene + "]: " + s.visual + "\n🎙️ Lời bình: " + s.voiceover).join('\n\n');
-  }
-  if (document.getElementById('video_script_output')) safeSetVal('video_script_output', videoText);
-
-  const bannerHeadline = pkg.banner?.headline || webTitle;
-  if (document.getElementById('studio_title_text')) safeSetVal('studio_title_text', bannerHeadline);
-  renderStudioCanvasBanner(bannerHeadline);
-
-  // POPULATE INFOGRAPHIC HIGHLIGHTS
-  if (pkg.infographic) {
-    const infoDiv = document.getElementById('infographic_content_display');
-    if (infoDiv) {
-      const headline = pkg.infographic.headline || "ĐIỂM NHẤN SỰ KIỆN";
-      const highlights = Array.isArray(pkg.infographic.highlights) ? pkg.infographic.highlights : [];
-      infoDiv.innerHTML = `
-        <div style="font-size: 16px; font-weight: 800; margin-bottom: 12px; color: #065F46; display: flex; align-items: center; gap: 8px;">
-          <i class="fa-solid fa-chart-pie"></i> ${headline}
-        </div>
-        <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
-          ${highlights.map(h => `<li style="font-weight: 600; color: #064E3B;">${h}</li>`).join('')}
-        </ul>
-      `;
-    }
-  }
-
-  // AUTO-POPULATE IMAGE MODAL PROMPT IF AI SUGGESTED
-  if (pkg.website?.imagePrompt && document.getElementById('img_modal_prompt')) {
-    document.getElementById('img_modal_prompt').value = pkg.website.imagePrompt;
-  }
-  if (pkg.website?.imageCaption && document.getElementById('img_modal_caption')) {
-    document.getElementById('img_modal_caption').value = pkg.website.imageCaption;
-  }
-
-  switchPackageTab('web');
-  updateMetrics();
-  
-  // KHỞI TẠO BỘ NHỚ LỊCH SỬ TIẾN / LÙI CHO BẢN GỐC AI TẠO
-  editorHistoryStack = [];
-  editorHistoryIndex = -1;
-  saveEditorState("Bản gốc do AI khởi tạo");
 }
 
 // =========================================================================
@@ -1621,7 +1624,12 @@ async function handleToolbarAiAction(action) {
     isSelection = false;
   }
 
-  const actionName = action === 'formal' ? "Hành chính hóa" : "Mở rộng nội dung";
+  const actionNames = {
+    formal: "Hành chính hóa",
+    shorten: "Rút gọn",
+    expand: "Mở rộng"
+  };
+  const actionName = actionNames[action] || action;
 
   const copilotStatus = document.getElementById('copilot_status_indicator');
   if (copilotStatus) {
@@ -2053,61 +2061,81 @@ let copilotChatHistory = [];
 let pendingManusEdits = {};
 let currentManusSelectionRange = null;
 
-// Bôi đen chữ để hỏi Copilot
+// Biến toàn cục cho Copilot
+let copilotAbortController = null;
+let globalCopilotSelectionRange = null;
+let globalCopilotSelectedText = "";
+let currentAiProposal = "";
+
+// Bắt sự kiện bôi đen văn bản trong trình soạn thảo
 document.addEventListener('selectionchange', () => {
   const editor = document.getElementById('native_rich_editor');
   const selection = window.getSelection();
-  const pill = document.getElementById('copilot_context_pill');
-  const pillText = document.getElementById('copilot_context_text');
-  
   if (editor && editor.contains(selection.anchorNode) && !selection.isCollapsed) {
     currentManusSelectionRange = selection.getRangeAt(0).cloneRange();
-    const selectedString = selection.toString().trim();
-    if (pill && pillText && selectedString.length > 0) {
-      pill.style.display = 'flex';
-      pillText.innerText = selectedString.substring(0, 35) + (selectedString.length > 35 ? '...' : '');
-    }
-  } else if (editor && document.activeElement === editor && selection.isCollapsed) {
-    clearManusSelection();
   }
 });
 
 document.addEventListener('mouseup', (e) => {
   const editor = document.getElementById('native_rich_editor');
-  const popup = document.getElementById('floating_ask_copilot_btn');
+  const popup = document.getElementById('floating_ai_bubble_toolbar');
   const selection = window.getSelection();
   
-  if (editor && editor.contains(e.target) && !selection.isCollapsed) {
+  if (popup && popup.contains(e.target)) return;
+
+  if (editor && editor.contains(e.target) && !selection.isCollapsed && selection.toString().trim().length > 0) {
     const range = selection.getRangeAt(0);
     const rect = range.getBoundingClientRect();
     if (popup) {
       popup.style.display = 'flex';
-      popup.style.top = (rect.top + window.scrollY - 42) + 'px';
-      popup.style.left = (rect.left + window.scrollX + (rect.width / 2) - 85) + 'px';
+      popup.style.position = 'absolute';
+      popup.style.top = (rect.top + window.scrollY - 32) + 'px';
+      popup.style.left = (rect.right + window.scrollX + 8) + 'px';
     }
   } else {
-    if (popup) popup.style.display = 'none';
+    // Không ẩn nếu click vào chính popup
+    if (popup && (!e.target || !popup.contains(e.target))) {
+      popup.style.display = 'none';
+    }
   }
 });
 
-function clearManusSelection() {
-  currentManusSelectionRange = null;
-  const pill = document.getElementById('copilot_context_pill');
-  if (pill) pill.style.display = 'none';
-  const popup = document.getElementById('floating_ask_copilot_btn');
+function captureSelectionToCopilot() {
+  if (currentManusSelectionRange && !currentManusSelectionRange.collapsed) {
+    globalCopilotSelectionRange = currentManusSelectionRange.cloneRange();
+    globalCopilotSelectedText = currentManusSelectionRange.toString().trim();
+    
+    const pill = document.getElementById('copilot_context_pill');
+    const pillText = document.getElementById('copilot_context_text');
+    if (pill && pillText) {
+      pill.style.display = 'flex';
+      pillText.innerText = globalCopilotSelectedText.substring(0, 40) + '...';
+    }
+  }
+  
+  const popup = document.getElementById('floating_ai_bubble_toolbar');
   if (popup) popup.style.display = 'none';
+
+  const input = document.getElementById('copilot_user_input');
+  if (input) input.focus();
 }
 
-function focusCopilotChat() {
-  const input = document.getElementById('copilot_user_input');
-  const popup = document.getElementById('floating_ask_copilot_btn');
+function clearManusSelection() {
+  currentManusSelectionRange = null;
+  globalCopilotSelectionRange = null;
+  globalCopilotSelectedText = "";
+  const pill = document.getElementById('copilot_context_pill');
+  if (pill) pill.style.display = 'none';
+  const popup = document.getElementById('floating_ai_bubble_toolbar');
   if (popup) popup.style.display = 'none';
-  if (input) {
-    input.focus();
-    if (input.parentElement) {
-      input.parentElement.style.boxShadow = '0 0 0 4px rgba(2,132,199,0.2)';
-      setTimeout(() => { if (input.parentElement) input.parentElement.style.boxShadow = 'none'; }, 1000);
-    }
+  const safezone = document.getElementById('copilot_diff_safezone');
+  if (safezone) safezone.style.display = 'none';
+}
+
+function abortCopilotStream() {
+  if (copilotAbortController) {
+    copilotAbortController.abort();
+    copilotAbortController = null;
   }
 }
 
@@ -2120,59 +2148,138 @@ async function sendCopilotMessage() {
   input.value = '';
   appendCopilotMessage('user', msg);
 
+  // Chuẩn bị UI Streaming
   const container = document.getElementById('copilot_messages_container');
-  const loadingId = `loading_${Date.now()}`;
+  const msgId = `msg_${Date.now()}`;
   if (container) {
     container.innerHTML += `
-      <div id="${loadingId}" style="display: flex; gap: 8px; align-items: center; color: #64748B; font-size: 11.5px;">
-        <i class="fa-solid fa-circle-notch fa-spin"></i> Copilot đang phân tích văn bản...
+      <div id="wrapper_${msgId}" style="display: flex; gap: 8px; align-items: flex-start;">
+        <div style="width: 26px; height: 26px; border-radius: 6px; background: #F0F9FF; color: #0284C7; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; border: 1px solid #BAE6FD;">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+        </div>
+        <div id="${msgId}" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 12px; font-size: 13.5px; line-height: 1.5; color: #334155; width: 100%;">
+          <i class="fa-solid fa-circle-notch fa-spin text-muted"></i> Đang suy nghĩ...
+        </div>
       </div>
     `;
     container.scrollTop = container.scrollHeight;
   }
 
-  const apiKey = localStorage.getItem('gemini_api_key') || "";
-  const groqApiKey = localStorage.getItem('groq_api_key') || "";
-  const title = document.getElementById('ai_final_title')?.value || "";
-  const editor = document.getElementById('native_rich_editor');
-  const content = editor ? editor.innerHTML : "";
-  
-  let selectedText = "";
-  let capturedRange = null;
-  if (currentManusSelectionRange && !currentManusSelectionRange.collapsed) {
-    selectedText = currentManusSelectionRange.toString().trim();
-    capturedRange = currentManusSelectionRange.cloneRange();
-    clearManusSelection();
+  const stopBtn = document.getElementById('copilot_stop_btn');
+  if (stopBtn) stopBtn.style.display = 'flex';
+
+  const safezone = document.getElementById('copilot_diff_safezone');
+  const diffOld = document.getElementById('copilot_diff_old');
+  const diffNew = document.getElementById('copilot_diff_new');
+
+  currentAiProposal = "";
+  if (globalCopilotSelectedText && diffOld) {
+    diffOld.innerText = globalCopilotSelectedText;
+    diffNew.innerText = "";
+    safezone.style.display = 'flex';
+  } else {
+    safezone.style.display = 'none';
   }
 
+  copilotAbortController = new AbortController();
+  const apiKey = localStorage.getItem('gemini_api_key') || "";
+
   try {
-    const res = await fetch('/api/ai/chat', {
+    const res = await fetch('/api/ai/chat-stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message: msg,
-        history: copilotChatHistory,
-        articleTitle: title,
-        articleContent: content,
-        selectedText: selectedText,
-        apiKey,
-        groqApiKey
-      })
-    }).then(r => r.json());
+        selectedText: globalCopilotSelectedText,
+        apiKey: apiKey
+      }),
+      signal: copilotAbortController.signal
+    });
 
-    const loader = document.getElementById(loadingId);
-    if (loader) loader.remove();
+    if (!res.ok) throw new Error("Lỗi kết nối Stream");
 
-    if (res.success) {
-      copilotChatHistory.push({ role: 'user', text: msg });
-      copilotChatHistory.push({ role: 'assistant', text: res.reply });
-      appendManusCopilotResponse(res, capturedRange);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = "";
+    let isFirstChunk = true;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      let lines = buffer.split('\n\n');
+      buffer = lines.pop(); 
+
+      for (let line of lines) {
+        if (line.startsWith('data: ')) {
+          const jsonStr = line.substring(6).trim();
+          if (!jsonStr) continue;
+          
+          try {
+            const data = JSON.parse(jsonStr);
+            if (data.error) throw new Error(data.error);
+
+            if (data.chunk) {
+              if (isFirstChunk) {
+                document.getElementById(msgId).innerHTML = "";
+                isFirstChunk = false;
+              }
+              currentAiProposal += data.chunk;
+              
+              if (globalCopilotSelectedText) {
+                document.getElementById(msgId).innerHTML = "<em>(Xem bản thảo so sánh bên dưới)</em>";
+                diffNew.innerHTML += data.chunk;
+              } else {
+                document.getElementById(msgId).innerHTML += data.chunk;
+              }
+              container.scrollTop = container.scrollHeight;
+            }
+          } catch(e) {
+            console.error("Lỗi parse SSE:", e);
+          }
+        }
+      }
     }
   } catch (err) {
-    const loader = document.getElementById(loadingId);
-    if (loader) loader.remove();
-    console.error(err);
+    if (err.name === 'AbortError') {
+      document.getElementById(msgId).innerHTML += '<br><span style="color:#EF4444;font-size:11px;">[Đã dừng AI]</span>';
+    } else {
+      document.getElementById(msgId).innerHTML = '<span style="color:#EF4444;"><i class="fa-solid fa-triangle-exclamation"></i> Lỗi: ' + err.message + '</span>';
+    }
+  } finally {
+    const stopBtn = document.getElementById('copilot_stop_btn');
+    if (stopBtn) stopBtn.style.display = 'none';
+    copilotAbortController = null;
   }
+}
+
+function approveCopilotDiff() {
+  const safezone = document.getElementById('copilot_diff_safezone');
+  
+  if (globalCopilotSelectionRange && currentAiProposal) {
+    const editor = document.getElementById('native_rich_editor');
+    saveEditorState("Trước khi Duyệt Copilot");
+    
+    try {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(globalCopilotSelectionRange);
+      document.execCommand('insertHTML', false, currentAiProposal);
+    } catch (e) {
+      console.error(e);
+      alert("Không thể thay thế, vui lòng copy thủ công!");
+    }
+  }
+  
+  if (safezone) safezone.style.display = 'none';
+  clearManusSelection();
+}
+
+function rejectCopilotDiff() {
+  const safezone = document.getElementById('copilot_diff_safezone');
+  if (safezone) safezone.style.display = 'none';
+  clearManusSelection();
 }
 
 function sendQuickCopilotPrompt(promptText) {
@@ -2197,54 +2304,6 @@ function appendCopilotMessage(role, text) {
     `;
     container.scrollTop = container.scrollHeight;
   }
-}
-
-function appendManusCopilotResponse(res, capturedRange) {
-  const container = document.getElementById('copilot_messages_container');
-  if (!container) return;
-
-  const msgId = `msg_${Date.now()}`;
-  let editBlockHtml = '';
-
-  if (res.editAction && res.editAction !== 'NONE' && res.editContent) {
-    pendingManusEdits[msgId] = {
-      action: res.editAction,
-      content: res.editContent,
-      range: capturedRange
-    };
-    
-    let actionLabel = 'Chèn vào tài liệu';
-    if (res.editAction === 'REPLACE_SELECTION') actionLabel = 'Thay thế đoạn bôi đen';
-    if (res.editAction === 'REPLACE_ALL') actionLabel = 'Viết lại toàn bộ bài viết';
-
-    editBlockHtml = `
-      <div id="edit_block_${msgId}" style="margin-top: 10px; border: 1px solid #BAE6FD; border-radius: 8px; overflow: hidden; background: #F8FAFC;">
-        <div style="background: #E0F2FE; color: #0369A1; font-size: 11px; font-weight: 700; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center;">
-          <span><i class="fa-solid fa-code-compare me-1"></i> ${actionLabel}</span>
-        </div>
-        <div style="padding: 10px; font-size: 12px; color: #334155; max-height: 120px; overflow-y: auto; background: white; border-bottom: 1px solid #E2E8F0;">
-          ${res.editContent}
-        </div>
-        <div style="padding: 6px 10px; display: flex; gap: 8px; justify-content: flex-end; background: #F8FAFC;">
-          <button type="button" style="background: transparent; color: #64748B; border: none; font-weight: 600; font-size: 11px; cursor: pointer;" onclick="document.getElementById('edit_block_${msgId}').style.display='none';">✕ Bỏ qua</button>
-          <button type="button" style="background: #0284C7; color: white; border: none; border-radius: 4px; font-weight: 700; padding: 4px 12px; font-size: 11px; cursor: pointer;" onclick="applyManusEdit('${msgId}')">✨ Áp Dụng (Apply)</button>
-        </div>
-      </div>
-    `;
-  }
-
-  container.innerHTML += `
-    <div style="display: flex; gap: 8px; align-items: flex-start;">
-      <div style="width: 26px; height: 26px; border-radius: 6px; background: #F0F9FF; color: #0284C7; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; border: 1px solid #BAE6FD;">
-        <i class="fa-solid fa-sparkles"></i>
-      </div>
-      <div style="background: white; border: 1px solid #E2E8F0; border-radius: 12px 12px 12px 2px; padding: 12px 14px; font-size: 12.5px; line-height: 1.6; color: #334155; box-shadow: 0 2px 8px rgba(0,0,0,0.02); max-width: 90%;">
-        <div>${res.reply}</div>
-        ${editBlockHtml}
-      </div>
-    </div>
-  `;
-  container.scrollTop = container.scrollHeight;
 }
 
 function applyManusEdit(msgId) {
@@ -2337,8 +2396,13 @@ function copyInfographicText() {
 
 // 3. MODAL CHÈN ẢNH BÁO CHÍ (FLUX AI / KHO TƯ LIỆU / URL)
 let selectedModalImgSrc = "";
+let savedImageInsertRange = null;
 
 function openJournalismImageModal() {
+  const sel = window.getSelection();
+  if (sel.rangeCount > 0) {
+    savedImageInsertRange = sel.getRangeAt(0).cloneRange();
+  }
   const modal = document.getElementById('modal_journalism_image');
   if (modal) {
     modal.style.display = 'flex';
@@ -2467,6 +2531,13 @@ function confirmInsertJournalismImage() {
   const editor = document.getElementById('native_rich_editor');
   if (editor) {
     editor.focus();
+    
+    if (savedImageInsertRange) {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(savedImageInsertRange);
+    }
+    
     document.execCommand('insertHTML', false, figureHtml);
     saveEditorState("Sau khi chèn ảnh báo chí");
   }

@@ -399,49 +399,39 @@
                     </div>
                   </div>
 
-                  <!-- BANNER ĐỀ XUẤT THAY ĐỔI AI (GOOGLE DOCS / CURSOR STYLE TRACK CHANGES) -->
-                  <div id="diff_action_banner" class="diff-action-banner" style="display: none;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <i class="fa-solid fa-wand-magic-sparkles text-warning"></i>
-                      <span id="diff_banner_message">AI đề xuất viết lại đoạn văn:</span>
-                    </div>
-                    <div style="display: flex; gap: 8px;">
-                      <button type="button" class="btn btn-sm" onclick="acceptAiDiff()" style="background: #16A34A; color: white; font-weight: 700; border: none; padding: 5px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-check"></i> Chấp Nhận</button>
-                      <button type="button" class="btn btn-sm" onclick="rejectAiDiff()" style="background: #DC2626; color: white; font-weight: 700; border: none; padding: 5px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-xmark"></i> Giữ Nguyên</button>
-                    </div>
+                  <!-- BANNER ĐỀ XUẤT THAY ĐỔI AI (ẨN MẶC ĐỊNH) -->
+                  <div id="diff_action_banner" style="display: none;">
+                    <span id="diff_banner_message"></span>
                   </div>
 
                   <!-- KHUNG NỘI DUNG TỜ GIẤY A4 -->
                   <div id="native_rich_editor" contenteditable="true" style="min-height: 480px; outline: none; font-size: 15px; line-height: 1.8; color: #1E293B;" placeholder="Nội dung bài viết sẽ hiển thị tại đây..." oninput="saveEditorStateDebounced()"></div>
                   
-                  <!-- Ẩn field summary để đảm bảo tính toàn vẹn code -->
                   <textarea id="ai_final_summary" style="display: none;"></textarea>
                 </div>
 
-                <!-- CỘT PHẢI: TRỢ LÝ MANUS AI COPILOT TRỰC TUYẾN (THAY THẾ TOÀN BỘ THANH TÓM TẮT/METRICS CŨ) -->
+                <!-- CỘT PHẢI: TRỢ LÝ MANUS AI COPILOT TRỰC TUYẾN -->
                 <div style="background: white; border: 1px solid #BAE6FD; border-radius: 12px; display: flex; flex-direction: column; height: 640px; box-shadow: 0 4px 20px rgba(2,132,199,0.08); overflow: hidden; position: sticky; top: 80px;">
                   <!-- Copilot Header -->
-                  <div style="background: linear-gradient(135deg, #003865, #0284C7); color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                      <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 15px;">
-                        <i class="fa-solid fa-robot text-warning"></i>
-                      </div>
-                      <div>
-                        <div style="font-weight: 800; font-size: 14px; line-height: 1.2;">Manus AI Copilot</div>
-                        <div style="font-size: 11px; color: #BAE6FD;"><i class="fa-solid fa-circle text-success" style="font-size: 8px;"></i> Sẵn sàng hỗ trợ &amp; sửa trực tiếp</div>
+                  <div style="background: #003865; color: white; padding: 10px 14px; font-size: 13px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <i class="fa-solid fa-robot"></i>
+                      <div style="line-height: 1.2;">
+                        <div>Manus AI Copilot</div>
+                        <div id="copilot_status_indicator" style="font-size: 10.5px; font-weight: 400; color: #93C5FD;">● Sẵn sàng hỗ trợ & sửa trực tiếp</div>
                       </div>
                     </div>
-                    <button type="button" onclick="clearCopilotChat()" style="background: none; border: none; color: #E2E8F0; cursor: pointer; font-size: 13px;" title="Làm mới cuộc trò chuyện">
-                      <i class="fa-solid fa-rotate-right"></i>
-                    </button>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                      <button id="copilot_stop_btn" onclick="abortCopilotStream()" style="display: none; background: #EF4444; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-stop"></i> DỪNG AI</button>
+                      <button type="button" onclick="document.getElementById('copilot_messages_container').innerHTML=''" style="background: transparent; border: none; color: white; cursor: pointer;"><i class="fa-solid fa-rotate-right"></i></button>
+                    </div>
                   </div>
 
                   <!-- Quick Suggestion Chips -->
                   <div style="background: #F8FAFC; padding: 8px 12px; border-bottom: 1px solid #E2E8F0; display: flex; gap: 6px; flex-wrap: wrap;">
-                    <button type="button" class="btn-word-tool" style="font-size: 11px; border-radius: 14px; padding: 3px 8px;" onclick="sendQuickCopilotPrompt('Phân tích và gợi ý cải thiện bài viết này')">💡 Đánh giá bài</button>
+                    <button type="button" class="btn-word-tool" style="font-size: 11px; border-radius: 14px; padding: 3px 8px;" onclick="sendQuickCopilotPrompt('Đánh giá và đề xuất cải thiện nội dung')">💡 Đánh giá bài</button>
                     <button type="button" class="btn-word-tool" style="font-size: 11px; border-radius: 14px; padding: 3px 8px;" onclick="sendQuickCopilotPrompt('Viết thêm đoạn kết kêu gọi đoàn viên hưởng ứng')">✍️ Viết Kết Bài</button>
                     <button type="button" class="btn-word-tool" style="font-size: 11px; border-radius: 14px; padding: 3px 8px;" onclick="sendQuickCopilotPrompt('Kiểm tra và sửa lỗi chính tả, ngữ pháp tiếng Việt')">🔍 Soát Chính Tả</button>
-                    <button type="button" class="btn-word-tool" style="font-size: 11px; border-radius: 14px; padding: 3px 8px;" onclick="sendQuickCopilotPrompt('Viết lại đoạn văn theo văn phong hành chính Công đoàn trang trọng')">🏛️ Hành Chính Hóa</button>
                   </div>
 
                   <!-- Chat Messages Container -->
@@ -453,6 +443,20 @@
                       <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.5; color: #334155;">
                         Xin chào! Em là <strong>Manus AI Copilot</strong>. Em có thể viết tiếp nội dung, tạo bảng biểu, hoặc <strong>sửa trực tiếp bất kỳ đoạn văn nào</strong> Thầy/Cô bôi đen bên trái nhé!
                       </div>
+                    </div>
+                  </div>
+
+                  <!-- AI DIFF PREVIEW CONTAINER (SAFE ZONE) -->
+                  <div id="copilot_diff_safezone" style="display: none; padding: 12px; background: #F1F5F9; border-top: 1px solid #CBD5E1; flex-direction: column;">
+                    <div style="font-weight: 700; color: #B91C1C; font-size: 12px; margin-bottom: 4px;">Bản gốc:</div>
+                    <div id="copilot_diff_old" style="color: #991B1B; background: #FEE2E2; padding: 8px; border-radius: 6px; font-size: 13.5px; text-decoration: line-through; margin-bottom: 8px; max-height: 100px; overflow-y: auto;"></div>
+                    
+                    <div style="font-weight: 700; color: #15803D; font-size: 12px; margin-bottom: 4px;">Bản AI đề xuất:</div>
+                    <div id="copilot_diff_new" style="color: #166534; background: #DCFCE7; padding: 8px; border-radius: 6px; font-size: 14px; font-weight: 600; margin-bottom: 10px; max-height: 200px; overflow-y: auto;"></div>
+                    
+                    <div style="display: flex; gap: 8px;">
+                      <button onclick="approveCopilotDiff()" style="flex: 1; background: #16A34A; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;"><i class="fa-solid fa-check"></i> Thay Thế</button>
+                      <button onclick="rejectCopilotDiff()" style="background: #E2E8F0; color: #475569; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 600; cursor: pointer;">Hủy</button>
                     </div>
                   </div>
 
@@ -895,9 +899,10 @@
     </div>
   </div>
 
-  <!-- FLOATING TOOLTIP FOR CURSOR SELECTION -->
-  <div id="floating_ask_copilot_btn" style="display: none; position: absolute; background: #003865; color: white; padding: 5px 12px; border-radius: 20px; font-size: 11.5px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0,56,101,0.3); z-index: 10000; align-items: center; gap: 6px; border: 1px solid #38BDF8;" onclick="focusCopilotChat()">
-    <i class="fa-solid fa-wand-magic-sparkles" style="color: #FBBF24;"></i> Hỏi Copilot sửa đoạn này
+  <!-- FLOATING TOOLTIP FOR CURSOR SELECTION (TIPTAP STYLE) -->
+  <!-- FLOATING MAGIC WAND (TINY BUTTON) -->
+  <div id="floating_ai_bubble_toolbar" class="floating-ai-bubble" style="display: none; position: absolute; z-index: 10000; background: #0F172A; padding: 6px; border-radius: 50%; box-shadow: 0 4px 16px rgba(0,0,0,0.25); cursor: pointer; border: 1px solid #334155; transition: transform 0.2s;" onclick="captureSelectionToCopilot()">
+    <i class="fa-solid fa-wand-magic-sparkles" style="color: #FBBF24; font-size: 14px;"></i>
   </div>
 
   <!-- MODAL KIỂM TRA CHẤT LƯỢNG NỘI DUNG AI (AUDIT SCORECARD) -->

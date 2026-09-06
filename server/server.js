@@ -1252,6 +1252,94 @@ YÊU CẦU ĐẦU RA: Trả về DUY NHẤT 1 đối tượng JSON hợp lệ (k
 app.post('/api/ai/package-generator', handlePackageGenerator);
 app.post('/api/ai/studio-package', handlePackageGenerator);
 
+// 4.5. SSE MULTI-PASS PIPELINE TẠO BÀI (NEW ARCHITECTURE)
+app.post('/api/ai/package-stream', async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const { briefText, customPrompt, apiKey } = req.body;
+  const activeKey = apiKey || process.env.GEMINI_API_KEY;
+
+  if (!activeKey) {
+    res.write('data: {"error": "Chưa cấu hình Gemini API Key"}\n\n');
+    return res.end();
+  }
+
+  const ai = new GoogleGenAI({ apiKey: activeKey });
+
+  try {
+    // -----------------------------------------------------
+    // PASS 1: TẠO BÀI BÁO WEB CHUẨN (KIM TỰ THÁP NGƯỢC)
+    // -----------------------------------------------------
+    res.write(`data: ${JSON.stringify({ step: 'status', message: 'Bước 1/3: Phân tích 5W1H và viết bài Website...' })}\n\n`);
+    
+    const webPrompt = `BẠN LÀ TỔNG THƯ KÝ TÒA SOẠN CỦA CÔNG ĐOÀN ĐH THỦ DẦU MỘT.
+Dựa vào tư liệu thô sau đây:
+"""
+${briefText}
+${customPrompt}
+"""
+Hãy viết MỘT BÀI BÁO WEBSITE DUY NHẤT. YÊU CẦU BẮT BUỘC:
+- Dùng thẻ HTML chuẩn. KHÔNG bọc trong markdown \`\`\`html. TRẢ VỀ HTML RAW.
+- Đầu bài có thẻ <h1 class="article-title">Tiêu đề bài báo</h1>.
+- Đoạn tiếp theo là Sapo in đậm (<p class="sapo"><strong>...</strong></p>) tóm tắt 5W1H.
+- Thân bài chia các thẻ <h2> mạch lạc (Không ghi Phần 1, Phần 2).
+- Có ít nhất 1 trích dẫn <blockquote>.
+- Có gợi ý chèn ảnh bằng <figure class="journalism-figure"><img src="https://via.placeholder.com/800x450" alt="placeholder"><figcaption>...</figcaption></figure>.
+`;
+
+    let webContent = "";
+    const webStream = await ai.models.generateContentStream({
+      model: 'gemini-2.5-flash',
+      contents: webPrompt
+    });
+
+    for await (const chunk of webStream) {
+      if (chunk.text) {
+        let textChunk = chunk.text.replace(/```html|```/g, ""); // strip markdown if any
+        webContent += textChunk;
+        res.write(`data: ${JSON.stringify({ step: 'web_chunk', chunk: textChunk })}\n\n`);
+      }
+    }
+    res.write(`data: ${JSON.stringify({ step: 'web_done' })}\n\n`);
+
+    // -----------------------------------------------------
+    // PASS 2 & 3: TẠO CÁC KÊNH PHÁI SINH DỰA TRÊN BẢN WEB
+    // -----------------------------------------------------
+    res.write(`data: ${JSON.stringify({ step: 'status', message: 'Bước 2/3: Chuyển thể Mạng xã hội & Video...' })}\n\n`);
+
+    const fbPrompt = `Viết 1 bài đăng Facebook Fanpage thu hút (3 dòng hook, có icon, hashtag, kêu gọi chia sẻ) TỪ BÀI BÁO SAU:\n${webContent}`;
+    const zaloPrompt = `Viết tin thông báo Zalo OA ngắn gọn gọn (dưới 80 từ) TỪ BÀI BÁO SAU:\n${webContent}`;
+    const videoPrompt = `Viết kịch bản video phóng sự 60s (chia thành 4 phân cảnh: Hình ảnh - Lời bình) TỪ BÀI BÁO SAU:\n${webContent}`;
+    const infoPrompt = `Trích xuất đúng 4 gạch đầu dòng (số liệu, cốt lõi nhất) từ bài báo sau để làm Infographic:\n${webContent}`;
+
+    // Chạy song song để tối ưu tốc độ
+    const [fbRes, zaloRes, videoRes, infoRes] = await Promise.all([
+      ai.models.generateContent({ model: 'gemini-2.5-flash', contents: fbPrompt }),
+      ai.models.generateContent({ model: 'gemini-2.5-flash', contents: zaloPrompt }),
+      ai.models.generateContent({ model: 'gemini-2.5-flash', contents: videoPrompt }),
+      ai.models.generateContent({ model: 'gemini-2.5-flash', contents: infoPrompt })
+    ]);
+
+    res.write(`data: ${JSON.stringify({ step: 'social_done', facebook: fbRes.text, zalo: zaloRes.text, video: videoRes.text, infographic: infoRes.text })}\n\n`);
+    
+    // Gợi ý 1 Prompt sinh ảnh chuyên nghiệp
+    res.write(`data: ${JSON.stringify({ step: 'status', message: 'Bước 3/3: Sinh Prompt Nhiếp ảnh...' })}\n\n`);
+    const imgPrompt = `Viết DUY NHẤT 1 CÂU PROMPT TIẾNG ANH (dưới 30 từ) miêu tả hình ảnh chính của sự kiện trong bài báo trên để đưa cho AI vẽ ảnh (dùng từ khóa: modern photojournalism, realistic, 8k). KHÔNG GIẢI THÍCH.`;
+    const imgRes = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: imgPrompt });
+    
+    res.write(`data: ${JSON.stringify({ step: 'image_prompt', prompt: imgRes.text.trim() })}\n\n`);
+    
+    res.write(`data: ${JSON.stringify({ step: 'all_done', message: 'Hoàn tất xuất bản đa kênh!' })}\n\n`);
+    res.end();
+
+  } catch (err) {
+    res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+    res.end();
+  }
+});
+
 // 5. INLINE MICRO-EDITING (GRAMMARLY STYLE)
 app.post('/api/ai/inline-edit', async (req, res) => {
   const { text, action, customPrompt, apiKey } = req.body;
@@ -1789,6 +1877,49 @@ app.listen(PORT, () => {
   console.log(`⚙️  Admin CMS Portal: http://localhost:${PORT}/admin.html`);
   console.log(`====================================================`);
 });// TRUE MANUS AI COPILOT - DIRECT EDITING ENDPOINT WITH AUTO-FALLBACK
+// =========================================================================
+// 8.5 COPILOT INLINE CHAT STREAMING (NEW)
+// =========================================================================
+app.post('/api/ai/chat-stream', async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const { message, selectedText, apiKey } = req.body;
+  const activeKey = apiKey || process.env.GEMINI_API_KEY;
+
+  if (!activeKey) {
+    res.write('data: {"error": "Chưa cấu hình Gemini API Key"}\n\n');
+    return res.end();
+  }
+
+  const ai = new GoogleGenAI({ apiKey: activeKey });
+
+  let systemPrompt = `BẠN LÀ MANUS AI COPILOT - TRỢ LÝ TRUYỀN THÔNG CÔNG ĐOÀN TDMU.
+Chỉ trả về trực tiếp đoạn văn bản kết quả đã chỉnh sửa để đưa thẳng vào giao diện (raw HTML/text, không dùng markdown \`\`\`html).
+ĐOẠN VĂN GỐC ĐỂ CHỈNH SỬA:\n"""\n${selectedText || ''}\n"""
+YÊU CẦU TỪ NGƯỜI DÙNG: ${message}`;
+
+  try {
+    const stream = await ai.models.generateContentStream({
+      model: 'gemini-2.5-flash',
+      contents: systemPrompt
+    });
+
+    for await (const chunk of stream) {
+      if (chunk.text) {
+        let textChunk = chunk.text.replace(/```html|```/g, "");
+        res.write(`data: ${JSON.stringify({ chunk: textChunk })}\n\n`);
+      }
+    }
+    res.write(`data: {"done": true}\n\n`);
+    res.end();
+  } catch (err) {
+    res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+    res.end();
+  }
+});
+
 app.post('/api/ai/chat', async (req, res) => {
   const { message, history, articleTitle, articleContent, selectedText, apiKey, groqApiKey, aiEngine } = req.body;
   if (!message) return res.json({ success: false, error: 'Message là bắt buộc' });
