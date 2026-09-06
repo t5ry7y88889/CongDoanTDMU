@@ -2176,122 +2176,6 @@ function clearCopilotChat() {
    TDMU JOURNALISM AI SUITE - CLIENT CONTROLS & BUBBLE TOOLBAR
    ========================================================================= */
 
-// 1. FLOATING AI BUBBLE TOOLBAR (TIPTAP / NOTION STYLE)
-let currentSelectedRange = null;
-
-function initFloatingBubbleToolbar() {
-  const editor = document.getElementById('native_rich_editor');
-  const bubble = document.getElementById('floating_ai_bubble_toolbar');
-  if (!editor || !bubble) return;
-
-  const handleSelection = () => {
-    const selection = window.getSelection();
-    if (!selection || selection.isCollapsed || !selection.toString().trim()) {
-      hideBubbleToolbar();
-      return;
-    }
-
-    // Check if selection is within editor
-    if (!editor.contains(selection.anchorNode)) {
-      hideBubbleToolbar();
-      return;
-    }
-
-    const text = selection.toString().trim();
-    if (text.length < 3) {
-      hideBubbleToolbar();
-      return;
-    }
-
-    try {
-      const range = selection.getRangeAt(0);
-      currentSelectedRange = range.cloneRange();
-      const rect = range.getBoundingClientRect();
-
-      bubble.style.display = 'flex';
-      const bubbleWidth = bubble.offsetWidth || 340;
-      const left = Math.max(10, rect.left + (rect.width / 2) - (bubbleWidth / 2) + window.scrollX);
-      const top = Math.max(10, rect.top - 46 + window.scrollY);
-
-      bubble.style.left = left + 'px';
-      bubble.style.top = top + 'px';
-    } catch (e) {
-      hideBubbleToolbar();
-    }
-  };
-
-  editor.addEventListener('mouseup', () => setTimeout(handleSelection, 50));
-  editor.addEventListener('keyup', (e) => {
-    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Shift'].includes(e.key)) {
-      setTimeout(handleSelection, 50);
-    }
-  });
-
-  document.addEventListener('mousedown', (e) => {
-    if (!bubble.contains(e.target) && !editor.contains(e.target)) {
-      hideBubbleToolbar();
-    }
-  });
-}
-
-function hideBubbleToolbar() {
-  const bubble = document.getElementById('floating_ai_bubble_toolbar');
-  if (bubble) bubble.style.display = 'none';
-}
-
-async function executeBubbleAction(action) {
-  const editor = document.getElementById('native_rich_editor');
-  if (!editor) return;
-
-  const selection = window.getSelection();
-  let text = selection ? selection.toString().trim() : '';
-
-  if (!text && currentSelectedRange) {
-    text = currentSelectedRange.toString().trim();
-  }
-
-  if (!text) {
-    alert("Vui lòng bôi đen đoạn văn bản cần xử lý!");
-    hideBubbleToolbar();
-    return;
-  }
-
-  hideBubbleToolbar();
-  saveEditorState("Trước khi AI " + action);
-
-  try {
-    const res = await fetch('/api/ai/floating-command', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action,
-        text,
-        apiKey: localStorage.getItem('gemini_api_key') || ''
-      })
-    }).then(r => r.json());
-
-    if (res.success && res.result) {
-      if (currentSelectedRange) {
-        selection.removeAllRanges();
-        selection.addRange(currentSelectedRange);
-      }
-
-      if (action === 'to_quote') {
-        document.execCommand('insertHTML', false, res.result);
-      } else {
-        document.execCommand('insertText', false, res.result);
-      }
-
-      saveEditorState("Sau khi AI " + action);
-    } else {
-      alert("⚠️ Không thể hoàn thành tác vụ AI: " + (res.error || "Lỗi không xác định"));
-    }
-  } catch (err) {
-    console.error("Lỗi Bubble AI:", err);
-    alert("❌ Lỗi kết nối AI: " + err.message);
-  }
-}
-
 // 2. KHỐI BÁO CHÍ: TRÍCH DẪN & HỘP THÔNG TIN
 function insertJournalismQuote() {
   saveEditorState("Trước khi chèn trích dẫn");
@@ -2459,5 +2343,5 @@ function confirmInsertJournalismImage() {
 
 // Auto-initialize floating toolbar on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(initFloatingBubbleToolbar, 500);
+  // Floating toolbar initialized
 });
