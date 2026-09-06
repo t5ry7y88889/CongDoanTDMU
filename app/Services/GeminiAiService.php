@@ -63,8 +63,8 @@ class GeminiAiService {
                 "Phát Động Chương Trình: " . $titleBase . " (Năm 2026)",
                 "Thông Báo Sôi Nổi: " . $titleBase
             ],
-            'summary' => "Thông báo chính thức từ Công đoàn Trường Đại học Thủ Dầu Một về việc triển khai: "{$prompt}". Kính mời toàn thể cán bộ, giảng viên và đoàn viên theo dõi và tham gia đông đủ.",
-            'content' => "Công đoàn Trường Đại học Thủ Dầu Một (TDMU) xin trân trọng thông báo tới toàn thể cán bộ, giảng viên, người lao động và đoàn viên công đoàn về chương trình: "{$prompt}".\n\nNội dung chi tiết được thực hiện với văn phong {$tone}, đảm bảo phát huy tinh thần đoàn kết, thi đua xuất sắc trong toàn trường.\n\nKính đề nghị các Công đoàn bộ phận triển khai sâu rộng đến toàn thể đoàn viên để tham gia hưởng ứng nhiệt tình.",
+            'summary' => "Thông báo chính thức từ Công đoàn Trường Đại học Thủ Dầu Một về việc triển khai: \"{$prompt}\". Kính mời toàn thể cán bộ, giảng viên và đoàn viên theo dõi và tham gia đông đủ.",
+            'content' => "Công đoàn Trường Đại học Thủ Dầu Một (TDMU) xin trân trọng thông báo tới toàn thể cán bộ, giảng viên, người lao động và đoàn viên công đoàn về chương trình: \"{$prompt}\".\n\nNội dung chi tiết được thực hiện với văn phong {$tone}, đảm bảo phát huy tinh thần đoàn kết, thi đua xuất sắc trong toàn trường.\n\nKính đề nghị các Công đoàn bộ phận triển khai sâu rộng đến toàn thể đoàn viên để tham gia hưởng ứng nhiệt tình.",
             'category' => $category
         ];
     }

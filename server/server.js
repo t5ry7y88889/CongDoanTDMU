@@ -1216,6 +1216,22 @@ YÊU CẦU: Trả về DUY NHẤT đoạn văn bản đã được chỉnh sửa
 
 
 
+// 15 TABLES STANDARDIZED API ENDPOINTS
+app.get('/api/categories', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, count: (db.categories || []).length, data: db.categories || [] });
+});
+
+app.get('/api/comments', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, count: (db.comments || []).length, data: db.comments || [] });
+});
+
+app.get('/api/article-audits', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, count: (db.article_audits || []).length, data: db.article_audits || [] });
+});
+
 // REST API USERS, EVENTS, MEDIA, AUDITS, SIMULATED SOCIAL (DUAL SCHEMA SUPPORT)
 app.get('/api/users', (req, res) => {
   const db = loadDB();
@@ -1258,6 +1274,7 @@ const getDashboardStats = (req, res) => {
 
 app.get('/api/analytics', getDashboardStats);
 app.get('/api/dashboard', getDashboardStats);
+app.get('/api/stats', getDashboardStats);
 
 app.post('/api/facebook/publish', (req, res) => {
   const { articleId, title } = req.body;
@@ -1322,6 +1339,21 @@ app.post('/api/bookmarks', (req, res) => {
 // =========================================================================
 // 2. WELFARE (PHÚC LỢI ĐOÀN VIÊN) & DON TRO CAP API
 // =========================================================================
+app.get('/api/phuc-loi', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, count: (db.phuc_loi || []).length, data: db.phuc_loi || [] });
+});
+
+app.get('/api/don-tro-cap', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, count: (db.don_tro_cap || []).length, data: db.don_tro_cap || [] });
+});
+
+app.get('/api/inbox-feedback', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, count: (db.inbox_feedback || []).length, data: db.inbox_feedback || [] });
+});
+
 app.get('/api/welfare', (req, res) => {
   const db = loadDB();
   res.json({ success: true, data: db.phuc_loi || [] });
