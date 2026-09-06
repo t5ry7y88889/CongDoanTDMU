@@ -574,3 +574,112 @@ footer a:hover {
   align-items: center;
   gap: 4px;
 }
+
+/* =========================================================================
+   TDMU JOURNALISM AI SUITE - BÁO ĐIỆN TỬ & PHÒNG BIÊN TẬP CAO CẤP
+   ========================================================================= */
+.sapo, p.sapo {
+  font-size: 1.12rem !important;
+  font-weight: 600 !important;
+  line-height: 1.7 !important;
+  color: #1E293B !important;
+  background: #F8FAFC;
+  border-left: 4px solid #0284C7;
+  padding: 12px 18px !important;
+  border-radius: 0 8px 8px 0;
+  margin: 16px 0 24px 0 !important;
+}
+
+.journalism-figure {
+  margin: 28px 0 !important;
+  text-align: center;
+  background: #F8FAFC;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+}
+.journalism-figure img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  display: block;
+  margin: 0 auto;
+}
+.journalism-figure figcaption {
+  margin-top: 8px;
+  font-size: 13px !important;
+  font-style: italic !important;
+  color: #64748B !important;
+  line-height: 1.5;
+  padding: 4px 12px;
+}
+
+blockquote {
+  position: relative;
+  margin: 24px 0 !important;
+  padding: 16px 20px 16px 48px !important;
+  background: linear-gradient(135deg, #F0F9FF, #E0F2FE);
+  border-left: 4px solid #0284C7 !important;
+  border-radius: 0 10px 10px 0;
+  font-style: italic;
+  font-size: 15.5px;
+  color: #0F172A;
+  line-height: 1.7;
+}
+blockquote::before {
+  content: "“";
+  position: absolute;
+  left: 14px;
+  top: 4px;
+  font-size: 42px;
+  font-family: Georgia, serif;
+  color: #0284C7;
+  line-height: 1;
+}
+blockquote cite {
+  display: block;
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0369A1;
+  margin-top: 8px;
+}
+
+.journalism-infobox {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-left: 4px solid #F59E0B;
+  border-radius: 0 8px 8px 0;
+  padding: 14px 18px;
+  margin: 20px 0;
+  font-size: 14px;
+}
+
+/* FLOATING AI BUBBLE TOOLBAR (TIPTAP / NOTION STYLE) */
+.floating-ai-bubble {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  user-select: none;
+}
+.floating-ai-bubble .bubble-btn {
+  background: transparent;
+  border: none;
+  color: #F8FAFC;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+.floating-ai-bubble .bubble-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #38BDF8;
+  transform: translateY(-1px);
+}
+.floating-ai-bubble .bubble-btn:active {
+  transform: translateY(0);
+}

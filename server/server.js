@@ -598,7 +598,8 @@ app.post('/api/ai/floating-command', async (req, res) => {
       if (action === 'rewrite') systemPrompt = "Viết lại đoạn văn sau theo cách diễn đạt mượt mà và thu hút hơn:";
       else if (action === 'shorten') systemPrompt = "Rút gọn đoạn văn sau thành một câu súc tích nhất:";
       else if (action === 'expand') systemPrompt = "Mở rộng đoạn văn sau với chi tiết bổ sung cho phong trào Công đoàn:";
-      else if (action === 'formal') systemPrompt = "Chuyển đoạn văn sau sang văn phong hành chính trang trọng Công đoàn trường:";
+      else if (action === 'formal') systemPrompt = "Viết lại đoạn văn sau theo văn phong báo chí chuẩn mực, trang nhã, giàu sức thuyết phục:";
+      else if (action === 'to_quote') systemPrompt = "Biến đoạn thông tin sau thành một câu trích dẫn phát biểu trực tiếp đầy cảm xúc và trang trọng từ lãnh đạo hoặc đoàn viên Công đoàn TDMU (đặt trong dấu ngoặc kép):";
       else systemPrompt = "Sửa lỗi chính tả và ngữ pháp cho đoạn văn sau:";
 
       const response = await ai.models.generateContent({
@@ -620,6 +621,8 @@ app.post('/api/ai/floating-command', async (req, res) => {
     result = text.split('.')[0] + '.';
   } else if (action === 'expand') {
     result = `${text} Đồng thời, Ban Thường vụ Công đoàn TDMU đề nghị các Công đoàn bộ phận rà soát và nghiêm túc thực hiện.`;
+  } else if (action === 'to_quote') {
+    result = `<blockquote>“${text}”<cite style="display:block;font-size:13px;color:#0284C7;font-weight:700;margin-top:6px;">– Đại diện Ban Thường vụ Công đoàn TDMU</cite></blockquote>`;
   } else if (action === 'formal') {
     result = `Ban Thường vụ Công đoàn TDMU trân trọng thông báo: ${text}`;
   } else if (action === 'fix_spelling') {
@@ -1007,6 +1010,35 @@ app.post('/api/articles/:id/reject', async (req, res) => {
 });
 
 // 4. MULTI-CHANNEL CONTENT PACKAGE GENERATOR (AI GROUNDED IN ASSETS)
+
+// REST API GENERATE JOURNALISM IMAGE VIA POLLINATIONS AI FLUX (100% FREE & INSTANT)
+app.post('/api/ai/generate-image', async (req, res) => {
+  try {
+    const { prompt, genre, width = 1280, height = 720 } = req.body;
+    if (!prompt) {
+      return res.status(400).json({ success: false, error: 'Thiếu mô tả ảnh (prompt)' });
+    }
+
+    // Build journalistic photo prompt in English for optimal Flux/SDXL output
+    const cleanPrompt = prompt.replace(/<[^>]*>/g, '').trim();
+    const styleModifiers = "modern photojournalism, realistic photography, university academic setting in Vietnam, natural ambient lighting, sharp focus, 8k, canon eos, award-winning editorial photograph";
+    const enhancedPrompt = `${cleanPrompt}, ${styleModifiers}`;
+    const seed = Math.floor(Math.random() * 1000000);
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${width}&height=${height}&model=flux&nologo=true&enhance=true&seed=${seed}`;
+
+    res.json({
+      success: true,
+      imageUrl,
+      caption: `Ảnh minh họa: ${cleanPrompt.slice(0, 80)}`,
+      prompt: enhancedPrompt,
+      seed
+    });
+  } catch (err) {
+    console.error("Lỗi sinh ảnh AI:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 const handlePackageGenerator = async (req, res) => {
   const { dossierId, assetIds, briefText, channels, customPrompt, prompt, apiKey, groqApiKey, aiEngine } = req.body;
   const pText = customPrompt || prompt || briefText || "Tháng Công Nhân 2026";
@@ -1039,48 +1071,64 @@ const handlePackageGenerator = async (req, res) => {
     ? channels
     : ['website', 'facebook', 'zalo', 'video', 'banner'];
 
-  const systemPrompt = `BẠN LÀ GIÁM ĐỐC TRUYỀN THÔNG ĐA KÊNH CỦA CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT (TDMU).
-Nhiệm vụ của bạn là nhận Hồ sơ và các Tư liệu nguồn thực tế, sau đó sản xuất trọn gói 1 "CONTENT PACKAGE ĐA KÊNH" hoàn chỉnh.
+  const systemPrompt = `BẠN LÀ TỔNG THƯ KÝ TÒA SOẠN & GIÁM ĐỐC TRUYỀN THÔNG ĐA KÊNH CỦA CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT (TDMU).
+Nhiệm vụ của bạn là nhận Tư liệu nguồn thực tế, sau đó sản xuất trọn gói 1 "BỘ BÁO CHÍ & TRUYỀN THÔNG ĐA KÊNH" ĐẠT CHUẨN BÁO ĐIỆN TỬ VIỆT NAM CAO CẤP.
 
-QUY TẮC CỐT LÕI BẮT BUỘC (GROUNDING TRUTHFULNESS):
-1. BÁM SÁT SỰ THẬT TỪ TƯ LIỆU: Chỉ được dùng các dữ kiện, con số, đối tượng đã ghi trong phần Tư liệu nguồn. TUYỆT ĐỐI KHÔNG tự ý bịa đặt lịch trình, số tiền, tên người nếu tư liệu không nhắc đến.
-2. ĐỊNH DẠNG ĐA KÊNH CHUYÊN BIỆT:
-   - Website: Trang trọng, mạch lạc, dùng các thẻ HTML <h2>, <p>, <ul>, <li>, văn phong hành chính hiện đại.
-   - Facebook: Giọng văn truyền cảm hứng, ngắn gọn, có icon sinh động, có bộ Hashtags chuẩn và Call to Action (CTA).
-   - Zalo OA: Tin vắn dưới 100 chữ, súc tích, dạng thẻ hành động.
-   - Video Script: Kịch bản phân cảnh (Scene, Visual, Voice-over) thời lượng 60 giây.
-   - Banner Concept: Khẩu hiệu ngắn gọn (dưới 10 chữ) và thông điệp phụ.
+==================================================
+QUY CHUẨN BÁO CHÍ KIM TỰ THÁP NGƯỢC (INVERTED PYRAMID):
+==================================================
+1. TIÊU ĐỀ (HEADLINE): Đúng bản chất sự kiện, trang trọng, lôi cuốn, không giật gân, chuẩn thể thức báo chí đại học.
+2. SAPO (LEAD 5W1H): Đoạn mở đầu khoảng 45-60 từ in đậm (<p class="sapo"><strong>...</strong></p>), trả lời trọn vẹn: AI - LÀM GÌ - Ở ĐÂU - KHI NÀO - VÌ SAO - NHƯ THẾ NÀO.
+3. THÂN BÀI (BODY):
+   - Phân chia các tiêu đề phụ <h2> mạch lạc, sinh động (Tuyệt đối không viết "Phần I, Phần II").
+   - BẮT BUỘC CÓ ÍT NHẤT 1 TRÍCH DẪN PHÁT BIỂU: Sử dụng thẻ <blockquote>“Lời phát biểu xúc động hoặc chỉ đạo sâu sắc...”<cite>– Đ/c [Họ tên], Đại diện Ban Thường vụ Công đoàn</cite></blockquote>.
+   - BẮT BUỘC CÓ GỢI Ý ẢNH BÁO CHÍ: Chèn thẻ <figure class="journalism-figure"><img src="URL_ANH" alt="Mô tả" /><figcaption>Ảnh: [Chú thích chi tiết về hoạt động trong ảnh]</figcaption></figure>.
+   - Văn phong: Trang nhã, giàu nhiệt huyết, nêu bật tinh thần tương thân tương ái, chăm lo đời sống CBGV-NLĐ TDMU.
+4. MA TRẬN ĐA KÊNH CHUYÊN BIỆT:
+   - Facebook Fanpage: 3 dòng hook gây tò mò, bullet points icon sinh động, hashtag, Call to Action chia sẻ.
+   - Zalo OA: Tin vắn dưới 80 từ, súc tích, thẻ hành động.
+   - Video Script: Kịch bản 60 giây chia 4 phân cảnh [Scene, Visual, Voice-over].
+   - Infographic Summary: 4-5 số liệu hoặc điểm nhấn cốt lõi nhất (Core Highlights).
 
-YÊU CẦU ĐẦU RA: Trả về DUY NHẤT 1 đối tượng JSON hợp lệ theo đúng cấu trúc sau (không có văn bản nào khác ngoài JSON):
+YÊU CẦU ĐẦU RA: Trả về DUY NHẤT 1 đối tượng JSON hợp lệ (không có văn bản nào ngoài JSON):
 {
   "website": {
-    "title": "Tiêu đề bài báo Web chính thống",
-    "sapo": "Đoạn mở đầu tóm lược khoảng 40-50 từ",
-    "content": "Nội dung HTML đầy đủ có <h2>, <p>, <ul>...",
-    "suggestedTags": ["Công đoàn TDMU", "Chăm lo đời sống"]
+    "title": "Tiêu đề bài báo Web chuẩn báo chí",
+    "sapo": "Đoạn Sapo in đậm 45-60 từ tóm tắt trọn vẹn 5W1H",
+    "content": "<p class=\"sapo\"><strong>...</strong></p><h2>...</h2><p>...</p><blockquote>“...”<cite>– ...</cite></blockquote><h2>...</h2><p>...</p>",
+    "suggestedTags": ["Công đoàn TDMU", "Hoạt động phong trào"],
+    "imagePrompt": "English detailed photo prompt for Flux AI (e.g. Vietnamese university professors at academic conference hall, realistic photojournalism)",
+    "imageCaption": "Ảnh: Hoạt động sôi nổi của đoàn viên Công đoàn TDMU"
   },
   "facebook": {
-    "caption": "Bài đăng Facebook truyền thông cảm xúc, có biểu tượng icon sinh động...",
-    "hashtags": "#CongDoanTDMU #TDMU2026",
-    "callToAction": "Quý Thầy/Cô vui lòng chia sẻ thông tin đến toàn thể đoàn viên tại đơn vị!",
-    "suggestedImages": ["${selectedAssets.find(a => a.fileType === 'image')?.fileName || 'banner.jpg'}"]
+    "caption": "Bài đăng Facebook truyền thông cảm xúc, có icon sinh động, cấu trúc 3 phần...",
+    "hashtags": "#CongDoanTDMU #TDMU2026 #ChuyenDoiSo",
+    "callToAction": "Quý Thầy/Cô vui lòng chia sẻ thông tin đến toàn thể đoàn viên tại đơn vị!"
   },
   "zalo": {
     "headline": "Tiêu đề tin Zalo OA",
-    "broadcastBody": "Nội dung tin nhắn Zalo vắn tắt, súc tích dưới 80 từ...",
+    "broadcastBody": "Nội dung tin nhắn Zalo vắn tắt dưới 80 từ...",
     "actionLink": "https://congdoan.tdmu.edu.vn"
   },
   "video": {
     "title": "Kịch bản phóng sự ngắn 60s",
     "scenes": [
-      { "scene": 1, "visual": "Hình ảnh khuôn viên trường TDMU và biểu trưng Công đoàn", "voiceover": "Đoàn kết, đổi mới và sáng tạo - Công đoàn Trường Đại học Thủ Dầu Một luôn đồng hành..." },
-      { "scene": 2, "visual": "Hình ảnh cán bộ công đoàn tham gia hoạt động", "voiceover": "Kế hoạch được triển khai sâu rộng mang lại nhiều quyền lợi thiết thực..." }
+      { "scene": 1, "visual": "Toàn cảnh khuôn viên trường ĐH Thủ Dầu Một", "voiceover": "Đoàn kết, đổi mới và sáng tạo..." },
+      { "scene": 2, "visual": "Hình ảnh cán bộ đoàn viên tham gia sự kiện", "voiceover": "Chương trình mang lại nhiều giá trị thiết thực..." }
+    ]
+  },
+  "infographic": {
+    "headline": "TỔNG HỢP ĐIỂM NHẤN SỰ KIỆN",
+    "highlights": [
+      "Số lượng tham gia: 100% Tổ Công đoàn trực thuộc",
+      "Kinh phí chăm lo: Thiết thực và kịp thời",
+      "Thông điệp: Đoàn kết - Sáng tạo - Trách nhiệm"
     ]
   },
   "banner": {
-    "headline": "KHẨU HIỆU BANNER CHÍNH",
+    "headline": "KHẨU HIỆU CHỦ ĐẠO",
     "subText": "Thông điệp bổ trợ",
-    "suggestedPalette": "Xanh dương TDMU & Vàng kim năng động"
+    "suggestedPalette": "Xanh dương TDMU & Vàng kim"
   }
 }`;
 
@@ -1101,11 +1149,44 @@ YÊU CẦU ĐẦU RA: Trả về DUY NHẤT 1 đối tượng JSON hợp lệ th
         title: `Công Đoàn Trường ĐH Thủ Dầu Một: ${promptTitle}`,
         subTitle: "Đồng hành, chăm lo và bảo vệ quyền lợi hợp pháp của cán bộ giảng viên",
         summary: `Kế hoạch tổ chức ${promptTitle} với nhiều hoạt động thiết thực chăm lo đời sống đoàn viên.`,
-        articleHtml: `<h2>1. MỤC ĐÍCH & Ý NGHĨA</h2><p>Chương trình <strong>${promptTitle}</strong> nhằm tạo khí thế thi đua sôi nổi trong toàn thể cán bộ, giảng viên và người lao động TDMU.</p><blockquote>"Công đoàn TDMU luôn là mái ấm tin cậy của người lao động"</blockquote>`,
-        facebookPost: `📢 [TDMU NEWS] ${promptTitle}\n\nCông đoàn Trường ĐH Thủ Dầu Một phát động chương trình ${promptTitle} với nhiều hoạt động sôi nổi!\n\n👉 Chi tiết tại: https://congdoan.tdmu.edu.vn\n#CongDoanTDMU #TDMU2026`,
-        zaloPost: `[CÔNG ĐOÀN TDMU] Thông báo triển khai ${promptTitle}. Kính mời quý Thầy/Cô theo dõi.`,
-        emailNewsletter: `Kính gửi quý Thầy/Cô Đoàn viên,\n\nBan Thường vụ Công đoàn TDMU trân trọng thông báo kế hoạch: ${promptTitle}.\n\nTrân trọng!`,
-        videoScript: `Kịch bản video 60s: [00:00-00:10] Giới thiệu không khí ${promptTitle}. [00:10-00:40] Hoạt động trao quà và thi đua. [00:40-01:00] Lời chúc và thông điệp đoàn kết.`
+        articleHtml: `<p class="sapo"><strong>(TDMU) - Nhằm phát huy truyền thống đoàn kết, sáng tạo và chăm lo toàn diện đời sống vật chất, tinh thần cho đội ngũ cán bộ, giảng viên và người lao động, Công đoàn Trường Đại học Thủ Dầu Một chính thức triển khai chuỗi hoạt động: ${promptTitle}.</strong></p>
+
+<h2>Phát huy tinh thần đổi mới và trách nhiệm của tổ chức Công đoàn</h2>
+<p>Chương trình được tổ chức với sự tham gia nhiệt tình của 16 Tổ Công đoàn trực thuộc toàn trường, tạo nên không khí thi đua sôi nổi trong phong trào dạy tốt, học tốt và nghiên cứu khoa học.</p>
+
+<figure class="journalism-figure" style="text-align: center; margin: 24px 0;">
+  <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&auto=format&fit=crop&q=80" alt="Hoạt động Công đoàn TDMU" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);" />
+  <figcaption style="font-size: 13px; font-style: italic; color: #64748B; margin-top: 8px;">Ảnh: Hoạt động truyền thống sôi nổi của Công đoàn Trường Đại học Thủ Dầu Một</figcaption>
+</figure>
+
+<blockquote>
+  “Mỗi chương trình của Công đoàn TDMU không chỉ là hoạt động phong trào mà còn là tình cảm, trách nhiệm sẻ chia và sự gắn kết bền chặt giữa Nhà trường với từng đoàn viên người lao động.”
+  <cite style="display: block; font-size: 13px; color: #0284C7; font-weight: 700; margin-top: 6px;">– Đại diện Ban Thường vụ Công đoàn TDMU</cite>
+</blockquote>
+
+<h2>Nội dung trọng tâm và thông điệp hành động</h2>
+<p>Ban Thường vụ Công đoàn đề nghị các Tổ Công đoàn cơ sở phổ biến sâu rộng kế hoạch đến từng công đoàn viên, đảm bảo quyền lợi thiết thực và lan tỏa tinh thần đoàn kết trong toàn thể Nhà trường.</p>`,
+        facebookPost: `📢 [TDMU NEWS] ${promptTitle}\n\nCông đoàn Trường ĐH Thủ Dầu Một phát động chương trình ${promptTitle} với nhiều hoạt động sôi nổi và ý nghĩa thiết thực!\n\n👉 Xem chi tiết tại: https://congdoan.tdmu.edu.vn\n#CongDoanTDMU #TDMU2026 #ChuyenDoiSo`,
+        zaloPost: `[CÔNG ĐOÀN TDMU THÔNG BÁO]\nTriển khai kế hoạch: ${promptTitle}. Kính mời quý Thầy/Cô đoàn viên theo dõi và hưởng ứng tích cực.`,
+        facebook: {
+          caption: `📢 [TDMU NEWS] ${promptTitle}\n\nCông đoàn Trường ĐH Thủ Dầu Một phát động chương trình ${promptTitle} với nhiều hoạt động sôi nổi và ý nghĩa thiết thực!\n\n👉 Xem chi tiết tại: https://congdoan.tdmu.edu.vn`,
+          hashtags: "#CongDoanTDMU #TDMU2026 #ChuyenDoiSo",
+          callToAction: "Quý Thầy/Cô vui lòng chia sẻ thông tin đến toàn thể đoàn viên tại đơn vị!"
+        },
+        zalo: {
+          headline: `[CÔNG ĐOÀN TDMU] ${promptTitle}`,
+          broadcastBody: `Công đoàn Trường ĐH Thủ Dầu Một triển khai kế hoạch: ${promptTitle}. Kính mời quý Thầy/Cô đoàn viên tham gia hưởng ứng nhiệt tình.`,
+          actionLink: "https://congdoan.tdmu.edu.vn"
+        },
+        infographic: {
+          headline: "ĐIỂM NHẤN SỰ KIỆN",
+          highlights: [
+            "Quy mô: 16 Tổ Công đoàn cơ sở trực thuộc",
+            "Mục tiêu: Chăm lo đời sống & Nâng cao tinh thần đoàn kết",
+            "Thời gian: Kế hoạch triển khai định kỳ năm 2026"
+          ]
+        },
+        videoScript: `Kịch bản phóng sự 60s: [00:00-00:15] Không khí sự kiện. [00:15-00:45] Phát biểu và hoạt động trọng tâm. [00:45-01:00] Thông điệp đoàn kết TDMU.`
       }
     });
   }

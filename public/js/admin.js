@@ -1322,7 +1322,7 @@ function handleStudioFileUpload(input) {
 }
 
 function switchPackageTab(tab) {
-  const tabs = ['web', 'fb', 'zalo', 'video', 'banner'];
+  const tabs = ['web', 'fb', 'zalo', 'video', 'infographic', 'banner'];
 
   tabs.forEach(t => {
     const btn = document.getElementById('tab_btn_pkg_' + t);
@@ -1364,9 +1364,20 @@ async function generateGroundedContentPackage() {
   if (spinner) spinner.style.display = 'block';
   if (statusText) statusText.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> Trí tuệ nhân tạo đang sản xuất nội dung 5 kênh...';
 
+  const genre = document.getElementById('studio_genre_selector')?.value || 'tin_hoat_dong';
+  const channels = [];
+  if (document.getElementById('chk_chan_web')?.checked) channels.push('website');
+  if (document.getElementById('chk_chan_fb')?.checked) channels.push('facebook');
+  if (document.getElementById('chk_chan_zalo')?.checked) channels.push('zalo');
+  if (document.getElementById('chk_chan_video')?.checked) channels.push('video');
+  if (document.getElementById('chk_chan_infographic')?.checked) channels.push('infographic');
+
   const payload = {
     briefText,
     customPrompt: customPrompt || briefText,
+    genre,
+    channels: channels.length ? channels : ['website', 'facebook', 'zalo', 'video', 'infographic'],
+    autoGenImage: document.getElementById('chk_auto_gen_image')?.checked !== false,
     apiKey: localStorage.getItem('gemini_api_key') || '',
     groqApiKey: localStorage.getItem('groq_api_key') || '',
     aiEngine: localStorage.getItem('ai_engine_preference') || 'auto'
@@ -1423,6 +1434,31 @@ function populatePackageToStudio(pkg) {
   const bannerHeadline = pkg.banner?.headline || webTitle;
   if (document.getElementById('studio_title_text')) safeSetVal('studio_title_text', bannerHeadline);
   renderStudioCanvasBanner(bannerHeadline);
+
+  // POPULATE INFOGRAPHIC HIGHLIGHTS
+  if (pkg.infographic) {
+    const infoDiv = document.getElementById('infographic_content_display');
+    if (infoDiv) {
+      const headline = pkg.infographic.headline || "ĐIỂM NHẤN SỰ KIỆN";
+      const highlights = Array.isArray(pkg.infographic.highlights) ? pkg.infographic.highlights : [];
+      infoDiv.innerHTML = `
+        <div style="font-size: 16px; font-weight: 800; margin-bottom: 12px; color: #065F46; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-chart-pie"></i> ${headline}
+        </div>
+        <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
+          ${highlights.map(h => `<li style="font-weight: 600; color: #064E3B;">${h}</li>`).join('')}
+        </ul>
+      `;
+    }
+  }
+
+  // AUTO-POPULATE IMAGE MODAL PROMPT IF AI SUGGESTED
+  if (pkg.website?.imagePrompt && document.getElementById('img_modal_prompt')) {
+    document.getElementById('img_modal_prompt').value = pkg.website.imagePrompt;
+  }
+  if (pkg.website?.imageCaption && document.getElementById('img_modal_caption')) {
+    document.getElementById('img_modal_caption').value = pkg.website.imageCaption;
+  }
 
   switchPackageTab('web');
   updateMetrics();
@@ -2135,3 +2171,293 @@ function clearCopilotChat() {
     `;
   }
 }
+
+/* =========================================================================
+   TDMU JOURNALISM AI SUITE - CLIENT CONTROLS & BUBBLE TOOLBAR
+   ========================================================================= */
+
+// 1. FLOATING AI BUBBLE TOOLBAR (TIPTAP / NOTION STYLE)
+let currentSelectedRange = null;
+
+function initFloatingBubbleToolbar() {
+  const editor = document.getElementById('native_rich_editor');
+  const bubble = document.getElementById('floating_ai_bubble_toolbar');
+  if (!editor || !bubble) return;
+
+  const handleSelection = () => {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || !selection.toString().trim()) {
+      hideBubbleToolbar();
+      return;
+    }
+
+    // Check if selection is within editor
+    if (!editor.contains(selection.anchorNode)) {
+      hideBubbleToolbar();
+      return;
+    }
+
+    const text = selection.toString().trim();
+    if (text.length < 3) {
+      hideBubbleToolbar();
+      return;
+    }
+
+    try {
+      const range = selection.getRangeAt(0);
+      currentSelectedRange = range.cloneRange();
+      const rect = range.getBoundingClientRect();
+
+      bubble.style.display = 'flex';
+      const bubbleWidth = bubble.offsetWidth || 340;
+      const left = Math.max(10, rect.left + (rect.width / 2) - (bubbleWidth / 2) + window.scrollX);
+      const top = Math.max(10, rect.top - 46 + window.scrollY);
+
+      bubble.style.left = left + 'px';
+      bubble.style.top = top + 'px';
+    } catch (e) {
+      hideBubbleToolbar();
+    }
+  };
+
+  editor.addEventListener('mouseup', () => setTimeout(handleSelection, 50));
+  editor.addEventListener('keyup', (e) => {
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Shift'].includes(e.key)) {
+      setTimeout(handleSelection, 50);
+    }
+  });
+
+  document.addEventListener('mousedown', (e) => {
+    if (!bubble.contains(e.target) && !editor.contains(e.target)) {
+      hideBubbleToolbar();
+    }
+  });
+}
+
+function hideBubbleToolbar() {
+  const bubble = document.getElementById('floating_ai_bubble_toolbar');
+  if (bubble) bubble.style.display = 'none';
+}
+
+async function executeBubbleAction(action) {
+  const editor = document.getElementById('native_rich_editor');
+  if (!editor) return;
+
+  const selection = window.getSelection();
+  let text = selection ? selection.toString().trim() : '';
+
+  if (!text && currentSelectedRange) {
+    text = currentSelectedRange.toString().trim();
+  }
+
+  if (!text) {
+    alert("Vui lòng bôi đen đoạn văn bản cần xử lý!");
+    hideBubbleToolbar();
+    return;
+  }
+
+  hideBubbleToolbar();
+  saveEditorState("Trước khi AI " + action);
+
+  try {
+    const res = await fetch('/api/ai/floating-command', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action,
+        text,
+        apiKey: localStorage.getItem('gemini_api_key') || ''
+      })
+    }).then(r => r.json());
+
+    if (res.success && res.result) {
+      if (currentSelectedRange) {
+        selection.removeAllRanges();
+        selection.addRange(currentSelectedRange);
+      }
+
+      if (action === 'to_quote') {
+        document.execCommand('insertHTML', false, res.result);
+      } else {
+        document.execCommand('insertText', false, res.result);
+      }
+
+      saveEditorState("Sau khi AI " + action);
+    } else {
+      alert("⚠️ Không thể hoàn thành tác vụ AI: " + (res.error || "Lỗi không xác định"));
+    }
+  } catch (err) {
+    console.error("Lỗi Bubble AI:", err);
+    alert("❌ Lỗi kết nối AI: " + err.message);
+  }
+}
+
+// 2. KHỐI BÁO CHÍ: TRÍCH DẪN & HỘP THÔNG TIN
+function insertJournalismQuote() {
+  saveEditorState("Trước khi chèn trích dẫn");
+  const quoteHtml = `<blockquote>“Mỗi chương trình, hoạt động của Công đoàn TDMU là sự đồng hành thiết thực, bảo vệ quyền và lợi ích hợp pháp của cán bộ giảng viên và người lao động.”<cite style="display:block;font-size:13px;color:#0284C7;font-weight:700;margin-top:6px;">– Đại diện Ban Thường vụ Công đoàn TDMU</cite></blockquote><p><br></p>`;
+  document.execCommand('insertHTML', false, quoteHtml);
+  saveEditorState("Sau khi chèn trích dẫn");
+}
+
+function insertJournalismInfobox() {
+  saveEditorState("Trước khi chèn hộp tin");
+  const boxHtml = `<div class="journalism-infobox"><strong>📌 THÔNG TIN CẦN LƯU Ý:</strong><ul style="margin: 6px 0 0 0; padding-left: 20px;"><li><strong>Thời gian:</strong> Kế hoạch định kỳ năm 2026.</li><li><strong>Địa điểm:</strong> Trường Đại học Thủ Dầu Một (Số 06 Trần Văn Ơn, Phú Hòa, TP. TDM).</li><li><strong>Đối tượng:</strong> Toàn thể cán bộ, giảng viên và đoàn viên 16 Tổ Công đoàn.</li></ul></div><p><br></p>`;
+  document.execCommand('insertHTML', false, boxHtml);
+  saveEditorState("Sau khi chèn hộp tin");
+}
+
+function copyInfographicText() {
+  const infoDiv = document.getElementById('infographic_content_display');
+  if (!infoDiv) return;
+  const text = infoDiv.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    alert("✅ Đã sao chép nội dung tóm tắt Infographic vào Clipboard!");
+  }).catch(() => {
+    alert("⚠️ Không thể sao chép tự động. Vui lòng chọn và copy thủ công.");
+  });
+}
+
+// 3. MODAL CHÈN ẢNH BÁO CHÍ (FLUX AI / KHO TƯ LIỆU / URL)
+let selectedModalImgSrc = "";
+
+function openJournalismImageModal() {
+  const modal = document.getElementById('modal_journalism_image');
+  if (modal) {
+    modal.style.display = 'flex';
+    // Auto fill prompt from title if empty
+    const promptInput = document.getElementById('img_modal_prompt');
+    const titleInput = document.getElementById('ai_final_title');
+    if (promptInput && !promptInput.value && titleInput && titleInput.value) {
+      promptInput.value = titleInput.value;
+    }
+  }
+}
+
+function closeJournalismImageModal() {
+  const modal = document.getElementById('modal_journalism_image');
+  if (modal) modal.style.display = 'none';
+}
+
+function switchImageSourceTab(source) {
+  ['ai', 'url', 'upload'].forEach(s => {
+    const btn = document.getElementById('tab_img_src_' + s);
+    const panel = document.getElementById('panel_img_src_' + s);
+    if (btn) {
+      btn.style.background = (s === source) ? 'white' : 'transparent';
+      btn.style.color = (s === source) ? '#0284C7' : '#475569';
+    }
+    if (panel) {
+      panel.style.display = (s === source) ? 'block' : 'none';
+    }
+  });
+}
+
+async function generateImageFromModal() {
+  const promptInput = document.getElementById('img_modal_prompt');
+  const btn = document.getElementById('btn_modal_gen_img');
+  const preview = document.getElementById('img_modal_preview');
+  const previewWrap = document.getElementById('img_modal_preview_wrap');
+  const captionInput = document.getElementById('img_modal_caption');
+
+  const promptText = (promptInput?.value || '').trim();
+  if (!promptText) {
+    alert("Vui lòng nhập mô tả ảnh (Prompt)!");
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i> Đang sinh ảnh Flux AI...';
+  }
+
+  try {
+    const res = await fetch('/api/ai/generate-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: promptText })
+    }).then(r => r.json());
+
+    if (res.success && res.imageUrl) {
+      selectedModalImgSrc = res.imageUrl;
+      if (preview) preview.src = res.imageUrl;
+      if (previewWrap) previewWrap.style.display = 'block';
+      if (captionInput && (!captionInput.value || captionInput.value.includes('Ảnh:'))) {
+        captionInput.value = "Ảnh: " + promptText.slice(0, 70);
+      }
+    } else {
+      alert("⚠️ Không thể sinh ảnh: " + (res.error || "Lỗi server"));
+    }
+  } catch (err) {
+    console.error("Lỗi generateImageFromModal:", err);
+    alert("❌ Lỗi sinh ảnh: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles me-1"></i> Tạo Ảnh Báo Chí (16:9 Flux)';
+    }
+  }
+}
+
+function previewUrlImage(url) {
+  selectedModalImgSrc = url.trim();
+  const preview = document.getElementById('img_modal_preview');
+  const previewWrap = document.getElementById('img_modal_preview_wrap');
+  if (preview && selectedModalImgSrc) {
+    preview.src = selectedModalImgSrc;
+    if (previewWrap) previewWrap.style.display = 'block';
+  }
+}
+
+function selectDamImage(src) {
+  selectedModalImgSrc = src;
+  document.querySelectorAll('.dam-pick-thumb').forEach(t => t.style.borderColor = 'transparent');
+  const clicked = event.target;
+  if (clicked) clicked.style.borderColor = '#0284C7';
+
+  const captionInput = document.getElementById('img_modal_caption');
+  if (captionInput && !captionInput.value) {
+    captionInput.value = "Ảnh: Hoạt động truyền thống của đoàn viên Công đoàn TDMU";
+  }
+}
+
+function confirmInsertJournalismImage() {
+  const captionInput = document.getElementById('img_modal_caption');
+  const caption = (captionInput?.value || '').trim() || "Ảnh: Hoạt động Công đoàn Trường Đại học Thủ Dầu Một";
+
+  if (!selectedModalImgSrc) {
+    const urlInput = document.getElementById('img_modal_url');
+    if (urlInput && urlInput.value.trim()) {
+      selectedModalImgSrc = urlInput.value.trim();
+    }
+  }
+
+  if (!selectedModalImgSrc) {
+    alert("Vui lòng chọn ảnh, sinh ảnh AI hoặc nhập link ảnh trước khi chèn!");
+    return;
+  }
+
+  saveEditorState("Trước khi chèn ảnh báo chí");
+
+  const figureHtml = `
+    <figure class="journalism-figure" style="margin: 24px auto; text-align: center; max-width: 780px;">
+      <img src="${selectedModalImgSrc}" alt="${caption}" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.08);" />
+      <figcaption contenteditable="true" style="font-size: 13px; font-style: italic; color: #64748B; margin-top: 8px; outline: none;">${caption}</figcaption>
+    </figure>
+    <p><br></p>
+  `;
+
+  const editor = document.getElementById('native_rich_editor');
+  if (editor) {
+    editor.focus();
+    document.execCommand('insertHTML', false, figureHtml);
+    saveEditorState("Sau khi chèn ảnh báo chí");
+  }
+
+  closeJournalismImageModal();
+}
+
+// Auto-initialize floating toolbar on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(initFloatingBubbleToolbar, 500);
+});

@@ -275,20 +275,35 @@
               <!-- CỘT 2: CHỌN ĐẦU RA ĐA KÊNH -->
               <div style="background: #F8FAFC; padding: 14px; border-radius: 8px; border: 1px solid #E2E8F0;">
                 <label style="font-size: 11.5px; font-weight: 800; color: #475569; text-transform: uppercase; display: block; margin-bottom: 8px;">
-                  ③ Kênh Truyền Thông Cần Tạo:
+                  ② Thể Loại & ③ Kênh Xuất Bản:
                 </label>
-                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; font-weight: 600; color: #334155;">
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="chk_chan_web" checked> <i class="fa-solid fa-globe" style="color: #0284C7;"></i> Bài Viết Trang Web
+                <div style="margin-bottom: 10px;">
+                  <select id="studio_genre_selector" style="width: 100%; background: white; border: 1px solid #BAE6FD; border-radius: 6px; font-size: 12px; font-weight: 700; color: #0369A1; padding: 6px 8px; outline: none; cursor: pointer;">
+                    <option value="tin_hoat_dong">📰 Tin Hoạt Động & Sự Kiện Phong Trào</option>
+                    <option value="guong_sang">🌟 Gương Sáng Đoàn Viên & Nhà Giáo</option>
+                    <option value="thong_bao">📋 Thông Báo - Chỉ Đạo Của BTV</option>
+                    <option value="phuc_loi">💖 Chăm Lo Đời Sống & Phúc Lợi Đoàn Viên</option>
+                    <option value="khen_thuong">🏆 Khen Thưởng - Thi Đua Dạy Tốt</option>
+                  </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12.5px; font-weight: 600; color: #334155;">
+                  <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" id="chk_chan_web" checked> <i class="fa-solid fa-globe text-primary"></i> Báo Web (Sapo 5W1H)
                   </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="chk_chan_fb" checked> <i class="fa-brands fa-facebook" style="color: #1877F2;"></i> Bài Đăng Fanpage
+                  <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" id="chk_chan_fb" checked> <i class="fa-brands fa-facebook text-info"></i> Fanpage
                   </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="chk_chan_zalo" checked> <i class="fa-solid fa-comment-dots" style="color: #0068FF;"></i> Bản Tin Zalo Cơ Quan
+                  <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" id="chk_chan_zalo" checked> <i class="fa-solid fa-comment-dots text-primary"></i> Zalo OA
                   </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="chk_chan_video" checked> <i class="fa-solid fa-clapperboard" style="color: #8B5CF6;"></i> Kịch Bản Phóng Sự Video
+                  <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" id="chk_chan_video" checked> <i class="fa-solid fa-clapperboard text-purple"></i> Video 60s
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" id="chk_chan_infographic" checked> <i class="fa-solid fa-chart-pie text-success"></i> Infographic
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" id="chk_auto_gen_image" checked> <i class="fa-solid fa-wand-magic-sparkles text-warning"></i> Ảnh AI (Flux)
                   </label>
                 </div>
               </div>
@@ -324,8 +339,11 @@
               <button type="button" class="package-tab-btn" id="tab_btn_pkg_video" onclick="switchPackageTab('video')">
                 <i class="fa-solid fa-clapperboard" style="color: #8B5CF6;"></i> 4. Kịch Bản Video 60 Giây
               </button>
+              <button type="button" class="package-tab-btn" id="tab_btn_pkg_infographic" onclick="switchPackageTab('infographic')">
+                <i class="fa-solid fa-chart-pie" style="color: #10B981;"></i> 5. Tóm Tắt Infographic
+              </button>
               <button type="button" class="package-tab-btn" id="tab_btn_pkg_banner" onclick="switchPackageTab('banner')">
-                <i class="fa-solid fa-image" style="color: #F59E0B;"></i> 5. Vẽ Ảnh Trí Tuệ Nhân Tạo
+                <i class="fa-solid fa-image" style="color: #F59E0B;"></i> 6. Vẽ Ảnh & Banner AI
               </button>
 
               <!-- WORKFLOW ACTION BUTTONS RIGHT ALIGNED -->
@@ -358,7 +376,7 @@
                       <div style="width: 1px; height: 22px; background: #CBD5E1; margin: 0 4px;"></div>
                     </div>
 
-                    <!-- Nhóm 2: Định dạng văn bản báo chí chuẩn Word -->
+                    <!-- Nhóm 2: Định dạng văn bản báo chí chuẩn Word & Khối Báo Chí Chuyên Nghiệp -->
                     <div style="display: flex; align-items: center; gap: 4px;">
                       <button type="button" class="btn-word-tool fw-bold" onclick="document.execCommand('bold')" title="In đậm (Ctrl+B)"><strong>B</strong></button>
                       <button type="button" class="btn-word-tool fst-italic" onclick="document.execCommand('italic')" title="In nghiêng (Ctrl+I)"><em>I</em></button>
@@ -368,6 +386,17 @@
                       <button type="button" class="btn-word-tool" onclick="document.execCommand('justifyCenter')" title="Căn giữa"><i class="fa-solid fa-align-center"></i></button>
                       <button type="button" class="btn-word-tool" onclick="document.execCommand('justifyRight')" title="Căn phải"><i class="fa-solid fa-align-right"></i></button>
                       <button type="button" class="btn-word-tool" onclick="document.execCommand('insertUnorderedList')" title="Danh sách gạch đầu dòng"><i class="fa-solid fa-list-ul"></i></button>
+                      <div style="width: 1px; height: 18px; background: #CBD5E1; margin: 0 4px;"></div>
+                      <!-- Khối Báo Chí -->
+                      <button type="button" class="btn-word-tool" onclick="openJournalismImageModal()" title="Chèn Ảnh Báo Chí Kèm Chú Thích (Photo Caption)" style="color: #D97706; font-weight: 700; background: #FFFBEB;">
+                        <i class="fa-solid fa-image me-1"></i> 📷 Ảnh Báo Chí
+                      </button>
+                      <button type="button" class="btn-word-tool" onclick="insertJournalismQuote()" title="Chèn Khối Trích Dẫn Phát Biểu (Blockquote)" style="color: #0284C7; font-weight: 700; background: #F0F9FF;">
+                        <i class="fa-solid fa-quote-left me-1"></i> 💬 Trích Dẫn
+                      </button>
+                      <button type="button" class="btn-word-tool" onclick="insertJournalismInfobox()" title="Chèn Hộp Thông Tin / Lưu Ý" style="color: #059669; font-weight: 700; background: #ECFDF5;">
+                        <i class="fa-solid fa-circle-info me-1"></i> 📦 Hộp Tin
+                      </button>
                     </div>
 
                     <!-- Nhóm 3: AI Chỉnh Sửa & Hệ Thống Kiểm Tra Chất Lượng AI -->
@@ -480,6 +509,24 @@
             </div>
 
             <!-- TAB 5: AI VẼ ẢNH / BANNER -->
+            <!-- TAB 5: INFOGRAPHIC HIGHLIGHTS VIEW -->
+            <div id="pkg_view_infographic" style="display: none; padding: 24px;">
+              <div style="background: white; border: 1px solid #CBD5E1; border-radius: 12px; padding: 24px; max-width: 800px; margin: 0 auto; box-shadow: 0 4px 16px rgba(0,0,0,0.04);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 2px solid #E2E8F0; padding-bottom: 12px;">
+                  <h3 style="font-size: 18px; font-weight: 800; color: #059669; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-chart-pie"></i> Tóm Tắt Điểm Nhấn Infographic (Core Highlights)
+                  </h3>
+                  <button type="button" class="btn btn-sm" onclick="copyInfographicText()" style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; font-weight: 700; border-radius: 6px; padding: 6px 12px; cursor: pointer;">
+                    <i class="fa-solid fa-copy me-1"></i> Sao Chép
+                  </button>
+                </div>
+                <p style="font-size: 13px; color: #64748B; margin-bottom: 16px;">Các số liệu và điểm nhấn cốt lõi được AI bóc tách tự động để cung cấp cho bộ phận đồ họa thiết kế poster/infographic truyền thông.</p>
+                <div id="infographic_content_display" style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 18px; font-size: 14.5px; line-height: 1.8; color: #065F46;">
+                  Chưa có dữ liệu infographic. Hãy bấm tạo trọn gói hoặc nạp bài báo.
+                </div>
+              </div>
+            </div>
+
             <div id="pkg_view_banner" style="display: none; padding: 24px;">
               <div style="max-width: 700px; margin: 0 auto; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 12px; padding: 20px; text-align: center;">
                 <h5 style="font-weight: 800; color: #D97706; margin-bottom: 12px;"><i class="fa-solid fa-image me-2"></i> Trình Tạo Banner Đồ Họa Tự Động</h5>
@@ -867,5 +914,80 @@
 
   <script src="js/api.js?v=1788369246232"></script>
   <script src="js/admin.js?v=1788369246232"></script>
+
+  <!-- FLOATING AI BUBBLE TOOLBAR (TIPTAP / NOTION STYLE) -->
+  <div id="floating_ai_bubble_toolbar" class="floating-ai-bubble" style="display: none; position: absolute; z-index: 9999; background: #0F172A; color: white; border-radius: 30px; padding: 5px 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); align-items: center; gap: 6px; font-size: 12px; font-weight: 600;">
+    <span style="color: #38BDF8; font-size: 11px; padding: 0 4px; display: inline-flex; align-items: center; gap: 4px;">
+      <i class="fa-solid fa-wand-magic-sparkles"></i> AI
+    </span>
+    <button type="button" class="bubble-btn" onclick="executeBubbleAction('formal')" title="Chuyển sang văn phong báo chí chính thống">🏛️ Trang Trọng</button>
+    <button type="button" class="bubble-btn" onclick="executeBubbleAction('shorten')" title="Rút gọn súc tích">🎯 Rút Gọn</button>
+    <button type="button" class="bubble-btn" onclick="executeBubbleAction('expand')" title="Mở rộng luận điểm & chi tiết">📈 Mở Rộng</button>
+    <button type="button" class="bubble-btn" onclick="executeBubbleAction('to_quote')" title="Chuyển thành trích dẫn phát biểu">💬 Trích Dẫn</button>
+    <button type="button" class="bubble-btn" onclick="executeBubbleAction('fix_spelling')" title="Sửa chính tả & ngữ pháp">✨ Sửa Lỗi</button>
+    <button type="button" class="bubble-btn" onclick="hideBubbleToolbar()" style="color: #94A3B8; margin-left: 2px;"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <!-- MODAL CHÈN ẢNH BÁO CHÍ (POLLINATIONS AI FLUX / KHO TƯ LIỆU / URL) -->
+  <div id="modal_journalism_image" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 12px; width: 560px; max-width: 95vw; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #E2E8F0; padding-bottom: 12px;">
+        <h3 style="font-size: 17px; font-weight: 800; color: #003865; margin: 0; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-camera" style="color: #D97706;"></i> Chèn Ảnh Báo Chí Kèm Chú Thích
+        </h3>
+        <button type="button" onclick="closeJournalismImageModal()" style="background: none; border: none; font-size: 18px; color: #94A3B8; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Tab chọn nguồn ảnh -->
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; background: #F1F5F9; padding: 4px; border-radius: 8px;">
+        <button type="button" id="tab_img_src_ai" class="btn btn-sm" onclick="switchImageSourceTab('ai')" style="flex: 1; font-weight: 700; background: white; color: #0284C7; border: none; border-radius: 6px; padding: 6px;">✨ Sinh Bằng AI (Flux)</button>
+        <button type="button" id="tab_img_src_url" class="btn btn-sm" onclick="switchImageSourceTab('url')" style="flex: 1; font-weight: 700; background: transparent; color: #475569; border: none; border-radius: 6px; padding: 6px;">🔗 Dán Link Ảnh</button>
+        <button type="button" id="tab_img_src_upload" class="btn btn-sm" onclick="switchImageSourceTab('upload')" style="flex: 1; font-weight: 700; background: transparent; color: #475569; border: none; border-radius: 6px; padding: 6px;">📁 Kho Tư Liệu</button>
+      </div>
+
+      <!-- Form Nguồn AI -->
+      <div id="panel_img_src_ai">
+        <label style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Mô tả ảnh báo chí (Prompt):</label>
+        <input type="text" id="img_modal_prompt" placeholder="VD: Hội nghị tuyên dương giảng viên tiêu biểu TDMU, hội trường trang trọng..." style="width: 100%; padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; margin-bottom: 12px; box-sizing: border-box;">
+        <button type="button" class="btn btn-sm" id="btn_modal_gen_img" onclick="generateImageFromModal()" style="background: linear-gradient(135deg, #0284C7, #0369A1); color: white; border: none; font-weight: 700; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+          <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Tạo Ảnh Báo Chí (16:9 Flux)
+        </button>
+        <div id="img_modal_preview_wrap" style="margin-top: 12px; display: none; text-align: center;">
+          <img id="img_modal_preview" src="" style="max-width: 100%; max-height: 200px; border-radius: 6px; border: 1px solid #CBD5E1;">
+        </div>
+      </div>
+
+      <!-- Form Nguồn URL -->
+      <div id="panel_img_src_url" style="display: none;">
+        <label style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Đường dẫn ảnh (URL):</label>
+        <input type="text" id="img_modal_url" placeholder="https://..." style="width: 100%; padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; margin-bottom: 12px; box-sizing: border-box;" onchange="previewUrlImage(this.value)">
+      </div>
+
+      <!-- Form Nguồn Kho tư liệu -->
+      <div id="panel_img_src_upload" style="display: none;">
+        <p style="font-size: 12.5px; color: #64748B; margin-bottom: 8px;">Chọn ảnh từ Kho Tư Liệu Sự Kiện của trường:</p>
+        <div style="display: flex; gap: 8px; overflow-x: auto; padding: 6px 0;" id="img_modal_dam_list">
+          <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400" onclick="selectDamImage(this.src)" style="width: 110px; height: 75px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent;" class="dam-pick-thumb">
+          <img src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=400" onclick="selectDamImage(this.src)" style="width: 110px; height: 75px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent;" class="dam-pick-thumb">
+          <img src="https://images.unsplash.com/photo-1577495508048-b635879837f1?w=400" onclick="selectDamImage(this.src)" style="width: 110px; height: 75px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent;" class="dam-pick-thumb">
+          <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400" onclick="selectDamImage(this.src)" style="width: 110px; height: 75px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent;" class="dam-pick-thumb">
+        </div>
+      </div>
+
+      <!-- Chú thích ảnh (Photo Caption) -->
+      <div style="margin-top: 14px; border-top: 1px dashed #E2E8F0; padding-top: 12px;">
+        <label style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Chú thích ảnh báo chí (Caption):</label>
+        <input type="text" id="img_modal_caption" placeholder="VD: Ảnh: Đ/c Chủ tịch Công đoàn phát biểu khai mạc tại Hội trường trung tâm" style="width: 100%; padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px;">
+        <button type="button" class="btn btn-sm" onclick="closeJournalismImageModal()" style="background: #F1F5F9; color: #475569; border: none; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Hủy Bỏ</button>
+        <button type="button" class="btn btn-sm" onclick="confirmInsertJournalismImage()" style="background: #D97706; color: white; border: none; font-weight: 700; padding: 8px 20px; border-radius: 6px; cursor: pointer;">
+          <i class="fa-solid fa-plus me-1"></i> Chèn Vào Bài Báo
+        </button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
