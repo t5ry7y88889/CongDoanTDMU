@@ -683,3 +683,49 @@ blockquote cite {
 .floating-ai-bubble .bubble-btn:active {
   transform: translateY(0);
 }
+
+/* =========================================================================
+   AI DIFF & TRACK CHANGES (GOOGLE DOCS / CURSOR STYLE)
+   ========================================================================= */
+.ai-diff-container {
+  border: 1.5px dashed #0284C7;
+  background: #F0F9FF;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 14px 0;
+  position: relative;
+}
+.diff-removed {
+  background-color: #FEE2E2 !important;
+  color: #B91C1C !important;
+  text-decoration: line-through !important;
+  padding: 2px 5px;
+  border-radius: 4px;
+  margin-right: 6px;
+  display: inline;
+}
+.diff-added {
+  background-color: #DCFCE7 !important;
+  color: #15803D !important;
+  font-weight: 600 !important;
+  padding: 2px 5px;
+  border-radius: 4px;
+  display: inline;
+}
+.diff-action-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0F172A;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  animation: fadeInDown 0.2s ease;
+}
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}

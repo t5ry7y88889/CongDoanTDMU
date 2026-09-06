@@ -1362,7 +1362,21 @@ async function generateGroundedContentPackage() {
 
   if (btn) btn.disabled = true;
   if (spinner) spinner.style.display = 'block';
-  if (statusText) statusText.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> Trí tuệ nhân tạo đang sản xuất nội dung 5 kênh...';
+
+  // Tiến trình 3 bước trực quan
+  const stepMessages = [
+    '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> <strong>Bước 1/3:</strong> Đọc tư liệu và bóc tách 5W1H (Who, What, When, Where, Why, How)...',
+    '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> <strong>Bước 2/3:</strong> Chấp bút bài báo Kim Tự Tháp Ngược (Sapo, Thân bài, Trích dẫn)...',
+    '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> <strong>Bước 3/3:</strong> Chuyển thể đa kênh (Facebook, Zalo OA, Kịch bản Video 60s, Infographic)...'
+  ];
+  let currentStep = 0;
+  if (statusText) statusText.innerHTML = stepMessages[0];
+  const progressTimer = setInterval(() => {
+    currentStep++;
+    if (currentStep < stepMessages.length) {
+      if (statusText) statusText.innerHTML = stepMessages[currentStep];
+    }
+  }, 2200);
 
   const genre = document.getElementById('studio_genre_selector')?.value || 'tin_hoat_dong';
   const channels = [];
@@ -1391,18 +1405,22 @@ async function generateGroundedContentPackage() {
     });
     const json = await res.json();
 
+    clearInterval(progressTimer);
+
     if (json.success && json.package) {
       populatePackageToStudio(json.package);
-      if (statusText) statusText.innerHTML = '<i class="fa-solid fa-check text-success me-2"></i> Hoàn tất! Đã sản xuất trọn bộ nội dung đa kênh.';
+      if (statusText) statusText.innerHTML = '<i class="fa-solid fa-check text-success me-2"></i> <strong>Hoàn tất!</strong> Đã sản xuất trọn bộ nội dung đa kênh chuẩn báo chí.';
       setTimeout(() => { if (spinner) spinner.style.display = 'none'; }, 2000);
     } else {
       throw new Error(json.error || "Không thể sinh Content Package");
     }
   } catch (err) {
+    clearInterval(progressTimer);
     console.error('Lỗi Package:', err);
     if (statusText) statusText.innerHTML = '<span class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> ' + err.message + '</span>';
     alert("❌ " + err.message);
   } finally {
+    clearInterval(progressTimer);
     if (btn) btn.disabled = false;
   }
 }
@@ -1469,6 +1487,123 @@ function populatePackageToStudio(pkg) {
   saveEditorState("Bản gốc do AI khởi tạo");
 }
 
+// =========================================================================
+// AI DIFF & TRACK CHANGES (GOOGLE DOCS / CURSOR STYLE)
+// =========================================================================
+let currentPendingDiff = null;
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function applyDiffSuggestion(origText, newContent, actionName, isSelection, range) {
+  const editor = document.getElementById('native_rich_editor');
+  if (!editor) return;
+
+  if (currentPendingDiff) {
+    acceptAiDiff(false);
+  }
+
+  saveEditorState("Trước khi đề xuất: " + actionName);
+
+  const diffId = "ai_diff_" + Date.now();
+  currentPendingDiff = {
+    id: diffId,
+    actionName: actionName,
+    origText: origText,
+    newContent: newContent,
+    isSelection: isSelection
+  };
+
+  const diffHtml = `<span id="${diffId}" class="ai-diff-container" style="display: block; margin: 12px 0; border: 1.5px dashed #0284C7; background: #F0F9FF; padding: 12px 16px; border-radius: 8px;"><del class="diff-removed" style="background:#FEE2E2; color:#B91C1C; text-decoration:line-through; padding:3px 6px; border-radius:4px; margin-right:8px; display:inline-block;">${escapeHtml(origText)}</del><ins class="diff-added" style="background:#DCFCE7; color:#15803D; text-decoration:none; font-weight:600; padding:3px 6px; border-radius:4px; display:inline-block;">${newContent}</ins></span>`;
+
+  if (isSelection && range) {
+    try {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      document.execCommand('insertHTML', false, diffHtml);
+    } catch (e) {
+      editor.innerHTML = diffHtml;
+    }
+  } else {
+    editor.innerHTML = `<span id="${diffId}" class="ai-diff-container" style="display: block; margin: 12px 0; border: 1.5px dashed #0284C7; background: #F0F9FF; padding: 12px 16px; border-radius: 8px;"><del class="diff-removed" style="background:#FEE2E2; color:#B91C1C; text-decoration:line-through; padding:4px 8px; border-radius:4px; display:block; margin-bottom:10px;">${escapeHtml(origText)}</del><ins class="diff-added" style="background:#DCFCE7; color:#15803D; text-decoration:none; font-weight:500; padding:4px 8px; border-radius:4px; display:block;">${newContent}</ins></span>`;
+  }
+
+  const banner = document.getElementById('diff_action_banner');
+  const msg = document.getElementById('diff_banner_message');
+  if (banner) {
+    banner.style.display = 'flex';
+    if (msg) msg.innerHTML = `<strong>✨ AI đề xuất ${actionName}:</strong> Xem xét đoạn gạch đỏ (cũ) và xanh lá (mới)`;
+  }
+}
+
+function acceptAiDiff(notify = true) {
+  if (!currentPendingDiff) return;
+  const el = document.getElementById(currentPendingDiff.id);
+  const newContent = currentPendingDiff.newContent;
+  const actionName = currentPendingDiff.actionName;
+
+  if (el) {
+    el.outerHTML = newContent;
+  } else {
+    const editor = document.getElementById('native_rich_editor');
+    if (editor) {
+      const diffNode = editor.querySelector('.ai-diff-container');
+      if (diffNode) diffNode.outerHTML = newContent;
+    }
+  }
+
+  const banner = document.getElementById('diff_action_banner');
+  if (banner) banner.style.display = 'none';
+
+  currentPendingDiff = null;
+  saveEditorState("Chấp nhận đề xuất AI: " + actionName);
+
+  if (notify) {
+    const copilotStatus = document.getElementById('copilot_status_indicator');
+    if (copilotStatus) {
+      copilotStatus.innerHTML = `<span style="color:#16A34A;font-weight:700;"><i class="fa-solid fa-check"></i> Đã áp dụng đề xuất AI (${actionName})</span>`;
+      setTimeout(() => { copilotStatus.innerHTML = 'Sẵn sàng hỗ trợ'; }, 3000);
+    }
+  }
+}
+
+function rejectAiDiff() {
+  if (!currentPendingDiff) return;
+  const el = document.getElementById(currentPendingDiff.id);
+  const origText = currentPendingDiff.origText;
+  const actionName = currentPendingDiff.actionName;
+
+  if (el) {
+    el.outerHTML = escapeHtml(origText).replace(/\n/g, '<br>');
+  } else {
+    const editor = document.getElementById('native_rich_editor');
+    if (editor) {
+      const diffNode = editor.querySelector('.ai-diff-container');
+      if (diffNode) diffNode.outerHTML = escapeHtml(origText).replace(/\n/g, '<br>');
+    }
+  }
+
+  const banner = document.getElementById('diff_action_banner');
+  if (banner) banner.style.display = 'none';
+
+  currentPendingDiff = null;
+  saveEditorState("Từ chối đề xuất AI: " + actionName);
+
+  const copilotStatus = document.getElementById('copilot_status_indicator');
+  if (copilotStatus) {
+    copilotStatus.innerHTML = `<span style="color:#DC2626;font-weight:700;"><i class="fa-solid fa-xmark"></i> Đã giữ nguyên văn bản gốc</span>`;
+    setTimeout(() => { copilotStatus.innerHTML = 'Sẵn sàng hỗ trợ'; }, 3000);
+  }
+}
+
 async function handleToolbarAiAction(action) {
   const editor = document.getElementById('native_rich_editor');
   if (!editor || !editor.innerText.trim()) {
@@ -1479,6 +1614,7 @@ async function handleToolbarAiAction(action) {
   const selection = window.getSelection();
   let textToProcess = selection.toString().trim();
   let isSelection = true;
+  let targetRange = currentManusSelectionRange ? currentManusSelectionRange.cloneRange() : null;
 
   if (!textToProcess) {
     textToProcess = editor.innerText.trim();
@@ -1487,8 +1623,10 @@ async function handleToolbarAiAction(action) {
 
   const actionName = action === 'formal' ? "Hành chính hóa" : "Mở rộng nội dung";
 
-  // 1. LƯU TRẠNG THÁI TRƯỚC KHI AI SỬA (ĐỂ CÓ THỂ LÙI / TIẾN BẤT CỨ LÚC NÀO)
-  saveEditorState("Trước khi " + actionName);
+  const copilotStatus = document.getElementById('copilot_status_indicator');
+  if (copilotStatus) {
+    copilotStatus.innerHTML = `<span style="color:#0284C7;font-weight:700;"><i class="fa-solid fa-spinner fa-spin"></i> AI đang ${actionName}...</span>`;
+  }
 
   const promptMsg = action === 'formal'
     ? "Viết lại đoạn văn sau theo văn phong chuẩn mực hành chính Công đoàn TDMU, trang nhã, đúng thể thức nghị định 30:\n\n" + textToProcess
@@ -1514,24 +1652,19 @@ async function handleToolbarAiAction(action) {
     }).then(r => r.json());
 
     if (res.success && res.editContent) {
-      if (isSelection && currentManusSelectionRange) {
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(currentManusSelectionRange);
-        document.execCommand('insertHTML', false, res.editContent);
-      } else {
-        editor.innerHTML = res.editContent;
+      applyDiffSuggestion(textToProcess, res.editContent, actionName, isSelection, targetRange);
+      if (copilotStatus) {
+        copilotStatus.innerHTML = `<span style="color:#0284C7;font-weight:700;"><i class="fa-solid fa-wand-magic-sparkles"></i> Đã đưa ra đề xuất thay đổi</span>`;
+        setTimeout(() => { copilotStatus.innerHTML = 'Sẵn sàng hỗ trợ'; }, 3000);
       }
-
-      // 2. LƯU TRẠNG THÁI SAU KHI AI SỬA ĐỒNG BỘ VÀO BỘ NHỚ LỊCH SỬ
-      saveEditorState("Sau khi " + actionName);
-      alert(`✨ AI đã ${actionName} thành công!\n(Sếp có thể bấm nút 'Lùi (Ctrl+Z)' trên thanh Ribbon để quay về bản trước bất kỳ lúc nào)`);
     } else {
       alert(res.reply || "✨ AI đã xử lý xong.");
+      if (copilotStatus) copilotStatus.innerHTML = 'Sẵn sàng hỗ trợ';
     }
   } catch (err) {
     console.error(err);
     alert("Lỗi AI: " + err.message);
+    if (copilotStatus) copilotStatus.innerHTML = 'Sẵn sàng hỗ trợ';
   }
 }
 

@@ -399,6 +399,18 @@
                     </div>
                   </div>
 
+                  <!-- BANNER ĐỀ XUẤT THAY ĐỔI AI (GOOGLE DOCS / CURSOR STYLE TRACK CHANGES) -->
+                  <div id="diff_action_banner" class="diff-action-banner" style="display: none;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <i class="fa-solid fa-wand-magic-sparkles text-warning"></i>
+                      <span id="diff_banner_message">AI đề xuất viết lại đoạn văn:</span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                      <button type="button" class="btn btn-sm" onclick="acceptAiDiff()" style="background: #16A34A; color: white; font-weight: 700; border: none; padding: 5px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-check"></i> Chấp Nhận</button>
+                      <button type="button" class="btn btn-sm" onclick="rejectAiDiff()" style="background: #DC2626; color: white; font-weight: 700; border: none; padding: 5px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-xmark"></i> Giữ Nguyên</button>
+                    </div>
+                  </div>
+
                   <!-- KHUNG NỘI DUNG TỜ GIẤY A4 -->
                   <div id="native_rich_editor" contenteditable="true" style="min-height: 480px; outline: none; font-size: 15px; line-height: 1.8; color: #1E293B;" placeholder="Nội dung bài viết sẽ hiển thị tại đây..." oninput="saveEditorStateDebounced()"></div>
                   
