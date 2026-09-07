@@ -1,4 +1,4 @@
-﻿-- =========================================================================
+-- =========================================================================
 -- DỮ LIỆU KHỞI TẠO MẪU 15 BẢNG (15 TABLES SEED DATA)
 -- MICROSOFT SQL SERVER 2019/2022 | Database: TDMU_TradeUnion_DB
 -- =========================================================================
@@ -176,15 +176,15 @@ GO
 -- 14. Nạp DON_TRO_CAP
 IF NOT EXISTS (SELECT 1 FROM dbo.DON_TRO_CAP)
 BEGIN
-    INSERT INTO dbo.DON_TRO_CAP (MaNhanSu, HoTen, DonVi, LoaiTroCap, SoTienDeXuat, LyDo, TrangThai, NguoiDuyet, GhiChu) VALUES
-    (8, N'ThS. Huỳnh Thị Lệ Kha', N'Khoa Luật', N'Chế độ nghỉ dưỡng thai sản', 2000000, N'Thực hiện chế độ chăm lo nữ công thai sản quý 3', 'approved', N'TS. Lê Thị Kim Út', N'Đã duyệt chi chuyển khoản qua KHTC');
+    INSERT INTO dbo.DON_TRO_CAP (MaNhanSu, PhucLoiId, HoTen, DonVi, LoaiTroCap, SoTienDeXuat, LyDo, TrangThai, NguoiDuyet, GhiChu) VALUES
+    (8, 2, N'ThS. Huỳnh Thị Lệ Kha', N'Khoa Luật', N'Chế độ nghỉ dưỡng thai sản', 2000000, N'Thực hiện chế độ chăm lo nữ công thai sản quý 3', 'approved', N'TS. Lê Thị Kim Út', N'Đã duyệt chi chuyển khoản qua KHTC');
 END
 GO
 
 -- 15. Nạp INBOX_FEEDBACK
 IF NOT EXISTS (SELECT 1 FROM dbo.INBOX_FEEDBACK)
 BEGIN
-    INSERT INTO dbo.INBOX_FEEDBACK (HoTen, Email, SoDienThoai, DonVi, ChuDe, TieuDe, NoiDung, TrangThai, TraLoi) VALUES
-    (N'ThS. Hồ Ngọc Trung Kiên', 'kienhnt@tdmu.edu.vn', '0977.797.378', N'Viện Công nghệ số', N'Đề xuất chuyển đổi số', N'Đề xuất tích hợp biểu mẫu điện tử cho 16 Tổ công đoàn', N'Kính gửi Ban Thường vụ, Viện CNS đề xuất tích hợp chữ ký số và biểu mẫu trực tuyến để giảm thiểu in ấn giấy tờ báo cáo tháng.', 'processed', N'Ban Thường vụ đã ghi nhận và giao Ban Tuyên giáo triển khai trên Cổng thông tin mới.');
+    INSERT INTO dbo.INBOX_FEEDBACK (MaNhanSu, NguoiXuLy, HoTen, Email, SoDienThoai, DonVi, ChuDe, TieuDe, NoiDung, TrangThai, TraLoi) VALUES
+    (9, 1, N'ThS. Hồ Ngọc Trung Kiên', 'kienhnt@tdmu.edu.vn', '0977.797.378', N'Viện Công nghệ số', N'Đề xuất chuyển đổi số', N'Đề xuất tích hợp biểu mẫu điện tử cho 16 Tổ công đoàn', N'Kính gửi Ban Thường vụ, Viện CNS đề xuất tích hợp chữ ký số và biểu mẫu trực tuyến để giảm thiểu in ấn giấy tờ báo cáo tháng.', 'processed', N'Ban Thường vụ đã ghi nhận và giao Ban Tuyên giáo triển khai trên Cổng thông tin mới.');
 END
 GO

@@ -1,10 +1,23 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const { GoogleGenAI } = require('@google/genai');
 const { loadDB, saveDB } = require('./db');
-const { isMssqlConnected, getArticlesFromDb, insertArticleToDb, updateArticleInDb, deleteArticleFromDb } = require('./mssql_db');
+const { 
+  isMssqlConnected, 
+  getArticlesFromDb, 
+  insertArticleToDb, 
+  updateArticleInDb, 
+  deleteArticleFromDb,
+  getDocumentsFromDb,
+  getCategoriesFromDb,
+  getOrgDataFromDb,
+  getMonthlyReportsFromDb,
+  getWelfareFromDb,
+  getUsersFromDb
+} = require('./mssql_db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -650,23 +663,9 @@ app.post('/api/ai/repurpose', (req, res) => {
 // REST API ARTICLES (SYNCHRONIZED LIVE WITH MSSQL 2020 + JSON DB)
 
 // REST API DOCUMENTS / VĂN BẢN CHỈ ĐẠO
-app.get('/api/documents', (req, res) => {
+app.get('/api/documents', async (req, res) => {
   const { category, search } = req.query;
-  const db = loadDB();
-  let list = db.documents || [];
-  
-  if (category && category !== 'all') {
-    list = list.filter(d => (d.loai_van_ban === category || (d.loai_van_ban_ten && d.loai_van_ban_ten.toLowerCase().includes(category.toLowerCase()))));
-  }
-  if (search) {
-    const q = search.toLowerCase();
-    list = list.filter(d => 
-      (d.so_hieu || '').toLowerCase().includes(q) ||
-      (d.tieu_de || '').toLowerCase().includes(q) ||
-      (d.co_quan_ban_hanh || '').toLowerCase().includes(q)
-    );
-  }
-  list.sort((a, b) => (parseInt(b.id) || 0) - (parseInt(a.id) || 0));
+  const list = await getDocumentsFromDb(category, search);
   res.json({ success: true, count: list.length, data: list });
 });
 
@@ -740,12 +739,10 @@ app.get('/api/articles', async (req, res) => {
   res.json({ success: true, count: list.length, data: list });
 });
 
-app.get('/api/articles/:id', (req, res) => {
-  const db = loadDB();
-  const art = (db.articles || []).find(a => a.id == req.params.id);
-  if (!art) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
-  art.viewsCount = (art.viewsCount || 0) + 1;
-  saveDB(db);
+app.get('/api/articles/:id', async (req, res) => {
+  const list = await getArticlesFromDb('all', 'all');
+  const art = list.find(a => a.id == req.params.id);
+  if (!art) return res.status(404).json({ success: false, error: 'Không tìm thấy bài viết' });
   res.json({ success: true, data: art });
 });
 
@@ -1386,9 +1383,9 @@ YÊU CẦU: Trả về DUY NHẤT đoạn văn bản đã được chỉnh sửa
 
 
 // 15 TABLES STANDARDIZED API ENDPOINTS
-app.get('/api/categories', (req, res) => {
-  const db = loadDB();
-  res.json({ success: true, count: (db.categories || []).length, data: db.categories || [] });
+app.get('/api/categories', async (req, res) => {
+  const list = await getCategoriesFromDb();
+  res.json({ success: true, count: list.length, data: list });
 });
 
 app.get('/api/comments', (req, res) => {
@@ -1402,9 +1399,9 @@ app.get('/api/article-audits', (req, res) => {
 });
 
 // REST API USERS, EVENTS, MEDIA, AUDITS, SIMULATED SOCIAL (DUAL SCHEMA SUPPORT)
-app.get('/api/users', (req, res) => {
-  const db = loadDB();
-  res.json({ success: true, data: db.users || db.nhan_su || [] });
+app.get('/api/users', async (req, res) => {
+  const list = await getUsersFromDb();
+  res.json({ success: true, data: list });
 });
 
 app.get('/api/schedules', (req, res) => {
@@ -1508,9 +1505,9 @@ app.post('/api/bookmarks', (req, res) => {
 // =========================================================================
 // 2. WELFARE (PHÚC LỢI ĐOÀN VIÊN) & DON TRO CAP API
 // =========================================================================
-app.get('/api/phuc-loi', (req, res) => {
-  const db = loadDB();
-  res.json({ success: true, count: (db.phuc_loi || []).length, data: db.phuc_loi || [] });
+app.get('/api/phuc-loi', async (req, res) => {
+  const list = await getWelfareFromDb();
+  res.json({ success: true, count: list.length, data: list });
 });
 
 app.get('/api/don-tro-cap', (req, res) => {
@@ -1523,9 +1520,9 @@ app.get('/api/inbox-feedback', (req, res) => {
   res.json({ success: true, count: (db.inbox_feedback || []).length, data: db.inbox_feedback || [] });
 });
 
-app.get('/api/welfare', (req, res) => {
-  const db = loadDB();
-  res.json({ success: true, data: db.phuc_loi || [] });
+app.get('/api/welfare', async (req, res) => {
+  const list = await getWelfareFromDb();
+  res.json({ success: true, data: list });
 });
 
 app.get('/api/welfare/applications', (req, res) => {
@@ -1656,15 +1653,15 @@ app.post('/api/articles/:id/reactions', (req, res) => {
 });
 
 // SUPER-FAST AGGREGATED ORG TREE API (TỐI ƯU 1-REQUEST TOÀN BỘ CƠ CẤU TỔ CHỨC)
-app.get('/api/org-full-tree', (req, res) => {
+app.get('/api/org-full-tree', async (req, res) => {
   try {
-    const db = loadDB();
-    const toChuc = db.to_chuc || [];
-    const toCongDoan = db.to_cong_doan || [];
-    const nhanSu = db.nhan_su || [];
+    const orgData = await getOrgDataFromDb();
+    const toChuc = orgData.boards || [];
+    const toCongDoan = orgData.units || [];
+    const nhanSu = orgData.cadres || [];
 
     const stats = {
-      total_members: toCongDoan.reduce((acc, u) => acc + (u.TongDoanVien || u.members || 0), 0) || 760,
+      total_members: toCongDoan.reduce((acc, u) => acc + (u.TongDoanVien || u.members || 45), 0) || 760,
       total_units: toCongDoan.length,
       total_boards: toChuc.length,
       total_cadres: nhanSu.length
@@ -1684,30 +1681,29 @@ app.get('/api/org-full-tree', (req, res) => {
   }
 });
 
-app.get('/api/to-chuc', (req, res) => {
-  const db = loadDB();
-  res.json({ success: true, data: db.to_chuc || [] });
+app.get('/api/to-chuc', async (req, res) => {
+  const org = await getOrgDataFromDb();
+  res.json({ success: true, data: org.boards || [] });
 });
 
-app.get('/api/to-cong-doan', (req, res) => {
-  const db = loadDB();
-  res.json({ success: true, data: db.to_cong_doan || [] });
+app.get('/api/to-cong-doan', async (req, res) => {
+  const org = await getOrgDataFromDb();
+  res.json({ success: true, data: org.units || [] });
 });
 
-app.get('/api/nhan-su', (req, res) => {
-  const db = loadDB();
-  res.json({ success: true, data: db.nhan_su || [] });
+app.get('/api/nhan-su', async (req, res) => {
+  const org = await getOrgDataFromDb();
+  res.json({ success: true, data: org.cadres || [] });
 });
 
-app.get('/api/trade-unions', (req, res) => {
-  const db = loadDB();
-  res.json({ success: true, data: db.trade_unions || [] });
+app.get('/api/trade-unions', async (req, res) => {
+  const org = await getOrgDataFromDb();
+  res.json({ success: true, data: org.units || [] });
 });
 
 // 2. Lấy danh sách Báo cáo Tháng của các Tổ Công đoàn
-app.get('/api/monthly-reports', (req, res) => {
-  const db = loadDB();
-  let reports = db.monthly_reports || [];
+app.get('/api/monthly-reports', async (req, res) => {
+  let reports = await getMonthlyReportsFromDb();
   const { month, year, union_id } = req.query;
 
   if (month) {
@@ -1717,7 +1713,7 @@ app.get('/api/monthly-reports', (req, res) => {
     reports = reports.filter(r => r.year == year);
   }
   if (union_id) {
-    reports = reports.filter(r => r.union_id === union_id);
+    reports = reports.filter(r => r.union_id === union_id || r.unit_id == union_id);
   }
 
   res.json({ success: true, count: reports.length, data: reports });
