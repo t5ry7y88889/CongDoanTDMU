@@ -128,14 +128,14 @@ const PhucLoiDoanVien = () => {
             <div class="welfare-card">
               <div>
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                  <span class="badge bg-light text-\${p.color} border"><i class="fa-solid \${p.icon} me-1"></i> \${p.code}</span>
-                  <span class="welfare-badge-budget">\${p.budget_range}</span>
+                  <span class="badge bg-light text-\${p.color || 'primary'} border"><i class="fa-solid \${p.icon || 'fa-gift'} me-1"></i> \${p.code}</span>
+                  <span class="welfare-badge-budget">\${p.budget_range || p.amount || p.MucHoTro || ''}</span>
                 </div>
                 <h6 class="fw-bold text-primary mb-2" style="font-size: 15px;">\${p.title}</h6>
                 <p class="small text-muted mb-2">\${p.description}</p>
               </div>
               <div class="border-top pt-2 mt-2 text-secondary small d-flex justify-content-between align-items-center">
-                <span><i class="fa-solid fa-users text-primary me-1"></i> Đối tượng: <strong>\${p.target}</strong></span>
+                <span><i class="fa-solid fa-users text-primary me-1"></i> Đối tượng: <strong>\${p.target || p.target_audience || p.DoiTuongHuong || ''}</strong></span>
               </div>
             </div>
           </div>

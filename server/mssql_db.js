@@ -393,8 +393,27 @@ async function getWelfareFromDb() {
   if (isMssqlConnected && mssqlPool) {
     try {
       const result = await mssqlPool.request().query(`
-        SELECT PhucLoiId AS id, MaPhucLoi AS code, TieuDe AS title, ChuyenMuc AS category,
-               DoiTuongHuong AS target, MucHoTro AS amount, MoTa AS description, Icon AS icon
+        SELECT 
+          PhucLoiId AS id, 
+          MaPhucLoi AS code, 
+          TieuDe AS title, 
+          ChuyenMuc AS category,
+          DoiTuongHuong AS target,
+          DoiTuongHuong AS target_audience,
+          DoiTuongHuong AS DoiTuongHuong,
+          MucHoTro AS budget_range,
+          MucHoTro AS amount,
+          MucHoTro AS MucHoTro,
+          MoTa AS description, 
+          Icon AS icon,
+          CASE 
+            WHEN ChuyenMuc = 'le_tet' THEN 'warning'
+            WHEN ChuyenMuc = 'nu_cong' THEN 'danger'
+            WHEN ChuyenMuc = 'tro_cap' THEN 'info'
+            WHEN ChuyenMuc = 'vay_von' THEN 'success'
+            ELSE 'primary'
+          END AS color,
+          'active' AS status
         FROM dbo.PHUC_LOI
         ORDER BY PhucLoiId ASC
       `);
