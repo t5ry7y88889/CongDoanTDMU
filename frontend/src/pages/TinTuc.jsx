@@ -133,33 +133,78 @@ const TinTuc = () => {
 
     async function loadArticlesFeed() {
       const container = document.getElementById('magazine_grid_container');
-      container.innerHTML = '<div class="col-12 text-center p-4"><i class="fa-solid fa-spinner fa-spin fa-2x text-primary"></i><p class="mt-2 text-muted">Đang nạp dữ liệu tạp chí...</p></div>';
+      if (container) {
+        container.innerHTML = '<div class="col-12 text-center p-4"><i class="fa-solid fa-spinner fa-spin fa-2x text-primary"></i><p class="mt-2 text-muted">Đang nạp dữ liệu tạp chí từ CSDL SQL Server...</p></div>';
+      }
 
       try {
-        const res = await API.getArticles('all');
-        if (res.success && Array.isArray(res.data)) {
+        const res = (typeof API !== 'undefined' && API.getArticles)
+          ? await API.getArticles('all', 'published')
+          : await fetch('/api/articles?status=published').then(r => r.json());
+
+        if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
           allArticles = res.data;
+
+          // BINDING HERO ARTICLE DYNAMICALLY
+          const hero = allArticles[0];
+          const heroEl = document.getElementById('featured_hero_article');
+          if (hero && heroEl) {
+            const heroImg = document.getElementById('hero_img');
+            if (heroImg && hero.image) heroImg.src = hero.image;
+            const heroTitle = document.getElementById('hero_title');
+            if (heroTitle) heroTitle.innerText = hero.title;
+            const heroTime = document.getElementById('hero_time');
+            if (heroTime) heroTime.innerText = (hero.readingTime || '3 phút') + ' đọc';
+            const heroDate = document.getElementById('hero_date');
+            if (heroDate) heroDate.innerText = (hero.createdAt || '').split(' ')[0] || '2026-09-08';
+            const heroViews = document.getElementById('hero_views');
+            if (heroViews) heroViews.innerText = hero.viewsCount || 160;
+            const heroComments = document.getElementById('hero_comments');
+            if (heroComments) heroComments.innerText = hero.commentsCount || 8;
+            const heroAuthor = document.getElementById('hero_author');
+            if (heroAuthor) heroAuthor.innerText = hero.author || 'Ban Thường vụ';
+
+            heroEl.onclick = function() { window.location.href = 'bai-viet.html?id=' + hero.id; };
+
+            const heroTakeaways = document.getElementById('hero_takeaways');
+            if (heroTakeaways) {
+              if (hero.ai_takeaways && Array.isArray(hero.ai_takeaways) && hero.ai_takeaways.length > 0) {
+                heroTakeaways.innerHTML = hero.ai_takeaways.map(t => '<li>' + t + '</li>').join('');
+              } else if (hero.summary) {
+                heroTakeaways.innerHTML = '<li>' + hero.summary + '</li>';
+              }
+            }
+          }
+
           renderMagazineGrid();
+        } else if (container) {
+          container.innerHTML = '<div class="col-12 text-center p-5 text-muted"><i class="fa-solid fa-inbox fa-3x mb-3 text-secondary"></i><p>Chưa có bài viết nào được xuất bản.</p></div>';
         }
       } catch (e) {
-        console.error(e);
+        console.error('Lỗi tải tin tức:', e);
+        if (container) container.innerHTML = '<div class="alert alert-warning text-center">Không thể kết nối danh mục bài viết từ máy chủ.</div>';
       }
     }
 
     function renderMagazineGrid() {
       const container = document.getElementById('magazine_grid_container');
+      if (!container) return;
       let filtered = allArticles;
 
       if (currentCategory === 'saved') {
-        const savedIds = getSavedArticleIds();
+        const savedIds = typeof getSavedArticleIds === 'function' ? getSavedArticleIds() : [];
         filtered = filtered.filter(a => savedIds.includes(parseInt(a.id)));
       } else if (currentCategory !== 'all') {
         filtered = filtered.filter(a => (a.categoryName || a.ChuyenMuc) === currentCategory);
       }
 
-      const q = (document.getElementById('articleSearchInput').value || '').toLowerCase().trim();
+      const qInput = document.getElementById('articleSearchInput');
+      const q = (qInput ? qInput.value : '').toLowerCase().trim();
       if (q) {
         filtered = filtered.filter(a => (a.title || '').toLowerCase().includes(q) || (a.summary || '').toLowerCase().includes(q));
+      } else if (currentCategory === 'all' && filtered.length > 1) {
+        // Exclude hero article from repeating below if displaying 'all' feed
+        filtered = filtered.slice(1);
       }
 
       if (filtered.length === 0) {

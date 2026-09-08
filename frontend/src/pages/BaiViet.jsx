@@ -228,42 +228,93 @@ const BaiViet = () => {
       const articleId = urlParams.get('id') || 1;
 
       try {
-        const res = await API.getArticles('all');
-        if (res.success && Array.isArray(res.data)) {
-          const a = res.data.find(item => item.id == articleId) || res.data[0];
+        let a = null;
+        let allArticlesList = [];
+
+        // 1. Fetch single article directly
+        try {
+          const resSingle = await fetch('/api/articles/' + articleId).then(r => r.json());
+          if (resSingle && resSingle.success && resSingle.data) {
+            a = resSingle.data;
+          }
+        } catch (errSingle) {
+          console.warn('Direct article fetch fallback:', errSingle);
+        }
+
+        // 2. Fetch all articles for sidebar & navigation
+        try {
+          const resList = (typeof API !== 'undefined' && API.getArticles)
+            ? await API.getArticles('all')
+            : await fetch('/api/articles?status=all').then(r => r.json());
+
+          if (resList && resList.success && Array.isArray(resList.data)) {
+            allArticlesList = resList.data;
+            if (!a) {
+              a = allArticlesList.find(item => item.id == articleId) || allArticlesList[0];
+            }
+          }
+        } catch (errList) {
+          console.warn('Articles list fetch notice:', errList);
+        }
+
+        if (a) {
           currentArticle = a;
 
           document.title = (a.title || a.TieuDe) + ' - Công Đoàn TDMU';
-          document.getElementById('breadcrumbCategory').innerText = a.categoryName || a.ChuyenMuc || 'Tin tức';
-          document.getElementById('artCategory').innerText = (a.categoryName || a.ChuyenMuc || 'TIN TỨC').toUpperCase();
-          document.getElementById('artTitle').innerText = a.title || a.TieuDe;
-          document.getElementById('artAuthor').innerText = a.author || a.TacGia || 'Ban Tuyên giáo';
-          document.getElementById('artDate').innerText = (a.createdAt || '26/06/2026 12:56');
-          document.getElementById('artReadingTime').innerText = (a.readingTime || '3 phút') + ' đọc';
-          document.getElementById('artViews').innerText = a.viewsCount || a.LuotXem || 162;
-          document.getElementById('artCommentsCount').innerText = a.commentsCount || 14;
-          document.getElementById('artContent').innerHTML = a.content || a.NoiDung || ('<p>' + (a.summary || a.TomTat) + '</p>');
+          const bcEl = document.getElementById('breadcrumbCategory');
+          if (bcEl) bcEl.innerText = a.categoryName || a.ChuyenMuc || 'Tin tức';
+          const catEl = document.getElementById('artCategory');
+          if (catEl) catEl.innerText = (a.categoryName || a.ChuyenMuc || 'TIN TỨC').toUpperCase();
+          const titleEl = document.getElementById('artTitle');
+          if (titleEl) titleEl.innerText = a.title || a.TieuDe;
+          const authorEl = document.getElementById('artAuthor');
+          if (authorEl) authorEl.innerText = a.author || a.TacGia || 'Ban Tuyên giáo & Ban Biên Tập';
+          const dateEl = document.getElementById('artDate');
+          if (dateEl) dateEl.innerText = (a.createdAt || '2026-09-08');
+          const timeEl = document.getElementById('artReadingTime');
+          if (timeEl) timeEl.innerText = (a.readingTime || '3 phút') + ' đọc';
+          const viewsEl = document.getElementById('artViews');
+          if (viewsEl) viewsEl.innerText = a.viewsCount || a.LuotXem || 162;
+          const commentsEl = document.getElementById('artCommentsCount');
+          if (commentsEl) commentsEl.innerText = a.commentsCount || 14;
 
-          if (a.ai_takeaways && a.ai_takeaways.length > 0) {
-            document.getElementById('artTakeaways').innerHTML = a.ai_takeaways.map(t => '<li>' + t + '</li>').join('');
+          const contentEl = document.getElementById('artContent');
+          if (contentEl) {
+            let bodyHtml = a.content || a.NoiDung || ('<p>' + (a.summary || a.TomTat || '') + '</p>');
+            if (a.image && !bodyHtml.includes(a.image)) {
+              bodyHtml = '<div class="text-center mb-4"><img src="' + a.image + '" class="img-fluid rounded shadow-sm" style="max-height: 480px; width: 100%; object-fit: cover;" alt="' + (a.title || '') + '"><p class="text-muted small mt-2 fst-italic">' + (a.title || '') + '</p></div>' + bodyHtml;
+            }
+            contentEl.innerHTML = bodyHtml;
+          }
+
+          const takeawaysEl = document.getElementById('artTakeaways');
+          if (takeawaysEl) {
+            if (a.ai_takeaways && Array.isArray(a.ai_takeaways) && a.ai_takeaways.length > 0) {
+              takeawaysEl.innerHTML = a.ai_takeaways.map(t => '<li>' + t + '</li>').join('');
+            } else if (a.summary) {
+              takeawaysEl.innerHTML = '<li>' + a.summary + '</li>';
+            }
           }
 
           // Render sidebar top articles
           const sideList = document.getElementById('popular_articles_sidebar');
-          sideList.innerHTML = res.data.slice(0, 5).map(item => \`
-            <a href="bai-viet.html?id=\${item.id}" class="list-group-item \${item.id == articleId ? 'fw-bold text-primary bg-light' : ''}">
-              <i class="fa-solid fa-angle-right me-1 text-muted small"></i> \${item.title || item.TieuDe}
-            </a>
-          \`).join('');
+          if (sideList && allArticlesList.length > 0) {
+            sideList.innerHTML = allArticlesList.slice(0, 5).map(item => \`
+              <a href="bai-viet.html?id=\${item.id}" class="list-group-item \${item.id == articleId ? 'fw-bold text-primary bg-light' : ''}">
+                <i class="fa-solid fa-angle-right me-1 text-muted small"></i> \${item.title || item.TieuDe}
+              </a>
+            \`).join('');
+          }
 
           // Next article
-          const next = res.data.find(item => item.id != articleId);
-          if (next) {
-            document.getElementById('nextArtTitle').innerHTML = '<a href="bai-viet.html?id=' + next.id + '" class="text-decoration-none text-primary">' + (next.title || next.TieuDe) + '</a>';
+          const next = allArticlesList.find(item => item.id != articleId);
+          const nextEl = document.getElementById('nextArtTitle');
+          if (next && nextEl) {
+            nextEl.innerHTML = '<a href="bai-viet.html?id=' + next.id + '" class="text-decoration-none text-primary">' + (next.title || next.TieuDe) + '</a>';
           }
         }
       } catch (e) {
-        console.error(e);
+        console.error('Lỗi tải bài viết chi tiết:', e);
       }
     }
 
