@@ -387,73 +387,101 @@
       color: #0284C7;
       border-color: #0284C7;
     }
-      /* COLLAPSED STATE ENHANCEMENTS */
+          /* COLLAPSED STATE ENHANCEMENTS */
     .admin-sidebar.collapsed {
-      width: 72px;
+      width: 72px !important;
     }
     .admin-sidebar.collapsed .sidebar-header {
-      padding: 0;
-      justify-content: center;
+      padding: 0 !important;
+      justify-content: center !important;
+      align-items: center !important;
+      display: flex !important;
+      height: var(--header-height) !important;
     }
     .admin-sidebar.collapsed .sidebar-header a {
       justify-content: center !important;
-      padding: 0;
+      align-items: center !important;
+      padding: 0 !important;
+      margin: 0 auto !important;
       gap: 0 !important;
+      width: 100% !important;
+      display: flex !important;
     }
     .admin-sidebar.collapsed .sidebar-header img {
-      margin: 0 auto;
-      height: 38px;
+      margin: 0 auto !important;
+      height: 38px !important;
+      width: 38px !important;
+      max-width: 38px !important;
+      object-fit: contain !important;
+      display: block !important;
+      flex-shrink: 0 !important;
     }
     .admin-sidebar.collapsed .sidebar-brand-text {
       display: none !important;
     }
     .admin-sidebar.collapsed .sidebar-nav {
-      padding: 16px 8px;
-      align-items: center;
+      padding: 14px 0 !important;
+      align-items: center !important;
+      overflow-x: hidden !important;
     }
     .admin-sidebar.collapsed .nav-section-label {
       display: none !important;
     }
     .admin-sidebar.collapsed .sidebar-nav-link {
-      width: 48px;
-      height: 48px;
-      padding: 0;
-      margin: 4px auto;
-      justify-content: center;
-      border-radius: 12px;
-      position: relative;
+      width: 46px !important;
+      height: 46px !important;
+      padding: 0 !important;
+      margin: 5px auto !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border-radius: 12px !important;
+      position: relative !important;
+      gap: 0 !important;
+      text-align: center !important;
+      box-sizing: border-box !important;
     }
     .admin-sidebar.collapsed .sidebar-nav-link .nav-icon {
-      width: auto;
-      font-size: 17px;
-      margin: 0;
+      width: 46px !important;
+      height: 46px !important;
+      line-height: 46px !important;
+      font-size: 18px !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      text-align: center !important;
+      flex-shrink: 0 !important;
     }
-    .admin-sidebar.collapsed .sidebar-nav-link .nav-text {
-      display: none !important;
-    }
-    .admin-sidebar.collapsed .sidebar-nav-link .nav-badge-ai {
+    .admin-sidebar.collapsed .sidebar-nav-link > *:not(.nav-icon) {
       display: none !important;
     }
     .admin-sidebar.collapsed .sidebar-nav-link:hover {
-      transform: none;
-      background: rgba(255, 255, 255, 0.14);
-      color: #FFFFFF;
+      transform: none !important;
+      background: rgba(255, 255, 255, 0.14) !important;
+      color: #FFFFFF !important;
     }
     .admin-sidebar.collapsed .sidebar-nav-link.active {
-      background: #0284C7;
-      color: #FFFFFF;
-      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.45);
-      border-color: #38BDF8;
+      background: #0284C7 !important;
+      color: #FFFFFF !important;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.45) !important;
+      border-color: #38BDF8 !important;
     }
     .admin-sidebar.collapsed .sidebar-nav-link.active i {
       color: #FFFFFF !important;
+    }
+
+    /* HIDE FOOTER IN COLLAPSED STATE TO PREVENT OVERFLOW */
+    .admin-sidebar.collapsed .sidebar-footer {
+      display: none !important;
     }
 
     /* FLOATING TOOLTIP ON HOVER WHEN COLLAPSED */
     .admin-sidebar.collapsed .sidebar-nav-link::after {
       content: attr(data-tooltip);
       position: absolute;
-      left: calc(100% + 12px);
+      left: calc(100% + 14px);
       top: 50%;
       transform: translateY(-50%) scale(0.95);
       background: #0F172A;
@@ -474,7 +502,7 @@
     .admin-sidebar.collapsed .sidebar-nav-link::before {
       content: '';
       position: absolute;
-      left: calc(100% + 6px);
+      left: calc(100% + 8px);
       top: 50%;
       transform: translateY(-50%);
       border-width: 5px 6px 5px 0;
@@ -493,8 +521,9 @@
     }
 
     .admin-sidebar.collapsed ~ .admin-main-wrapper {
-      margin-left: 72px;
+      margin-left: 72px !important;
     }
+  
   </style>
 </head>
 <body>
