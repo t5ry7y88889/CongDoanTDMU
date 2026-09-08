@@ -897,31 +897,48 @@ footer {
 .tdmu-pagination-size-wrap {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .tdmu-size-label {
-  font-size: 11.5px;
+  font-size: 12px;
+  font-weight: 600;
   color: #64748B;
   margin: 0;
+  display: inline-flex;
+  align-items: center;
 }
 
 .tdmu-page-size-select {
-  padding: 4px 8px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #1E293B;
-  background: #F8FAFC;
-  border: 1px solid #CBD5E1;
-  border-radius: 6px;
-  outline: none;
-  cursor: pointer;
-  transition: all 0.15s;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-color: #FFFFFF !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23002855'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 8px center !important;
+  background-size: 14px 14px !important;
+  padding: 5px 28px 5px 10px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #002855 !important;
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 7px !important;
+  outline: none !important;
+  cursor: pointer !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  transition: all 0.2s ease !important;
+}
+
+.tdmu-page-size-select:hover {
+  border-color: #002855 !important;
+  background-color: #F8FAFC !important;
 }
 
 .tdmu-page-size-select:focus {
-  border-color: #0284C7;
-  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+  border-color: #002855 !important;
+  box-shadow: 0 0 0 3px rgba(0, 40, 85, 0.12) !important;
+  background-color: #FFFFFF !important;
 }
 
 /* Container override for TOAST UI */
