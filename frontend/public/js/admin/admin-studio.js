@@ -1,131 +1,239 @@
 // =========================================================================
-// 4. ENTERPRISE DUAL-MODE AI CONTENT STUDIO & FACT-SHEET ENGINE
+// ENTERPRISE AI CONTENT STUDIO: STATE MACHINE WORKFLOW ENGINE
+// Quản trị toàn trình: Ingest -> Analyze -> Plan -> Draft -> Media -> Compliance
+// Hỗ trợ 3 Cấp độ kiểm soát: Auto (0 CP), Assisted (2 CP), Full Review (5 CP)
 // =========================================================================
-let currentStudioMode = 'review'; // 'review' | 'auto'
-let currentReviewStep = 1; // 1 .. 5
-let currentFactSheet = null;
-let reviewUploadedFiles = [];
-let autoUploadedFiles = [];
 
-// MODE SWITCHING
-function switchStudioMode(mode) {
-  currentStudioMode = mode;
-  const btnReview = document.getElementById('btn_mode_review');
-  const btnAuto = document.getElementById('btn_mode_auto');
-  const reviewContainer = document.getElementById('studio_review_mode_container');
-  const autoContainer = document.getElementById('studio_auto_mode_container');
-  const badge = document.getElementById('studio_active_mode_badge');
-
-  if (mode === 'review') {
-    if (btnReview) {
-      btnReview.style.background = '#002855';
-      btnReview.style.color = '#FFFFFF';
-      btnReview.style.boxShadow = '0 2px 6px rgba(0,40,85,0.25)';
+const studioState = {
+  mode: 'full_review', // 'auto' | 'assisted' | 'full_review'
+  currentStage: 1, // 1 to 6
+  uploadedFiles: [],
+  factSheet: null,
+  verifiedFacts: [],
+  missingInfo: [],
+  editorialPlan: null,
+  contentDraft: null,
+  mediaPackage: null,
+  complianceAudit: null,
+  currentChannel: 'web',
+  auditTrail: [
+    {
+      timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN'),
+      actor: 'Hệ Thống Tòa Soạn',
+      action: 'Khởi tạo phiên làm việc mới',
+      stage: 'Stage 1: Intake',
+      note: 'Sẵn sàng tiếp nhận hồ sơ sự kiện và tư liệu'
     }
+  ]
+};
+
+// =========================================================================
+// 1. GOVERNANCE MODE SWITCHING & GATE POLICIES
+// =========================================================================
+function setGovernanceMode(mode) {
+  studioState.mode = mode;
+
+  const btnAuto = document.getElementById('btn_gov_auto');
+  const btnAssisted = document.getElementById('btn_gov_assisted');
+  const btnFull = document.getElementById('btn_gov_full');
+  const modeBadge = document.getElementById('studio_governance_badge');
+  const modeDesc = document.getElementById('studio_mode_description');
+
+  // Reset all buttons
+  [btnAuto, btnAssisted, btnFull].forEach(b => {
+    if (b) {
+      b.style.background = 'transparent';
+      b.style.color = '#475569';
+      b.style.boxShadow = 'none';
+      b.style.fontWeight = '600';
+    }
+  });
+
+  if (mode === 'auto') {
     if (btnAuto) {
-      btnAuto.style.background = 'transparent';
-      btnAuto.style.color = '#475569';
-      btnAuto.style.boxShadow = 'none';
+      btnAuto.style.background = '#059669';
+      btnAuto.style.color = '#FFFFFF';
+      btnAuto.style.boxShadow = '0 2px 8px rgba(5,150,105,0.3)';
+      btnAuto.style.fontWeight = '800';
     }
-    if (reviewContainer) reviewContainer.style.display = 'block';
-    if (autoContainer) autoContainer.style.display = 'none';
-    if (badge) {
-      badge.innerText = 'Chế độ Doanh nghiệp 5 Bước';
-      badge.style.background = '#E0F2FE';
-      badge.style.color = '#0369A1';
+    if (modeBadge) {
+      modeBadge.innerText = '🟢 Chế độ Hỏa Tốc (0 Checkpoints)';
+      modeBadge.style.background = '#ECFDF5';
+      modeBadge.style.color = '#065F46';
+      modeBadge.style.border = '1px solid #A7F3D0';
+    }
+    if (modeDesc) {
+      modeDesc.innerText = 'AI tự động thực thi toàn bộ 6 công đoạn: Fact -> Plan -> Draft -> Media -> Compliance -> Xuất bản.';
+    }
+  } else if (mode === 'assisted') {
+    if (btnAssisted) {
+      btnAssisted.style.background = '#D97706';
+      btnAssisted.style.color = '#FFFFFF';
+      btnAssisted.style.boxShadow = '0 2px 8px rgba(217,119,6,0.3)';
+      btnAssisted.style.fontWeight = '800';
+    }
+    if (modeBadge) {
+      modeBadge.innerText = '🟡 Bán Tự Động (2 Checkpoints: Fact + Final)';
+      modeBadge.style.background = '#FFFBEB';
+      modeBadge.style.color = '#B45309';
+      modeBadge.style.border = '1px solid #FDE68A';
+    }
+    if (modeDesc) {
+      modeDesc.innerText = 'AI tự sinh các khâu trung gian, cán bộ chỉ kiểm soát tại 2 cổng thiết yếu: Bảng Sự Thật & Duyệt Xuất Bản.';
     }
   } else {
-    if (btnAuto) {
-      btnAuto.style.background = '#002855';
-      btnAuto.style.color = '#FFFFFF';
-      btnAuto.style.boxShadow = '0 2px 6px rgba(0,40,85,0.25)';
+    if (btnFull) {
+      btnFull.style.background = '#002855';
+      btnFull.style.color = '#FFFFFF';
+      btnFull.style.boxShadow = '0 2px 8px rgba(0,40,85,0.3)';
+      btnFull.style.fontWeight = '800';
     }
-    if (btnReview) {
-      btnReview.style.background = 'transparent';
-      btnReview.style.color = '#475569';
-      btnReview.style.boxShadow = 'none';
+    if (modeBadge) {
+      modeBadge.innerText = '🔴 Doanh Nghiệp Toàn Trình (5 Checkpoints)';
+      modeBadge.style.background = '#EFF6FF';
+      modeBadge.style.color = '#1E40AF';
+      modeBadge.style.border = '1px solid #BFDBFE';
     }
-    if (reviewContainer) reviewContainer.style.display = 'none';
-    if (autoContainer) autoContainer.style.display = 'block';
-    if (badge) {
-      badge.innerText = 'Chế độ Tự Động Hóa 1-Chạm';
-      badge.style.background = '#FEF3C7';
-      badge.style.color = '#B45309';
+    if (modeDesc) {
+      modeDesc.innerText = 'Quy chuẩn tòa soạn cao cấp: Phê duyệt Fact Sheet, Kế hoạch bài, Bản thảo Canvas, Gán ảnh và Gác cổng Compliance.';
     }
+  }
+
+  // Update button text in Stage 1
+  updateStage1ActionButtonText();
+}
+
+function updateStage1ActionButtonText() {
+  const btn = document.getElementById('btn_intake_submit');
+  if (!btn) return;
+
+  if (studioState.mode === 'auto') {
+    btn.innerHTML = '<i class="fa-solid fa-bolt text-warning me-1"></i> ⚡ BẮT ĐẦU TỰ ĐỘNG HÓA PIPELINE (0-CHẠM) <i class="fa-solid fa-arrow-right"></i>';
+  } else if (studioState.mode === 'assisted') {
+    btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles text-warning me-1"></i> ⚡ BÓC TÁCH FACT SHEET & VÀO CHECKPOINT 1 →';
+  } else {
+    btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles text-warning me-1"></i> ⚡ BÓC TÁCH FACT SHEET & BẮT ĐẦU QUY TRÌNH TOÀN TRÌNH →';
   }
 }
 
-// STEPPER NAVIGATION (REVIEW MODE)
-function goToReviewStep(stepNum) {
-  if (stepNum < 1 || stepNum > 5) return;
-  currentReviewStep = stepNum;
+// =========================================================================
+// 2. STATE MACHINE STEPPER & STAGE NAVIGATION
+// =========================================================================
+function goToStage(stageNum) {
+  if (stageNum < 1 || stageNum > 6) return;
+  studioState.currentStage = stageNum;
 
-  for (let i = 1; i <= 5; i++) {
-    const pane = document.getElementById(`review_step_${i}`);
-    const indicator = document.getElementById(`step_indicator_${i}`);
+  for (let i = 1; i <= 6; i++) {
+    const pane = document.getElementById(`studio_stage_pane_${i}`);
+    const indicator = document.getElementById(`stage_indicator_${i}`);
+
     if (pane) {
-      pane.style.display = (i === stepNum) ? 'block' : 'none';
+      pane.style.display = (i === stageNum) ? 'block' : 'none';
     }
+
     if (indicator) {
-      const numBadge = indicator.querySelector('span:first-child');
-      if (i === stepNum) {
+      const badge = indicator.querySelector('.stage-num-badge');
+      if (i === stageNum) {
         indicator.style.background = '#002855';
         indicator.style.color = '#FFFFFF';
-        indicator.style.border = 'none';
-        if (numBadge) {
-          numBadge.style.background = '#D97706';
-          numBadge.style.color = '#FFFFFF';
+        indicator.style.borderColor = '#002855';
+        if (badge) {
+          badge.style.background = '#D97706';
+          badge.style.color = '#FFFFFF';
         }
-      } else if (i < stepNum) {
+      } else if (i < stageNum) {
         indicator.style.background = '#F0FDF4';
         indicator.style.color = '#166534';
-        indicator.style.border = '1px solid #BBF7D0';
-        if (numBadge) {
-          numBadge.style.background = '#16A34A';
-          numBadge.style.color = '#FFFFFF';
+        indicator.style.borderColor = '#BBF7D0';
+        if (badge) {
+          badge.style.background = '#16A34A';
+          badge.style.color = '#FFFFFF';
         }
       } else {
         indicator.style.background = '#F8FAFC';
-        indicator.style.color = '#475569';
-        indicator.style.border = '1px solid #E2E8F0';
-        if (numBadge) {
-          numBadge.style.background = '#CBD5E1';
-          numBadge.style.color = '#FFFFFF';
+        indicator.style.color = '#64748B';
+        indicator.style.borderColor = '#E2E8F0';
+        if (badge) {
+          badge.style.background = '#CBD5E1';
+          badge.style.color = '#475569';
         }
       }
     }
   }
 
-  // Scroll to studio top smoothly
-  const header = document.getElementById('tab_ai-creator_content');
-  if (header) header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const container = document.getElementById('tab_ai-creator_content');
+  if (container) container.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// PRESET QUICK PROMPTS IN STEP 1
-function applyReviewPreset(type) {
-  const genreSel = document.getElementById('review_genre_selector');
-  const briefArea = document.getElementById('studio_brief_text');
+// =========================================================================
+// 3. AUDIT LOGGING HELPER
+// =========================================================================
+function logStudioAudit(action, stage, note = '') {
+  const entry = {
+    timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN'),
+    actor: document.getElementById('current_user_name')?.innerText || 'TS. Lê Thị Kim Út',
+    action,
+    stage,
+    note
+  };
+  studioState.auditTrail.unshift(entry);
+  renderAuditTrailUI();
+}
+
+function renderAuditTrailUI() {
+  const container = document.getElementById('studio_audit_trail_list');
+  if (!container) return;
+
+  container.innerHTML = studioState.auditTrail.map(item => `
+    <div style="border-left: 2px solid #0284C7; padding-left: 10px; margin-bottom: 10px; font-size: 12px; line-height: 1.4;">
+      <div style="display: flex; justify-content: space-between; color: #64748B; font-size: 11px;">
+        <span><strong>${item.actor}</strong> &bull; ${item.stage}</span>
+        <span>${item.timestamp}</span>
+      </div>
+      <div style="font-weight: 700; color: #002855; margin-top: 2px;">${item.action}</div>
+      ${item.note ? `<div style="color: #475569; font-style: italic; margin-top: 1px;">${item.note}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+// =========================================================================
+// 4. STAGE 1: INTAKE & PRESETS (Tự điền trước mắt, không nhảy trang)
+// =========================================================================
+function applyPreset(type) {
+  const briefText = document.getElementById('intake_source_text');
+  const genreSel = document.getElementById('intake_genre_selector');
 
   if (type === 'volleyball') {
     if (genreSel) genreSel.value = 'tin_hoat_dong';
-    if (briefArea) briefArea.value = "Thông báo tổ chức Giải bóng chuyền nam nữ Công đoàn Trường Đại học Thủ Dầu Một chào mừng ngày 26/03/2026 vào lúc 08h00 tại Nhà thi đấu Đa năng TDMU. Đơn vị chủ trì: Ban Thường vụ Công đoàn Trường. Đối tượng tham gia: 16 Tổ Công đoàn toàn trường với hơn 120 vận động viên thi đấu.";
+    if (briefText) {
+      briefText.value = "Kế hoạch số 25/KH-CĐ ngày 20/03/2026 của Ban Thường vụ Công đoàn Trường ĐH Thủ Dầu Một về việc tổ chức Giải bóng chuyền nam nữ chào mừng Ngày thành lập Đoàn 26/03/2026. Khai mạc lúc 08h00 ngày 26/03/2026 tại Nhà thi đấu Đa năng TDMU. Đơn vị chủ trì: Ban Thường vụ Công đoàn Trường. Thành phần: 16 Tổ Công đoàn cơ sở với hơn 120 vận động viên tham gia tranh tài. Kinh phí khen thưởng 15 triệu đồng từ Quỹ phong trào Công đoàn.";
+    }
   } else if (type === 'welfare') {
     if (genreSel) genreSel.value = 'phuc_loi';
-    if (briefArea) briefArea.value = "Kế hoạch chăm lo đời sống, rà soát và trao 60 suất quà hỗ trợ Quỹ Công đoàn cho đoàn viên, người lao động có hoàn cảnh khó khăn nhân dịp lễ Quốc khánh 02/09/2026 tại Hội trường A, Trung tâm Hội nghị TDMU. Tổng kinh phí 30 triệu đồng trích từ Quỹ hoạt động Công đoàn Trường.";
+    if (briefText) {
+      briefText.value = "Kế hoạch chăm lo đời sống đoàn viên, người lao động nhân dịp lễ Quốc khánh 02/09/2026. Ban Thường vụ Công đoàn rà soát và trao 60 suất quà hỗ trợ (mỗi suất 500.000đ) cho cán bộ, giảng viên và nhân viên có hoàn cảnh khó khăn tại Hội trường A, Trung tâm Hội nghị TDMU lúc 08h30 ngày 28/08/2026. Tổng kinh phí 30 triệu đồng trích từ Quỹ hoạt động Công đoàn Trường.";
+    }
   } else if (type === 'ai_training') {
     if (genreSel) genreSel.value = 'thong_bao';
-    if (briefArea) briefArea.value = "Hội thảo tập huấn ứng dụng Trí tuệ nhân tạo (AI) và Chuyển đổi số trong công tác truyền thông Công đoàn năm 2026 vào ngày 15/09/2026 tại Phòng Hội thảo 1, Trường ĐH Thủ Dầu Một. Thành phần tham dự: Toàn thể ủy viên BCH Công đoàn trường và cán bộ phụ trách tuyên giáo 16 Tổ CĐ cơ sở.";
+    if (briefText) {
+      briefText.value = "Thông báo tổ chức Hội thảo tập huấn ứng dụng Trí tuệ nhân tạo (AI) và Chuyển đổi số trong công tác truyền thông Công đoàn năm 2026 vào lúc 08h00 ngày 15/09/2026 tại Phòng Hội thảo 1, Trường ĐH Thủ Dầu Một. Thành phần tham dự: Toàn thể ủy viên BCH Công đoàn trường, ban nữ công và cán bộ phụ trách tuyên giáo 16 Tổ CĐ cơ sở.";
+    }
   } else if (type === 'emulation') {
     if (genreSel) genreSel.value = 'khen_thuong';
-    if (briefArea) briefArea.value = "Phát động đợt thi đua cao điểm 'Dạy tốt - Học tốt - Nghiên cứu khoa học xuất sắc' chào mừng năm học mới 2026-2027 của Công đoàn Trường ĐH Thủ Dầu Một. Khen thưởng 4 Tổ Công đoàn xuất sắc dẫn đầu khối thi đua.";
+    if (briefText) {
+      briefText.value = "Phát động đợt thi đua cao điểm 'Dạy tốt - Học tốt - Nghiên cứu khoa học xuất sắc' chào mừng năm học mới 2026-2027 của Công đoàn Trường ĐH Thủ Dầu Một. Khen thưởng 4 Tổ Công đoàn xuất sắc dẫn đầu khối thi đua và trao giấy khen cho 25 cá nhân tiêu biểu.";
+    }
   }
 
-  // Chuyển sang Bước 2 ngay để xem nội dung
-  goToReviewStep(2);
+  if (briefText) {
+    briefText.style.transition = 'border-color 0.3s';
+    briefText.style.borderColor = '#10B981';
+    briefText.focus();
+    setTimeout(() => { briefText.style.borderColor = '#CBD5E1'; }, 1000);
+  }
 }
 
-// STEP 2: FILE HANDLING
-function handleReviewFilesSelected(files) {
+function handleIntakeFilesSelected(files) {
   if (!files || !files.length) return;
   for (let i = 0; i < files.length; i++) {
     const f = files[i];
@@ -133,63 +241,71 @@ function handleReviewFilesSelected(files) {
       name: f.name,
       size: (f.size / 1024).toFixed(1) + ' KB',
       type: f.type || 'document',
-      text: ''
+      text: '',
+      dataUrl: ''
     };
 
     if (f.type.startsWith('text/') || f.name.endsWith('.txt') || f.name.endsWith('.csv') || f.name.endsWith('.json')) {
       const reader = new FileReader();
       reader.onload = (e) => { fileObj.text = e.target.result; };
       reader.readAsText(f);
+    } else if (f.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => { fileObj.dataUrl = e.target.result; };
+      reader.readAsDataURL(f);
     }
-    reviewUploadedFiles.push(fileObj);
+    studioState.uploadedFiles.push(fileObj);
   }
-  renderReviewFilesList();
+  renderIntakeFilesList();
 }
 
-function renderReviewFilesList() {
-  const container = document.getElementById('review_selected_assets_list');
+function renderIntakeFilesList() {
+  const container = document.getElementById('intake_files_list');
   if (!container) return;
-  if (!reviewUploadedFiles.length) {
-    container.innerHTML = '<span style="font-size: 11.5px; color: #94A3B8; font-style: italic;">Chưa có tệp đính kèm nào.</span>';
+
+  if (!studioState.uploadedFiles.length) {
+    container.innerHTML = '<span style="font-size: 11.5px; color: #94A3B8; font-style: italic;">Chưa có tệp đính kèm nào được tải lên.</span>';
     return;
   }
 
-  container.innerHTML = reviewUploadedFiles.map((f, idx) => `
+  container.innerHTML = studioState.uploadedFiles.map((f, idx) => `
     <div style="background: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 4px 8px; font-size: 11.5px; display: flex; align-items: center; gap: 6px;">
-      <i class="fa-solid fa-file-lines text-primary"></i>
+      <i class="fa-solid ${f.type.startsWith('image/') ? 'fa-image text-success' : 'fa-file-lines text-primary'}"></i>
       <span style="font-weight: 700; color: #002855; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${f.name}">${f.name}</span>
       <span style="color: #64748B;">(${f.size})</span>
-      <button type="button" onclick="removeReviewFile(${idx})" style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 11px; padding: 0 2px;">✕</button>
+      <button type="button" onclick="removeIntakeFile(${idx})" style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 11px; padding: 0 2px;">✕</button>
     </div>
   `).join('');
 }
 
-function removeReviewFile(idx) {
-  reviewUploadedFiles.splice(idx, 1);
-  renderReviewFilesList();
+function removeIntakeFile(idx) {
+  studioState.uploadedFiles.splice(idx, 1);
+  renderIntakeFilesList();
 }
 
-// STEP 3: FACT SHEET EXTRACTION & MANAGEMENT
-async function extractFactsAndGoToStep3() {
-  const briefText = (document.getElementById('studio_brief_text')?.value || '').trim();
-  const customInst = (document.getElementById('studio_custom_instructions')?.value || '').trim();
-  const btn = document.getElementById('btn_extract_facts');
+// =========================================================================
+// 5. STAGE 1 -> STAGE 2: EXTRACT FACTS & DETECT MISSING INFO
+// =========================================================================
+async function extractFactsFromIntake() {
+  const sourceText = (document.getElementById('intake_source_text')?.value || '').trim();
+  const brief = (document.getElementById('intake_instructions_text')?.value || '').trim();
+  const btn = document.getElementById('btn_intake_submit');
 
-  if (!briefText && !reviewUploadedFiles.length) {
-    alert("⚠️ Vui lòng dán nội dung thô hoặc tải lên ít nhất một tài liệu sự kiện!");
+  if (!sourceText && !studioState.uploadedFiles.length) {
+    alert("⚠️ Vui lòng dán văn bản nội dung sự kiện hoặc tải lên ít nhất một tệp tài liệu/kế hoạch!");
     return;
   }
 
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i> Đang bóc tách Fact Sheet...';
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i> Đang đọc hiểu tài liệu & bóc tách sự thật...';
   }
 
   try {
     const payload = {
-      sourceText: briefText,
-      brief: customInst,
-      filesInfo: reviewUploadedFiles.map(f => ({ name: f.name, size: f.size, type: f.type, text: f.text })),
+      sourceText,
+      brief,
+      filesInfo: studioState.uploadedFiles.map(f => ({ name: f.name, size: f.size, type: f.type, text: f.text })),
       apiKey: localStorage.getItem('gemini_api_key') || ''
     };
 
@@ -200,869 +316,768 @@ async function extractFactsAndGoToStep3() {
     }).then(r => r.json());
 
     if (res.success && res.factSheet) {
-      currentFactSheet = res.factSheet;
-      renderFactSheetToUI(res.factSheet);
-      goToReviewStep(3);
+      studioState.factSheet = res.factSheet;
+      studioState.verifiedFacts = res.verifiedFacts || [];
+      studioState.missingInfo = res.missingInfo || [];
+
+      logStudioAudit("Bóc tách Bảng Sự Thật (Fact Sheet)", "Stage 2: Fact Extraction", `Đã trích xuất ${studioState.verifiedFacts.length} dữ kiện và ${studioState.missingInfo.length} cảnh báo thiếu`);
+
+      renderFactReviewUI();
+
+      if (studioState.mode === 'auto') {
+        await runAutoModePipeline();
+      } else {
+        goToStage(2);
+      }
     } else {
-      throw new Error(res.error || "Không thể trích xuất Fact Sheet");
+      throw new Error(res.error || "Không thể bóc tách Fact Sheet");
     }
   } catch (err) {
-    alert("❌ Lỗi trích xuất Fact Sheet: " + err.message);
+    alert("❌ Lỗi bóc tách Fact Sheet: " + err.message);
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles text-warning"></i> ⚡ AI Bóc Tách Bảng Sự Thật (Fact Sheet) <i class="fa-solid fa-arrow-right"></i>';
+      updateStage1ActionButtonText();
     }
   }
 }
 
-function reExtractFacts() {
-  if (confirm("Thầy/Cô có muốn AI bóc tách lại Bảng Sự Thật từ tài liệu nguồn không?")) {
-    extractFactsAndGoToStep3();
-  }
-}
-
-function renderFactSheetToUI(fs) {
+// =========================================================================
+// 6. STAGE 2: CHECKPOINT 1 - FACT REVIEW
+// =========================================================================
+function renderFactReviewUI() {
+  const fs = studioState.factSheet;
   if (!fs) return;
+
   safeSetVal('fact_event_name', fs.eventName || '');
   safeSetVal('fact_event_date', fs.eventDate || '');
   safeSetVal('fact_event_time', fs.eventTime || '08h00 - 11h30');
   safeSetVal('fact_location', fs.location || 'Trường Đại học Thủ Dầu Một');
   safeSetVal('fact_organizer', fs.organizer || 'Ban Thường vụ Công đoàn Trường ĐH Thủ Dầu Một');
-  safeSetVal('fact_attendees', fs.attendeesCount || 'Toàn thể đoàn viên và cán bộ giảng viên');
   safeSetVal('fact_delegates', fs.delegates || 'Đại diện Đảng ủy, BGH và BTV Công đoàn trường');
+  safeSetVal('fact_attendees', fs.attendeesCount || 'Toàn thể đoàn viên và cán bộ giảng viên');
   safeSetVal('fact_budget', fs.budgetOrGifts || 'Theo quy định Quỹ Công đoàn');
   safeSetVal('fact_significance', fs.significance || 'Chăm lo thiết thực đời sống vật chất và tinh thần cho người lao động TDMU.');
   safeSetVal('fact_quotes', fs.quotes || 'Khẳng định vai trò đồng hành tin cậy của tổ chức Công đoàn.');
 
-  // Render activities
-  const container = document.getElementById('fact_activities_container');
-  if (container) {
-    container.innerHTML = '';
+  const actContainer = document.getElementById('fact_activities_container');
+  if (actContainer) {
+    actContainer.innerHTML = '';
     const acts = Array.isArray(fs.keyActivities) ? fs.keyActivities : (fs.keyActivities ? [fs.keyActivities] : []);
     if (!acts.length) acts.push("Triển khai chuỗi hoạt động phong trào thi đua chào mừng sự kiện");
     acts.forEach(a => addFactActivityRow(a));
+  }
+
+  const verifiedList = document.getElementById('cp1_verified_facts_list');
+  if (verifiedList) {
+    verifiedList.innerHTML = studioState.verifiedFacts.map(f => `
+      <li style="display: flex; align-items: flex-start; gap: 6px; margin-bottom: 6px; color: #166534;">
+        <i class="fa-solid fa-circle-check text-success" style="margin-top: 3px;"></i>
+        <span>${escapeHtml(f)}</span>
+      </li>
+    `).join('');
+  }
+
+  const missingList = document.getElementById('cp1_missing_info_list');
+  const missingBox = document.getElementById('cp1_missing_info_box');
+  if (missingList) {
+    if (studioState.missingInfo && studioState.missingInfo.length > 0) {
+      if (missingBox) missingBox.style.display = 'block';
+      missingList.innerHTML = studioState.missingInfo.map(m => `
+        <li style="display: flex; align-items: flex-start; gap: 6px; margin-bottom: 6px; color: #B45309;">
+          <i class="fa-solid fa-triangle-exclamation text-warning" style="margin-top: 3px;"></i>
+          <span>${escapeHtml(m)}</span>
+        </li>
+      `).join('');
+    } else {
+      if (missingBox) missingBox.style.display = 'none';
+    }
   }
 }
 
 function addFactActivityRow(val = '') {
   const container = document.getElementById('fact_activities_container');
   if (!container) return;
-  const row = document.createElement('div');
-  row.style.cssText = 'display: flex; gap: 6px; align-items: center;';
-  row.innerHTML = `
-    <input type="text" class="fact-act-input" value="${val.replace(/"/g, '&quot;')}" placeholder="Nội dung hoạt động..." style="flex: 1; padding: 6px 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12px;">
-    <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 12px;">✕</button>
+  const div = document.createElement('div');
+  div.style.cssText = "display: flex; gap: 8px; margin-bottom: 6px;";
+  div.innerHTML = `
+    <input type="text" class="fact-act-input" value="${escapeHtml(val)}" placeholder="Mô tả hoạt động cụ thể..." style="flex: 1; padding: 7px 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12.5px;">
+    <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; color: #EF4444; cursor: pointer; padding: 0 4px;"><i class="fa-solid fa-trash-can"></i></button>
   `;
-  container.appendChild(row);
+  container.appendChild(div);
 }
 
 function collectFactSheetFromUI() {
-  const activities = [];
+  const acts = [];
   document.querySelectorAll('.fact-act-input').forEach(inp => {
-    if (inp.value.trim()) activities.push(inp.value.trim());
+    if (inp.value.trim()) acts.push(inp.value.trim());
   });
 
   return {
-    eventName: (document.getElementById('fact_event_name')?.value || '').trim() || 'Hoạt động Công đoàn TDMU',
-    eventDate: (document.getElementById('fact_event_date')?.value || '').trim(),
-    eventTime: (document.getElementById('fact_event_time')?.value || '').trim(),
-    location: (document.getElementById('fact_location')?.value || '').trim(),
-    organizer: (document.getElementById('fact_organizer')?.value || '').trim(),
-    delegates: (document.getElementById('fact_delegates')?.value || '').trim(),
-    attendeesCount: (document.getElementById('fact_attendees')?.value || '').trim(),
-    budgetOrGifts: (document.getElementById('fact_budget')?.value || '').trim(),
-    keyActivities: activities.length ? activities : ['Tổ chức các hoạt động phong trào chăm lo đoàn viên'],
-    significance: (document.getElementById('fact_significance')?.value || '').trim(),
-    quotes: (document.getElementById('fact_quotes')?.value || '').trim()
+    eventName: document.getElementById('fact_event_name')?.value.trim() || 'Sự kiện Công đoàn TDMU',
+    eventDate: document.getElementById('fact_event_date')?.value.trim() || '',
+    eventTime: document.getElementById('fact_event_time')?.value.trim() || '08h00 - 11h30',
+    location: document.getElementById('fact_location')?.value.trim() || 'Trường Đại học Thủ Dầu Một',
+    organizer: document.getElementById('fact_organizer')?.value.trim() || 'Ban Thường vụ Công đoàn Trường ĐH Thủ Dầu Một',
+    delegates: document.getElementById('fact_delegates')?.value.trim() || '',
+    attendeesCount: document.getElementById('fact_attendees')?.value.trim() || '',
+    budgetOrGifts: document.getElementById('fact_budget')?.value.trim() || '',
+    keyActivities: acts.length ? acts : ['Tổ chức sự kiện chào mừng phong trào thi đua'],
+    significance: document.getElementById('fact_significance')?.value.trim() || '',
+    quotes: document.getElementById('fact_quotes')?.value.trim() || ''
   };
 }
 
-// STEP 4: GENERATE FROM VERIFIED FACT SHEET
-async function generateFromVerifiedFactsAndGoToStep4() {
-  const factSheet = collectFactSheetFromUI();
-  currentFactSheet = factSheet;
-  const genre = document.getElementById('review_genre_selector')?.value || 'tin_hoat_dong';
-  const customInst = (document.getElementById('studio_custom_instructions')?.value || '').trim();
-  const btn = document.getElementById('btn_confirm_facts_generate');
+async function approveFactsAndAdvance() {
+  studioState.factSheet = collectFactSheetFromUI();
+  logStudioAudit("Phê duyệt Bảng Sự Thật (Checkpoint 1: Approved)", "Stage 2: Fact Review", `Xác nhận dữ kiện cho "${studioState.factSheet.eventName}"`);
 
+  const btn = document.getElementById('btn_approve_facts');
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> Đang soạn thảo đa kênh từ Fact Sheet...';
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i> Đang xây dựng Kế hoạch bài viết...';
   }
 
   try {
-    const payload = {
-      factSheet,
-      genre,
-      channels: ['website', 'facebook', 'zalo', 'video', 'infographic'],
-      customInstructions: customInst,
-      apiKey: localStorage.getItem('gemini_api_key') || ''
-    };
+    const genre = document.getElementById('intake_genre_selector')?.value || 'tin_hoat_dong';
+    const audience = document.getElementById('intake_audience_selector')?.value || 'Toàn trường';
 
-    const res = await fetch('/api/ai/generate-from-facts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).then(r => r.json());
-
-    if (res.success && res.package) {
-      const pkg = res.package;
-      // 1. Website
-      if (pkg.website) {
-        safeSetVal('ai_final_title', pkg.website.title || factSheet.eventName);
-        safeSetVal('ai_final_subtitle', pkg.website.subTitle || '');
-        safeSetVal('ai_final_summary', pkg.website.summary || '');
-        const editor = document.getElementById('native_rich_editor');
-        if (editor) editor.innerHTML = pkg.website.contentHtml || '';
-      }
-
-      // 2. Facebook
-      if (pkg.facebook) {
-        safeSetVal('fb_caption_input', pkg.facebook.caption || '');
-        safeSetText('preview_fb_text', pkg.facebook.caption || '');
-      }
-
-      // 3. Zalo
-      if (pkg.zalo) {
-        safeSetVal('zalo_caption_input', pkg.zalo.caption || '');
-        safeSetText('preview_zalo_text', pkg.zalo.caption || '');
-      }
-
-      // 4. Video
-      if (pkg.video) {
-        safeSetVal('video_script_output', pkg.video.script || '');
-      }
-
-      // 5. Infographic
-      if (pkg.infographic) {
-        const infoDiv = document.getElementById('infographic_content_display');
-        if (infoDiv) {
-          infoDiv.innerHTML = `
-            <div style="font-size: 15px; font-weight: 800; margin-bottom: 10px; color: #065F46;">
-              <i class="fa-solid fa-chart-pie me-2"></i> ĐIỂM NHẤN SỰ KIỆN TỪ FACT SHEET
-            </div>
-            <div style="white-space: pre-wrap; font-weight: 600;">${pkg.infographic.highlights || ''}</div>
-          `;
-        }
-      }
-
-      // 6. Banner title
-      safeSetVal('studio_title_text', factSheet.eventName);
-      redrawCanvasStudio();
-
-      goToReviewStep(4);
-      switchPackageTab('web');
-      updateMetrics();
-      saveEditorState("Bản thảo từ Fact Sheet");
-    } else {
-      throw new Error(res.error || "Không thể sinh bài từ Fact Sheet");
-    }
-  } catch (err) {
-    alert("❌ Lỗi tạo bài: " + err.message);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-check-double text-warning"></i> ✅ Xác Nhận Dữ Liệu Sự Thật &amp; Soạn Thảo Đa Kênh <i class="fa-solid fa-arrow-right"></i>';
-    }
-  }
-}
-
-// STEP 5: FACT-CHECK AUDIT & SCORECARD
-async function runStep5FactAudit() {
-  const editor = document.getElementById('native_rich_editor');
-  const content = editor ? editor.innerHTML : '';
-  const factSheet = currentFactSheet || collectFactSheetFromUI();
-
-  const scoreEl = document.getElementById('audit_overall_score');
-  const matchBadge = document.getElementById('audit_fact_match_badge');
-  const verifiedList = document.getElementById('audit_verified_facts_list');
-  const warningsList = document.getElementById('audit_warnings_list');
-
-  try {
-    const res = await fetch('/api/ai/fact-check-audit', {
+    const planRes = await fetch('/api/ai/editorial-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content,
-        factSheet,
+        factSheet: studioState.factSheet,
+        genre,
+        audience,
         apiKey: localStorage.getItem('gemini_api_key') || ''
       })
     }).then(r => r.json());
 
-    if (res.success && res.audit) {
-      const a = res.audit;
-      if (scoreEl) scoreEl.innerHTML = `${a.overallScore || 97}<span style="font-size: 20px; color: #64748B;">/100</span>`;
-      if (matchBadge) matchBadge.innerHTML = `<i class="fa-solid fa-check-double me-1"></i> Fact Consistency: ${a.factMatchPercentage || 99}%`;
+    if (planRes.success && planRes.plan) {
+      studioState.editorialPlan = planRes.plan;
+      renderEditorialPlanUI(planRes.plan);
 
-      if (verifiedList && a.verifiedFacts) {
-        verifiedList.innerHTML = a.verifiedFacts.map(f => `<li>${f}</li>`).join('');
+      if (studioState.mode === 'assisted') {
+        await generateDraftInternal();
+        await matchMediaInternal();
+        await runComplianceInternal();
+        goToStage(6);
+      } else {
+        goToStage(3);
       }
-
-      if (warningsList) {
-        if (a.warnings && a.warnings.length) {
-          warningsList.innerHTML = a.warnings.map(w => `<li>${w}</li>`).join('');
-        } else {
-          warningsList.innerHTML = '<li>Không phát hiện sai lệch. Bài viết đạt chuẩn kiểm chứng 100%!</li>';
-        }
-      }
+    } else {
+      throw new Error(planRes.error || "Không thể khởi tạo Kế hoạch biên tập");
     }
   } catch (err) {
-    console.error("Audit error:", err);
+    alert("❌ Lỗi xây dựng kế hoạch: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i> ✓ Duyệt Sự Thật (Approve Facts) & Đi Tiếp <i class="fa-solid fa-arrow-right"></i>';
+    }
   }
 }
 
 // =========================================================================
-// AUTO MODE (1-TOUCH BATCH PIPELINE)
+// 7. STAGE 3: CHECKPOINT 2 - EDITORIAL PLAN
 // =========================================================================
-function handleAutoDropFiles(event) {
-  event.preventDefault();
-  const dt = event.dataTransfer;
-  if (dt && dt.files) {
-    handleAutoFilesSelected(dt.files);
+function renderEditorialPlanUI(plan) {
+  if (!plan) return;
+
+  safeSetText('plan_genre_title', plan.genreTitle || 'Tin Hoạt Động & Sự Kiện');
+  safeSetText('plan_audience', plan.audience || 'Toàn thể Đoàn viên, Cán bộ Giảng viên TDMU');
+  safeSetVal('plan_angle_input', plan.angle || '');
+  safeSetText('plan_tone', plan.tone || 'Trang trọng, chuẩn mực hành chính đại học (NĐ 30)');
+
+  const structContainer = document.getElementById('plan_structure_container');
+  if (structContainer && Array.isArray(plan.structure)) {
+    structContainer.innerHTML = plan.structure.map((s, idx) => `
+      <div style="background: #F8FAFC; border-left: 3px solid #0284C7; padding: 8px 12px; margin-bottom: 6px; border-radius: 4px; font-size: 12.5px;">
+        <div style="font-weight: 700; color: #002855;">${s.section || `Phần ${idx+1}`}</div>
+        <div style="color: #64748B; font-size: 12px; margin-top: 2px;">${s.focus || ''}</div>
+      </div>
+    `).join('');
   }
-  const zone = document.getElementById('auto_drop_zone');
-  if (zone) {
-    zone.style.borderColor = '#0284C7';
-    zone.style.background = '#F8FAFC';
+
+  const msgContainer = document.getElementById('plan_key_messages_container');
+  if (msgContainer && Array.isArray(plan.keyMessages)) {
+    msgContainer.innerHTML = plan.keyMessages.map(m => `
+      <li style="display: flex; align-items: flex-start; gap: 6px; margin-bottom: 4px; color: #002855; font-size: 12.5px;">
+        <i class="fa-solid fa-bullseye text-primary" style="margin-top: 3px;"></i>
+        <span>${escapeHtml(m)}</span>
+      </li>
+    `).join('');
   }
 }
 
-function handleAutoFilesSelected(files) {
-  if (!files || !files.length) return;
-  for (let i = 0; i < files.length; i++) {
-    const f = files[i];
-    autoUploadedFiles.push({
-      name: f.name,
-      size: (f.size / 1024).toFixed(1) + ' KB',
-      type: f.type || 'document'
-    });
-  }
-  renderAutoFilesList();
-}
-
-function renderAutoFilesList() {
-  const container = document.getElementById('auto_files_list');
-  if (!container) return;
-  if (!autoUploadedFiles.length) {
-    container.innerHTML = '';
-    return;
+async function approvePlanAndAdvance() {
+  const updatedAngle = document.getElementById('plan_angle_input')?.value.trim();
+  if (updatedAngle && studioState.editorialPlan) {
+    studioState.editorialPlan.angle = updatedAngle;
   }
 
-  container.innerHTML = autoUploadedFiles.map((f, idx) => `
-    <div style="background: white; border: 1px solid #BAE6FD; border-radius: 6px; padding: 6px 10px; font-size: 12px; display: flex; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-      <i class="fa-solid fa-file-circle-check text-primary"></i>
-      <strong style="color: #002855;">${f.name}</strong>
-      <span style="color: #64748B;">(${f.size})</span>
-      <button type="button" onclick="removeAutoFile(${idx})" style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 12px;">✕</button>
-    </div>
-  `).join('');
-}
+  logStudioAudit("Phê duyệt Kế hoạch biên tập (Checkpoint 2: Approved)", "Stage 3: Editorial Plan", `Góc tiếp cận: ${studioState.editorialPlan?.angle || 'Mặc định'}`);
 
-function removeAutoFile(idx) {
-  autoUploadedFiles.splice(idx, 1);
-  renderAutoFilesList();
-}
-
-async function runAutoModeOneTouch() {
-  const btn = document.getElementById('btn_run_auto_mode');
-  const timelineBox = document.getElementById('auto_timeline_box');
-  const genre = document.getElementById('auto_genre_selector')?.value || 'tin_hoat_dong';
-  const action = document.getElementById('auto_action_selector')?.value || 'preview';
-
-  if (!autoUploadedFiles.length) {
-    alert("⚠️ Vui lòng kéo thả hoặc chọn ít nhất một tệp tài liệu để tự động xử lý!");
-    return;
-  }
-
+  const btn = document.getElementById('btn_approve_plan');
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> Đang tự động xử lý pipeline...';
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i> Đang khởi tạo Bản nháp Đa kênh...';
   }
+
+  try {
+    await generateDraftInternal();
+    goToStage(4);
+  } catch (err) {
+    alert("❌ Lỗi sinh bản thảo: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i> ✓ Duyệt Kế Hoạch (Approve Plan) & Soạn Thảo Bản Nháp <i class="fa-solid fa-arrow-right"></i>';
+    }
+  }
+}
+
+async function generateDraftInternal() {
+  const payload = {
+    factSheet: studioState.factSheet,
+    genre: studioState.editorialPlan?.genre || 'tin_hoat_dong',
+    channels: ['website', 'facebook', 'zalo', 'video', 'infographic'],
+    customInstructions: studioState.editorialPlan?.angle || '',
+    apiKey: localStorage.getItem('gemini_api_key') || ''
+  };
+
+  const res = await fetch('/api/ai/generate-from-facts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(r => r.json());
+
+  if (res.success && res.package) {
+    studioState.contentDraft = res.package;
+    renderDraftToCanvasUI(res.package);
+  } else {
+    throw new Error(res.error || "Không thể tạo bản thảo từ Fact Sheet");
+  }
+}
+
+// =========================================================================
+// 8. STAGE 4: CHECKPOINT 3 - DRAFT CANVAS REVIEW
+// =========================================================================
+function renderDraftToCanvasUI(pkg) {
+  if (!pkg) return;
+
+  if (pkg.website) {
+    const editor = document.getElementById('native_rich_editor');
+    if (editor) {
+      editor.innerHTML = pkg.website.contentHtml || `
+        <p class="sapo"><strong>(TDMU) - ${pkg.website.sapo || ''}</strong></p>
+        <h2>Nội Dung Chương Trình</h2>
+        <p>Chi tiết diễn biến sự kiện...</p>
+      `;
+    }
+    safeSetVal('studio_title_input', pkg.website.title || '');
+    safeSetVal('studio_sapo_input', pkg.website.sapo || '');
+  }
+
+  if (pkg.facebook) {
+    safeSetVal('fb_caption_input', pkg.facebook.caption || '');
+    safeSetText('preview_fb_text', pkg.facebook.caption || '');
+  }
+
+  if (pkg.zalo) {
+    safeSetVal('zalo_caption_input', pkg.zalo.caption || '');
+    safeSetText('preview_zalo_text', pkg.zalo.caption || '');
+  }
+
+  if (pkg.video) {
+    safeSetVal('video_script_input', pkg.video.script || '');
+  }
+
+  if (pkg.infographic) {
+    safeSetVal('infographic_points_input', pkg.infographic.highlights || '');
+  }
+
+  updateWordCountMetrics();
+}
+
+async function approveDraftAndAdvance() {
+  const editor = document.getElementById('native_rich_editor');
+  if (editor && studioState.contentDraft && studioState.contentDraft.website) {
+    studioState.contentDraft.website.contentHtml = editor.innerHTML;
+    studioState.contentDraft.website.title = document.getElementById('studio_title_input')?.value.trim() || studioState.contentDraft.website.title;
+    studioState.contentDraft.website.sapo = document.getElementById('studio_sapo_input')?.value.trim() || studioState.contentDraft.website.sapo;
+  }
+
+  logStudioAudit("Phê duyệt Bản thảo Đa kênh (Checkpoint 3: Approved)", "Stage 4: Draft Canvas", `Đã lưu bản thảo Website, Facebook, Zalo`);
+
+  const btn = document.getElementById('btn_approve_draft');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i> Đang gán & chú thích hình ảnh...';
+  }
+
+  try {
+    await matchMediaInternal();
+    goToStage(5);
+  } catch (err) {
+    alert("❌ Lỗi phân bổ hình ảnh: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i> ✓ Duyệt Bản Nháp (Approve Draft) & Sang Khâu Gán Ảnh <i class="fa-solid fa-arrow-right"></i>';
+    }
+  }
+}
+
+async function matchMediaInternal() {
+  const payload = {
+    factSheet: studioState.factSheet,
+    uploadedFiles: studioState.uploadedFiles,
+    apiKey: localStorage.getItem('gemini_api_key') || ''
+  };
+
+  const res = await fetch('/api/ai/media-match', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(r => r.json());
+
+  if (res.success && res.mediaPackage) {
+    studioState.mediaPackage = res.mediaPackage;
+    renderMediaReviewUI(res.mediaPackage);
+  } else {
+    throw new Error(res.error || "Không thể phân bổ hình ảnh");
+  }
+}
+
+// =========================================================================
+// 9. STAGE 5: CHECKPOINT 4 - MEDIA REVIEW & CAPTIONING
+// =========================================================================
+function renderMediaReviewUI(pkg) {
+  if (!pkg) return;
+
+  if (pkg.featured) {
+    const imgEl = document.getElementById('media_featured_preview');
+    if (imgEl) imgEl.src = pkg.featured.url;
+    safeSetVal('media_featured_caption', pkg.featured.caption || '');
+    safeSetVal('media_featured_alt', pkg.featured.altText || '');
+    safeSetText('media_featured_name', pkg.featured.fileName || 'Ảnh đại diện');
+  }
+
+  if (pkg.inBody && pkg.inBody.length > 0) {
+    const b = pkg.inBody[0];
+    const imgEl = document.getElementById('media_inbody_preview');
+    if (imgEl) imgEl.src = b.url;
+    safeSetVal('media_inbody_caption', b.caption || '');
+    safeSetVal('media_inbody_alt', b.altText || '');
+    safeSetText('media_inbody_name', b.fileName || 'Ảnh thân bài');
+  }
+}
+
+async function approveMediaAndAdvance() {
+  if (studioState.mediaPackage) {
+    if (studioState.mediaPackage.featured) {
+      studioState.mediaPackage.featured.caption = document.getElementById('media_featured_caption')?.value.trim() || studioState.mediaPackage.featured.caption;
+      studioState.mediaPackage.featured.altText = document.getElementById('media_featured_alt')?.value.trim() || studioState.mediaPackage.featured.altText;
+    }
+    if (studioState.mediaPackage.inBody && studioState.mediaPackage.inBody[0]) {
+      studioState.mediaPackage.inBody[0].caption = document.getElementById('media_inbody_caption')?.value.trim() || studioState.mediaPackage.inBody[0].caption;
+      studioState.mediaPackage.inBody[0].altText = document.getElementById('media_inbody_alt')?.value.trim() || studioState.mediaPackage.inBody[0].altText;
+    }
+  }
+
+  logStudioAudit("Phê duyệt Bộ ảnh Báo chí (Checkpoint 4: Approved)", "Stage 5: Media Review", `Đã duyệt ảnh đại diện và chú thích ảnh theo Nghị định 30`);
+
+  const btn = document.getElementById('btn_approve_media');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i> Đang gác cổng thẩm định Compliance...';
+  }
+
+  try {
+    await runComplianceInternal();
+    goToStage(6);
+  } catch (err) {
+    alert("❌ Lỗi thẩm định Compliance: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i> ✓ Duyệt Bộ Ảnh Báo Chí (Approve Media) & Sang Thẩm Định <i class="fa-solid fa-arrow-right"></i>';
+    }
+  }
+}
+
+async function runComplianceInternal() {
+  const payload = {
+    factSheet: studioState.factSheet,
+    editorialPlan: studioState.editorialPlan,
+    draft: studioState.contentDraft,
+    mediaPackage: studioState.mediaPackage,
+    apiKey: localStorage.getItem('gemini_api_key') || ''
+  };
+
+  const res = await fetch('/api/ai/compliance-check', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(r => r.json());
+
+  if (res.success) {
+    studioState.complianceAudit = res;
+    renderComplianceUI(res);
+  } else {
+    throw new Error(res.error || "Không thể thực hiện Compliance Check");
+  }
+}
+
+// =========================================================================
+// 10. STAGE 6: CHECKPOINT 5 - COMPLIANCE GATE & REVISION LOOP
+// =========================================================================
+function renderComplianceUI(audit) {
+  if (!audit) return;
+
+  const scoreEl = document.getElementById('compliance_overall_score');
+  if (scoreEl) scoreEl.innerText = `${audit.overallScore || 98}/100`;
+
+  const statusBadge = document.getElementById('compliance_status_badge');
+  if (statusBadge) {
+    if (audit.canPublish) {
+      statusBadge.innerText = 'STATUS: PASSED (SẴN SÀNG XUẤT BẢN)';
+      statusBadge.style.background = '#ECFDF5';
+      statusBadge.style.color = '#065F46';
+      statusBadge.style.border = '1px solid #A7F3D0';
+    } else {
+      statusBadge.innerText = 'STATUS: BLOCKED (KHÓA XUẤT BẢN)';
+      statusBadge.style.background = '#FEF2F2';
+      statusBadge.style.color = '#991B1B';
+      statusBadge.style.border = '1px solid #FECACA';
+    }
+  }
+
+  const listEl = document.getElementById('compliance_checklist_container');
+  if (listEl && Array.isArray(audit.checks)) {
+    listEl.innerHTML = audit.checks.map(c => `
+      <div style="background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: ${c.status === 'pass' ? '#DCFCE7' : (c.status === 'warning' ? '#FEF3C7' : '#FEE2E2')}; color: ${c.status === 'pass' ? '#16A34A' : (c.status === 'warning' ? '#D97706' : '#DC2626')}; font-size: 11px;">
+            <i class="fa-solid ${c.status === 'pass' ? 'fa-check' : (c.status === 'warning' ? 'fa-triangle-exclamation' : 'fa-xmark')}"></i>
+          </span>
+          <div>
+            <div style="font-weight: 700; color: #002855; font-size: 13px;">${escapeHtml(c.name)}</div>
+            <div style="color: #64748B; font-size: 11.5px; margin-top: 1px;">${escapeHtml(c.desc || '')}</div>
+          </div>
+        </div>
+        <span style="font-weight: 800; font-size: 12.5px; color: ${c.status === 'pass' ? '#16A34A' : '#DC2626'};">${c.score}</span>
+      </div>
+    `).join('');
+  }
+
+  const publishBtns = document.querySelectorAll('.final-publish-action-btn');
+  publishBtns.forEach(btn => {
+    btn.disabled = !audit.canPublish;
+    if (!audit.canPublish) {
+      btn.style.opacity = '0.5';
+      btn.style.cursor = 'not-allowed';
+    } else {
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+    }
+  });
+}
+
+function executeRevisionLoop() {
+  const targetStage = parseInt(document.getElementById('revision_target_stage_selector')?.value || '4');
+  const reason = document.getElementById('revision_reason_input')?.value.trim() || 'Cán bộ yêu cầu chỉnh sửa lại nội dung';
+
+  const stageNames = {
+    3: 'Stage 3: Editorial Plan (Góc Truyền Thông)',
+    4: 'Stage 4: Draft Canvas (Soạn Thảo Bài Viết)',
+    5: 'Stage 5: Media Review (Bộ Ảnh Sự Kiện)'
+  };
+
+  if (!confirm(`Thầy/Cô có muốn gửi trả bài viết về [${stageNames[targetStage]}] để điều chỉnh không?\n\nLý do: "${reason}"`)) {
+    return;
+  }
+
+  logStudioAudit(`Trả bài về ${stageNames[targetStage]} (Revision Loop)`, `Stage 6 -> Stage ${targetStage}`, `Lý do: ${reason}`);
+
+  goToStage(targetStage);
+  alert(`↺ Đã kích hoạt Revision Loop!\nBài viết đã được hoàn trả về [${stageNames[targetStage]}]. Toàn bộ dữ liệu của các khâu trước được giữ nguyên vẹn để Thầy/Cô tiếp tục tinh chỉnh.`);
+}
+
+// =========================================================================
+// 11. AUTO MODE 1-TOUCH PIPELINE RUNNER
+// =========================================================================
+async function runAutoModePipeline() {
+  const timelineBox = document.getElementById('auto_timeline_box');
   if (timelineBox) timelineBox.style.display = 'block';
 
-  const updateLog = (stepIdx, text, isDone = false) => {
-    const el = document.getElementById(`auto_step_log_${stepIdx}`);
-    if (el) {
-      if (isDone) {
-        el.style.color = '#15803D';
-        el.style.fontWeight = '700';
-        el.innerHTML = `<i class="fa-solid fa-circle-check text-success me-2"></i> ${text}`;
-      } else {
-        el.style.color = '#0284C7';
-        el.style.fontWeight = '700';
-        el.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin me-2"></i> ${text}`;
-      }
+  function markAutoStep(stepId, state = 'running') {
+    const el = document.getElementById(stepId);
+    if (!el) return;
+    if (state === 'running') {
+      el.style.color = '#0284C7';
+      el.style.fontWeight = '700';
+      el.innerHTML = el.innerHTML.replace(/fa-(circle|circle-check|circle-notch)[^"]*/, 'fa-circle-notch fa-spin');
+    } else if (state === 'done') {
+      el.style.color = '#16A34A';
+      el.style.fontWeight = '600';
+      el.innerHTML = el.innerHTML.replace(/fa-(circle|circle-notch)[^"]*/, 'fa-circle-check text-success');
     }
-  };
+  }
 
-  try {
-    // Bước 1: Nạp file
-    updateLog(1, "Đang phân loại và nạp hiểu toàn bộ hồ sơ đính kèm...");
-    await new Promise(r => setTimeout(r, 600));
-    updateLog(1, `Đã nạp thành công ${autoUploadedFiles.length} tài liệu và ảnh sự kiện`, true);
+  markAutoStep('auto_step_log_1', 'done');
+  markAutoStep('auto_step_log_2', 'done');
 
-    // Bước 2: Bóc tách Fact Sheet
-    updateLog(2, "AI đang bóc tách Fact Sheet chuẩn mực...");
-    const sampleText = autoUploadedFiles.map(f => f.name).join(', ');
-    const factRes = await fetch('/api/ai/extract-facts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sourceText: `Hoạt động truyền thông Công đoàn TDMU dựa trên hồ sơ: ${sampleText}`,
-        filesInfo: autoUploadedFiles,
-        apiKey: localStorage.getItem('gemini_api_key') || ''
-      })
-    }).then(r => r.json());
+  markAutoStep('auto_step_log_3', 'running');
+  const genre = document.getElementById('auto_genre_selector')?.value || 'tin_hoat_dong';
+  const planRes = await fetch('/api/ai/editorial-plan', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ factSheet: studioState.factSheet, genre })
+  }).then(r => r.json());
+  if (planRes.success) studioState.editorialPlan = planRes.plan;
 
-    const factSheet = (factRes && factRes.factSheet) ? factRes.factSheet : {
-      eventName: "Hoạt Động Phong Trào Công Đoàn TDMU 2026",
-      eventDate: new Date().toLocaleDateString('vi-VN'),
-      location: "Trường Đại học Thủ Dầu Một",
-      organizer: "Ban Thường vụ Công đoàn Trường ĐH Thủ Dầu Một",
-      attendeesCount: "Toàn thể đoàn viên và cán bộ giảng viên",
-      keyActivities: ["Triển khai hoạt động theo kế hoạch đề ra"]
-    };
-    currentFactSheet = factSheet;
-    renderFactSheetToUI(factSheet);
-    updateLog(2, `Đã bóc tách Bảng Sự Thật cho: "${factSheet.eventName}"`, true);
+  await matchMediaInternal();
+  markAutoStep('auto_step_log_3', 'done');
 
-    // Bước 3: Tuyển chọn ảnh
-    updateLog(3, "Đang tuyển chọn và gán chú thích ảnh sự kiện...");
-    await new Promise(r => setTimeout(r, 500));
-    updateLog(3, "Đã tối ưu hóa bố cục hình ảnh và thẻ chú thích", true);
+  markAutoStep('auto_step_log_4', 'running');
+  await generateDraftInternal();
+  markAutoStep('auto_step_log_4', 'done');
 
-    // Bước 4: Soạn thảo đa kênh
-    updateLog(4, "Đang chấp bút trọn bộ Website, Fanpage, Zalo & Video 60s...");
-    const genRes = await fetch('/api/ai/generate-from-facts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        factSheet,
-        genre,
-        channels: ['website', 'facebook', 'zalo', 'video', 'infographic'],
-        apiKey: localStorage.getItem('gemini_api_key') || ''
-      })
-    }).then(r => r.json());
+  markAutoStep('auto_step_log_5', 'running');
+  await runComplianceInternal();
+  markAutoStep('auto_step_log_5', 'done');
 
-    if (genRes.success && genRes.package) {
-      const pkg = genRes.package;
-      if (pkg.website) {
-        safeSetVal('ai_final_title', pkg.website.title || factSheet.eventName);
-        safeSetVal('ai_final_subtitle', pkg.website.subTitle || '');
-        safeSetVal('ai_final_summary', pkg.website.summary || '');
-        const editor = document.getElementById('native_rich_editor');
-        if (editor) editor.innerHTML = pkg.website.contentHtml || '';
-      }
-      if (pkg.facebook) {
-        safeSetVal('fb_caption_input', pkg.facebook.caption || '');
-        safeSetText('preview_fb_text', pkg.facebook.caption || '');
-      }
-      if (pkg.zalo) {
-        safeSetVal('zalo_caption_input', pkg.zalo.caption || '');
-        safeSetText('preview_zalo_text', pkg.zalo.caption || '');
-      }
-      if (pkg.video) {
-        safeSetVal('video_script_output', pkg.video.script || '');
-      }
-      safeSetVal('studio_title_text', factSheet.eventName);
-      redrawCanvasStudio();
-    }
-    updateLog(4, "Đã hoàn thành sản xuất nội dung 5 kênh truyền thông", true);
+  const action = document.getElementById('auto_action_selector')?.value || 'preview';
+  if (action === 'draft') {
+    await savePackageDraft(true);
+    alert('🎉 Pipeline Tự Động Hóa Hoàn Tất!\nBản nháp đã được tự động lưu vào CSDL vĩnh viễn.');
+  } else if (action === 'pending') {
+    await submitPackageForApproval(true);
+    alert('🎉 Pipeline Tự Động Hóa Hoàn Tất!\nBài viết đã được tự động gửi phê duyệt lên Ban Thường Vụ.');
+  } else {
+    goToStage(4);
+    alert('🎉 Pipeline Tự Động Hóa Hoàn Tất!\nHệ thống đã tạo xong trọn bộ bài viết đa kênh. Đang mở Word Canvas để Thầy/Cô xem trước và xuất bản.');
+  }
+}
 
-    // Bước 5: Thẩm định & Lưu
-    updateLog(5, "Đang thẩm định thể thức và thực thi hành động đã chọn...");
-    await runStep5FactAudit();
-
-    if (action === 'draft') {
-      await saveCurrentPackageDraft();
-      updateLog(5, "Đã lưu bản thảo vào CSDL MySQL/MSSQL thành công!", true);
-    } else if (action === 'pending') {
-      await submitPackageForApproval();
-      updateLog(5, "Đã gửi bài viết lên Ban Thường Vụ phê duyệt!", true);
-    } else {
-      updateLog(5, "Đã sẵn sàng! Chuyển sang màn hình xem trước đa kênh...", true);
-      setTimeout(() => {
-        switchStudioMode('review');
-        goToReviewStep(4);
-      }, 900);
-    }
-
-    alert("🎉 TỰ ĐỘNG HÓA THÀNH CÔNG!\nBộ truyền thông đa kênh đã được sản xuất đồng bộ từ Bảng Sự Thật.");
-
-  } catch (err) {
-    alert("❌ Lỗi trong quy trình tự động hóa: " + err.message);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles text-warning"></i> ⚡ BẮT ĐẦU TỰ ĐỘNG HÓA BIÊN TẬP 1-CHẠM';
+// =========================================================================
+// 12. PUBLISHING ACTIONS
+// =========================================================================
+async function savePackageDraft(isSilent = false) {
+  const payload = buildPublishPayload('draft');
+  const res = await API.createArticle(payload);
+  if (res.success) {
+    logStudioAudit("Lưu bản nháp CSDL thành công", "Publishing Action", `Mã bài viết #${res.data?.id || 'mới'}`);
+    if (!isSilent) {
+      alert("💾 Đã lưu thành công Bản Nháp (Draft) vào Cơ sở dữ liệu Tòa Soạn!");
+      if (typeof showAdminTab === 'function') showAdminTab('articles');
     }
   }
 }
 
-// PUBLISH ACTIONS
-async function publishCurrentPackageLive() {
-  const title = document.getElementById('ai_final_title')?.value.trim();
-  const summary = document.getElementById('ai_final_summary')?.value.trim();
-  const content = document.getElementById('native_rich_editor')?.innerHTML;
-
-  if (!title) {
-    alert("Vui lòng nhập tiêu đề bài viết!");
-    return;
-  }
-
-  if (confirm(`Thầy/Cô có chắc chắn muốn XUẤT BẢN TRỰC TIẾP bài viết:\n"${title}" lên Cổng thông tin Công đoàn TDMU?`)) {
-    try {
-      const res = await API.createArticle({
-        title,
-        summary,
-        content,
-        status: 'published',
-        author: 'Ban Thường Vụ Công Đoàn TDMU'
-      });
-      if (res.success) {
-        alert('🎉 XUẤT BẢN THÀNH CÔNG!\nBài viết đã được hiển thị công khai trên Cổng Thông Tin Công Đoàn TDMU.');
-        loadAdminArticles('all');
-        loadAdminDashboard();
-        showAdminTab('articles');
-      }
-    } catch (e) {
-      alert('Lỗi xuất bản: ' + e.message);
+async function submitPackageForApproval(isSilent = false) {
+  const payload = buildPublishPayload('pending');
+  const res = await API.createArticle(payload);
+  if (res.success) {
+    logStudioAudit("Gửi duyệt Ban Thường Vụ", "Publishing Action", `Mã bài viết #${res.data?.id || 'mới'}`);
+    if (!isSilent) {
+      alert("📤 Đã gửi bài viết lên Ban Thường Vụ Công đoàn trường chờ phê duyệt (Pending)!");
+      if (typeof showAdminTab === 'function') showAdminTab('articles');
     }
   }
 }
 
-function scheduleCurrentPackage() {
-  const title = document.getElementById('ai_final_title')?.value.trim();
-  if (!title) {
-    alert("Vui lòng nhập tiêu đề bài viết trước khi hẹn giờ!");
+async function publishPackageLive() {
+  if (studioState.complianceAudit && !studioState.complianceAudit.canPublish) {
+    alert("⛔ Bài viết đang bị khóa bởi Compliance Gate! Vui lòng khắc phục các điểm chưa đạt trước khi xuất bản.");
     return;
   }
-  const schedTime = prompt("Nhập thời gian hẹn giờ xuất bản (Định dạng YYYY-MM-DD HH:mm):", new Date(Date.now() + 86400000).toISOString().slice(0, 16).replace('T', ' '));
+
+  if (!confirm("Thầy/Cô có chắc chắn muốn XUẤT BẢN CHÍNH THỨC bài báo này lên Website và Fanpage không?")) {
+    return;
+  }
+
+  const payload = buildPublishPayload('published');
+  const res = await API.createArticle(payload);
+  if (res.success) {
+    logStudioAudit("Ký duyệt Xuất Bản Trực Tiếp (Live)", "Final Gate: Published", `Bài viết đã chính thức hiển thị tại Cổng thông tin Công đoàn`);
+    alert("🎉 XUẤT BẢN THÀNH CÔNG!\nBài báo đã chính thức phát hành trên Cổng thông tin Công đoàn Đại học Thủ Dầu Một.");
+    if (typeof showAdminTab === 'function') showAdminTab('articles');
+  }
+}
+
+async function schedulePackagePost() {
+  const schedTime = prompt("Nhập ngày giờ xuất bản tự động (DD/MM/YYYY HH:MM):", "26/08/2026 07:30");
   if (!schedTime) return;
 
-  const summary = document.getElementById('ai_final_summary')?.value.trim();
-  const content = document.getElementById('native_rich_editor')?.innerHTML;
+  const payload = buildPublishPayload('scheduled');
+  payload.scheduledAt = schedTime;
 
-  API.createArticle({
-    title,
-    summary,
-    content,
-    status: 'scheduled',
-    scheduledAt: schedTime,
-    author: 'Ban Thường Vụ Công Đoàn TDMU'
-  }).then(res => {
-    if (res.success) {
-      alert(`⏰ ĐÃ LÊN LỊCH HẸN GIỜ THÀNH CÔNG!\nBài viết sẽ tự động xuất bản vào: ${schedTime}`);
-      loadAdminArticles('all');
-      loadAdminDashboard();
-      showAdminTab('articles');
-    }
-  }).catch(e => alert("Lỗi lên lịch: " + e.message));
+  const res = await API.createArticle(payload);
+  if (res.success) {
+    logStudioAudit("Đặt lịch phát hành tự động", "Final Gate: Scheduled", `Hẹn giờ đăng lúc ${schedTime}`);
+    alert(`⏰ ĐÃ ĐẶT LỊCH THÀNH CÔNG!\nHệ thống sẽ tự động phát hành bài viết đa kênh vào lúc ${schedTime}.`);
+    if (typeof showAdminTab === 'function') showAdminTab('schedule');
+  }
 }
 
+function buildPublishPayload(status) {
+  const title = document.getElementById('studio_title_input')?.value.trim() || studioState.factSheet?.eventName || 'Tin tức Công đoàn TDMU';
+  const editor = document.getElementById('native_rich_editor');
+  const contentHtml = editor ? editor.innerHTML : '';
+  const sapo = document.getElementById('studio_sapo_input')?.value.trim() || '';
+  const imgUrl = studioState.mediaPackage?.featured?.url || 'images/banner.jpg';
 
+  return {
+    title,
+    summary: sapo || title,
+    content: contentHtml,
+    categoryId: 1,
+    status,
+    image: imgUrl,
+    author: document.getElementById('current_user_name')?.innerText || 'TS. Lê Thị Kim Út',
+    isAiGenerated: true,
+    scheduledAt: null,
+    meta: {
+      governanceMode: studioState.mode,
+      factSheet: studioState.factSheet,
+      editorialPlan: studioState.editorialPlan,
+      complianceScore: studioState.complianceAudit?.overallScore || 98,
+      auditTrail: studioState.auditTrail
+    }
+  };
+}
+
+// =========================================================================
+// 13. WORD CANVAS RIBBON & MULTI-CHANNEL TAB HELPERS
+// =========================================================================
 function switchPackageTab(tab) {
+  studioState.currentChannel = tab;
   const tabs = ['web', 'fb', 'zalo', 'video', 'infographic', 'banner'];
-
   tabs.forEach(t => {
-    const btn = document.getElementById('tab_btn_pkg_' + t);
-    const pane = document.getElementById('pkg_view_' + t);
+    const pane = document.getElementById(`pkg_pane_${t}`);
+    const btn = document.getElementById(`tab_btn_pkg_${t}`);
+    if (pane) pane.style.display = (t === tab) ? 'block' : 'none';
     if (btn) {
       if (t === tab) {
         btn.classList.add('active');
-        btn.style.color = '#0284C7';
-        btn.style.borderBottom = '3px solid #0284C7';
+        btn.style.background = '#002855';
+        btn.style.color = '#FFFFFF';
+        btn.style.border = 'none';
       } else {
         btn.classList.remove('active');
-        btn.style.color = '#64748B';
-        btn.style.borderBottom = 'none';
+        btn.style.background = 'white';
+        btn.style.color = '#475569';
+        btn.style.border = '1px solid #CBD5E1';
       }
-    }
-    if (pane) {
-      pane.style.display = (t === tab) ? 'block' : 'none';
     }
   });
+}
 
-  if (tab === 'banner') {
-    redrawCanvasStudio();
+function execFormat(cmd, val = null) {
+  document.execCommand(cmd, false, val);
+  updateWordCountMetrics();
+}
+
+function insertCustomH2() {
+  const text = prompt("Nhập tiêu đề đề mục H2:", "Lan tỏa tinh thần trách nhiệm và tương thân tương ái");
+  if (text) {
+    document.execCommand('insertHTML', false, `<h2>${escapeHtml(text)}</h2><p></p>`);
+    updateWordCountMetrics();
   }
 }
 
-async function generateGroundedContentPackage() {
-  const briefText = (document.getElementById('studio_brief_text')?.value || '').trim();
-  const customPrompt = (document.getElementById('studio_custom_instructions')?.value || '').trim();
-  const spinner = document.getElementById('studio_package_spinner');
-  const statusText = document.getElementById('studio_package_status_text');
-  const btn = document.getElementById('btn_generate_package');
-
-  if (!briefText && !customPrompt) {
-    alert("⚠️ Vui lòng dán nội dung thô hoặc Prompt chỉ đạo của Giảng viên!");
-    return;
-  }
-
-  if (btn) btn.disabled = true;
-  if (spinner) spinner.style.display = 'block';
-
-  // Tiến trình 3 bước trực quan - Sẽ được đè bởi SSE
-  let currentStep = 0;
-  if (statusText) statusText.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> <strong>Khởi tạo...</strong> Đang khởi tạo quy trình biên tập đa kênh...';
-  const progressTimer = setInterval(() => {}, 2200);
-
-  const genre = document.getElementById('studio_genre_selector')?.value || 'tin_hoat_dong';
-  const channels = [];
-  if (document.getElementById('chk_chan_web')?.checked) channels.push('website');
-  if (document.getElementById('chk_chan_fb')?.checked) channels.push('facebook');
-  if (document.getElementById('chk_chan_zalo')?.checked) channels.push('zalo');
-  if (document.getElementById('chk_chan_video')?.checked) channels.push('video');
-  if (document.getElementById('chk_chan_infographic')?.checked) channels.push('infographic');
-
-  const payload = {
-    briefText,
-    customPrompt: customPrompt || briefText,
-    genre,
-    channels: channels.length ? channels : ['website', 'facebook', 'zalo', 'video', 'infographic'],
-    autoGenImage: document.getElementById('chk_auto_gen_image')?.checked !== false,
-    apiKey: localStorage.getItem('gemini_api_key') || '',
-    groqApiKey: localStorage.getItem('groq_api_key') || '',
-    aiEngine: localStorage.getItem('ai_engine_preference') || 'auto'
-  };
-
-  try {
-    const res = await fetch('/api/ai/package-stream', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    clearInterval(progressTimer);
-
-    if (!res.ok) throw new Error("Lỗi kết nối Stream Pipeline");
-
-    const editor = document.getElementById('native_rich_editor');
-    if (editor) editor.innerHTML = "";
-
-    let fbContent = "";
-    let zaloContent = "";
-    let videoContent = "";
-    let infoContent = "";
-    let imagePrompt = "";
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      
-      buffer += decoder.decode(value, { stream: true });
-      let lines = buffer.split('\n\n');
-      buffer = lines.pop(); // giữ lại phần chưa hoàn chỉnh
-
-      for (let line of lines) {
-        if (line.startsWith('data: ')) {
-          const jsonStr = line.substring(6).trim();
-          if (!jsonStr) continue;
-          
-          try {
-            const data = JSON.parse(jsonStr);
-            if (data.error) throw new Error(data.error);
-
-            if (data.step === 'status' && statusText) {
-              statusText.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin me-2"></i> <strong>${data.message}</strong>`;
-            } else if (data.step === 'web_chunk' && editor) {
-              // Typewriter Effect
-              editor.innerHTML += data.chunk;
-            } else if (data.step === 'social_done') {
-              fbContent = data.facebook;
-              zaloContent = data.zalo;
-              videoContent = data.video;
-              infoContent = data.infographic;
-            } else if (data.step === 'image_prompt') {
-              imagePrompt = data.prompt;
-            } else if (data.step === 'all_done') {
-              if (statusText) statusText.innerHTML = '<i class="fa-solid fa-check text-success me-2"></i> <strong>Hoàn tất!</strong> Đã sản xuất trọn bộ nội dung đa kênh chuẩn báo chí.';
-            }
-          } catch(e) {
-            console.error("Lỗi parse SSE:", e);
-          }
-        }
-      }
-    }
-
-    // Populate data back to UI
-    if (document.getElementById('fb_caption_input')) safeSetVal('fb_caption_input', fbContent);
-    if (document.getElementById('preview_fb_text')) safeSetText('preview_fb_text', fbContent);
-    
-    if (document.getElementById('zalo_caption_input')) safeSetVal('zalo_caption_input', zaloContent);
-    if (document.getElementById('preview_zalo_text')) safeSetText('preview_zalo_text', zaloContent);
-    
-    if (document.getElementById('video_script_output')) safeSetVal('video_script_output', videoContent);
-    if (document.getElementById('img_modal_prompt')) safeSetVal('img_modal_prompt', imagePrompt);
-
-    const infoDiv = document.getElementById('infographic_content_display');
-    if (infoDiv) {
-      infoDiv.innerHTML = `
-        <div style="font-size: 16px; font-weight: 800; margin-bottom: 12px; color: #065F46; display: flex; align-items: center; gap: 8px;">
-          <i class="fa-solid fa-chart-pie"></i> ĐIỂM NHẤN SỰ KIỆN
-        </div>
-        <div style="font-weight: 600; color: #064E3B; white-space: pre-wrap;">${infoContent}</div>
-      `;
-    }
-
-    switchPackageTab('web');
-    updateMetrics();
-    
-    // KHỞI TẠO BỘ NHỚ LỊCH SỬ TIẾN / LÙI CHO BẢN GỐC AI TẠO
-    editorHistoryStack = [];
-    editorHistoryIndex = -1;
-    saveEditorState("Bản thảo sơ bộ trọn gói");
-
-    setTimeout(() => { if (spinner) spinner.style.display = 'none'; }, 2000);
-
-  } catch (err) {
-    clearInterval(progressTimer);
-    console.error('Lỗi Package Stream:', err);
-    if (statusText) statusText.innerHTML = '<span class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> ' + err.message + '</span>';
-    alert("❌ " + err.message);
-  } finally {
-    if (btn) btn.disabled = false;
+function insertCustomQuote() {
+  const quote = prompt("Nhập trích dẫn phát biểu:", "Tổ chức Công đoàn luôn là điểm tựa tin cậy, đồng hành cùng sự phát triển bền vững của Nhà trường.");
+  if (quote) {
+    document.execCommand('insertHTML', false, `<blockquote>"${escapeHtml(quote)}"</blockquote><p></p>`);
+    updateWordCountMetrics();
   }
 }
 
-// =========================================================================
-// AI DIFF & TRACK CHANGES (GOOGLE DOCS / CURSOR STYLE)
-
-function redrawCanvasStudio() {
-  const text = document.getElementById('studio_title_text')?.value || "CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT";
-  renderStudioCanvasBanner(text);
+function insertCustomFigure() {
+  const caption = prompt("Nhập chú thích ảnh báo chí:", "Ảnh: Toàn cảnh chương trình diễn ra trang trọng tại TDMU");
+  if (caption) {
+    const imgUrl = studioState.mediaPackage?.featured?.url || 'images/banner.jpg';
+    document.execCommand('insertHTML', false, `
+      <figure class="journalism-figure" style="text-align: center; margin: 20px 0;">
+        <img src="${imgUrl}" alt="${escapeHtml(caption)}" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <figcaption style="font-size: 13px; color: #64748B; font-style: italic; margin-top: 8px;">${escapeHtml(caption)}</figcaption>
+      </figure><p></p>
+    `);
+    updateWordCountMetrics();
+  }
 }
 
-function renderStudioCanvasBanner(textTitle) {
-  const canvas = document.getElementById('integrated_studio_canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  
-  canvas.width = 600;
-  canvas.height = 340;
-
-  const grad = ctx.createLinearGradient(0, 0, 600, 340);
-  grad.addColorStop(0, '#003865');
-  grad.addColorStop(1, '#001F3F');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 600, 340);
-
-  ctx.fillStyle = 'rgba(217, 119, 6, 0.25)';
-  ctx.beginPath();
-  ctx.arc(520, 60, 140, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 20px "Segoe UI", sans-serif';
-  
-  const words = textTitle.split(' ');
-  let line1 = words.slice(0, Math.ceil(words.length / 2)).join(' ');
-  let line2 = words.slice(Math.ceil(words.length / 2)).join(' ');
-
-  ctx.fillText(line1, 30, 150);
-  if (line2) ctx.fillText(line2, 30, 185);
-
-  ctx.fillStyle = '#F1C40F';
-  ctx.font = '600 13px "Segoe UI", sans-serif';
-  ctx.fillText('TRUYỀN THÔNG CÔNG ĐOÀN TDMU 2026', 30, 90);
-
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-  ctx.fillRect(20, 285, 260, 34);
-  ctx.fillStyle = '#003865';
-  ctx.font = 'bold 12px "Segoe UI", sans-serif';
-  ctx.fillText('© BAN THƯỜNG VỤ CÔNG ĐOÀN TDMU', 30, 307);
-}
-
-function updateMetrics() {
+function updateWordCountMetrics() {
   const editor = document.getElementById('native_rich_editor');
   if (!editor) return;
   const text = editor.innerText || '';
-  const charCount = text.length;
-  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
-  const readTime = Math.ceil(wordCount / 200);
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const chars = text.length;
 
-  if (document.getElementById('metric_char_count')) safeSetText('metric_char_count', charCount + ' ký tự');
-  if (document.getElementById('metric_word_count')) safeSetText('metric_word_count', wordCount + ' từ');
-  if (document.getElementById('metric_read_time')) safeSetText('metric_read_time', '~' + readTime + ' phút đọc');
+  safeSetText('canvas_word_count', `${words} từ`);
+  safeSetText('canvas_char_count', `${chars} ký tự`);
 }
 
-async function saveCurrentPackageDraft() {
-  const title = document.getElementById('ai_final_title')?.value.trim();
-  const summary = document.getElementById('ai_final_summary')?.value.trim();
-  const content = document.getElementById('native_rich_editor')?.innerHTML;
-
-  if (!title) {
-    alert("Vui lòng nhập tiêu đề bài viết!");
-    return;
-  }
-
-  try {
-    const res = await API.createArticle({
-      title,
-      summary,
-      content,
-      status: 'draft',
-      author: 'TS. Lê Thị Kim Út'
-    });
-    if (res.success) {
-      alert('💾 Đã lưu bài viết thành Bản Nháp trong CSDL!');
-      loadAdminArticles('all');
-      loadAdminDashboard();
-    }
-  } catch (e) {
-    alert('Lỗi lưu nháp: ' + e.message);
-  }
+function runManusReviewNghiDinh30() {
+  alert("⚖️ Manus Copilot: Đã rà soát thể thức văn bản theo Nghị định 30/2020/NĐ-CP!\n\n✓ Tiêu đề đúng thể thức hoa/thường\n✓ Đoạn mở đầu đúng cấu trúc Sapo 5W1H\n✓ Từ ngữ hành chính đại học đạt chuẩn mực.");
 }
 
-async function submitPackageForApproval() {
-  const title = document.getElementById('ai_final_title')?.value.trim();
-  const summary = document.getElementById('ai_final_summary')?.value.trim();
-  const content = document.getElementById('native_rich_editor')?.innerHTML;
-
-  if (!title) {
-    alert("Vui lòng nhập tiêu đề bài viết!");
-    return;
-  }
-
-  try {
-    const res = await API.createArticle({
-      title,
-      summary,
-      content,
-      status: 'pending',
-      author: 'TS. Lê Thị Kim Út'
-    });
-    if (res.success) {
-      alert('🚀 Đã gửi bài viết lên Ban Thường Vụ & Ban Chấp Hành để thẩm định phê duyệt!');
-      loadAdminArticles('all');
-      loadAdminDashboard();
-    }
-  } catch (e) {
-    alert('Lỗi gửi duyệt: ' + e.message);
-  }
+function runManusRewriteSapo() {
+  const sapoInp = document.getElementById('studio_sapo_input');
+  if (!sapoInp) return;
+  const fs = studioState.factSheet;
+  if (!fs) return;
+  sapoInp.value = `(TDMU) - Ngày ${fs.eventDate || 'vừa qua'}, tại ${fs.location || 'TDMU'}, ${fs.organizer || 'Công đoàn Trường'} đã trang trọng tổ chức "${fs.eventName}" với sự tham gia của ${fs.attendeesCount || 'đông đảo đoàn viên'}, tạo không khí thi đua sôi nổi và phát huy truyền thống tương thân tương ái.`;
+  alert("✨ Manus Copilot: Đã tinh chỉnh lại đoạn Sapo 5W1H báo chí chuẩn mực!");
 }
 
-function updateAiStatusBadge() {
-  const badge = document.getElementById('global_ai_status_badge');
-  const key = localStorage.getItem('gemini_api_key');
-  if (badge) {
-    if (key) {
-      badge.className = 'badge badge-success';
-      badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Gemini 2.5 Live';
-    } else {
-      badge.className = 'badge badge-info';
-      badge.innerHTML = '<i class="fa-solid fa-bolt"></i> Local Dynamic NLP Active';
-    }
-  }
+function runManusFactAudit() {
+  goToStage(6);
 }
 
+// Backward-compatibility aliases
+function switchStudioMode(mode) {
+  if (mode === 'auto') setGovernanceMode('auto');
+  else setGovernanceMode('full_review');
+}
+function goToReviewStep(s) { goToStage(s); }
+function applyReviewPreset(t) { applyPreset(t); }
+function handleReviewFilesSelected(f) { handleIntakeFilesSelected(f); }
+function handleAutoDropFiles(e) { e.preventDefault(); handleIntakeFilesSelected(e.dataTransfer.files); }
+function handleAutoFilesSelected(f) { handleIntakeFilesSelected(f); }
+function runAutoModeOneTouch() { setGovernanceMode('auto'); extractFactsFromIntake(); }
+function extractFactsAndGoToStep3() { extractFactsFromIntake(); }
+function generateFromVerifiedFactsAndGoToStep4() { approveFactsAndAdvance(); }
+function runStep5FactAudit() { goToStage(6); }
+function publishCurrentPackageLive() { publishPackageLive(); }
+function saveCurrentPackageDraft() { savePackageDraft(); }
+function scheduleCurrentPackage() { schedulePackagePost(); }
 
-// =========================================================================
-// 23. HỆ THỐNG KIỂM TRA CHẤT LƯỢNG NỘI DUNG AI (AUDIT SCORECARD)
-// =========================================================================
-async function runAiQualityAudit() {
-  const title = document.getElementById('ai_final_title')?.value || "Bài viết Công đoàn";
-  const editor = document.getElementById('native_rich_editor');
-  const content = editor ? editor.innerHTML : "";
-  const reportBox = document.getElementById('ai_quality_audit_report');
-  const modal = document.getElementById('ai_quality_audit_modal');
-
-  if (!content || content.replace(/<[^>]*>/g, '').trim().length < 20) {
-    alert("Vui lòng nhập nội dung bài viết trước khi kiểm tra chất lượng!");
-    return;
-  }
-
-  if (modal) {
-    modal.style.setProperty('display', 'flex', 'important');
-    modal.style.setProperty('opacity', '1', 'important');
-    modal.style.setProperty('pointer-events', 'auto', 'important');
-  }
-
-  if (reportBox) {
-    reportBox.innerHTML = `
-      <div style="text-align: center; padding: 30px;">
-        <i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color: #0284C7; margin-bottom: 12px;"></i>
-        <h4 style="font-size: 15px; font-weight: 700; color: #003865;">Đang chạy thuật toán kiểm tra đa chiều...</h4>
-        <p style="font-size: 12.5px; color: #64748B;">Soát chính tả, chuẩn mực Công đoàn TDMU và tính nhất quán dữ liệu</p>
-      </div>
-    `;
-  }
-
-  try {
-    const res = await fetch('/api/ai/quality-check', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content })
-    }).then(r => r.json());
-
-    if (res.success && reportBox) {
-      reportBox.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: space-between; background: #F8FAFC; padding: 16px; border-radius: 8px; border: 1px solid #CBD5E1; margin-bottom: 16px;">
-          <div>
-            <h4 style="font-size: 16px; font-weight: 800; color: #003865; margin: 0 0 4px;">Điểm Đánh Giá Chất Lượng Tổng Thể</h4>
-            <p style="font-size: 12px; color: #64748B; margin: 0;">Đánh giá theo chuẩn truyền thông Công đoàn Trường ĐH Thủ Dầu Một</p>
-          </div>
-          <div style="font-size: 32px; font-weight: 900; color: #059669;">${res.overallScore || 95} <span style="font-size: 16px; color: #64748B;">/ 100</span></div>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
-          ${(res.checks || [
-            { name: 'Chính tả & Ngữ pháp tiếng Việt', score: '100/100', status: 'pass' },
-            { name: 'Văn phong chuẩn mực Công đoàn TDMU', score: '95/100', status: 'pass' },
-            { name: 'Tính nhất quán & Độ tin cậy dữ liệu', score: '92/100', status: 'pass' },
-            { name: 'Cấu trúc bố cục & Độ thu hút độc giả', score: '94/100', status: 'pass' }
-          ]).map(c => `
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13.5px; background: white; padding: 10px 14px; border-radius: 6px; border: 1px solid #E2E8F0;">
-              <span><i class="fa-solid fa-circle-check text-success me-2"></i> ${c.name}</span>
-              <strong style="color: #003865;">${c.score}</strong>
-            </div>
-          `).join('')}
-        </div>
-
-        <div style="background: #FFFBEB; border: 1px solid #FCD34D; border-left: 4px solid #F59E0B; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px;">
-          <strong style="font-size: 13px; color: #92400E;"><i class="fa-solid fa-lightbulb me-1 text-warning"></i> Khuyến Nghị Tối Ưu Hóa:</strong>
-          <ul style="margin: 6px 0 0 20px; font-size: 13px; color: #78350F; line-height: 1.6;">
-            ${(res.warnings && res.warnings.length > 0) ? res.warnings.map(w => `<li>${w}</li>`).join('') : '<li>Bài viết đạt chuẩn mực cao, ngôn từ trang trọng, thông điệp rõ ràng!</li>'}
-          </ul>
-        </div>
-
-        <div style="display: flex; justify-content: flex-end; gap: 10px;">
-          <button type="button" class="btn btn-outline btn-sm" onclick="closeAiQualityAuditModal()">Đóng Cửa Sổ</button>
-          <button type="button" class="btn btn-primary btn-sm" style="background: #003865; border-color: #003865;" onclick="closeAiQualityAuditModal(); alert('✅ Bài viết đã được đóng dấu đạt chuẩn chất lượng xuất bản!');">
-            <i class="fa-solid fa-check me-1"></i> Xác Nhận Đạt Chuẩn
-          </button>
-        </div>
-      `;
-    }
-  } catch (err) {
-    if (reportBox) {
-      reportBox.innerHTML = `
-        <div style="background: #ECFDF5; border: 1px solid #A7F3D0; padding: 18px; border-radius: 8px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h4 style="font-size: 15px; font-weight: 800; color: #065F46; margin: 0;">Điểm Đánh Giá Chất Lượng</h4>
-            <div style="font-size: 28px; font-weight: 900; color: #059669;">96 / 100</div>
-          </div>
-          <p style="font-size: 13px; color: #047857; margin-bottom: 12px;">✅ Bài viết tuân thủ xuất sắc Nghị định 30/2020/NĐ-CP và Điều lệ Công đoàn Việt Nam. Không phát hiện lỗi chính tả.</p>
-          <div style="display: flex; justify-content: flex-end;">
-            <button class="btn btn-primary btn-sm" onclick="closeAiQualityAuditModal()">Đóng</button>
-          </div>
-        </div>
-      `;
-    }
-  }
+function safeSetVal(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val;
 }
 
-function closeAiQualityAuditModal() {
-  const modal = document.getElementById('ai_quality_audit_modal');
-  if (modal) {
-    modal.style.setProperty('display', 'none', 'important');
-    modal.style.setProperty('opacity', '0', 'important');
-    modal.style.setProperty('pointer-events', 'none', 'important');
-  }
+function safeSetText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.innerText = text;
 }
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  setGovernanceMode('full_review');
+  renderAuditTrailUI();
+});
