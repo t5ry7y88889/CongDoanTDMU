@@ -729,3 +729,129 @@ blockquote cite {
   from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+
+/* =========================================================================
+   TDMU UNIVERSAL PAGINATION COMPONENT
+   ========================================================================= */
+.tdmu-pagination-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 12px 18px;
+  background: #FFFFFF;
+  border-top: 1px solid #E2E8F0;
+  border-radius: 0 0 10px 10px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.tdmu-pagination-wrapper.empty {
+  justify-content: center;
+  padding: 16px;
+  color: #94A3B8;
+  font-style: italic;
+}
+
+.tdmu-pagination-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.tdmu-pagination-info {
+  font-size: 12px;
+  color: #64748B;
+}
+
+.tdmu-pagination-info strong {
+  color: #0F172A;
+  font-weight: 700;
+}
+
+.tdmu-pagination-size-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tdmu-size-label {
+  font-size: 11.5px;
+  color: #64748B;
+  margin: 0;
+}
+
+.tdmu-page-size-select {
+  padding: 4px 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #1E293B;
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tdmu-page-size-select:focus {
+  border-color: #0284C7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+}
+
+.tdmu-pagination-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tdmu-page-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.tdmu-page-btn:hover:not(.disabled):not(.active) {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  color: #002855;
+  transform: translateY(-1px);
+}
+
+.tdmu-page-btn.active {
+  background: #002855;
+  border-color: #002855;
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 40, 85, 0.25);
+  cursor: default;
+}
+
+.tdmu-page-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #94A3B8;
+}
+
+.tdmu-page-ellipsis {
+  padding: 0 6px;
+  color: #94A3B8;
+  font-weight: 700;
+}

@@ -538,6 +538,7 @@
   
   
   </style>
+  <link rel="stylesheet" href="libs/tui-pagination/tui-pagination.min.css">
 </head>
 <body>
 
@@ -785,6 +786,7 @@
             </thead>
             <tbody id="admin_article_list"></tbody>
           </table>
+          <div id="admin_articles_pagination"></div>
         </div>
       </section>
 
@@ -1188,6 +1190,7 @@
               </thead>
               <tbody id="admin_reports_table_body"></tbody>
             </table>
+            <div id="admin_reports_pagination"></div>
           </div>
         </div>
 
@@ -1346,6 +1349,7 @@
             </thead>
             <tbody id="admin_documents_table_body"></tbody>
           </table>
+          <div id="admin_documents_pagination"></div>
         </div>
       </section>
 
@@ -1367,6 +1371,7 @@
             </thead>
             <tbody id="schedule_table_body"></tbody>
           </table>
+          <div id="admin_schedule_pagination"></div>
         </div>
       </section>
 
@@ -1391,6 +1396,7 @@
             </thead>
             <tbody id="users_table_body"></tbody>
           </table>
+          <div id="admin_users_pagination"></div>
         </div>
       </section>
 
@@ -1412,6 +1418,7 @@
             </thead>
             <tbody id="audit_table_body"></tbody>
           </table>
+          <div id="admin_audits_pagination"></div>
         </div>
       </section>
     </main>
@@ -1487,6 +1494,8 @@
   </div>
 
   <script src="js/api.js?v=2026"></script>
+  <script src="libs/tui-pagination/tui-pagination.min.js"></script>
+  <script src="js/pagination.js?v=2026"></script>
   <script src="js/admin/admin-ui.js?v=2026"></script>
   <script src="js/admin/admin-articles.js?v=2026"></script>
   <script src="js/admin/admin-reports.js?v=2026"></script>

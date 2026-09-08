@@ -30,6 +30,9 @@ function toggleOnlineReportForm() {
   switchReportSubTab('form');
 }
 
+let adminReportsPager = null;
+let rawReportsData = [];
+
 async function loadAdminMonthlyReports() {
   const tbody = document.getElementById('admin_reports_table_body');
   if (!tbody) return;
@@ -39,6 +42,7 @@ async function loadAdminMonthlyReports() {
   try {
     const res = await API.getMonthlyReports();
     if (res.success && Array.isArray(res.data)) {
+      rawReportsData = res.data;
       currentReportsData = res.data;
       
       const total = res.data.length;
@@ -55,42 +59,18 @@ async function loadAdminMonthlyReports() {
       safeSetText('kpi_rpt_pending', pending + ' Tổ (' + Math.round(pending/total*100) + '%)');
       safeSetText('kpi_rpt_excellent', (excellent || 4) + ' Tổ (Loại A)');
 
-      tbody.innerHTML = res.data.map((r, i) => {
-        const isSubmitted = r.trang_thai === 'Đã nộp';
-        const statusBadge = isSubmitted 
-          ? '<span class="badge" style="background: #DCFCE7; color: #166534; font-weight: 700; font-size: 11px;"><i class="fa-solid fa-circle-check me-1"></i> Đã nộp</span>'
-          : '<span class="badge" style="background: #FEE2E2; color: #991B1B; font-weight: 700; font-size: 11px;"><i class="fa-solid fa-clock me-1"></i> Chưa nộp</span>';
-
-        let emulBadge = '<span class="badge" style="background: #F1F5F9; color: #64748B; font-size: 11px;">Chờ thẩm định</span>';
-        if ((r.btv_xep_loai || '').includes('Loại A')) {
-          emulBadge = '<span class="badge" style="background: #FEF3C7; color: #B45309; font-weight: 800; font-size: 11px; border: 1px solid #FCD34D;"><i class="fa-solid fa-star text-warning me-1"></i> Loại A - Xuất Sắc</span>';
-        } else if ((r.btv_xep_loai || '').includes('Loại B')) {
-          emulBadge = '<span class="badge" style="background: #E0F2FE; color: #0369A1; font-weight: 700; font-size: 11px; border: 1px solid #BAE6FD;"><i class="fa-solid fa-circle-check text-info me-1"></i> Loại B - Tốt</span>';
-        } else if ((r.btv_xep_loai || '').includes('Loại C')) {
-          emulBadge = '<span class="badge" style="background: #F3E8FF; color: #6B21A8; font-weight: 700; font-size: 11px; border: 1px solid #DDD6FE;">Loại C</span>';
-        }
-
-        let actionBtns = '<div style="display: flex; justify-content: flex-end; gap: 4px;">';
-        actionBtns += '<button class="btn btn-outline btn-sm" style="font-size: 11px; padding: 3px 7px;" onclick="openViewReportModal(' + r.id + ')"><i class="fa-solid fa-eye text-primary"></i> Xem</button>';
-        if (currentUserRole === 'admin' || currentUserRole === 'editor') {
-          actionBtns += '<button class="btn btn-primary btn-sm" style="font-size: 11px; padding: 3px 7px; background: #003865; border-color: #003865;" onclick="gradeUnionUnit(' + r.id + ')"><i class="fa-solid fa-star text-warning"></i> Chấm</button>';
-        }
-        actionBtns += '</div>';
-
-        return '<tr style="border-bottom: 1px solid #E2E8F0; background: ' + (isSubmitted ? '#FFFFFF' : '#FAFAFA') + ';">' +
-          '<td style="padding: 10px 12px; font-weight: 700; color: #003865;">' + (i + 1) + '</td>' +
-          '<td style="padding: 10px 12px; font-weight: 700; color: #003865;">' + r.ten_to_cong_doan + '</td>' +
-          '<td style="padding: 10px 12px; font-weight: 600; color: #1E293B;">' + (r.to_truong || r.reporter_name || 'Đ/c Tổ trưởng') + '</td>' +
-          '<td style="padding: 10px 12px; text-align: center; font-weight: 600;">' + (r.tong_doan_vien || r.so_doan_vien || 0) + '</td>' +
-          '<td style="padding: 10px 12px; text-align: center;">' + (r.nu_doan_vien || 0) + '</td>' +
-          '<td style="padding: 10px 12px; text-align: center;">' + (r.doan_vien_ket_nap || 0) + '</td>' +
-          '<td style="padding: 10px 12px; text-align: center; font-size: 12px;">' + (r.so_nguoi_cham_lo ? r.so_nguoi_cham_lo + ' người' : '0') + '</td>' +
-          '<td style="padding: 10px 12px; text-align: center; font-size: 12px;">' + (r.so_buoi_tuyen_truyen ? r.so_buoi_tuyen_truyen + ' buổi' : '0') + '</td>' +
-          '<td style="padding: 10px 12px; text-align: center;">' + statusBadge + '</td>' +
-          '<td style="padding: 10px 12px; text-align: center;">' + emulBadge + '</td>' +
-          '<td style="padding: 10px 12px; text-align: right;">' + actionBtns + '</td>' +
-        '</tr>';
-      }).join('');
+      if (!adminReportsPager && typeof TDMUPagination !== 'undefined') {
+        adminReportsPager = new TDMUPagination({
+          container: '#admin_reports_pagination',
+          totalItems: rawReportsData.length,
+          pageSize: 10,
+          itemLabel: 'báo cáo',
+          onPageChange: () => renderReportsPage()
+        });
+      } else if (adminReportsPager) {
+        adminReportsPager.setTotalItems(rawReportsData.length, false);
+      }
+      renderReportsPage();
     }
   } catch (err) {
     console.error('Error loading monthly reports:', err);
@@ -98,9 +78,67 @@ async function loadAdminMonthlyReports() {
   }
 }
 
+function renderReportsPage() {
+  const tbody = document.getElementById('admin_reports_table_body');
+  if (!tbody) return;
+
+  const displayList = adminReportsPager && typeof TDMUPagination !== 'undefined'
+    ? TDMUPagination.paginate(rawReportsData, adminReportsPager.currentPage, adminReportsPager.pageSize).pagedItems
+    : rawReportsData;
+
+  const offset = adminReportsPager && typeof TDMUPagination !== 'undefined'
+    ? (adminReportsPager.currentPage - 1) * adminReportsPager.pageSize
+    : 0;
+
+  if (displayList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 20px; color: #64748B;">Không có báo cáo nào.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = displayList.map((r, i) => {
+    const isSubmitted = r.trang_thai === 'Đã nộp';
+    const statusBadge = isSubmitted 
+      ? '<span class="badge" style="background: #DCFCE7; color: #166534; font-weight: 700; font-size: 11px;"><i class="fa-solid fa-circle-check me-1"></i> Đã nộp</span>'
+      : '<span class="badge" style="background: #FEE2E2; color: #991B1B; font-weight: 700; font-size: 11px;"><i class="fa-solid fa-clock me-1"></i> Chưa nộp</span>';
+
+    let emulBadge = '<span class="badge" style="background: #F1F5F9; color: #64748B; font-size: 11px;">Chờ thẩm định</span>';
+    if ((r.btv_xep_loai || '').includes('Loại A')) {
+      emulBadge = '<span class="badge" style="background: #FEF3C7; color: #B45309; font-weight: 800; font-size: 11px; border: 1px solid #FCD34D;"><i class="fa-solid fa-star text-warning me-1"></i> Loại A - Xuất Sắc</span>';
+    } else if ((r.btv_xep_loai || '').includes('Loại B')) {
+      emulBadge = '<span class="badge" style="background: #E0F2FE; color: #0369A1; font-weight: 700; font-size: 11px; border: 1px solid #BAE6FD;"><i class="fa-solid fa-circle-check text-info me-1"></i> Loại B - Tốt</span>';
+    } else if ((r.btv_xep_loai || '').includes('Loại C')) {
+      emulBadge = '<span class="badge" style="background: #F3E8FF; color: #6B21A8; font-weight: 700; font-size: 11px; border: 1px solid #DDD6FE;">Loại C</span>';
+    }
+
+    let actionBtns = '<div style="display: flex; justify-content: flex-end; gap: 4px;">';
+    actionBtns += '<button class="btn btn-outline btn-sm" style="font-size: 11px; padding: 3px 7px;" onclick="openViewReportModal(' + r.id + ')"><i class="fa-solid fa-eye text-primary"></i> Xem</button>';
+    if (currentUserRole === 'admin' || currentUserRole === 'editor') {
+      actionBtns += '<button class="btn btn-primary btn-sm" style="font-size: 11px; padding: 3px 7px; background: #003865; border-color: #003865;" onclick="gradeUnionUnit(' + r.id + ')"><i class="fa-solid fa-star text-warning"></i> Chấm</button>';
+    }
+    actionBtns += '</div>';
+
+    return '<tr style="border-bottom: 1px solid #E2E8F0; background: ' + (isSubmitted ? '#FFFFFF' : '#FAFAFA') + ';">' +
+      '<td style="padding: 10px 12px; font-weight: 700; color: #003865;">' + (offset + i + 1) + '</td>' +
+      '<td style="padding: 10px 12px; font-weight: 700; color: #003865;">' + r.ten_to_cong_doan + '</td>' +
+      '<td style="padding: 10px 12px; font-weight: 600; color: #1E293B;">' + (r.to_truong || r.reporter_name || 'Đ/c Tổ trưởng') + '</td>' +
+      '<td style="padding: 10px 12px; text-align: center; font-weight: 600;">' + (r.tong_doan_vien || r.so_doan_vien || 0) + '</td>' +
+      '<td style="padding: 10px 12px; text-align: center;">' + (r.nu_doan_vien || 0) + '</td>' +
+      '<td style="padding: 10px 12px; text-align: center;">' + (r.doan_vien_ket_nap || 0) + '</td>' +
+      '<td style="padding: 10px 12px; text-align: center; font-size: 12px;">' + (r.so_nguoi_cham_lo ? r.so_nguoi_cham_lo + ' người' : '0') + '</td>' +
+      '<td style="padding: 10px 12px; text-align: center; font-size: 12px;">' + (r.so_buoi_tuyen_truyen ? r.so_buoi_tuyen_truyen + ' buổi' : '0') + '</td>' +
+      '<td style="padding: 10px 12px; text-align: center;">' + statusBadge + '</td>' +
+      '<td style="padding: 10px 12px; text-align: center;">' + emulBadge + '</td>' +
+      '<td style="padding: 10px 12px; text-align: right;">' + actionBtns + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
 // =========================================================================
 // 19. KHO VĂN BẢN & BIỂU MẪU CHỈ ĐẠO
 // =========================================================================
+let adminDocumentsPager = null;
+let rawDocumentsData = [];
+
 async function loadAdminDocuments() {
   const tbody = document.getElementById('admin_documents_table_body');
   if (!tbody) return;
@@ -110,28 +148,52 @@ async function loadAdminDocuments() {
   try {
     const res = await API.getDocuments();
     if (res.success && Array.isArray(res.data)) {
-      if (res.data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #64748B;">Chưa có văn bản nào trong kho.</td></tr>';
-        return;
+      rawDocumentsData = res.data;
+      if (!adminDocumentsPager && typeof TDMUPagination !== 'undefined') {
+        adminDocumentsPager = new TDMUPagination({
+          container: '#admin_documents_pagination',
+          totalItems: rawDocumentsData.length,
+          pageSize: 10,
+          itemLabel: 'văn bản',
+          onPageChange: () => renderDocumentsPage()
+        });
+      } else if (adminDocumentsPager) {
+        adminDocumentsPager.setTotalItems(rawDocumentsData.length, false);
       }
-      tbody.innerHTML = res.data.map(d => `
-        <tr style="border-bottom: 1px solid #E2E8F0;">
-          <td style="padding: 12px; font-weight: 700; color: #003865;">${d.so_hieu || d.SoHieuVanBan || 'N/A'}</td>
-          <td style="padding: 12px; font-weight: 600; color: #1E293B;">${d.tieu_de || d.TenVanBan || ''}</td>
-          <td style="padding: 12px;"><span class="badge badge-info" style="font-size: 11px;">${d.loai_van_ban_ten || d.loai_van_ban || 'Văn bản'}</span></td>
-          <td style="padding: 12px; font-size: 13px; color: #64748B;">${d.ngay_ban_hanh || ''}</td>
-          <td style="padding: 12px; text-align: right;">
-            <a href="${d.file_url || '#'}" target="_blank" class="btn btn-sm btn-outline" style="font-size: 11.5px; padding: 4px 8px; text-decoration: none; color: #0284C7; border: 1px solid #BAE6FD;">
-              <i class="fa-solid fa-download me-1"></i> Tải Về (${d.dung_luong || 'PDF'})
-            </a>
-          </td>
-        </tr>
-      `).join('');
+      renderDocumentsPage();
     }
   } catch (err) {
     console.error('Error loading documents:', err);
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: red;">Lỗi tải dữ liệu văn bản.</td></tr>';
   }
+}
+
+function renderDocumentsPage() {
+  const tbody = document.getElementById('admin_documents_table_body');
+  if (!tbody) return;
+
+  const displayList = adminDocumentsPager && typeof TDMUPagination !== 'undefined'
+    ? TDMUPagination.paginate(rawDocumentsData, adminDocumentsPager.currentPage, adminDocumentsPager.pageSize).pagedItems
+    : rawDocumentsData;
+
+  if (displayList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #64748B;">Chưa có văn bản nào trong kho.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = displayList.map(d => `
+    <tr style="border-bottom: 1px solid #E2E8F0;">
+      <td style="padding: 12px; font-weight: 700; color: #003865;">${d.so_hieu || d.SoHieuVanBan || 'N/A'}</td>
+      <td style="padding: 12px; font-weight: 600; color: #1E293B;">${d.tieu_de || d.TenVanBan || ''}</td>
+      <td style="padding: 12px;"><span class="badge badge-info" style="font-size: 11px;">${d.loai_van_ban_ten || d.loai_van_ban || 'Văn bản'}</span></td>
+      <td style="padding: 12px; font-size: 13px; color: #64748B;">${d.ngay_ban_hanh || ''}</td>
+      <td style="padding: 12px; text-align: right;">
+        <a href="${d.file_url || '#'}" target="_blank" class="btn btn-sm btn-outline" style="font-size: 11.5px; padding: 4px 8px; text-decoration: none; color: #0284C7; border: 1px solid #BAE6FD;">
+          <i class="fa-solid fa-download me-1"></i> Tải Về (${d.dung_luong || 'PDF'})
+        </a>
+      </td>
+    </tr>
+  `).join('');
 }
 
 function scrollToReportForm() {

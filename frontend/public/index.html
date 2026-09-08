@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="css/portal.css?v=1788276464341">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#002855">
+  <link rel="stylesheet" href="libs/tui-pagination/tui-pagination.min.css">
 </head>
 <body>
   <div class="main-content-wrapper">
@@ -169,6 +170,7 @@
               <span class="new_item_desc">Trong không khí rộn ràng đón Tết, Công đoàn TDMU tổ chức Phiên chợ Tết với nhiều gian hàng ẩm thực, quà tết ưu đãi cho cán bộ, giảng viên và sinh viên...</span>
             </div>
           </div>
+          <div id="home_articles_pagination" class="mt-3"></div>
         </div>
 
         <!-- RIGHT COLUMN (3 PHẦN): LIÊN KẾT WEBSITE -->
@@ -283,6 +285,76 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    let homeArticles = [];
+    let homePager = null;
+
+    async function loadHomeArticles() {
+      try {
+        const res = await fetch('/api/articles?status=published');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          homeArticles = data.data;
+        } else {
+          homeArticles = Object.keys(staticArticles).map(k => ({ id: k, ...staticArticles[k] }));
+        }
+      } catch (e) {
+        homeArticles = Object.keys(staticArticles).map(k => ({ id: k, ...staticArticles[k] }));
+      }
+
+      if (!homePager && typeof TDMUPagination !== 'undefined') {
+        homePager = new TDMUPagination({
+          container: '#home_articles_pagination',
+          totalItems: homeArticles.length,
+          pageSize: 4,
+          pageSizeOptions: [4, 8, 12],
+          itemLabel: 'bài viết',
+          onPageChange: () => renderHomeArticlesPage()
+        });
+      } else if (homePager) {
+        homePager.setTotalItems(homeArticles.length, false);
+      }
+      renderHomeArticlesPage();
+    }
+
+    function renderHomeArticlesPage() {
+      const container = document.getElementById('article_container');
+      if (!container) return;
+
+      const displayList = homePager && typeof TDMUPagination !== 'undefined'
+        ? TDMUPagination.paginate(homeArticles, homePager.currentPage, homePager.pageSize).pagedItems
+        : homeArticles;
+
+      container.innerHTML = displayList.map(a => `
+        <div class="col-md-6 new_item">
+          <h3 class="new_item_title"><a href="javascript:void(0)" onclick="openHomeArticleDetail('${a.id}')">${a.title}</a></h3>
+          <img src="${a.image || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500'}" class="new_item_img" alt="${a.title}">
+          <span class="new_item_time"><i class="fa-regular fa-clock me-1"></i> ${a.date || a.createdAt || '26/06/2026'} &nbsp;|&nbsp; <i class="fa-regular fa-eye me-1"></i> ${a.views || a.viewsCount || 140} lượt xem</span>
+          <span class="new_item_desc">${a.summary || (a.content ? a.content.replace(/<[^>]*>/g, '').substring(0, 160) + '...' : '')}</span>
+        </div>
+      `).join('');
+    }
+
+    function openHomeArticleDetail(id) {
+      const a = homeArticles.find(item => item.id == id) || staticArticles[id];
+      if (!a) return;
+      document.getElementById('modalArticleTitle').innerText = a.title;
+      document.getElementById('modalArticleBody').innerHTML = `
+        <div class="mb-3 d-flex align-items-center gap-3 text-muted small border-bottom pb-2">
+          <span><i class="fa-regular fa-calendar me-1 text-primary"></i> ${a.date || a.createdAt || '26/06/2026'}</span>
+          <span><i class="fa-solid fa-user-pen me-1 text-primary"></i> ${a.author || 'Ban Thường Vụ'}</span>
+          <span><i class="fa-regular fa-eye me-1 text-success"></i> ${a.views || a.viewsCount || 140} lượt xem</span>
+        </div>
+        <img src="${a.image || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800'}" class="img-fluid rounded mb-3 w-100" style="max-height: 360px; object-fit: cover;">
+        <div style="font-size: 14.5px; line-height: 1.8; color: #2d3748;">
+          ${a.content || a.summary || ''}
+        </div>
+      `;
+      const modal = new bootstrap.Modal(document.getElementById('articleDetailModal'));
+      modal.show();
+    }
+
+    document.addEventListener('DOMContentLoaded', loadHomeArticles);
+
     const staticArticles = {
       1: {
         title: 'Tọa đàm "Dinh dưỡng lành mạnh vì sức khỏe gia đình"',
@@ -337,6 +409,8 @@
       modal.show();
     }
   </script>
+  <script src="libs/tui-pagination/tui-pagination.min.js"></script>
+  <script src="js/pagination.js?v=2026"></script>
   <script src="js/bookmarks.js?v=20260901_v23"></script>
 
   <!-- OFFCANVAS TỦ SÁCH ĐỌC SAU (SAVED ARTICLES DRAWER) -->

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="css/portal.css?v=20260901_v20">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#002855">
+  <link rel="stylesheet" href="libs/tui-pagination/tui-pagination.min.css">
 </head>
 <body>
 
@@ -110,6 +111,7 @@
             <div id="document_list_container">
               <!-- Rendered dynamically -->
             </div>
+            <div id="doc_pagination" class="mt-3"></div>
           </div>
         </div>
 
@@ -310,19 +312,22 @@
       }).join('');
     }
 
+    let docPager = null;
+    let currentFilteredDocs = [];
+
     function filterDocs(cat, btn) {
       currentCategory = cat;
       document.querySelectorAll('#docCategoryTabs button').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
-      applyFilterAndSearch();
+      applyFilterAndSearch(true);
     }
 
     function handleDocSearch(term) {
       currentSearchTerm = (term || '').trim().toLowerCase();
-      applyFilterAndSearch();
+      applyFilterAndSearch(true);
     }
 
-    function applyFilterAndSearch() {
+    function applyFilterAndSearch(resetPage = false) {
       let filtered = allDocuments;
 
       if (currentCategory !== 'all') {
@@ -344,7 +349,38 @@
         });
       }
 
-      renderDocs(filtered);
+      currentFilteredDocs = filtered;
+
+      if (filtered.length === 0) {
+        const container = document.getElementById('document_list_container');
+        if (container) {
+          container.innerHTML = '<div class="text-center p-5 text-muted"><i class="fa-solid fa-folder-open fa-3x mb-3 text-secondary"></i><p>Không tìm thấy văn bản phù hợp.</p></div>';
+        }
+        if (docPager) docPager.setTotalItems(0);
+        return;
+      }
+
+      if (!docPager && typeof TDMUPagination !== 'undefined') {
+        docPager = new TDMUPagination({
+          container: '#doc_pagination',
+          totalItems: currentFilteredDocs.length,
+          pageSize: 8,
+          pageSizeOptions: [8, 16, 32],
+          itemLabel: 'văn bản',
+          onPageChange: () => displayDocCards()
+        });
+      } else if (docPager) {
+        docPager.setTotalItems(currentFilteredDocs.length, resetPage);
+      }
+
+      displayDocCards();
+    }
+
+    function displayDocCards() {
+      const displayList = docPager && typeof TDMUPagination !== 'undefined'
+        ? TDMUPagination.paginate(currentFilteredDocs, docPager.currentPage, docPager.pageSize).pagedItems
+        : currentFilteredDocs;
+      renderDocs(displayList);
     }
 
     function checkUrlHash() {
@@ -419,6 +455,8 @@
 
     document.addEventListener('DOMContentLoaded', loadPortalDocuments);
   </script>
+  <script src="libs/tui-pagination/tui-pagination.min.js"></script>
+  <script src="js/pagination.js?v=2026"></script>
   <script src="js/bookmarks.js?v=20260901_v23"></script>
 
   <!-- OFFCANVAS TỦ SÁCH ĐỌC SAU (SAVED ARTICLES DRAWER) -->

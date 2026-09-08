@@ -1,6 +1,9 @@
 // =========================================================================
 // 2. ARTICLES, MEDIA, SCHEDULES, USERS & AUDIT MANAGEMENT
 // =========================================================================
+let adminUsersPager = null;
+let rawUsersList = [];
+
 async function loadUsersTable() {
   const tbody = document.getElementById('users_table_body');
   if (!tbody) return;
@@ -8,29 +11,57 @@ async function loadUsersTable() {
   try {
     const res = await API.getUsers();
     if (res.success && Array.isArray(res.data)) {
-      tbody.innerHTML = res.data.map(u => {
-        const roleLabel = u.role === 'admin' ? 'Quản Trị Viên (Admin)' : (u.role === 'editor' ? 'Biên Tập Viên (Editor)' : 'Cộng Tác Viên (Contributor)');
-        const roleBadgeClass = u.role === 'admin' ? 'badge-gold' : (u.role === 'editor' ? 'badge-info' : 'badge-warning');
-        return `
-        <tr style="border-bottom: 1px solid var(--border-color);">
-          <td style="padding: 12px; font-weight: 700; color: #003865;">${u.ho_ten || u.name || 'Cán bộ TDMU'}</td>
-          <td style="padding: 12px;">${u.email || ''}</td>
-          <td style="padding: 12px;"><span class="badge ${roleBadgeClass}">${roleLabel}</span></td>
-          <td style="padding: 12px;">${u.unit || u.department || 'ĐH Thủ Dầu Một'}</td>
-          <td style="padding: 12px; text-align: right;">
-            ${currentUserRole === 'admin' ? `
-              <button class="btn btn-outline btn-sm" style="color: var(--danger); padding: 4px 8px;" onclick="deleteUserAccount(${u.id})">
-                <i class="fa-solid fa-trash"></i> Xóa
-              </button>
-            ` : '<span style="font-size:12px; color:#94A3B8;">Chỉ xem</span>'}
-          </td>
-        </tr>
-      `;
-      }).join('');
+      rawUsersList = res.data;
+      if (!adminUsersPager && typeof TDMUPagination !== 'undefined') {
+        adminUsersPager = new TDMUPagination({
+          container: '#admin_users_pagination',
+          totalItems: rawUsersList.length,
+          pageSize: 10,
+          itemLabel: 'cán bộ',
+          onPageChange: () => renderUsersPage()
+        });
+      } else if (adminUsersPager) {
+        adminUsersPager.setTotalItems(rawUsersList.length, false);
+      }
+      renderUsersPage();
     }
   } catch (err) {
     console.error('Error loading users table:', err);
   }
+}
+
+function renderUsersPage() {
+  const tbody = document.getElementById('users_table_body');
+  if (!tbody) return;
+
+  const displayList = adminUsersPager && typeof TDMUPagination !== 'undefined'
+    ? TDMUPagination.paginate(rawUsersList, adminUsersPager.currentPage, adminUsersPager.pageSize).pagedItems
+    : rawUsersList;
+
+  if (displayList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--text-muted);">Không có cán bộ nào.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = displayList.map(u => {
+    const roleLabel = u.role === 'admin' ? 'Quản Trị Viên (Admin)' : (u.role === 'editor' ? 'Biên Tập Viên (Editor)' : 'Cộng Tác Viên (Contributor)');
+    const roleBadgeClass = u.role === 'admin' ? 'badge-gold' : (u.role === 'editor' ? 'badge-info' : 'badge-warning');
+    return `
+    <tr style="border-bottom: 1px solid var(--border-color);">
+      <td style="padding: 12px; font-weight: 700; color: #003865;">${u.ho_ten || u.name || 'Cán bộ TDMU'}</td>
+      <td style="padding: 12px;">${u.email || ''}</td>
+      <td style="padding: 12px;"><span class="badge ${roleBadgeClass}">${roleLabel}</span></td>
+      <td style="padding: 12px;">${u.unit || u.department || 'ĐH Thủ Dầu Một'}</td>
+      <td style="padding: 12px; text-align: right;">
+        ${currentUserRole === 'admin' ? `
+          <button class="btn btn-outline btn-sm" style="color: var(--danger); padding: 4px 8px;" onclick="deleteUserAccount(${u.id})">
+            <i class="fa-solid fa-trash"></i> Xóa
+          </button>
+        ` : '<span style="font-size:12px; color:#94A3B8;">Chỉ xem</span>'}
+      </td>
+    </tr>
+  `;
+  }).join('');
 }
 
 async function createNewUserAccount() {
@@ -135,6 +166,9 @@ async function loadTopArticlesTable() {
 
 // 3. Article Management
 
+let adminArticlesPager = null;
+let rawAdminArticles = [];
+
 async function loadAdminArticles(filter = currentFilter, searchQuery = '') {
   currentFilter = filter;
   const tbody = document.getElementById('admin_article_list');
@@ -145,11 +179,32 @@ async function loadAdminArticles(filter = currentFilter, searchQuery = '') {
   try {
     const res = await API.getArticles('all', filter, searchQuery);
     if (res.success) {
-      renderAdminArticleRows(res.data);
+      rawAdminArticles = res.data || [];
+      if (!adminArticlesPager && typeof TDMUPagination !== 'undefined') {
+        adminArticlesPager = new TDMUPagination({
+          container: '#admin_articles_pagination',
+          totalItems: rawAdminArticles.length,
+          pageSize: 10,
+          itemLabel: 'bài viết',
+          onPageChange: () => renderAdminArticlePage()
+        });
+      } else if (adminArticlesPager) {
+        adminArticlesPager.setTotalItems(rawAdminArticles.length, true);
+      }
+      renderAdminArticlePage();
     }
   } catch (err) {
     console.error(err);
   }
+}
+
+function renderAdminArticlePage() {
+  if (!adminArticlesPager || typeof TDMUPagination === 'undefined') {
+    renderAdminArticleRows(rawAdminArticles);
+    return;
+  }
+  const { pagedItems } = TDMUPagination.paginate(rawAdminArticles, adminArticlesPager.currentPage, adminArticlesPager.pageSize);
+  renderAdminArticleRows(pagedItems);
 }
 
 function renderAdminArticleRows(list) {
@@ -416,6 +471,9 @@ async function deleteMediaFile(id) {
 }
 
 // Schedule Table Render
+let adminSchedulePager = null;
+let rawScheduleList = [];
+
 async function loadScheduleTable() {
   const tbody = document.getElementById('schedule_table_body');
   if (!tbody) return;
@@ -423,22 +481,50 @@ async function loadScheduleTable() {
   try {
     const res = await API.getArticles('all', 'all');
     if (res.success && Array.isArray(res.data)) {
-      tbody.innerHTML = res.data.map(a => `
-        <tr style="border-bottom: 1px solid var(--border-color);">
-          <td style="padding: 12px; font-weight: 600;">${a.title}</td>
-          <td style="padding: 12px;"><span class="badge badge-info" style="font-size: 11px;">Website, Fanpage</span></td>
-          <td style="padding: 12px; color: #D97706; font-weight: 700;"><i class="fa-regular fa-clock me-1"></i> ${a.scheduledAt || '26/08/2026 07:30'}</td>
-          <td style="padding: 12px;">
-            <span class="badge ${a.status === 'published' ? 'badge-success' : 'badge-warning'}">
-              ${a.status === 'published' ? 'Đã Xuất Bản' : 'Chờ Tự Động Đăng'}
-            </span>
-          </td>
-        </tr>
-      `).join('');
+      rawScheduleList = res.data;
+      if (!adminSchedulePager && typeof TDMUPagination !== 'undefined') {
+        adminSchedulePager = new TDMUPagination({
+          container: '#admin_schedule_pagination',
+          totalItems: rawScheduleList.length,
+          pageSize: 10,
+          itemLabel: 'lịch hẹn',
+          onPageChange: () => renderSchedulePage()
+        });
+      } else if (adminSchedulePager) {
+        adminSchedulePager.setTotalItems(rawScheduleList.length, false);
+      }
+      renderSchedulePage();
     }
   } catch (err) {
     console.error('Error loading schedule table:', err);
   }
+}
+
+function renderSchedulePage() {
+  const tbody = document.getElementById('schedule_table_body');
+  if (!tbody) return;
+
+  const displayList = adminSchedulePager && typeof TDMUPagination !== 'undefined'
+    ? TDMUPagination.paginate(rawScheduleList, adminSchedulePager.currentPage, adminSchedulePager.pageSize).pagedItems
+    : rawScheduleList;
+
+  if (displayList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">Chưa có lịch đăng nào.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = displayList.map(a => `
+    <tr style="border-bottom: 1px solid var(--border-color);">
+      <td style="padding: 12px; font-weight: 600;">${a.title}</td>
+      <td style="padding: 12px;"><span class="badge badge-info" style="font-size: 11px;">Website, Fanpage</span></td>
+      <td style="padding: 12px; color: #D97706; font-weight: 700;"><i class="fa-regular fa-clock me-1"></i> ${a.scheduledAt || '26/08/2026 07:30'}</td>
+      <td style="padding: 12px;">
+        <span class="badge ${a.status === 'published' ? 'badge-success' : 'badge-warning'}">
+          ${a.status === 'published' ? 'Đã Xuất Bản' : 'Chờ Tự Động Đăng'}
+        </span>
+      </td>
+    </tr>
+  `).join('');
 }
 
 async function setScheduleTime(id) {
@@ -524,6 +610,9 @@ async function executeFacebookPublish(art) {
 }
 
 // Audit Logs
+let adminAuditsPager = null;
+let rawAuditsList = [];
+
 async function loadAuditLogs() {
   const tbody = document.getElementById('audit_table_body');
   if (!tbody) return;
@@ -531,18 +620,46 @@ async function loadAuditLogs() {
   try {
     const res = await API.getAudits();
     if (res.success && Array.isArray(res.data)) {
-      tbody.innerHTML = res.data.map(log => `
-        <tr style="border-bottom: 1px solid var(--border-color);">
-          <td style="padding: 12px; font-weight: 600; font-size: 13px;">${log.timestamp || log.created_at || '2026-09-01'}</td>
-          <td style="padding: 12px; font-weight: 700; color: #003865;">${log.userName || log.user_name || 'TS. Lê Thị Kim Út'}</td>
-          <td style="padding: 12px;"><span class="badge badge-gold" style="font-size: 11px;">${log.action || 'TÁC NGHIỆP'}</span></td>
-          <td style="padding: 12px; font-size: 13px; color: #334155;">${log.details || log.note || log.action}</td>
-        </tr>
-      `).join('');
+      rawAuditsList = res.data;
+      if (!adminAuditsPager && typeof TDMUPagination !== 'undefined') {
+        adminAuditsPager = new TDMUPagination({
+          container: '#admin_audits_pagination',
+          totalItems: rawAuditsList.length,
+          pageSize: 15,
+          itemLabel: 'nhật ký',
+          onPageChange: () => renderAuditsPage()
+        });
+      } else if (adminAuditsPager) {
+        adminAuditsPager.setTotalItems(rawAuditsList.length, false);
+      }
+      renderAuditsPage();
     }
   } catch (err) {
     console.error('Error loading audits:', err);
   }
+}
+
+function renderAuditsPage() {
+  const tbody = document.getElementById('audit_table_body');
+  if (!tbody) return;
+
+  const displayList = adminAuditsPager && typeof TDMUPagination !== 'undefined'
+    ? TDMUPagination.paginate(rawAuditsList, adminAuditsPager.currentPage, adminAuditsPager.pageSize).pagedItems
+    : rawAuditsList;
+
+  if (displayList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">Chưa có nhật ký nào.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = displayList.map(log => `
+    <tr style="border-bottom: 1px solid var(--border-color);">
+      <td style="padding: 12px; font-weight: 600; font-size: 13px;">${log.timestamp || log.created_at || '2026-09-01'}</td>
+      <td style="padding: 12px; font-weight: 700; color: #003865;">${log.userName || log.user_name || 'TS. Lê Thị Kim Út'}</td>
+      <td style="padding: 12px;"><span class="badge badge-gold" style="font-size: 11px;">${log.action || 'TÁC NGHIỆP'}</span></td>
+      <td style="padding: 12px; font-size: 13px; color: #334155;">${log.details || log.note || log.action}</td>
+    </tr>
+  `).join('');
 }
 
 // Unified Engagement Inbox

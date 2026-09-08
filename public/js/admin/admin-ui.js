@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initTinyMCEEditors();
   loadAdminDashboard();
   loadAdminArticles();
+  loadAdminMonthlyReports();
+  loadAdminDocuments();
   loadUsersTable();
   loadScheduleTable();
   loadAuditLogs();
