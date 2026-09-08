@@ -4,99 +4,526 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quản lý website truyền thông công đoàn TDMU</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=1788369246232">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* TOPBAR & LAYOUT FIXES */
-    body { background: #F1F5F9; margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-    .admin-layout { display: flex; flex-direction: column; min-height: 100vh; }
-    .admin-topbar { background: #003865; color: white; padding: 10px 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); position: sticky; top: 0; z-index: 1000; }
-    .admin-main { flex: 1; max-width: 1650px; width: 100%; margin: 0 auto; padding: 24px; }
-    .top-nav-link { padding: 6px 14px; color: #E2E8F0; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s ease; }
-    .top-nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
-    .top-nav-link.active { background: #0284C7; color: white; box-shadow: 0 2px 8px rgba(2,132,199,0.4); }
-    .btn-word-tool { background: white; border: 1px solid #CBD5E1; border-radius: 4px; padding: 4px 8px; font-size: 12px; cursor: pointer; color: #334155; }
-    .btn-word-tool:hover { background: #F1F5F9; color: #0284C7; }
-    .package-tab-btn { border-radius: 8px 8px 0 0; padding: 12px 18px; font-weight: 700; font-size: 13px; border: none; background: transparent; color: #64748B; cursor: pointer; }
-    .package-tab-btn.active { background: white; color: #0284C7; border-bottom: 3px solid #0284C7; }
+    :root {
+      --sidebar-width: 260px;
+      --header-height: 64px;
+      --tdmu-navy: #002855;
+      --tdmu-navy-dark: #001A38;
+      --tdmu-navy-light: #003B7A;
+      --tdmu-gold: #D4A017;
+      --tdmu-gold-light: #FEF08A;
+      --bg-body: #F8FAFC;
+      --border-color: #E2E8F0;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+    }
+    * { box-sizing: border-box; }
+    body {
+      background-color: var(--bg-body);
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      color: var(--text-main);
+      overflow-x: hidden;
+    }
+
+    /* APP LAYOUT */
+    .admin-app-layout {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    /* SIDEBAR */
+    .admin-sidebar {
+      width: var(--sidebar-width);
+      background: linear-gradient(180deg, var(--tdmu-navy) 0%, var(--tdmu-navy-dark) 100%);
+      color: #FFFFFF;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 1050;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 4px 0 20px rgba(0, 40, 85, 0.12);
+      transition: width 0.25s ease;
+    }
+    .admin-sidebar.collapsed {
+      width: 76px;
+    }
+    .sidebar-header {
+      height: var(--header-height);
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.15);
+    }
+    .sidebar-brand-text {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .admin-sidebar.collapsed .sidebar-brand-text {
+      display: none;
+    }
+    .brand-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #FFFFFF;
+      line-height: 1.2;
+      letter-spacing: 0.3px;
+    }
+    .brand-sub {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--tdmu-gold-light);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .sidebar-nav::-webkit-scrollbar {
+      width: 4px;
+    }
+    .sidebar-nav::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: #94A3B8;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 14px 12px 6px 12px;
+    }
+    .admin-sidebar.collapsed .nav-section-label {
+      display: none;
+    }
+    .sidebar-nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: #CBD5E1;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .sidebar-nav-link:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #FFFFFF;
+      transform: translateX(2px);
+    }
+    .sidebar-nav-link.active {
+      background: rgba(2, 132, 199, 0.22);
+      color: #FFFFFF;
+      border-color: rgba(56, 189, 248, 0.45);
+      font-weight: 700;
+      box-shadow: 0 2px 10px rgba(0, 40, 85, 0.2);
+    }
+    .sidebar-nav-link.active i {
+      color: #38BDF8 !important;
+    }
+    .nav-icon {
+      width: 20px;
+      text-align: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .nav-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .admin-sidebar.collapsed .nav-text {
+      display: none;
+    }
+    .nav-badge-ai {
+      background: linear-gradient(135deg, #F59E0B, #D97706);
+      color: #FFFFFF;
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .admin-sidebar.collapsed .nav-badge-ai {
+      display: none;
+    }
+    .sidebar-footer {
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.15);
+      font-size: 11px;
+      color: #94A3B8;
+    }
+    .admin-sidebar.collapsed .sidebar-footer {
+      display: none;
+    }
+
+    /* MAIN CONTAINER */
+    .admin-main-wrapper {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      transition: margin-left 0.25s ease;
+      background: var(--bg-body);
+    }
+    .admin-sidebar.collapsed ~ .admin-main-wrapper {
+      margin-left: 76px;
+    }
+
+    /* TOP HEADER */
+    .admin-top-header {
+      height: var(--header-height);
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      box-shadow: 0 1px 4px rgba(0, 40, 85, 0.04);
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .btn-sidebar-toggle {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .btn-sidebar-toggle:hover {
+      background: #F1F5F9;
+      color: var(--tdmu-navy);
+      border-color: #CBD5E1;
+    }
+    .header-breadcrumb {
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+      letter-spacing: 0.2px;
+    }
+    .user-profile-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px 4px 4px;
+      background: #F8FAFC;
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+    }
+    .user-avatar-circle {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--tdmu-navy);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+    .btn-header-action {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-header-action:hover {
+      background: #F1F5F9;
+      color: var(--tdmu-navy);
+    }
+    .btn-header-website {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #FFFFFF;
+      border: 1px solid #BAE6FD;
+      color: #0284C7;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-header-website:hover {
+      background: #0284C7;
+      color: #FFFFFF;
+    }
+
+    /* ADMIN CONTENT BODY */
+    .admin-main {
+      flex: 1;
+      padding: 24px;
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* CARD ENHANCEMENTS */
+    .card-tdmu {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 40, 85, 0.04);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .card-tdmu-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #FAFAFA;
+    }
+    .card-tdmu-body {
+      padding: 20px;
+    }
+
+    /* STUDIO ENHANCEMENTS */
+    .studio-hero-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--tdmu-navy);
+      margin: 0 0 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .studio-hero-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+    .package-tab-btn {
+      border-radius: 8px 8px 0 0;
+      padding: 12px 18px;
+      font-weight: 700;
+      font-size: 13px;
+      border: none;
+      background: transparent;
+      color: #64748B;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .package-tab-btn:hover {
+      color: var(--tdmu-navy);
+      background: #F1F5F9;
+    }
+    .package-tab-btn.active {
+      background: #FFFFFF;
+      color: #0284C7;
+      border-bottom: 3px solid #0284C7;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.03);
+    }
+    .btn-word-tool {
+      background: #FFFFFF;
+      border: 1px solid #CBD5E1;
+      border-radius: 5px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #334155;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .btn-word-tool:hover {
+      background: #F1F5F9;
+      color: #0284C7;
+      border-color: #0284C7;
+    }
   </style>
 </head>
 <body>
 
-  <div class="admin-layout">
-    <!-- TOP HORIZONTAL NAVIGATION HEADER -->
-    <header class="admin-topbar">
-      <!-- Row 1: Brand Logo + User Switcher + Status Badges + Global Actions -->
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 8px; margin-bottom: 8px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <img src="images/logo_cong_doan.png" alt="Logo Công Đoàn" style="height: 42px; width: auto; object-fit: contain;">
-          <img src="images/tdmu_logo.png" alt="Logo TDMU" style="height: 38px;">
-          <div>
-            <h3 style="color: white; font-size: 15.5px; font-weight: 800; margin: 0; line-height: 1.2;">QUẢN LÝ WEBSITE TRUYỀN THÔNG CÔNG ĐOÀN TDMU</h3>
-            <span style="font-size: 11.5px; color: #F1C40F; font-weight: 700;">HỆ THỐNG BIÊN TẬP &amp; PHÂN PHỐI ĐA KÊNH THÔNG MINH</span>
-          </div>
+  <div class="admin-app-layout">
+    <!-- ASIDE: LEFT SIDEBAR -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <!-- Brand Logo Header -->
+      <div class="sidebar-header">
+        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+          <img src="images/logo_cong_doan.png" alt="Logo CĐ" style="height: 38px; width: auto; object-fit: contain;">
+          <img src="images/tdmu_logo.png" alt="Logo TDMU" style="height: 34px; width: auto; object-fit: contain;">
         </div>
-
-        <!-- Status Badges & Quick Tools -->
-        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-          <span id="global_ai_status_badge" class="badge" style="background: #10B981; color: white; font-size: 11px; padding: 4px 8px; border-radius: 4px;">
-            <i class="fa-solid fa-circle-check"></i> Gemini AI Active
-          </span>
-          <span class="badge" style="font-size: 11px; background: #0284C7; color: white; padding: 4px 8px; border-radius: 4px;">
-            <i class="fa-solid fa-database"></i> SQLite 15 Bảng Active
-          </span>
-
-          <!-- User Role Switcher -->
-          <div style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 6px;">
-            <span style="font-size: 11px; color: #CBD5E1;">Cán bộ:</span>
-            <span style="font-weight: 700; color: white; font-size: 11.5px;" id="current_user_name">TS. Lê Thị Kim Út</span>
-            <select id="role_switcher" style="background: #002543; color: #F1C40F; border: 1px solid #D97706; padding: 2px 4px; border-radius: 4px; font-size: 11px; font-weight: 600;" onchange="switchUserRole(this.value)">
-              <option value="admin">Quản Trị Viên (Admin)</option>
-              <option value="editor">Biên Tập Viên (Editor)</option>
-              <option value="contributor">Cộng Tác Viên (Contributor)</option>
-            </select>
-          </div>
-
-          <button class="btn btn-sm" style="background: #D97706; color: white; font-size: 11px; font-weight: 700; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;" onclick="openSystemSettingsModal()">
-            <i class="fa-solid fa-gear"></i> Cấu Hình AI
-          </button>
-          <a href="index.html" class="btn btn-sm" style="color: white; border: 1px solid rgba(255,255,255,0.4); text-decoration: none; font-size: 11px; padding: 4px 10px; border-radius: 4px;">
-            <i class="fa-solid fa-globe"></i> Trang Chủ
-          </a>
+        <div class="sidebar-brand-text">
+          <span class="brand-title">CÔNG ĐOÀN TDMU</span>
+          <span class="brand-sub">HỆ THỐNG TRUYỀN THÔNG AI</span>
         </div>
       </div>
 
-      <!-- Row 2: Horizontal Navigation Bar (Top Menu Items) -->
-      <nav style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
-        <a href="#dashboard" class="top-nav-link" id="menu_dashboard" onclick="showAdminTab('dashboard')">
-          <i class="fa-solid fa-gauge-high" style="color: #38BDF8;"></i> 1. Bảng Điều Hành
+      <!-- Sidebar Navigation Menu -->
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">TỔNG QUAN</div>
+        <a href="#dashboard" class="sidebar-nav-link" id="menu_dashboard" onclick="showAdminTab('dashboard')">
+          <i class="fa-solid fa-gauge-high nav-icon" style="color: #38BDF8;"></i>
+          <span class="nav-text">Bảng Điều Hành</span>
         </a>
-        <a href="#articles" class="top-nav-link" id="menu_articles" onclick="showAdminTab('articles', 'all')">
-          <i class="fa-solid fa-layer-group" style="color: #60A5FA;"></i> 2. Quản Lý Tin Tức
+
+        <div class="nav-section-label">TRUYỀN THÔNG &amp; AI</div>
+        <a href="#articles" class="sidebar-nav-link" id="menu_articles" onclick="showAdminTab('articles', 'all')">
+          <i class="fa-solid fa-newspaper nav-icon" style="color: #60A5FA;"></i>
+          <span class="nav-text">Quản Lý Tin Tức</span>
         </a>
-        <a href="#ai-creator" class="top-nav-link active" id="menu_ai-creator" onclick="showAdminTab('ai-creator')" style="color: #FEF08A; background: rgba(245,158,11,0.25); border: 1px solid #F59E0B;">
-          <i class="fa-solid fa-wand-magic-sparkles" style="color: #F59E0B;"></i> 3. AI Content Studio
+        <a href="#ai-creator" class="sidebar-nav-link active" id="menu_ai-creator" onclick="showAdminTab('ai-creator')">
+          <i class="fa-solid fa-wand-magic-sparkles nav-icon" style="color: #F59E0B;"></i>
+          <span class="nav-text">Xưởng Biên Tập AI</span>
+          <span class="nav-badge-ai">PRO</span>
         </a>
-        <a href="#reports" class="top-nav-link" id="menu_reports" onclick="showAdminTab('reports')">
-          <i class="fa-solid fa-file-invoice" style="color: #FBBF24;"></i> 4. Báo Cáo Tháng 16 Tổ
+        <a href="#schedule" class="sidebar-nav-link" id="menu_schedule" onclick="showAdminTab('schedule')">
+          <i class="fa-solid fa-calendar-check nav-icon" style="color: #C084FC;"></i>
+          <span class="nav-text">Lịch Xuất Bản</span>
         </a>
-        <a href="#documents" class="top-nav-link" id="menu_documents" onclick="showAdminTab('documents')">
-          <i class="fa-solid fa-folder-open" style="color: #34D399;"></i> 5. Kho Văn Bản
+        <a href="#documents" class="sidebar-nav-link" id="menu_documents" onclick="showAdminTab('documents')">
+          <i class="fa-solid fa-folder-open nav-icon" style="color: #34D399;"></i>
+          <span class="nav-text">Kho Văn Bản</span>
         </a>
-        <a href="#schedule" class="top-nav-link" id="menu_schedule" onclick="showAdminTab('schedule')">
-          <i class="fa-solid fa-clock" style="color: #C084FC;"></i> 6. Lịch Xuất Bản
+
+        <div class="nav-section-label">NGHIỆP VỤ CÔNG ĐOÀN</div>
+        <a href="#reports" class="sidebar-nav-link" id="menu_reports" onclick="showAdminTab('reports')">
+          <i class="fa-solid fa-file-invoice nav-icon" style="color: #FBBF24;"></i>
+          <span class="nav-text">Báo Cáo 16 Tổ CĐ</span>
         </a>
-        <a href="#users" class="top-nav-link" id="menu_users" onclick="showAdminTab('users')">
-          <i class="fa-solid fa-users-gear" style="color: #F87171;"></i> 7. Cán Bộ (3 Role)
+        <a href="#users" class="sidebar-nav-link" id="menu_users" onclick="showAdminTab('users')">
+          <i class="fa-solid fa-users-gear nav-icon" style="color: #F87171;"></i>
+          <span class="nav-text">Cán Bộ &amp; Phân Quyền</span>
         </a>
-        <a href="#audits" class="top-nav-link" id="menu_audits" onclick="showAdminTab('audits')">
-          <i class="fa-solid fa-clock-rotate-left" style="color: #A78BFA;"></i> 8. Nhật Ký Tác Nghiệp
+        <a href="#audits" class="sidebar-nav-link" id="menu_audits" onclick="showAdminTab('audits')">
+          <i class="fa-solid fa-clock-rotate-left nav-icon" style="color: #A78BFA;"></i>
+          <span class="nav-text">Nhật Ký Tác Nghiệp</span>
         </a>
       </nav>
-    </header>
 
-    <!-- ADMIN MAIN CONTENT AREA -->
-    <main class="admin-main">
+      <!-- Sidebar Footer -->
+      <div class="sidebar-footer">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 10.5px; color: #94A3B8;">Phiên bản v2.5 Enterprise</span>
+          <span style="background: rgba(16, 185, 129, 0.15); color: #34D399; font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">ONLINE</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT WRAPPER -->
+    <div class="admin-main-wrapper">
+      <!-- TOP HEADER -->
+      <header class="admin-top-header">
+        <div class="header-left">
+          <button type="button" class="btn-sidebar-toggle" onclick="toggleSidebarCollapse()" title="Thu gọn / Mở rộng Menu">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div class="header-breadcrumb">
+            <span><i class="fa-solid fa-house-chimney me-1 text-muted"></i> Trang Quản Trị</span>
+            <span class="text-muted">/</span>
+            <strong id="current_breadcrumb_title" style="color: var(--tdmu-navy);">Xưởng Biên Tập Đa Kênh Tích Hợp AI</strong>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- Database Live Badge -->
+          <span class="header-status-badge" style="background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0;">
+            <i class="fa-solid fa-database text-success"></i> MSSQL Server (15 Bảng 3NF)
+          </span>
+
+          <!-- AI Engine Live Badge -->
+          <span id="global_ai_status_badge" class="header-status-badge" style="background: #EFF6FF; color: #1E40AF; border: 1px solid #BFDBFE;">
+            <i class="fa-solid fa-bolt text-primary"></i> Gemini 2.5 &amp; Groq Active
+          </span>
+
+          <!-- User Role Switcher -->
+          <div class="user-profile-badge">
+            <div class="user-avatar-circle">KU</div>
+            <div style="line-height: 1.2;">
+              <div style="font-size: 12px; font-weight: 700; color: #1E293B;" id="current_user_name">TS. Lê Thị Kim Út</div>
+              <select id="role_switcher" onchange="switchUserRole(this.value)" style="border: none; background: transparent; font-size: 11px; color: #64748B; font-weight: 600; outline: none; cursor: pointer; padding: 0;">
+                <option value="admin">Quản Trị Viên (Admin)</option>
+                <option value="editor">Biên Tập Viên (Editor)</option>
+                <option value="contributor">Cộng Tác Viên (Contributor)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Settings Button -->
+          <button type="button" class="btn-header-action" onclick="openSystemSettingsModal()" title="Cấu hình API Key AI">
+            <i class="fa-solid fa-gear"></i>
+          </button>
+
+          <!-- View Website Link -->
+          <a href="index.html" target="_blank" class="btn-header-website" title="Xem Cổng thông tin trang chủ">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> Xem Website
+          </a>
+        </div>
+      </header>
+
+      <!-- ADMIN MAIN CONTENT AREA -->
+      <main class="admin-main">
       
       <!-- TAB 1: BẢNG ĐIỀU HÀNH -->
       <section id="tab_dashboard_content" style="display: none;">
@@ -228,93 +655,97 @@
 
       <!-- TAB 3: PHÒNG BIÊN TẬP ĐA KÊNH TRỌN GÓI (XƯỞNG BIÊN TẬP AI LATEST) -->
       <section id="tab_ai-creator_content" style="display: block;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
           <div>
-            <h1 style="font-size: 24px; font-weight: 800; color: #003865; margin: 0 0 4px;">
-              <i class="fa-solid fa-wand-magic-sparkles" style="color: #D97706;"></i> Phòng Biên Tập Đa Kênh (Xưởng Biên Tập AI)
+            <h1 class="studio-hero-title">
+              <i class="fa-solid fa-wand-magic-sparkles" style="color: #D97706;"></i> Xưởng Biên Tập Đa Kênh Tích Hợp AI
             </h1>
-            <p style="font-size: 13px; color: #64748B; margin: 0;">Sản xuất trọn gói nội dung truyền thông đa kênh dựa trên tư liệu nguồn thực tế (Căn Cứ &amp; Tư Liệu Thực Tế)</p>
+            <p class="studio-hero-sub">Sản xuất trọn gói nội dung truyền thông chuẩn báo chí từ tư liệu nguồn thực tế (Website, Fanpage, Zalo, Video, Infographic)</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; background: #FFFFFF; border: 1px solid #BAE6FD; padding: 6px 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <span style="font-size: 12px; font-weight: 700; color: #0369A1;"><i class="fa-solid fa-microchip me-1"></i> Động cơ AI:</span>
+            <select id="ai_engine_selector" onchange="localStorage.setItem('ai_engine_preference', this.value)" style="border: none; background: transparent; font-size: 12px; font-weight: 700; color: #0284C7; outline: none; cursor: pointer;">
+              <option value="auto">⚡ Tự Động (Gemini ↔ Groq)</option>
+              <option value="gemini">🧠 Google Gemini 2.5</option>
+              <option value="groq">⚡ Groq Llama 3.3</option>
+            </select>
           </div>
         </div>
 
         <div id="studio_main_workspace">
           <!-- 1. BỘ ĐIỀU KHIỂN HỒ SƠ & TƯ LIỆU NGUỒN -->
-          <div style="background: white; border: 1px solid #BAE6FD; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(2,132,199,0.06);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px dashed #E2E8F0; padding-bottom: 12px;">
+          <div style="background: white; border: 1px solid #BAE6FD; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(2,132,199,0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #F1F5F9; padding-bottom: 12px;">
               <div>
-                <h3 style="font-size: 16px; font-weight: 800; color: #0284C7; margin: 0; display: flex; align-items: center; gap: 8px;">
-                  <i class="fa-solid fa-brain" style="color: #F59E0B;"></i> XƯỞNG BIÊN TẬP ĐA KÊNH DỰA TRÊN TƯ LIỆU NGUỒN THỰC TẾ
+                <h3 style="font-size: 15px; font-weight: 800; color: var(--tdmu-navy); margin: 0; display: flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-folder-tree" style="color: #0284C7;"></i> BƯỚC 1: TIẾP NHẬN TƯ LIỆU NGUỒN &amp; THIẾT LẬP KÊNH XUẤT BẢN
                 </h3>
-                <p style="font-size: 12.5px; color: #64748B; margin: 4px 0 0 0;">Trí tuệ nhân tạo đọc tài liệu đã chọn làm căn cứ để sản xuất trọn gói nội dung (Trang Web, Fanpage, Zalo, Video, Ảnh)</p>
+                <p style="font-size: 12px; color: #64748B; margin: 3px 0 0 0;">Trí tuệ nhân tạo đọc hiểu tài liệu thực tế làm cơ sở dữ liệu chính xác để biên soạn bài viết</p>
               </div>
-
-              <!-- AI Engine Selector -->
-              <select id="ai_engine_selector" onchange="localStorage.setItem('ai_engine_preference', this.value)" style="background: #F8FAFC; border: 1px solid #BAE6FD; border-radius: 6px; font-size: 11px; font-weight: 700; color: #0369A1; padding: 6px 10px; outline: none; cursor: pointer;">
-                <option value="auto">⚡ Tự Động (Gemini ↔ Groq)</option>
-                <option value="gemini">🧠 Google Gemini 2.5</option>
-                <option value="groq">⚡ Groq Llama 3.3</option>
-              </select>
             </div>
 
-            <!-- 3 BƯỚC NẠP DỮ LIỆU -->
-            <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; margin-bottom: 16px;">
+            <!-- 2 CỘT NẠP TƯ LIỆU VÀ KÊNH XUẤT BẢN -->
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 18px; margin-bottom: 18px;">
               <!-- CỘT 1: NẠP FILE TÀI LIỆU & ẢNH -->
-              <div style="background: #F8FAFC; padding: 16px; border-radius: 8px; border: 1px solid #E2E8F0;">
-                <label style="font-size: 11.5px; font-weight: 800; color: #0284C7; text-transform: uppercase; margin-bottom: 8px; display: block;">
-                  <i class="fa-solid fa-file-arrow-up"></i> ① Nạp File Tài Liệu (PDF / Word / Bài Giảng) &amp; Ảnh / Video Của Cán Bộ:
+              <div style="background: #F8FAFC; padding: 18px; border-radius: 10px; border: 1px solid #E2E8F0;">
+                <label style="font-size: 12px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                  <i class="fa-solid fa-file-pen text-primary"></i> 1. Nội Dung Thô / Tư Liệu Nguồn Của Sự Kiện:
                 </label>
-                <textarea id="studio_brief_text" rows="3" placeholder="📌 Dán nội dung thô từ file bài báo, báo cáo hội thảo NCKH, hoặc ghi chú sự kiện của Giảng viên/Cán bộ tại đây..." style="width: 100%; padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; margin-bottom: 10px; outline: none; box-sizing: border-box;"></textarea>
+                <textarea id="studio_brief_text" rows="3" placeholder="Nhập hoặc dán nội dung sự kiện, biên bản hội nghị, thông tin hoạt động công đoàn tại đây..." style="width: 100%; padding: 12px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 13px; margin-bottom: 12px; outline: none; box-sizing: border-box; resize: vertical; line-height: 1.5; font-family: inherit;"></textarea>
                 <div style="display: flex; gap: 10px; align-items: center;">
-                  <button class="btn btn-sm" onclick="openUploadAssetModal('studio')" style="flex: 1; border: 1px dashed #0284C7; font-weight: 700; color: #0284C7; background: #F0F9FF; padding: 8px; border-radius: 6px; cursor: pointer;">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> Tải Lên File Tài Liệu (PDF / Word / Ảnh Sự Kiện / Video)
+                  <button type="button" class="btn btn-sm" onclick="openUploadAssetModal('studio')" style="flex: 1; border: 1.5px dashed #0284C7; font-weight: 700; color: #0284C7; background: #F0F9FF; padding: 10px 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Tải Lên Hồ Sơ Đính Kèm (PDF, Word, Ảnh Sự Kiện, Video)
                   </button>
-                  <span style="font-size: 11px; color: #0284C7; font-weight: 600; white-space: nowrap;" id="studio_selected_assets_count">Đã đính kèm: 0 file</span>
+                  <span style="font-size: 11.5px; color: #0284C7; font-weight: 700; background: #E0F2FE; padding: 6px 10px; border-radius: 6px; white-space: nowrap;" id="studio_selected_assets_count">Đã đính kèm: 0 file</span>
                 </div>
                 <div id="studio_assets_checklist" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;"></div>
               </div>
 
               <!-- CỘT 2: CHỌN ĐẦU RA ĐA KÊNH -->
-              <div style="background: #F8FAFC; padding: 14px; border-radius: 8px; border: 1px solid #E2E8F0;">
-                <label style="font-size: 11.5px; font-weight: 800; color: #475569; text-transform: uppercase; display: block; margin-bottom: 8px;">
-                  ② Thể Loại & ③ Kênh Xuất Bản:
+              <div style="background: #F8FAFC; padding: 18px; border-radius: 10px; border: 1px solid #E2E8F0;">
+                <label style="font-size: 12px; font-weight: 800; color: #002855; text-transform: uppercase; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                  <i class="fa-solid fa-sliders text-primary"></i> 2. Thể Loại &amp; Kênh Phát Hành:
                 </label>
-                <div style="margin-bottom: 10px;">
-                  <select id="studio_genre_selector" style="width: 100%; background: white; border: 1px solid #BAE6FD; border-radius: 6px; font-size: 12px; font-weight: 700; color: #0369A1; padding: 6px 8px; outline: none; cursor: pointer;">
-                    <option value="tin_hoat_dong">📰 Tin Hoạt Động & Sự Kiện Phong Trào</option>
-                    <option value="guong_sang">🌟 Gương Sáng Đoàn Viên & Nhà Giáo</option>
+                <div style="margin-bottom: 12px;">
+                  <select id="studio_genre_selector" style="width: 100%; background: white; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 12.5px; font-weight: 700; color: #002855; padding: 8px 12px; outline: none; cursor: pointer;">
+                    <option value="tin_hoat_dong">📰 Tin Hoạt Động &amp; Sự Kiện Phong Trào</option>
+                    <option value="guong_sang">🌟 Gương Sáng Đoàn Viên &amp; Nhà Giáo</option>
                     <option value="thong_bao">📋 Thông Báo - Chỉ Đạo Của BTV</option>
-                    <option value="phuc_loi">💖 Chăm Lo Đời Sống & Phúc Lợi Đoàn Viên</option>
+                    <option value="phuc_loi">💖 Chăm Lo Đời Sống &amp; Phúc Lợi Đoàn Viên</option>
                     <option value="khen_thuong">🏆 Khen Thưởng - Thi Đua Dạy Tốt</option>
                   </select>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12.5px; font-weight: 600; color: #334155;">
-                  <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                    <input type="checkbox" id="chk_chan_web" checked> <i class="fa-solid fa-globe text-primary"></i> Báo Web (Sapo 5W1H)
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; font-weight: 600; color: #334155;">
+                  <label style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: white; border: 1px solid #CBD5E1; border-radius: 8px; cursor: pointer; transition: border-color 0.2s;">
+                    <input type="checkbox" id="chk_chan_web" checked> <i class="fa-solid fa-globe text-primary"></i> Báo Web
                   </label>
-                  <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                    <input type="checkbox" id="chk_chan_fb" checked> <i class="fa-brands fa-facebook text-info"></i> Fanpage
+                  <label style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: white; border: 1px solid #CBD5E1; border-radius: 8px; cursor: pointer; transition: border-color 0.2s;">
+                    <input type="checkbox" id="chk_chan_fb" checked> <i class="fa-brands fa-facebook" style="color: #1877F2;"></i> Fanpage
                   </label>
-                  <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                    <input type="checkbox" id="chk_chan_zalo" checked> <i class="fa-solid fa-comment-dots text-primary"></i> Zalo OA
+                  <label style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: white; border: 1px solid #CBD5E1; border-radius: 8px; cursor: pointer; transition: border-color 0.2s;">
+                    <input type="checkbox" id="chk_chan_zalo" checked> <i class="fa-solid fa-comment-dots" style="color: #0068FF;"></i> Zalo OA
                   </label>
-                  <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                    <input type="checkbox" id="chk_chan_video" checked> <i class="fa-solid fa-clapperboard text-purple"></i> Video 60s
+                  <label style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: white; border: 1px solid #CBD5E1; border-radius: 8px; cursor: pointer; transition: border-color 0.2s;">
+                    <input type="checkbox" id="chk_chan_video" checked> <i class="fa-solid fa-clapperboard" style="color: #8B5CF6;"></i> Video 60s
                   </label>
-                  <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                    <input type="checkbox" id="chk_chan_infographic" checked> <i class="fa-solid fa-chart-pie text-success"></i> Infographic
+                  <label style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: white; border: 1px solid #CBD5E1; border-radius: 8px; cursor: pointer; transition: border-color 0.2s;">
+                    <input type="checkbox" id="chk_chan_infographic" checked> <i class="fa-solid fa-chart-pie" style="color: #10B981;"></i> Infographic
                   </label>
-                  <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                    <input type="checkbox" id="chk_auto_gen_image" checked> <i class="fa-solid fa-wand-magic-sparkles text-warning"></i> Ảnh AI (Flux)
+                  <label style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: white; border: 1px solid #CBD5E1; border-radius: 8px; cursor: pointer; transition: border-color 0.2s;">
+                    <input type="checkbox" id="chk_auto_gen_image" checked> <i class="fa-solid fa-wand-magic-sparkles" style="color: #F59E0B;"></i> Ảnh AI Flux
                   </label>
                 </div>
               </div>
             </div>
 
-            <!-- GHI CHÚ BỔ SUNG & NÚT TẠO TRỌN GÓI -->
-            <div style="display: flex; gap: 12px; align-items: center;">
-              <input type="text" id="studio_custom_instructions" placeholder="💡 Prompt chỉ đạo của Giảng viên: VD: Trích xuất 3 điểm NCKH mới nhất từ file PDF đính kèm, dùng 2 ảnh hội thảo để viết bài báo 800 chữ..." style="flex: 1; padding: 10px 14px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 13.5px; outline: none;">
-              <button type="button" class="btn btn-primary" onclick="generateGroundedContentPackage()" id="btn_generate_package" style="padding: 10px 22px; font-weight: 800; font-size: 13.5px; background: linear-gradient(135deg, #0284C7, #0369A1); color: white; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap;">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> ✨ AI TỰ ĐỘNG CHUYỂN THỂ THÀNH BỘ TRUYỀN THÔNG 5 KÊNH
+            <!-- CHỈ ĐẠO CỦA CÁN BỘ & NÚT CHUYỂN THỂ ĐA KÊNH -->
+            <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+              <div style="flex: 1; position: relative; min-width: 280px;">
+                <i class="fa-solid fa-lightbulb" style="position: absolute; left: 14px; top: 13px; color: #D97706;"></i>
+                <input type="text" id="studio_custom_instructions" placeholder="Chỉ đạo biên tập của Cán bộ (Tùy chọn): VD: Nhấn mạnh 3 kết quả nổi bật, dùng văn phong trang trọng..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 13px; outline: none; box-sizing: border-box; font-family: inherit;">
+              </div>
+              <button type="button" class="btn btn-primary" onclick="generateGroundedContentPackage()" id="btn_generate_package" style="padding: 11px 24px; font-weight: 800; font-size: 13.5px; background: linear-gradient(135deg, #002855 0%, #0284C7 100%); color: white; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3); display: flex; align-items: center; gap: 8px; transition: transform 0.15s ease;">
+                <i class="fa-solid fa-wand-magic-sparkles text-warning"></i> Chuyển Thể Bộ Truyền Thông 5 Kênh
               </button>
             </div>
 
@@ -849,6 +1280,7 @@
         </div>
       </section>
     </main>
+    </div>
   </div>
 
   <!-- MODALS -->

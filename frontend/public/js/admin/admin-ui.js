@@ -76,15 +76,31 @@ function switchUserRole(role) {
   currentUserRole = role;
   const nameEl = document.getElementById('current_user_name');
   if (nameEl) {
-    if (role === 'admin') nameEl.innerText = "Thầy Nguyễn Văn A (Admin)";
-    else if (role === 'editor') nameEl.innerText = "Cô Trần Thị B (Editor)";
-    else nameEl.innerText = "Thầy Lê Văn C (Contributor)";
+    if (role === 'admin') nameEl.innerText = "TS. Lê Thị Kim Út";
+    else if (role === 'editor') nameEl.innerText = "Đ/c Trần Thị B";
+    else nameEl.innerText = "Đ/c Nguyễn Văn C";
   }
   loadAdminArticles();
 }
 
 function showAdminTab(tabName, subFilter = null) {
   const tabs = ['dashboard', 'articles', 'ai-creator', 'reports', 'documents', 'schedule', 'users', 'audits'];
+  const titles = {
+    'dashboard': 'Bảng Điều Hành & Thống Kê',
+    'articles': 'Quản Lý Tin Tức & Bài Viết',
+    'ai-creator': 'Xưởng Biên Tập Đa Kênh Tích Hợp AI',
+    'reports': 'Báo Cáo Định Kỳ 16 Tổ Công Đoàn',
+    'documents': 'Kho Văn Bản Chỉ Đạo & Điều Hành',
+    'schedule': 'Lịch Xuất Bản Đa Kênh',
+    'users': 'Quản Lý Cán Bộ & Phân Quyền (3 Roles)',
+    'audits': 'Nhật Ký Tác Nghiệp Hệ Thống'
+  };
+
+  const breadcrumbEl = document.getElementById('current_breadcrumb_title');
+  if (breadcrumbEl && titles[tabName]) {
+    breadcrumbEl.innerText = titles[tabName];
+  }
+
   tabs.forEach(t => {
     const elContent = document.getElementById(`tab_${t}_content`);
     const elMenu = document.getElementById(`menu_${t}`);
@@ -93,12 +109,8 @@ function showAdminTab(tabName, subFilter = null) {
     if (elMenu) {
       if (t === tabName) {
         elMenu.classList.add('active');
-        elMenu.style.background = '#0284C7';
-        elMenu.style.color = '#FFFFFF';
       } else {
         elMenu.classList.remove('active');
-        elMenu.style.background = 'transparent';
-        elMenu.style.color = '#E2E8F0';
       }
     }
   });
@@ -112,7 +124,12 @@ function showAdminTab(tabName, subFilter = null) {
   if (tabName === 'audits') loadAuditLogs();
 }
 
-// 1. User Management Page
+function toggleSidebarCollapse() {
+  const sidebar = document.getElementById('adminSidebar');
+  if (sidebar) {
+    sidebar.classList.toggle('collapsed');
+  }
+}
 
 // ==================== TOPBAR & STUDIO SYNC FUNCTIONS ====================
 function openSystemSettingsModal() {
@@ -132,11 +149,9 @@ function saveSystemSettings() {
   if (groq) localStorage.setItem('groq_api_key', groq);
   closeSystemSettingsModal();
   updateAiStatusBadge();
-  alert('✅ Đã lưu cấu hình AI Key vào hệ thống thành công!');
+  alert('Đã lưu cấu hình AI Key vào hệ thống thành công!');
 }
 
-
-// =========================================================================
 let currentPendingDiff = null;
 
 function escapeHtml(str) {
