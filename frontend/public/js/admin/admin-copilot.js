@@ -206,7 +206,7 @@ function approveCopilotDiff() {
   
   if (globalCopilotSelectionRange && currentAiProposal) {
     const editor = document.getElementById('native_rich_editor');
-    saveEditorState("Trước khi Duyệt Copilot");
+    saveEditorState("Trước khi phê duyệt bản thảo");
     
     try {
       const sel = window.getSelection();
@@ -277,7 +277,7 @@ function applyManusEdit(msgId) {
   }
 
   // 2. LƯU TRẠNG THÁI SAU KHI COPILOT SỬA VÀO BỘ NHỚ LỊCH SỬ
-  saveEditorState("Sau khi Copilot áp dụng sửa");
+  saveEditorState("Sau khi áp dụng chỉnh sửa");
   
   const block = document.getElementById(`edit_block_${msgId}`);
   if (block) {
@@ -286,7 +286,7 @@ function applyManusEdit(msgId) {
         <span class="copilot-applied-badge" style="color: #047857; font-size: 11.5px; font-weight: 700;">
           <i class="fa-solid fa-check-circle me-1"></i> Đã áp dụng vào bài
         </span>
-        <button type="button" class="btn btn-sm" onclick="undoEditor()" style="background: white; border: 1px solid #CBD5E1; color: #92400E; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" title="Hoàn tác lùi về trạng thái trước khi AI chỉnh sửa">
+        <button type="button" class="btn btn-sm" onclick="undoEditor()" style="background: white; border: 1px solid #CBD5E1; color: #92400E; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" title="Hoàn tác lùi về trạng thái trước khi chỉnh sửa">
           <i class="fa-solid fa-rotate-left me-1"></i> Hoàn Tác (Lùi Lại)
         </button>
       </div>
@@ -312,5 +312,5 @@ function clearCopilotChat() {
 }
 
 /* =========================================================================
-   TDMU JOURNALISM AI SUITE - CLIENT CONTROLS & BUBBLE TOOLBAR
+   TDMU MULTI-CHANNEL JOURNALISM SUITE - CLIENT CONTROLS & BUBBLE TOOLBAR
    ========================================================================= */

@@ -55,7 +55,7 @@ const TinTuc = () => {
                   <!-- AI 30s Takeaways -->
                   <div class="ai-takeaway-box">
                     <div class="ai-takeaway-title">
-                      <i class="fa-solid fa-bolt text-warning"></i> AI 30s Key Takeaways
+                      <i class="fa-solid fa-bolt text-warning"></i> Điểm Nhấn Bản Tin (30 Giây)
                     </div>
                     <ul class="ai-takeaway-list" id="hero_takeaways">
                       <li>Hưởng ứng kỷ niệm 25 năm Ngày Gia đình Việt Nam (28/6/2001 – 28/6/2026).</li>

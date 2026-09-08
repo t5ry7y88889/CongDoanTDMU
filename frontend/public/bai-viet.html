@@ -153,7 +153,7 @@
             <i class="fa-solid fa-phone me-1 text-warning"></i> Hotline: (0274) 3.815.184
           </span>
           <a href="admin.html" class="btn-portal-access">
-            <i class="fa-solid fa-wand-magic-sparkles me-1 text-warning"></i> Quản lý website truyền thông công đoàn TDMU
+            <i class="fa-solid fa-sliders me-1 text-warning"></i> Quản lý website truyền thông công đoàn TDMU
           </a>
         </div>
       </div>
@@ -238,8 +238,8 @@
                   <i class="fa-solid fa-play" id="audioArtIcon"></i>
                 </button>
                 <div>
-                  <div class="fw-bold text-dark" id="audioArtTitle">Nghe Bản Tin Bằng Giọng Đọc AI</div>
-                  <div class="text-muted small">Phát thanh tự động tiếng Việt chuẩn truyền cảm</div>
+                  <div class="fw-bold text-dark" id="audioArtTitle">Phát Thanh Bản Tin Trực Tuyến</div>
+                  <div class="text-muted small">Phát thanh tự động tiếng Việt chuẩn phát thanh viên</div>
                 </div>
               </div>
               <span class="badge bg-white text-primary border p-2"><i class="fa-solid fa-volume-high me-1"></i> Trực tuyến</span>
@@ -247,7 +247,7 @@
 
             <!-- AI 30s KEY TAKEAWAYS -->
             <div class="ai-takeaways-card">
-              <h6><i class="fa-solid fa-wand-magic-sparkles me-2 text-success"></i> AI 30s Key Takeaways (Tóm tắt nhanh)</h6>
+              <h6><i class="fa-solid fa-wand-magic-sparkles me-2 text-success"></i> Điểm Nhấn Bản Tin (Tóm tắt cốt lõi)</h6>
               <ul class="mb-0 ps-3 text-secondary small" style="line-height: 1.6;" id="artTakeaways">
                 <li>Hưởng ứng kỷ niệm 25 năm Ngày Gia đình Việt Nam (28/6/2001 – 28/6/2026).</li>
                 <li>PGS.TS. Lê Tuấn Anh (Bí thư Đảng ủy) và TS. Lê Thị Kim Út (Chủ tịch CĐ) chủ trì tọa đàm.</li>
@@ -403,7 +403,7 @@
           <p class="mb-0"><i class="fa-solid fa-globe me-2 text-warning"></i> Website: congdoan.tdmu.edu.vn</p>
         </div>
         <div class="col-md-5 text-md-end text-start">
-          <h6 class="fw-bold text-warning mb-2">HỆ THỐNG TRUYỀN THÔNG TÍCH HỢP AI</h6>
+          <h6 class="fw-bold text-warning mb-2">HỆ THỐNG TRUYỀN THÔNG ĐA KÊNH</h6>
           <p class="mb-1">Đề tài NCKH Sinh viên / Đồ án Cơ sở ngành - Viện Công nghệ số</p>
           <p class="mb-0 text-light text-opacity-75">Nhóm 2: Nguyễn Bình Dương - Trần Hồng Thanh - Phạm Anh Tuấn</p>
         </div>
@@ -518,7 +518,7 @@
           window.speechSynthesis.cancel();
           isFullSpeaking = false;
           document.getElementById('audioArtIcon').className = 'fa-solid fa-play';
-          document.getElementById('audioArtTitle').innerText = 'Nghe Bản Tin Bằng Giọng Đọc AI';
+          document.getElementById('audioArtTitle').innerText = 'Phát Thanh Bản Tin Trực Tuyến';
         } else {
           const textToRead = document.getElementById('artTitle').innerText + '. ' + (currentArticle ? (currentArticle.summary || currentArticle.TomTat) : '');
           const utterance = new SpeechSynthesisUtterance(textToRead);

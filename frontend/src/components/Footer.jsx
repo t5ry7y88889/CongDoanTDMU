@@ -12,7 +12,7 @@ const Footer = () => {
             <p className="mb-0"><i className="fa-solid fa-globe me-2 text-warning"></i> Website: congdoan.tdmu.edu.vn</p>
           </div>
           <div className="col-md-5 text-md-end text-start">
-            <h6 className="fw-bold text-warning mb-2">HỆ THỐNG TRUYỀN THÔNG TÍCH HỢP AI</h6>
+            <h6 className="fw-bold text-warning mb-2">HỆ THỐNG TRUYỀN THÔNG ĐA KÊNH</h6>
             <p className="mb-1">Đề tài NCKH Sinh viên / Đồ án Cơ sở ngành - Viện Công nghệ số</p>
             <p className="mb-0 text-light text-opacity-75">Nhóm 2: Nguyễn Bình Dương - Trần Hồng Thanh - Phạm Anh Tuấn</p>
           </div>

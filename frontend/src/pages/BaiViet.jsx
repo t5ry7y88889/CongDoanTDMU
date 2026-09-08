@@ -43,8 +43,8 @@ const BaiViet = () => {
                   <i class="fa-solid fa-play" id="audioArtIcon"></i>
                 </button>
                 <div>
-                  <div class="fw-bold text-dark" id="audioArtTitle">Nghe Bản Tin Bằng Giọng Đọc AI</div>
-                  <div class="text-muted small">Phát thanh tự động tiếng Việt chuẩn truyền cảm</div>
+                  <div class="fw-bold text-dark" id="audioArtTitle">Phát Thanh Bản Tin Trực Tuyến</div>
+                  <div class="text-muted small">Phát thanh tự động tiếng Việt chuẩn phát thanh viên</div>
                 </div>
               </div>
               <span class="badge bg-white text-primary border p-2"><i class="fa-solid fa-volume-high me-1"></i> Trực tuyến</span>
@@ -52,7 +52,7 @@ const BaiViet = () => {
 
             <!-- AI 30s KEY TAKEAWAYS -->
             <div class="ai-takeaways-card">
-              <h6><i class="fa-solid fa-wand-magic-sparkles me-2 text-success"></i> AI 30s Key Takeaways (Tóm tắt nhanh)</h6>
+              <h6><i class="fa-solid fa-wand-magic-sparkles me-2 text-success"></i> Điểm Nhấn Bản Tin (Tóm tắt cốt lõi)</h6>
               <ul class="mb-0 ps-3 text-secondary small" style="line-height: 1.6;" id="artTakeaways">
                 <li>Hưởng ứng kỷ niệm 25 năm Ngày Gia đình Việt Nam (28/6/2001 – 28/6/2026).</li>
                 <li>PGS.TS. Lê Tuấn Anh (Bí thư Đảng ủy) và TS. Lê Thị Kim Út (Chủ tịch CĐ) chủ trì tọa đàm.</li>
@@ -324,7 +324,7 @@ const BaiViet = () => {
           window.speechSynthesis.cancel();
           isFullSpeaking = false;
           document.getElementById('audioArtIcon').className = 'fa-solid fa-play';
-          document.getElementById('audioArtTitle').innerText = 'Nghe Bản Tin Bằng Giọng Đọc AI';
+          document.getElementById('audioArtTitle').innerText = 'Phát Thanh Bản Tin Trực Tuyến';
         } else {
           const textToRead = document.getElementById('artTitle').innerText + '. ' + (currentArticle ? (currentArticle.summary || currentArticle.TomTat) : '');
           const utterance = new SpeechSynthesisUtterance(textToRead);

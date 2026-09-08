@@ -23,7 +23,7 @@ async function generateAIContent() {
   const apiKey = document.getElementById('ai_api_key_input') ? document.getElementById('ai_api_key_input').value.trim() : "";
 
   if (!promptInput) {
-    alert("Vui lòng nhập ý tưởng/yêu cầu bài viết cho AI!");
+    alert("Vui lòng nhập nội dung hoặc tư liệu sự kiện cần biên tập!");
     return;
   }
 
@@ -83,14 +83,14 @@ async function saveAIGeneratedArticle() {
       categoryName,
       summary,
       content,
-      author: "Trợ Lý AI TDMU (Contributor)",
+      author: "Ban Thư Ký Tòa Soạn (Contributor)",
       status: currentUserRole === 'admin' ? 'approved' : 'pending',
       isAiGenerated: true,
       aiPrompt: promptInput
     });
 
     if (res.success) {
-      alert(`Đã lưu bài viết AI #${res.data.id} vào CSDL MySQL thành công! Bài viết ở trạng thái "${res.data.statusName}".`);
+      alert(`Đã lưu bản thảo bài viết #${res.data.id} vào CSDL MySQL thành công! Bài viết ở trạng thái "${res.data.statusName}".`);
       loadAdminArticles();
       loadScheduleTable();
       loadFacebookPublishSelect();
@@ -199,7 +199,7 @@ async function generateGroundedContentPackage() {
 
   // Tiến trình 3 bước trực quan - Sẽ được đè bởi SSE
   let currentStep = 0;
-  if (statusText) statusText.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> <strong>Khởi tạo...</strong> Đang kết nối AI Multi-Pass Pipeline...';
+  if (statusText) statusText.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> <strong>Khởi tạo...</strong> Đang khởi tạo quy trình biên tập đa kênh...';
   const progressTimer = setInterval(() => {}, 2200);
 
   const genre = document.getElementById('studio_genre_selector')?.value || 'tin_hoat_dong';
@@ -310,7 +310,7 @@ async function generateGroundedContentPackage() {
     // KHỞI TẠO BỘ NHỚ LỊCH SỬ TIẾN / LÙI CHO BẢN GỐC AI TẠO
     editorHistoryStack = [];
     editorHistoryIndex = -1;
-    saveEditorState("Bản gốc AI (Multi-Pass Streaming)");
+    saveEditorState("Bản thảo sơ bộ trọn gói");
 
     setTimeout(() => { if (spinner) spinner.style.display = 'none'; }, 2000);
 
@@ -467,7 +467,7 @@ async function runAiQualityAudit() {
   const modal = document.getElementById('ai_quality_audit_modal');
 
   if (!content || content.replace(/<[^>]*>/g, '').trim().length < 20) {
-    alert("Vui lòng soạn thảo hoặc để AI tạo nội dung trước khi kiểm tra chất lượng!");
+    alert("Vui lòng nhập nội dung bài viết trước khi kiểm tra chất lượng!");
     return;
   }
 

@@ -39,7 +39,7 @@ function applyDiffSuggestion(origText, newContent, actionName, isSelection, rang
   const msg = document.getElementById('diff_banner_message');
   if (banner) {
     banner.style.display = 'flex';
-    if (msg) msg.innerHTML = `<strong>✨ AI đề xuất ${actionName}:</strong> Xem xét đoạn gạch đỏ (cũ) và xanh lá (mới)`;
+    if (msg) msg.innerHTML = `<strong>✨ Bản thảo đề xuất ${actionName}:</strong> Xem xét đoạn gạch đỏ (cũ) và xanh lá (mới)`;
   }
 }
 
@@ -63,12 +63,12 @@ function acceptAiDiff(notify = true) {
   if (banner) banner.style.display = 'none';
 
   currentPendingDiff = null;
-  saveEditorState("Chấp nhận đề xuất AI: " + actionName);
+  saveEditorState("Chấp nhận bản thảo đề xuất: " + actionName);
 
   if (notify) {
     const copilotStatus = document.getElementById('copilot_status_indicator');
     if (copilotStatus) {
-      copilotStatus.innerHTML = `<span style="color:#16A34A;font-weight:700;"><i class="fa-solid fa-check"></i> Đã áp dụng đề xuất AI (${actionName})</span>`;
+      copilotStatus.innerHTML = `<span style="color:#16A34A;font-weight:700;"><i class="fa-solid fa-check"></i> Đã áp dụng bản thảo đề xuất (${actionName})</span>`;
       setTimeout(() => { copilotStatus.innerHTML = 'Sẵn sàng hỗ trợ'; }, 3000);
     }
   }
@@ -94,7 +94,7 @@ function rejectAiDiff() {
   if (banner) banner.style.display = 'none';
 
   currentPendingDiff = null;
-  saveEditorState("Từ chối đề xuất AI: " + actionName);
+  saveEditorState("Từ chối bản thảo đề xuất: " + actionName);
 
   const copilotStatus = document.getElementById('copilot_status_indicator');
   if (copilotStatus) {
@@ -129,7 +129,7 @@ async function handleToolbarAiAction(action) {
 
   const copilotStatus = document.getElementById('copilot_status_indicator');
   if (copilotStatus) {
-    copilotStatus.innerHTML = `<span style="color:#0284C7;font-weight:700;"><i class="fa-solid fa-spinner fa-spin"></i> AI đang ${actionName}...</span>`;
+    copilotStatus.innerHTML = `<span style="color:#0284C7;font-weight:700;"><i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý ${actionName}...</span>`;
   }
 
   const promptMsg = action === 'formal'
@@ -162,12 +162,12 @@ async function handleToolbarAiAction(action) {
         setTimeout(() => { copilotStatus.innerHTML = 'Sẵn sàng hỗ trợ'; }, 3000);
       }
     } else {
-      alert(res.reply || "✨ AI đã xử lý xong.");
+      alert(res.reply || "✨ Đã hoàn thành xử lý nội dung.");
       if (copilotStatus) copilotStatus.innerHTML = 'Sẵn sàng hỗ trợ';
     }
   } catch (err) {
     console.error(err);
-    alert("Lỗi AI: " + err.message);
+    alert("Lỗi xử lý hệ thống: " + err.message);
     if (copilotStatus) copilotStatus.innerHTML = 'Sẵn sàng hỗ trợ';
   }
 }
@@ -428,7 +428,7 @@ async function generateImageFromModal() {
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles me-1"></i> Tạo Ảnh Báo Chí (16:9 Flux)';
+      btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles me-1"></i> Khởi Tạo Đồ Họa Báo Chí';
     }
   }
 }
@@ -467,7 +467,7 @@ function confirmInsertJournalismImage() {
   }
 
   if (!selectedModalImgSrc) {
-    alert("Vui lòng chọn ảnh, sinh ảnh AI hoặc nhập link ảnh trước khi chèn!");
+    alert("Vui lòng chọn ảnh, tạo đồ họa mới hoặc nhập link ảnh trước khi chèn!");
     return;
   }
 

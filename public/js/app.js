@@ -73,14 +73,14 @@ function renderArticles(articles) {
         <div class="news-date d-flex align-items-center gap-2 mt-1">
           <span><i class="fa-regular fa-calendar me-1"></i> ${art.createdAt || '2026-08-24'}</span>
           <span class="badge bg-primary-subtle text-primary border">${art.categoryName || 'Tin hoạt động'}</span>
-          ${art.isAiGenerated ? '<span class="badge bg-success-subtle text-success border"><i class="fa-solid fa-wand-magic-sparkles"></i> AI</span>' : ''}
+          ${art.isAiGenerated ? '<span class="badge bg-success-subtle text-success border"><i class="fa-solid fa-file-pen"></i> Tự Động</span>' : ''}
           <span class="ms-auto text-muted"><i class="fa-regular fa-eye me-1"></i> ${art.viewsCount || 0}</span>
         </div>
         <p class="small text-muted mb-2 mt-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
           ${art.summary || ''}
         </p>
         <button class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 12px;" onclick="openArticleModal(${art.id})">
-          <i class="fa-regular fa-eye me-1"></i> Đọc tin & AI Sapo
+          <i class="fa-regular fa-eye me-1"></i> Xem chi tiết & Tóm tắt
         </button>
       </div>
     </div>

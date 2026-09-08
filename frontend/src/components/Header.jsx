@@ -20,7 +20,7 @@ const Header = () => {
               <i className="fa-solid fa-phone me-1 text-warning"></i> Hotline: (0274) 3.815.184
             </span>
             <a href="/admin.html" className="btn-portal-access">
-              <i className="fa-solid fa-wand-magic-sparkles me-1 text-warning"></i> Quản lý website truyền thông công đoàn TDMU
+              <i className="fa-solid fa-sliders me-1 text-warning"></i> Quản lý website truyền thông công đoàn TDMU
             </a>
           </div>
         </div>

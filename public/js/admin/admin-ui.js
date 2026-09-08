@@ -88,7 +88,7 @@ function showAdminTab(tabName, subFilter = null) {
   const titles = {
     'dashboard': 'Bảng Điều Hành & Thống Kê',
     'articles': 'Quản Lý Tin Tức & Bài Viết',
-    'ai-creator': 'Xưởng Biên Tập Đa Kênh Tích Hợp AI',
+    'ai-creator': 'Phòng Biên Tập & Sản Xuất Đa Kênh',
     'reports': 'Báo Cáo Định Kỳ 16 Tổ Công Đoàn',
     'documents': 'Kho Văn Bản Chỉ Đạo & Điều Hành',
     'schedule': 'Lịch Xuất Bản Đa Kênh',
@@ -149,7 +149,7 @@ function saveSystemSettings() {
   if (groq) localStorage.setItem('groq_api_key', groq);
   closeSystemSettingsModal();
   updateAiStatusBadge();
-  alert('Đã lưu cấu hình AI Key vào hệ thống thành công!');
+  alert('Đã lưu cấu hình dịch vụ tác nghiệp vào hệ thống thành công!');
 }
 
 let currentPendingDiff = null;
