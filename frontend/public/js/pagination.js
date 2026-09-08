@@ -116,63 +116,24 @@ class TDMUPagination {
     const endItem = Math.min(startItem + this.pageSize - 1, this.totalItems);
     const controlsId = `tui_ctrl_${this.instanceId}`;
 
-    // Only show page-size selector if total records exceed the lowest option
-    const minOption = this.pageSizeOptions && this.pageSizeOptions.length > 0
-      ? Math.min(...this.pageSizeOptions)
-      : 10;
-    const showSelector = this.showPageSizeSelector &&
-      this.pageSizeOptions &&
-      this.pageSizeOptions.length > 0 &&
-      this.totalItems > minOption;
-
     let html = `<div class="tdmu-pagination-wrapper">`;
 
-    // 1. Info and PageSize Selector on Left
+    // 1. Info on Left
     html += `<div class="tdmu-pagination-left">`;
     if (this.showInfo) {
-      if (this.totalItems <= this.pageSize) {
-        html += `
-          <div class="tdmu-pagination-info">
-            <i class="fa-solid fa-layer-group text-primary me-1"></i> Tổng số: <strong>${this.totalItems}</strong> ${this.itemLabel}
-          </div>
-        `;
-      } else {
-        html += `
-          <div class="tdmu-pagination-info">
-            <i class="fa-solid fa-layer-group text-primary me-1"></i> Hiển thị <strong>${startItem} - ${endItem}</strong> / <strong>${this.totalItems}</strong> ${this.itemLabel}
-          </div>
-        `;
-      }
-    }
-    if (showSelector) {
       html += `
-        <div class="tdmu-pagination-size-wrap">
-          <span class="tdmu-size-label"><i class="fa-solid fa-sliders text-secondary me-1"></i>Xem:</span>
-          <select class="tdmu-page-size-select" onchange="TDMUPagination._instances['${this.instanceId}'].setPageSize(this.value)" title="Số bản ghi mỗi trang">
-            ${this.pageSizeOptions.map(opt => `
-              <option value="${opt}" ${opt === this.pageSize ? 'selected' : ''}>${opt} dòng / trang</option>
-            `).join('')}
-          </select>
+        <div class="tdmu-pagination-info">
+          <i class="fa-solid fa-list-check text-primary me-1"></i> Hiển thị <strong>${startItem} - ${endItem}</strong> trên tổng số <strong>${this.totalItems}</strong> ${this.itemLabel}
         </div>
       `;
     }
     html += `</div>`;
 
-    // 2. Navigation controls on Right (mounted by TOAST UI Pagination or Native fallback)
-    // Only display navigation buttons when there are 2 or more pages
-    if (this.totalPages > 1) {
-      html += `<div class="tdmu-pagination-controls tui-pagination" id="${controlsId}"></div>`;
-    } else {
-      html += `<div class="tdmu-pagination-controls tui-pagination" id="${controlsId}" style="display:none;"></div>`;
-    }
+    // 2. Navigation controls on Right (ALWAYS rendered with arrows)
+    html += `<div class="tdmu-pagination-controls tui-pagination" id="${controlsId}"></div>`;
     html += `</div>`;
 
     this.container.innerHTML = html;
-
-    if (this.totalPages <= 1) {
-      this.tuiPagination = null;
-      return;
-    }
 
     const ctrlEl = document.getElementById(controlsId);
     if (!ctrlEl) return;
@@ -242,11 +203,7 @@ class TDMUPagination {
     if (!infoEl) return;
     const startItem = (this.currentPage - 1) * this.pageSize + 1;
     const endItem = Math.min(startItem + this.pageSize - 1, this.totalItems);
-    if (this.totalItems <= this.pageSize) {
-      infoEl.innerHTML = `<i class="fa-solid fa-layer-group text-primary me-1"></i> Tổng số: <strong>${this.totalItems}</strong> ${this.itemLabel}`;
-    } else {
-      infoEl.innerHTML = `<i class="fa-solid fa-layer-group text-primary me-1"></i> Hiển thị <strong>${startItem} - ${endItem}</strong> / <strong>${this.totalItems}</strong> ${this.itemLabel}`;
-    }
+    infoEl.innerHTML = `<i class="fa-solid fa-list-check text-primary me-1"></i> Hiển thị <strong>${startItem} - ${endItem}</strong> trên tổng số <strong>${this.totalItems}</strong> ${this.itemLabel}`;
   }
 
   renderFallbackControls(ctrlEl) {
