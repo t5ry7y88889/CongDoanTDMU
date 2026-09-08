@@ -54,6 +54,8 @@
       flex-direction: column;
       box-shadow: 4px 0 20px rgba(0, 40, 85, 0.12);
       transition: width 0.25s ease;
+      padding: 0 !important;
+      gap: 0 !important;
     }
     
     .sidebar-header {
@@ -390,6 +392,8 @@
           /* COLLAPSED STATE ENHANCEMENTS */
     .admin-sidebar.collapsed {
       width: 72px !important;
+      padding: 0 !important;
+      gap: 0 !important;
     }
     .admin-sidebar.collapsed .sidebar-header {
       padding: 0 !important;
@@ -423,6 +427,14 @@
       padding: 14px 0 !important;
       align-items: center !important;
       overflow-x: hidden !important;
+      overflow-y: auto !important;
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+    .admin-sidebar.collapsed .sidebar-nav::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
     }
     .admin-sidebar.collapsed .nav-section-label {
       display: none !important;
@@ -523,6 +535,7 @@
     .admin-sidebar.collapsed ~ .admin-main-wrapper {
       margin-left: 72px !important;
     }
+  
   
   </style>
 </head>
