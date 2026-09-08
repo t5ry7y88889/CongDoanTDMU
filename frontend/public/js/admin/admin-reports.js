@@ -119,11 +119,11 @@ function renderReportsPage() {
 
     return '<tr style="border-bottom: 1px solid #E2E8F0; background: ' + (isSubmitted ? '#FFFFFF' : '#FAFAFA') + ';">' +
       '<td style="padding: 10px 12px; font-weight: 700; color: #003865;">' + (offset + i + 1) + '</td>' +
-      '<td style="padding: 10px 12px; font-weight: 700; color: #003865;">' + r.ten_to_cong_doan + '</td>' +
-      '<td style="padding: 10px 12px; font-weight: 600; color: #1E293B;">' + (r.to_truong || r.reporter_name || 'Đ/c Tổ trưởng') + '</td>' +
-      '<td style="padding: 10px 12px; text-align: center; font-weight: 600;">' + (r.tong_doan_vien || r.so_doan_vien || 0) + '</td>' +
-      '<td style="padding: 10px 12px; text-align: center;">' + (r.nu_doan_vien || 0) + '</td>' +
-      '<td style="padding: 10px 12px; text-align: center;">' + (r.doan_vien_ket_nap || 0) + '</td>' +
+      '<td style="padding: 10px 12px; font-weight: 700; color: #003865;">' + (r.ten_to_cong_doan || r.TenToCongDoan || r.unit_name || r.union_name || ('Tổ CĐ số ' + (offset + i + 1))) + '</td>' +
+      '<td style="padding: 10px 12px; font-weight: 600; color: #1E293B;">' + (r.to_truong || r.ToTruong || r.reporter_name || 'Đ/c Tổ trưởng') + '</td>' +
+      '<td style="padding: 10px 12px; text-align: center; font-weight: 600;">' + (r.tong_doan_vien || r.TongDoanVien || r.total_members || r.so_doan_vien || 0) + '</td>' +
+      '<td style="padding: 10px 12px; text-align: center;">' + (r.nu_doan_vien || r.NuDoanVien || r.female_members || 0) + '</td>' +
+      '<td style="padding: 10px 12px; text-align: center;">' + (r.doan_vien_ket_nap || r.DangVien || 0) + '</td>' +
       '<td style="padding: 10px 12px; text-align: center; font-size: 12px;">' + (r.so_nguoi_cham_lo ? r.so_nguoi_cham_lo + ' người' : '0') + '</td>' +
       '<td style="padding: 10px 12px; text-align: center; font-size: 12px;">' + (r.so_buoi_tuyen_truyen ? r.so_buoi_tuyen_truyen + ' buổi' : '0') + '</td>' +
       '<td style="padding: 10px 12px; text-align: center;">' + statusBadge + '</td>' +

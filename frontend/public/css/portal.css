@@ -802,56 +802,94 @@ blockquote cite {
   box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
 }
 
+/* Container override for TOAST UI */
+.tdmu-pagination-controls.tui-pagination,
 .tdmu-pagination-controls {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: normal !important;
+  font-size: 13px !important;
+  text-align: right !important;
 }
 
+/* Button override for all pagination items */
+.tdmu-pagination-controls .tui-page-btn,
 .tdmu-page-btn {
-  min-width: 32px;
-  height: 32px;
-  padding: 0 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  border: 1px solid #E2E8F0;
-  background: #FFFFFF;
-  color: #334155;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  user-select: none;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  padding: 0 10px !important;
+  margin: 0 !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  color: #334155 !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 7px !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  box-sizing: border-box !important;
+  transition: all 0.18s ease !important;
+  vertical-align: middle !important;
 }
 
+/* Hover state */
+.tdmu-pagination-controls .tui-page-btn:hover:not(.tui-is-disabled):not(.disabled):not(.tui-is-selected):not(.active),
 .tdmu-page-btn:hover:not(.disabled):not(.active) {
-  background: #F1F5F9;
-  border-color: #CBD5E1;
-  color: #002855;
+  background: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+  color: #002855 !important;
   transform: translateY(-1px);
 }
 
+/* Active / Selected state (TDMU Navy & Gold glow) */
+.tdmu-pagination-controls .tui-page-btn.tui-is-selected,
+.tdmu-pagination-controls strong.tui-page-btn,
 .tdmu-page-btn.active {
-  background: #002855;
-  border-color: #002855;
-  color: #FFFFFF;
-  font-weight: 700;
-  box-shadow: 0 2px 6px rgba(0, 40, 85, 0.25);
-  cursor: default;
+  background: #002855 !important;
+  border-color: #002855 !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 6px rgba(0, 40, 85, 0.28) !important;
+  cursor: default !important;
 }
 
-.tdmu-page-btn.disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  background: #F8FAFC;
-  border-color: #E2E8F0;
-  color: #94A3B8;
+/* Disabled state */
+.tdmu-pagination-controls .tui-page-btn.tui-is-disabled,
+.tdmu-pagination-controls .tui-page-btn:disabled,
+.tdmu-page-btn.disabled,
+.tdmu-page-btn:disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+  background: #F8FAFC !important;
+  border-color: #E2E8F0 !important;
+  color: #94A3B8 !important;
+  pointer-events: none !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
+/* FontAwesome icon styling inside buttons */
+.tdmu-pagination-controls .tui-page-btn i,
+.tdmu-page-btn i {
+  font-size: 11.5px !important;
+  line-height: 1 !important;
+}
+
+/* Ellipsis */
+.tdmu-pagination-controls .tui-page-btn.tdmu-page-ellipsis,
 .tdmu-page-ellipsis {
-  padding: 0 6px;
-  color: #94A3B8;
-  font-weight: 700;
+  border-color: transparent !important;
+  background: transparent !important;
+  color: #94A3B8 !important;
+  cursor: default !important;
+  pointer-events: none !important;
 }

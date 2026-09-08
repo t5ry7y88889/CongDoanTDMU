@@ -140,7 +140,7 @@ class TDMUPagination {
     html += `</div>`;
 
     // 2. Navigation controls on Right (mounted by TOAST UI Pagination or Native fallback)
-    html += `<div class="tdmu-pagination-controls" id="${controlsId}"></div>`;
+    html += `<div class="tdmu-pagination-controls tui-pagination" id="${controlsId}"></div>`;
     html += `</div>`;
 
     this.container.innerHTML = html;
@@ -158,20 +158,36 @@ class TDMUPagination {
           page: this.currentPage,
           centerAlign: false,
           template: {
-            page: '<button type="button" class="tui-page-btn">{{page}}</button>',
-            currentPage: '<strong class="tui-page-btn tui-is-selected">{{page}}</strong>',
-            moveButton:
-              '<button type="button" class="tui-page-btn tui-{{type}}">' +
-                '<span class="tui-ico-{{type}}">{{type}}</span>' +
-              '</button>',
-            disabledMoveButton:
-              '<button type="button" class="tui-page-btn tui-is-disabled tui-{{type}}">' +
-                '<span class="tui-ico-{{type}}">{{type}}</span>' +
-              '</button>',
+            page: '<a href="javascript:void(0)" class="tui-page-btn tdmu-page-btn">{{page}}</a>',
+            currentPage: '<strong class="tui-page-btn tdmu-page-btn active tui-is-selected">{{page}}</strong>',
+            moveButton: function(type) {
+              const t = type.type;
+              const icons = {
+                first: '<i class="fa-solid fa-angles-left"></i>',
+                prev: '<i class="fa-solid fa-angle-left"></i>',
+                next: '<i class="fa-solid fa-angle-right"></i>',
+                last: '<i class="fa-solid fa-angles-right"></i>'
+              };
+              const titles = {
+                first: 'Trang đầu',
+                prev: 'Trang trước',
+                next: 'Trang sau',
+                last: 'Trang cuối'
+              };
+              return '<a href="javascript:void(0)" class="tui-page-btn tdmu-page-btn tui-' + t + '" title="' + (titles[t] || '') + '">' + (icons[t] || '') + '</a>';
+            },
+            disabledMoveButton: function(type) {
+              const t = type.type;
+              const icons = {
+                first: '<i class="fa-solid fa-angles-left"></i>',
+                prev: '<i class="fa-solid fa-angle-left"></i>',
+                next: '<i class="fa-solid fa-angle-right"></i>',
+                last: '<i class="fa-solid fa-angles-right"></i>'
+              };
+              return '<span class="tui-page-btn tdmu-page-btn disabled tui-is-disabled tui-' + t + '">' + (icons[t] || '') + '</span>';
+            },
             moreButton:
-              '<button type="button" class="tui-page-btn tui-{{type}}-is-ellip">' +
-                '<span class="tui-ico-ellip">...</span>' +
-              '</button>'
+              '<span class="tui-page-btn tdmu-page-btn tdmu-page-ellipsis tui-{{type}}-is-ellip"><i class="fa-solid fa-ellipsis"></i></span>'
           }
         });
 
