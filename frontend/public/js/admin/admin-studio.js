@@ -119,48 +119,36 @@ function updateStage1ActionButtonText() {
 
 function updateStageButtonsForMode() {
   const draftBtn = document.getElementById('btn_approve_draft');
-  const stage4Back = document.getElementById('btn_stage4_back');
+  const stage5Back = document.getElementById('btn_stage5_back');
   const stage6Back = document.getElementById('btn_stage6_back');
 
   if (draftBtn) {
-    if (studioState.mode === 'assisted') {
-      draftBtn.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i> ✓ Duyệt Bản Nháp & Sang Thẩm Định Xuất Bản (Stage 6) <i class="fa-solid fa-arrow-right"></i>';
-    } else {
-      draftBtn.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i> ✓ Duyệt Bản Nháp (Approve Draft) & Sang Khâu Gán Ảnh <i class="fa-solid fa-arrow-right"></i>';
-    }
+    draftBtn.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i> ✓ Duyệt Bản Nháp (Approve Draft) & Sang Thẩm Định Xuất Bản <i class="fa-solid fa-arrow-right"></i>';
   }
 
-  if (stage4Back) {
+  if (stage5Back) {
     if (studioState.mode === 'assisted') {
-      stage4Back.innerHTML = '<i class="fa-solid fa-arrow-left me-1"></i> Quay Lại Fact Sheet (Stage 2)';
+      stage5Back.innerHTML = '<i class="fa-solid fa-arrow-left me-1"></i> Quay Lại Fact Sheet (Stage 2)';
     } else {
-      stage4Back.innerHTML = '<i class="fa-solid fa-arrow-left me-1"></i> Quay Lại Kế Hoạch (Stage 3)';
+      stage5Back.innerHTML = '<i class="fa-solid fa-arrow-left me-1"></i> Quay Lại Gán Ảnh (Stage 4)';
     }
   }
 
   if (stage6Back) {
-    if (studioState.mode === 'assisted') {
-      stage6Back.innerHTML = '<i class="fa-solid fa-arrow-left me-1"></i> Quay Lại Bản Nháp (Stage 4)';
-    } else {
-      stage6Back.innerHTML = '<i class="fa-solid fa-arrow-left me-1"></i> Quay Lại Gán Ảnh (Stage 5)';
-    }
+    stage6Back.innerHTML = '<i class="fa-solid fa-arrow-left me-1"></i> Quay Lại Bản Nháp (Stage 5)';
   }
 }
 
-function handleStage4Back() {
+function handleStage5Back() {
   if (studioState.mode === 'assisted') {
     goToStage(2);
   } else {
-    goToStage(3);
+    goToStage(4);
   }
 }
 
 function handleStage6Back() {
-  if (studioState.mode === 'assisted') {
-    goToStage(4);
-  } else {
-    goToStage(5);
-  }
+  goToStage(5);
 }
 
 // =========================================================================
@@ -206,6 +194,19 @@ function goToStage(stageNum) {
         }
       }
     }
+  }
+
+  if (stageNum === 4 && typeof renderMediaReviewUI === 'function') {
+    renderMediaReviewUI(studioState.mediaPackage);
+  }
+  if (stageNum === 6) {
+    const genreSel = document.getElementById('compliance_genre_selector');
+    if (genreSel && studioState.editorialPlan?.genre) {
+      genreSel.value = studioState.editorialPlan.genre;
+    }
+  }
+  if (typeof updateGlobalPhotoBadge === 'function') {
+    updateGlobalPhotoBadge();
   }
 
   updateStageButtonsForMode();
@@ -282,7 +283,16 @@ function applyPreset(type) {
   }
 }
 
-function handleIntakeFilesSelected(files) {
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleIntakeFilesSelected(files) {
   if (!files || !files.length) return;
   for (let i = 0; i < files.length; i++) {
     const f = files[i];
@@ -295,13 +305,13 @@ function handleIntakeFilesSelected(files) {
     };
 
     if (f.type.startsWith('text/') || f.name.endsWith('.txt') || f.name.endsWith('.csv') || f.name.endsWith('.json')) {
-      const reader = new FileReader();
-      reader.onload = (e) => { fileObj.text = e.target.result; };
-      reader.readAsText(f);
+      fileObj.text = await new Promise((res) => {
+        const reader = new FileReader();
+        reader.onload = (e) => res(e.target.result);
+        reader.readAsText(f);
+      });
     } else if (f.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => { fileObj.dataUrl = e.target.result; };
-      reader.readAsDataURL(f);
+      fileObj.dataUrl = await readFileAsDataUrl(f);
     }
     studioState.uploadedFiles.push(fileObj);
   }
@@ -528,9 +538,10 @@ async function approveFactsAndAdvance() {
 
       if (studioState.mode === 'assisted') {
         // Assisted mode (2 Checkpoints: CP 1 Fact Sheet, CP 2 Draft Canvas):
-        // CP 1 (Fact Sheet) approved -> AI generates draft and takes user to CP 2 (Draft Canvas)
+        // CP 1 approved -> AI matches media, generates draft, opens CP 2 (Stage 5 Canvas)
+        await matchMediaInternal();
         await generateDraftInternal();
-        goToStage(4);
+        goToStage(5);
       } else {
         goToStage(3);
       }
@@ -590,28 +601,590 @@ async function approvePlanAndAdvance() {
   const btn = document.getElementById('btn_approve_plan');
   if (btn) {
     btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i> Đang phân bổ ảnh sự kiện...';
+  }
+
+  try {
+    await matchMediaInternal();
+    goToStage(4);
+  } catch (err) {
+    alert("❌ Lỗi phân bổ hình ảnh: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i> ✓ Duyệt Kế Hoạch (Approve Plan) & Sang Gán Ảnh <i class="fa-solid fa-arrow-right"></i>';
+    }
+  }
+}
+
+// =========================================================================
+// 8. STAGE 4: CHECKPOINT 3 - MEDIA MATCHING, UPLOAD & CURATION
+// =========================================================================
+async function matchMediaInternal() {
+  const payload = {
+    factSheet: studioState.factSheet,
+    uploadedFiles: studioState.uploadedFiles,
+    apiKey: localStorage.getItem('gemini_api_key') || ''
+  };
+
+  const res = await fetch('/api/ai/media-match', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(r => r.json());
+
+  if (res.success && res.mediaPackage) {
+    studioState.mediaPackage = res.mediaPackage;
+    renderMediaReviewUI(res.mediaPackage);
+  } else {
+    throw new Error(res.error || "Không thể phân bổ hình ảnh");
+  }
+}
+
+function escapeHtmlStudio(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+let isMediaManagerForInsert = false;
+
+function updateGlobalPhotoBadge() {
+  const photos = (studioState.mediaPackage && Array.isArray(studioState.mediaPackage.photos))
+    ? studioState.mediaPackage.photos
+    : [];
+  const count = photos.length;
+  const globalBadge = document.getElementById('global_photo_count_badge');
+  if (globalBadge) globalBadge.textContent = count;
+  const mediaBadge = document.getElementById('media_photos_count_badge');
+  if (mediaBadge) mediaBadge.textContent = `${count} ảnh`;
+  const totalText = document.getElementById('modal_media_total_text');
+  if (totalText) totalText.textContent = `Tổng số ảnh: ${count} ảnh`;
+}
+
+function renderMediaReviewUI(pkg) {
+  const emptyNotice = document.getElementById('media_empty_notice');
+  const photosContainer = document.getElementById('media_photos_container');
+
+  let photos = [];
+  if (pkg && Array.isArray(pkg.photos) && pkg.photos.length > 0) {
+    photos = pkg.photos;
+  } else if (pkg && pkg.hasMedia && pkg.featured && pkg.featured.url) {
+    photos = [pkg.featured, ...(pkg.inBody || [])].filter(Boolean);
+    pkg.photos = photos;
+  }
+
+  updateGlobalPhotoBadge();
+
+  const hasPhotos = photos.length > 0;
+
+  if (!hasPhotos) {
+    if (emptyNotice) emptyNotice.style.display = 'block';
+    if (photosContainer) {
+      photosContainer.style.display = 'none';
+      photosContainer.innerHTML = '';
+    }
+    return;
+  }
+
+  if (emptyNotice) emptyNotice.style.display = 'none';
+  if (photosContainer) {
+    photosContainer.style.display = 'grid';
+    photosContainer.innerHTML = photos.map((photo, idx) => {
+      const isFeat = photo.isFeatured || (idx === 0 && !photos.some(p => p.isFeatured));
+      const inArt = photo.inArticle !== false;
+      const ratio = photo.aspectRatio || '16/9';
+      const fit = photo.fitMode || 'cover';
+
+      return `
+      <div class="photo-card" style="background: ${isFeat ? '#F0F9FF' : '#F8FAFC'}; border: 1.5px solid ${isFeat ? '#0284C7' : '#CBD5E1'}; border-radius: 10px; padding: 16px; position: relative; display: flex; flex-direction: column; justify-content: space-between; box-shadow: ${isFeat ? '0 4px 12px rgba(2,132,199,0.08)' : 'none'};">
+        <div>
+          <!-- CARD HEADER -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span style="font-size: 12px; font-weight: 800; color: ${isFeat ? '#0369A1' : '#002855'}; display: flex; align-items: center; gap: 6px;">
+              ${isFeat 
+                ? '<span style="background: #0284C7; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;"><i class="fa-solid fa-star"></i> ẢNH ĐẠI DIỆN</span>' 
+                : `<span style="background: #E2E8F0; color: #475569; padding: 2px 8px; border-radius: 4px; font-size: 11px;">ẢNH THÂN BÀI #${idx}</span>`}
+            </span>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              ${!isFeat ? `
+              <button type="button" onclick="setPhotoAsFeatured(${idx})" title="Đặt làm ảnh đại diện" style="background: white; border: 1px solid #CBD5E1; color: #0284C7; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer;">
+                <i class="fa-regular fa-star"></i> Chọn đại diện
+              </button>` : ''}
+              <button type="button" onclick="confirmDeletePhoto(${idx})" title="Xóa ảnh khỏi danh sách" style="background: white; border: 1px solid #FECACA; color: #EF4444; padding: 3px 8px; border-radius: 5px; font-size: 11px; cursor: pointer;">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- IMAGE PREVIEW (HIỂN THỊ TRỰC QUAN THEO ASPECT RATIO & FIT MODE) -->
+          <div style="text-align: center; margin-bottom: 12px; background: #0F172A; border-radius: 8px; height: 180px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; border: 1px solid #CBD5E1;">
+            <img src="${photo.url}" alt="${photo.altText || ''}" style="width: 100%; height: 100%; aspect-ratio: ${ratio !== 'auto' ? ratio : 'auto'}; object-fit: ${fit};">
+            <span style="position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.65); color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">
+              ${ratio === 'auto' ? 'Tỷ lệ gốc' : ratio} &bull; ${fit === 'contain' ? 'Vừa khít' : 'Cắt vừa'}
+            </span>
+          </div>
+
+          <!-- ASPECT RATIO & FIT MODE CONTROLS -->
+          <div style="background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 11px; font-weight: 800; color: #334155; text-transform: uppercase;">
+                <i class="fa-solid fa-crop-simple text-primary me-1"></i> Khuôn Ảnh Báo Chí:
+              </span>
+              <button type="button" onclick="toggleFitMode(${idx})" title="Chuyển đổi giữa Cắt vừa (Cover) và Giữ nguyên khung (Contain)" style="background: #F1F5F9; border: 1px solid #CBD5E1; color: #0284C7; font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 4px; cursor: pointer;">
+                ${fit === 'contain' ? '🔍 Giữ tỷ lệ gốc (Contain)' : '✂️ Cắt vừa khuôn (Cover)'}
+              </button>
+            </div>
+            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+              ${[
+                { key: '16/9', label: '16:9 Banner' },
+                { key: '4/3', label: '4:3 Phóng sự' },
+                { key: '3/2', label: '3:2 DSLR' },
+                { key: '1/1', label: '1:1 Vuông' },
+                { key: 'auto', label: 'Gốc' }
+              ].map(opt => {
+                const isActive = (ratio === opt.key);
+                return `
+                  <button type="button" onclick="setPhotoAspectRatio(${idx}, '${opt.key}')" style="flex: 1; min-width: 58px; background: ${isActive ? '#0284C7' : '#F8FAFC'}; color: ${isActive ? 'white' : '#475569'}; border: 1px solid ${isActive ? '#0284C7' : '#CBD5E1'}; font-size: 10.5px; font-weight: 700; padding: 4px 6px; border-radius: 5px; cursor: pointer; text-align: center; transition: all 0.15s;">
+                    ${opt.label}
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- FILE NAME & IN-ARTICLE TOGGLE -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 11.5px; color: #64748B;">
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px;" title="${photo.fileName || ''}">
+              <i class="fa-regular fa-image"></i> ${photo.fileName || 'anh_su_kien.jpg'}
+            </span>
+            <label style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; color: ${inArt ? '#047857' : '#94A3B8'}; font-weight: 700;">
+              <input type="checkbox" ${inArt ? 'checked' : ''} onchange="togglePhotoInArticle(${idx}, this.checked)">
+              Chèn vào bài
+            </label>
+          </div>
+
+          <!-- CAPTION INPUT -->
+          <div style="margin-bottom: 10px;">
+            <label style="font-size: 11px; font-weight: 800; color: #334155; display: block; margin-bottom: 3px;">
+              Chú thích ảnh báo chí (Caption NĐ 30):
+            </label>
+            <input type="text" id="photo_caption_${idx}" value="${escapeHtmlStudio(photo.caption || '')}" oninput="updatePhotoCaption(${idx}, this.value)" placeholder="Ảnh: ..." style="width: 100%; padding: 7px 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12px; box-sizing: border-box;">
+          </div>
+
+          <!-- ALT INPUT -->
+          <div style="margin-bottom: 12px;">
+            <label style="font-size: 11px; font-weight: 800; color: #334155; display: block; margin-bottom: 3px;">
+              Thẻ Alt Text (Mô tả tiếp cận &amp; SEO):
+            </label>
+            <input type="text" id="photo_alt_${idx}" value="${escapeHtmlStudio(photo.altText || '')}" oninput="updatePhotoAlt(${idx}, this.value)" placeholder="Mô tả tóm tắt..." style="width: 100%; padding: 7px 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12px; box-sizing: border-box;">
+          </div>
+        </div>
+
+        <!-- BOTTOM DELETE BUTTON -->
+        <button type="button" onclick="confirmDeletePhoto(${idx})" style="background: white; border: 1px solid #FECACA; color: #DC2626; padding: 7px 12px; border-radius: 6px; font-size: 11.5px; font-weight: 700; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.15s;">
+          <i class="fa-solid fa-trash-can"></i> Xóa Ảnh Khỏi Bài
+        </button>
+      </div>
+      `;
+    }).join('');
+  }
+}
+
+function setPhotoAspectRatio(idx, ratio) {
+  if (!studioState.mediaPackage || !studioState.mediaPackage.photos || !studioState.mediaPackage.photos[idx]) return;
+  studioState.mediaPackage.photos[idx].aspectRatio = ratio;
+  renderMediaReviewUI(studioState.mediaPackage);
+  renderModalMediaGrid();
+}
+
+function toggleFitMode(idx) {
+  if (!studioState.mediaPackage || !studioState.mediaPackage.photos || !studioState.mediaPackage.photos[idx]) return;
+  const current = studioState.mediaPackage.photos[idx].fitMode || 'cover';
+  studioState.mediaPackage.photos[idx].fitMode = (current === 'contain') ? 'cover' : 'contain';
+  renderMediaReviewUI(studioState.mediaPackage);
+  renderModalMediaGrid();
+}
+
+function batchSetAspectRatio(ratio) {
+  if (!studioState.mediaPackage || !Array.isArray(studioState.mediaPackage.photos) || studioState.mediaPackage.photos.length === 0) {
+    alert("Chưa có ảnh nào trong bài để căn khuôn!");
+    return;
+  }
+  studioState.mediaPackage.photos.forEach(p => {
+    p.aspectRatio = ratio;
+    if (!p.fitMode) p.fitMode = 'cover';
+  });
+  renderMediaReviewUI(studioState.mediaPackage);
+  renderModalMediaGrid();
+  const label = ratio === '16/9' ? '16:9 Banner' : (ratio === '4/3' ? '4:3 Phóng sự' : ratio);
+  alert(`📐 Đã căn toàn bộ ${studioState.mediaPackage.photos.length} ảnh sang tỷ lệ khuôn ${label} chuẩn báo chí!`);
+}
+
+function confirmDeletePhoto(idx) {
+  if (!studioState.mediaPackage || !studioState.mediaPackage.photos || !studioState.mediaPackage.photos[idx]) return;
+  const photo = studioState.mediaPackage.photos[idx];
+  const name = photo.fileName || `Ảnh #${idx + 1}`;
+  if (confirm(`Bạn có chắc muốn xóa ảnh [${name}] khỏi bài viết?`)) {
+    removePhotoFromStudio(idx);
+    renderModalMediaGrid();
+  }
+}
+
+function clearAllPhotosFromStudio() {
+  if (!studioState.mediaPackage || !Array.isArray(studioState.mediaPackage.photos) || studioState.mediaPackage.photos.length === 0) {
+    alert("Hiện tại chưa có ảnh nào để xóa!");
+    return;
+  }
+  if (confirm(`Xác nhận xóa toàn bộ ${studioState.mediaPackage.photos.length} ảnh hiện trường khỏi bài viết?\n\nBài viết sẽ chuyển về chế độ thuần văn bản chuẩn mực.`)) {
+    studioState.mediaPackage.photos = [];
+    studioState.mediaPackage.hasMedia = false;
+    studioState.mediaPackage.featured = null;
+    studioState.mediaPackage.inBody = [];
+    studioState.uploadedFiles = (studioState.uploadedFiles || []).filter(f => {
+      const isImg = (f.type && f.type.startsWith('image/')) || (f.dataUrl && f.dataUrl.startsWith('data:image/')) || /\.(jpg|jpeg|png|webp|gif)$/i.test(f.name || '');
+      return !isImg;
+    });
+    renderMediaReviewUI(studioState.mediaPackage);
+    renderIntakeFilesList();
+    renderModalMediaGrid();
+    updateGlobalPhotoBadge();
+  }
+}
+
+function setPhotoAsFeatured(idx) {
+  if (!studioState.mediaPackage || !Array.isArray(studioState.mediaPackage.photos)) return;
+  studioState.mediaPackage.photos.forEach((p, i) => {
+    p.isFeatured = (i === idx);
+  });
+  studioState.mediaPackage.featured = studioState.mediaPackage.photos[idx];
+  studioState.mediaPackage.inBody = studioState.mediaPackage.photos.filter((p, i) => i !== idx);
+  renderMediaReviewUI(studioState.mediaPackage);
+  renderModalMediaGrid();
+}
+
+function removePhotoFromStudio(idx) {
+  if (!studioState.mediaPackage || !Array.isArray(studioState.mediaPackage.photos)) return;
+  const removed = studioState.mediaPackage.photos.splice(idx, 1)[0];
+  if (removed) {
+    studioState.uploadedFiles = (studioState.uploadedFiles || []).filter(f => f.url !== removed.url && f.name !== removed.fileName);
+  }
+
+  if (studioState.mediaPackage.photos.length === 0) {
+    studioState.mediaPackage.hasMedia = false;
+    studioState.mediaPackage.featured = null;
+    studioState.mediaPackage.inBody = [];
+  } else {
+    if (!studioState.mediaPackage.photos.some(p => p.isFeatured)) {
+      studioState.mediaPackage.photos[0].isFeatured = true;
+    }
+    studioState.mediaPackage.featured = studioState.mediaPackage.photos.find(p => p.isFeatured);
+    studioState.mediaPackage.inBody = studioState.mediaPackage.photos.filter(p => !p.isFeatured);
+  }
+  renderMediaReviewUI(studioState.mediaPackage);
+  renderIntakeFilesList();
+  renderModalMediaGrid();
+  updateGlobalPhotoBadge();
+}
+
+function togglePhotoInArticle(idx, isChecked) {
+  if (!studioState.mediaPackage || !studioState.mediaPackage.photos || !studioState.mediaPackage.photos[idx]) return;
+  studioState.mediaPackage.photos[idx].inArticle = isChecked;
+}
+
+function updatePhotoCaption(idx, val) {
+  if (!studioState.mediaPackage || !studioState.mediaPackage.photos || !studioState.mediaPackage.photos[idx]) return;
+  studioState.mediaPackage.photos[idx].caption = val;
+  if (studioState.mediaPackage.photos[idx].isFeatured && studioState.mediaPackage.featured) {
+    studioState.mediaPackage.featured.caption = val;
+  }
+}
+
+function updatePhotoAlt(idx, val) {
+  if (!studioState.mediaPackage || !studioState.mediaPackage.photos || !studioState.mediaPackage.photos[idx]) return;
+  studioState.mediaPackage.photos[idx].altText = val;
+  if (studioState.mediaPackage.photos[idx].isFeatured && studioState.mediaPackage.featured) {
+    studioState.mediaPackage.featured.altText = val;
+  }
+}
+
+function promptAddPhotoByUrl() {
+  const url = prompt("Nhập link URL hình ảnh sự kiện:\n(Ví dụ: https://tdmu.edu.vn/images/hoat-dong-cong-doan.jpg)");
+  if (!url || !url.trim()) return;
+  const trimmed = url.trim();
+
+  if (!studioState.mediaPackage) {
+    studioState.mediaPackage = { hasMedia: true, photos: [], featured: null, inBody: [] };
+  }
+  if (!Array.isArray(studioState.mediaPackage.photos)) {
+    studioState.mediaPackage.photos = [];
+  }
+
+  const evtName = studioState.factSheet?.eventName || 'Sự kiện Công đoàn TDMU';
+  const idx = studioState.mediaPackage.photos.length;
+  const isFirst = idx === 0;
+  const newPhoto = {
+    id: 'photo_url_' + Date.now().toString().slice(-4),
+    url: trimmed,
+    fileName: trimmed.split('/').pop().split('?')[0] || 'anh_su_kien.jpg',
+    caption: isFirst ? `Ảnh: Toàn cảnh sự kiện "${evtName}".` : `Ảnh: Hoạt động tiêu biểu tại chương trình "${evtName}".`,
+    altText: `Hình ảnh sự kiện ${evtName}`,
+    isFeatured: isFirst,
+    inArticle: true,
+    aspectRatio: '16/9',
+    fitMode: 'cover'
+  };
+
+  studioState.mediaPackage.photos.push(newPhoto);
+  studioState.mediaPackage.hasMedia = true;
+  if (isFirst) {
+    studioState.mediaPackage.featured = newPhoto;
+  } else {
+    studioState.mediaPackage.inBody = studioState.mediaPackage.photos.filter(p => !p.isFeatured);
+  }
+
+  // Ghi nhận vào uploadedFiles
+  studioState.uploadedFiles.push({
+    name: newPhoto.fileName,
+    size: 'URL Link',
+    type: 'image/jpeg',
+    text: '',
+    url: trimmed
+  });
+
+  renderMediaReviewUI(studioState.mediaPackage);
+  renderIntakeFilesList();
+  renderModalMediaGrid();
+  updateGlobalPhotoBadge();
+}
+
+async function handleMediaStageUpload(files) {
+  if (!files || !files.length) return;
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    if (!f.type.startsWith('image/')) continue;
+    const dataUrl = await readFileAsDataUrl(f);
+    studioState.uploadedFiles.push({
+      name: f.name,
+      size: (f.size / 1024).toFixed(1) + ' KB',
+      type: f.type,
+      text: '',
+      dataUrl: dataUrl,
+      url: dataUrl
+    });
+  }
+  renderIntakeFilesList();
+  await matchMediaInternal();
+  renderModalMediaGrid();
+  updateGlobalPhotoBadge();
+}
+
+// =========================================================================
+// 8.1 KHO TÀI NGUYÊN ẢNH BÁO CHÍ (MEDIA RESOURCE MANAGER MODAL)
+// =========================================================================
+function openMediaManagerModal(forInsert = false) {
+  isMediaManagerForInsert = !!forInsert;
+  const modal = document.getElementById('modal_media_resource_manager');
+  if (!modal) return;
+
+  const modeBadge = document.getElementById('modal_media_mode_badge');
+  const subtitle = document.getElementById('modal_media_subtitle');
+
+  if (isMediaManagerForInsert) {
+    if (modeBadge) {
+      modeBadge.textContent = 'Chèn Vào Bài Viết';
+      modeBadge.style.background = '#D97706';
+    }
+    if (subtitle) {
+      subtitle.textContent = '👉 Chọn ảnh từ kho hoặc tải lên để chèn ngay vào vị trí con trỏ trong trình soạn thảo Word Canvas';
+    }
+  } else {
+    if (modeBadge) {
+      modeBadge.textContent = 'Quản Lý Tài Nguyên';
+      modeBadge.style.background = '#0284C7';
+    }
+    if (subtitle) {
+      subtitle.textContent = 'Quản lý toàn bộ ảnh hiện trường, chuẩn hóa tỷ lệ khung hình & kiểm soát tài nguyên bài viết';
+    }
+  }
+
+  renderModalMediaGrid();
+  modal.style.display = 'flex';
+}
+
+function closeMediaManagerModal() {
+  const modal = document.getElementById('modal_media_resource_manager');
+  if (modal) modal.style.display = 'none';
+  isMediaManagerForInsert = false;
+}
+
+function renderModalMediaGrid() {
+  const listEl = document.getElementById('modal_media_photos_list');
+  const emptyEl = document.getElementById('modal_media_empty');
+  if (!listEl) return;
+
+  const photos = (studioState.mediaPackage && Array.isArray(studioState.mediaPackage.photos))
+    ? studioState.mediaPackage.photos
+    : [];
+
+  updateGlobalPhotoBadge();
+
+  if (photos.length === 0) {
+    listEl.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+
+  if (emptyEl) emptyEl.style.display = 'none';
+  listEl.style.display = 'grid';
+
+  listEl.innerHTML = photos.map((photo, idx) => {
+    const isFeat = photo.isFeatured || (idx === 0 && !photos.some(p => p.isFeatured));
+    const ratio = photo.aspectRatio || '16/9';
+    const fit = photo.fitMode || 'cover';
+
+    return `
+      <div style="background: ${isFeat ? '#F0F9FF' : '#F8FAFC'}; border: 1.5px solid ${isFeat ? '#0284C7' : '#E2E8F0'}; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: ${isFeat ? '0 3px 10px rgba(2,132,199,0.1)' : 'none'};">
+        <div>
+          <!-- THUMBNAIL -->
+          <div style="width: 100%; height: 140px; background: #0F172A; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; position: relative;">
+            <img src="${photo.url}" alt="${escapeHtmlStudio(photo.altText || '')}" style="width: 100%; height: 100%; aspect-ratio: ${ratio !== 'auto' ? ratio : 'auto'}; object-fit: ${fit};">
+            ${isFeat ? '<span style="position: absolute; top: 6px; left: 6px; background: #0284C7; color: white; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px;"><i class="fa-solid fa-star"></i> Đại Diện</span>' : ''}
+            <span style="position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.7); color: white; font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 4px;">
+              ${ratio}
+            </span>
+          </div>
+
+          <!-- ASPECT RATIO CONTROLS -->
+          <div style="margin-bottom: 8px;">
+            <div style="font-size: 10.5px; font-weight: 700; color: #475569; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+              <span>Khuôn ảnh:</span>
+              <span style="color: #0284C7; cursor: pointer; font-size: 10px;" onclick="toggleFitMode(${idx})">${fit === 'contain' ? '🔍 Giữ gốc' : '✂️ Cắt vừa'}</span>
+            </div>
+            <div style="display: flex; gap: 3px;">
+              ${['16/9', '4/3', '3/2', '1/1', 'auto'].map(r => `
+                <button type="button" onclick="setPhotoAspectRatio(${idx}, '${r}')" style="flex: 1; padding: 2px 3px; font-size: 10px; font-weight: 700; border-radius: 4px; border: 1px solid ${ratio === r ? '#0284C7' : '#CBD5E1'}; background: ${ratio === r ? '#0284C7' : 'white'}; color: ${ratio === r ? 'white' : '#475569'}; cursor: pointer;">
+                  ${r === 'auto' ? 'Gốc' : r}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- CAPTION INPUT -->
+          <div style="margin-bottom: 8px;">
+            <input type="text" value="${escapeHtmlStudio(photo.caption || '')}" oninput="updatePhotoCaption(${idx}, this.value)" placeholder="Chú thích ảnh..." style="width: 100%; font-size: 11px; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 5px; box-sizing: border-box;">
+          </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div style="display: flex; gap: 6px; margin-top: 6px;">
+          ${isMediaManagerForInsert ? `
+            <button type="button" onclick="insertPhotoToCanvas(${idx})" style="flex: 1; background: #D97706; color: white; border: none; font-size: 11.5px; font-weight: 700; padding: 6px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+              <i class="fa-solid fa-plus"></i> Chèn Vào Bài
+            </button>
+          ` : `
+            ${!isFeat ? `
+              <button type="button" onclick="setPhotoAsFeatured(${idx})" title="Đặt làm ảnh đại diện" style="flex: 1; background: white; border: 1px solid #0284C7; color: #0284C7; font-size: 11px; font-weight: 700; padding: 5px; border-radius: 5px; cursor: pointer;">
+                <i class="fa-regular fa-star"></i> Đại diện
+              </button>
+            ` : ''}
+          `}
+          <button type="button" onclick="confirmDeletePhoto(${idx})" title="Xóa ảnh này" style="background: #FEF2F2; border: 1px solid #FECACA; color: #DC2626; font-size: 11px; padding: 5px 10px; border-radius: 5px; cursor: pointer;">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function handleModalUpload(files) {
+  if (!files || !files.length) return;
+  await handleMediaStageUpload(files);
+}
+
+function insertPhotoToCanvas(idx) {
+  if (!studioState.mediaPackage || !studioState.mediaPackage.photos || !studioState.mediaPackage.photos[idx]) return;
+  const photo = studioState.mediaPackage.photos[idx];
+  const ratio = photo.aspectRatio && photo.aspectRatio !== 'auto' ? photo.aspectRatio : '16/9';
+  const fit = photo.fitMode || 'cover';
+  const caption = photo.caption || 'Ảnh: Hoạt động Công đoàn Đại học Thủ Dầu Một';
+  const alt = photo.altText || caption;
+
+  const figureHtml = `
+    <figure class="journalism-figure" style="margin: 24px auto; text-align: center; max-width: 780px;">
+      <img src="${photo.url}" alt="${escapeHtmlStudio(alt)}" style="width: 100%; aspect-ratio: ${ratio}; object-fit: ${fit}; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.08); display: block; margin: 0 auto;" />
+      <figcaption contenteditable="true" style="font-size: 13px; font-style: italic; color: #64748B; margin-top: 8px; outline: none;">${escapeHtmlStudio(caption)}</figcaption>
+    </figure>
+    <p><br></p>
+  `;
+
+  const editor = document.getElementById('native_rich_editor');
+  if (editor) {
+    editor.focus();
+    document.execCommand('insertHTML', false, figureHtml);
+    updateWordCountMetrics();
+    if (typeof saveEditorState === 'function') {
+      saveEditorState("Chèn ảnh từ Kho Tài Nguyên");
+    }
+  }
+
+  closeMediaManagerModal();
+}
+
+async function approveMediaAndAdvance() {
+  if (studioState.mediaPackage && Array.isArray(studioState.mediaPackage.photos)) {
+    studioState.mediaPackage.photos.forEach((p, idx) => {
+      const capInput = document.getElementById(`photo_caption_${idx}`);
+      const altInput = document.getElementById(`photo_alt_${idx}`);
+      if (capInput) p.caption = capInput.value.trim();
+      if (altInput) p.altText = altInput.value.trim();
+    });
+
+    const feat = studioState.mediaPackage.photos.find(p => p.isFeatured) || studioState.mediaPackage.photos[0];
+    if (feat) feat.isFeatured = true;
+    studioState.mediaPackage.featured = feat || null;
+    studioState.mediaPackage.inBody = studioState.mediaPackage.photos.filter(p => p !== feat);
+    studioState.mediaPackage.hasMedia = studioState.mediaPackage.photos.length > 0;
+  }
+
+  const hasPhoto = studioState.mediaPackage && studioState.mediaPackage.hasMedia && studioState.mediaPackage.photos && studioState.mediaPackage.photos.length > 0;
+  const count = hasPhoto ? studioState.mediaPackage.photos.length : 0;
+  logStudioAudit("Phê duyệt Bộ ảnh Báo chí (Checkpoint 3: Approved)", "Stage 4: Media Review", hasPhoto ? `Đã duyệt bộ ảnh báo chí gồm ${count} ảnh kèm chú thích theo Nghị định 30` : 'Xác nhận bài viết thuần văn bản (không kèm ảnh)');
+
+  const btn = document.getElementById('btn_approve_media');
+  if (btn) {
+    btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i> Đang khởi tạo Bản nháp Đa kênh...';
   }
 
   try {
     await generateDraftInternal();
-    goToStage(4);
+    goToStage(5);
   } catch (err) {
     alert("❌ Lỗi sinh bản thảo: " + err.message);
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i> ✓ Duyệt Kế Hoạch (Approve Plan) & Soạn Thảo Bản Nháp <i class="fa-solid fa-arrow-right"></i>';
+      btn.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i> ✓ Duyệt Bộ Ảnh Báo Chí (Approve Media) & Sang Soạn Bản Nháp <i class="fa-solid fa-arrow-right"></i>';
     }
   }
 }
 
+// =========================================================================
+// 9. STAGE 5: CHECKPOINT 4 - DRAFT GENERATION & WORD CANVAS REVIEW
+// =========================================================================
 async function generateDraftInternal() {
   const payload = {
     factSheet: studioState.factSheet,
     genre: studioState.editorialPlan?.genre || 'tin_hoat_dong',
     channels: ['website', 'facebook', 'zalo', 'video', 'infographic'],
     customInstructions: studioState.editorialPlan?.angle || '',
+    mediaPackage: studioState.mediaPackage,
     apiKey: localStorage.getItem('gemini_api_key') || ''
   };
 
@@ -629,9 +1202,6 @@ async function generateDraftInternal() {
   }
 }
 
-// =========================================================================
-// 8. STAGE 4: CHECKPOINT 3 - DRAFT CANVAS REVIEW
-// =========================================================================
 function renderDraftToCanvasUI(pkg) {
   if (!pkg) return;
 
@@ -651,6 +1221,16 @@ function renderDraftToCanvasUI(pkg) {
   if (pkg.facebook) {
     safeSetVal('fb_caption_input', pkg.facebook.caption || '');
     safeSetText('preview_fb_text', pkg.facebook.caption || '');
+
+    const fbImgContainer = document.getElementById('preview_fb_image_container');
+    const fbImg = document.getElementById('preview_fb_img');
+    const feat = studioState.mediaPackage?.featured || (studioState.mediaPackage?.photos && studioState.mediaPackage.photos[0]);
+    if (feat && feat.url && fbImg && fbImgContainer) {
+      fbImg.src = feat.url;
+      fbImgContainer.style.display = 'block';
+    } else if (fbImgContainer) {
+      fbImgContainer.style.display = 'none';
+    }
   }
 
   if (pkg.zalo) {
@@ -677,93 +1257,22 @@ async function approveDraftAndAdvance() {
     studioState.contentDraft.website.sapo = document.getElementById('studio_sapo_input')?.value.trim() || studioState.contentDraft.website.sapo;
   }
 
-  logStudioAudit("Phê duyệt Bản thảo Đa kênh (Checkpoint 3: Approved)", "Stage 4: Draft Canvas", `Đã lưu bản thảo Website, Facebook, Zalo`);
+  if (studioState.contentDraft && studioState.contentDraft.facebook) {
+    studioState.contentDraft.facebook.caption = document.getElementById('fb_caption_input')?.value || studioState.contentDraft.facebook.caption;
+  }
+  if (studioState.contentDraft && studioState.contentDraft.zalo) {
+    studioState.contentDraft.zalo.caption = document.getElementById('zalo_caption_input')?.value || studioState.contentDraft.zalo.caption;
+  }
+  if (studioState.contentDraft && studioState.contentDraft.video) {
+    studioState.contentDraft.video.script = document.getElementById('video_script_input')?.value || studioState.contentDraft.video.script;
+  }
+  if (studioState.contentDraft && studioState.contentDraft.infographic) {
+    studioState.contentDraft.infographic.highlights = document.getElementById('infographic_points_input')?.value || studioState.contentDraft.infographic.highlights;
+  }
+
+  logStudioAudit("Phê duyệt Bản thảo Đa kênh (Checkpoint 4: Approved)", "Stage 5: Draft Canvas", `Đã duyệt hoàn thiện bản thảo Website và các kênh`);
 
   const btn = document.getElementById('btn_approve_draft');
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i> Đang gán & chú thích hình ảnh...';
-  }
-
-  try {
-    await matchMediaInternal();
-    if (studioState.mode === 'assisted') {
-      // Assisted mode: CP 2 (Draft Canvas) approved -> AI runs compliance and jumps to Stage 6 for publish
-      await runComplianceInternal();
-      goToStage(6);
-    } else {
-      goToStage(5);
-    }
-  } catch (err) {
-    alert("❌ Lỗi phân bổ hình ảnh: " + err.message);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      updateStageButtonsForMode();
-    }
-  }
-}
-
-async function matchMediaInternal() {
-  const payload = {
-    factSheet: studioState.factSheet,
-    uploadedFiles: studioState.uploadedFiles,
-    apiKey: localStorage.getItem('gemini_api_key') || ''
-  };
-
-  const res = await fetch('/api/ai/media-match', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  }).then(r => r.json());
-
-  if (res.success && res.mediaPackage) {
-    studioState.mediaPackage = res.mediaPackage;
-    renderMediaReviewUI(res.mediaPackage);
-  } else {
-    throw new Error(res.error || "Không thể phân bổ hình ảnh");
-  }
-}
-
-// =========================================================================
-// 9. STAGE 5: CHECKPOINT 4 - MEDIA REVIEW & CAPTIONING
-// =========================================================================
-function renderMediaReviewUI(pkg) {
-  if (!pkg) return;
-
-  if (pkg.featured) {
-    const imgEl = document.getElementById('media_featured_preview');
-    if (imgEl) imgEl.src = pkg.featured.url;
-    safeSetVal('media_featured_caption', pkg.featured.caption || '');
-    safeSetVal('media_featured_alt', pkg.featured.altText || '');
-    safeSetText('media_featured_name', pkg.featured.fileName || 'Ảnh đại diện');
-  }
-
-  if (pkg.inBody && pkg.inBody.length > 0) {
-    const b = pkg.inBody[0];
-    const imgEl = document.getElementById('media_inbody_preview');
-    if (imgEl) imgEl.src = b.url;
-    safeSetVal('media_inbody_caption', b.caption || '');
-    safeSetVal('media_inbody_alt', b.altText || '');
-    safeSetText('media_inbody_name', b.fileName || 'Ảnh thân bài');
-  }
-}
-
-async function approveMediaAndAdvance() {
-  if (studioState.mediaPackage) {
-    if (studioState.mediaPackage.featured) {
-      studioState.mediaPackage.featured.caption = document.getElementById('media_featured_caption')?.value.trim() || studioState.mediaPackage.featured.caption;
-      studioState.mediaPackage.featured.altText = document.getElementById('media_featured_alt')?.value.trim() || studioState.mediaPackage.featured.altText;
-    }
-    if (studioState.mediaPackage.inBody && studioState.mediaPackage.inBody[0]) {
-      studioState.mediaPackage.inBody[0].caption = document.getElementById('media_inbody_caption')?.value.trim() || studioState.mediaPackage.inBody[0].caption;
-      studioState.mediaPackage.inBody[0].altText = document.getElementById('media_inbody_alt')?.value.trim() || studioState.mediaPackage.inBody[0].altText;
-    }
-  }
-
-  logStudioAudit("Phê duyệt Bộ ảnh Báo chí (Checkpoint 4: Approved)", "Stage 5: Media Review", `Đã duyệt ảnh đại diện và chú thích ảnh theo Nghị định 30`);
-
-  const btn = document.getElementById('btn_approve_media');
   if (btn) {
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i> Đang gác cổng thẩm định Compliance...';
@@ -777,17 +1286,19 @@ async function approveMediaAndAdvance() {
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i> ✓ Duyệt Bộ Ảnh Báo Chí (Approve Media) & Sang Thẩm Định <i class="fa-solid fa-arrow-right"></i>';
+      updateStageButtonsForMode();
     }
   }
 }
 
-async function runComplianceInternal() {
+async function runComplianceInternal(overrideGenre) {
+  const currentGenre = overrideGenre || document.getElementById('compliance_genre_selector')?.value || studioState.editorialPlan?.genre || 'tin_hoat_dong';
   const payload = {
     factSheet: studioState.factSheet,
     editorialPlan: studioState.editorialPlan,
     draft: studioState.contentDraft,
     mediaPackage: studioState.mediaPackage,
+    genre: currentGenre,
     apiKey: localStorage.getItem('gemini_api_key') || ''
   };
 
@@ -802,6 +1313,19 @@ async function runComplianceInternal() {
     renderComplianceUI(res);
   } else {
     throw new Error(res.error || "Không thể thực hiện Compliance Check");
+  }
+}
+
+async function switchComplianceGenre(newGenre) {
+  try {
+    if (studioState.editorialPlan) {
+      studioState.editorialPlan.genre = newGenre;
+    }
+    const sel = document.getElementById('compliance_genre_selector');
+    if (sel && sel.value !== newGenre) sel.value = newGenre;
+    await runComplianceInternal(newGenre);
+  } catch (err) {
+    alert("❌ Lỗi chuyển đổi thể loại thẩm định: " + err.message);
   }
 }
 
@@ -829,22 +1353,59 @@ function renderComplianceUI(audit) {
     }
   }
 
+  // Cập nhật bộ chọn thể loại nếu có
+  const genreSel = document.getElementById('compliance_genre_selector');
+  if (genreSel && audit.genreInfo && audit.genreInfo.key) {
+    genreSel.value = audit.genreInfo.key;
+  }
+
+  // Render Góp ý nâng tầm từ Thư ký Tòa soạn (Editorial Insights)
+  const insightsBox = document.getElementById('compliance_editorial_insights_content');
+  if (insightsBox) {
+    const insights = audit.editorialInsights || [];
+    if (insights.length > 0) {
+      insightsBox.innerHTML = '<ul style="margin: 0; padding-left: 18px; line-height: 1.8;">' +
+        insights.map(i => `<li>${escapeHtmlStudio(i)}</li>`).join('') +
+        '</ul>';
+    } else {
+      insightsBox.innerHTML = '<em>Bài viết phù hợp tiêu chuẩn biên tập của Tòa soạn Báo chí Công đoàn TDMU.</em>';
+    }
+  }
+
+  // Render danh sách tiêu chí thẩm định thích ứng với thể loại
   const listEl = document.getElementById('compliance_checklist_container');
   if (listEl && Array.isArray(audit.checks)) {
-    listEl.innerHTML = audit.checks.map(c => `
-      <div style="background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: ${c.status === 'pass' ? '#DCFCE7' : (c.status === 'warning' ? '#FEF3C7' : '#FEE2E2')}; color: ${c.status === 'pass' ? '#16A34A' : (c.status === 'warning' ? '#D97706' : '#DC2626')}; font-size: 11px;">
+    listEl.innerHTML = audit.checks.map(c => {
+      let tagBg = '#EFF6FF', tagColor = '#1D4ED8';
+      const tagStr = c.tag || '';
+      if (tagStr.includes('Bắt buộc')) {
+        tagBg = '#FEE2E2'; tagColor = '#991B1B';
+      } else if (tagStr.includes('Phóng sự') || tagStr.includes('Xã luận') || tagStr.includes('Thông báo') || tagStr.includes('Chân dung') || tagStr.includes('Thể loại')) {
+        tagBg = '#EFF6FF'; tagColor = '#1E40AF';
+      } else if (tagStr.includes('ảnh') || tagStr.includes('Đa phương tiện') || tagStr.includes('Kỹ thuật')) {
+        tagBg = '#FAF5FF'; tagColor = '#7E22CE';
+      } else if (tagStr.includes('Đa kênh')) {
+        tagBg = '#ECFDF5'; tagColor = '#065F46';
+      }
+
+      return `
+      <div style="background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+        <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+          <span style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: ${c.status === 'pass' ? '#DCFCE7' : (c.status === 'warning' ? '#FEF3C7' : '#FEE2E2')}; color: ${c.status === 'pass' ? '#16A34A' : (c.status === 'warning' ? '#D97706' : '#DC2626')}; font-size: 11px; flex-shrink: 0;">
             <i class="fa-solid ${c.status === 'pass' ? 'fa-check' : (c.status === 'warning' ? 'fa-triangle-exclamation' : 'fa-xmark')}"></i>
           </span>
           <div>
-            <div style="font-weight: 700; color: #002855; font-size: 13px;">${escapeHtml(c.name)}</div>
-            <div style="color: #64748B; font-size: 11.5px; margin-top: 1px;">${escapeHtml(c.desc || '')}</div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span style="font-weight: 700; color: #002855; font-size: 13px;">${escapeHtmlStudio(c.name)}</span>
+              ${c.tag ? `<span style="background: ${tagBg}; color: ${tagColor}; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 4px;">${escapeHtmlStudio(c.tag)}</span>` : ''}
+            </div>
+            <div style="color: #64748B; font-size: 11.5px; margin-top: 2px;">${escapeHtmlStudio(c.desc || '')}</div>
           </div>
         </div>
-        <span style="font-weight: 800; font-size: 12.5px; color: ${c.status === 'pass' ? '#16A34A' : '#DC2626'};">${c.score}</span>
+        <span style="font-weight: 800; font-size: 13px; color: ${c.status === 'pass' ? '#16A34A' : '#DC2626'}; flex-shrink: 0;">${c.score}</span>
       </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   const publishBtns = document.querySelectorAll('.final-publish-action-btn');
@@ -866,8 +1427,8 @@ function executeRevisionLoop() {
 
   const stageNames = {
     3: 'Stage 3: Editorial Plan (Góc Truyền Thông)',
-    4: 'Stage 4: Draft Canvas (Soạn Thảo Bài Viết)',
-    5: 'Stage 5: Media Review (Bộ Ảnh Sự Kiện)'
+    4: 'Stage 4: Media Review (Gán Ảnh & Chú Thích)',
+    5: 'Stage 5: Draft Canvas (Soạn Thảo Bài Viết)'
   };
 
   if (!confirm(`Thầy/Cô có muốn gửi trả bài viết về [${stageNames[targetStage]}] để điều chỉnh không?\n\nLý do: "${reason}"`)) {
@@ -909,7 +1470,7 @@ async function runAutoModePipeline() {
     markAutoStep('auto_step_log_1', 'done');
     markAutoStep('auto_step_log_2', 'done');
 
-    // Step 3: Editorial Planning & Media Matching
+    // Step 3: Editorial Planning
     markAutoStep('auto_step_log_3', 'running');
     const genre = document.getElementById('intake_genre_selector')?.value || 'tin_hoat_dong';
     const audience = document.getElementById('intake_audience_selector')?.value || 'Toàn thể Đoàn viên, Cán bộ Giảng viên TDMU';
@@ -932,22 +1493,23 @@ async function runAutoModePipeline() {
       renderEditorialPlanUI(planRes.plan);
     }
 
+    // Step 4: Media Matching (Scan real images or detect pure text)
     await matchMediaInternal();
     markAutoStep('auto_step_log_3', 'done');
 
-    // Step 4: Multi-channel Draft Generation
+    // Step 5: Multi-channel Draft Generation (Embeds real photos or clean pure text)
     markAutoStep('auto_step_log_4', 'running');
     await generateDraftInternal();
     markAutoStep('auto_step_log_4', 'done');
 
-    // Step 5: Compliance Gate
+    // Step 6: Compliance Gate
     markAutoStep('auto_step_log_5', 'running');
     await runComplianceInternal();
     markAutoStep('auto_step_log_5', 'done');
 
     logStudioAudit("Tự động hóa toàn trình hoàn tất (Auto Mode: Finished)", "Stage 6: Compliance & Publish", `Bài viết "${studioState.factSheet?.eventName}" đã sẵn sàng`);
 
-    goToStage(4);
+    goToStage(5);
     alert('🎉 Pipeline Tự Động Hóa Hoàn Tất!\nHệ thống đã tạo xong trọn bộ bài viết đa kênh (Website, Facebook, Zalo OA, Video Script). Đang mở Word Canvas để Thầy/Cô xem trước và xuất bản.');
   } catch (err) {
     console.error("Auto mode pipeline error:", err);
@@ -1022,7 +1584,9 @@ function buildPublishPayload(status) {
   const editor = document.getElementById('native_rich_editor');
   const contentHtml = editor ? editor.innerHTML : '';
   const sapo = document.getElementById('studio_sapo_input')?.value.trim() || '';
-  const imgUrl = studioState.mediaPackage?.featured?.url || 'images/banner.jpg';
+  const imgUrl = (studioState.mediaPackage?.featured && studioState.mediaPackage.featured.url) 
+    ? studioState.mediaPackage.featured.url 
+    : '';
 
   return {
     title,
@@ -1038,6 +1602,7 @@ function buildPublishPayload(status) {
       governanceMode: studioState.mode,
       factSheet: studioState.factSheet,
       editorialPlan: studioState.editorialPlan,
+      mediaPackage: studioState.mediaPackage,
       complianceScore: studioState.complianceAudit?.overallScore || 98,
       auditTrail: studioState.auditTrail
     }
@@ -1092,17 +1657,7 @@ function insertCustomQuote() {
 }
 
 function insertCustomFigure() {
-  const caption = prompt("Nhập chú thích ảnh báo chí:", "Ảnh: Toàn cảnh chương trình diễn ra trang trọng tại TDMU");
-  if (caption) {
-    const imgUrl = studioState.mediaPackage?.featured?.url || 'images/banner.jpg';
-    document.execCommand('insertHTML', false, `
-      <figure class="journalism-figure" style="text-align: center; margin: 20px 0;">
-        <img src="${imgUrl}" alt="${escapeHtml(caption)}" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-        <figcaption style="font-size: 13px; color: #64748B; font-style: italic; margin-top: 8px;">${escapeHtml(caption)}</figcaption>
-      </figure><p></p>
-    `);
-    updateWordCountMetrics();
-  }
+  openMediaManagerModal(true);
 }
 
 function updateWordCountMetrics() {

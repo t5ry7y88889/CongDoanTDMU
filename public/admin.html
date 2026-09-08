@@ -823,6 +823,9 @@
                 <i class="fa-solid fa-shield-halved text-warning"></i> 🔴 Doanh Nghiệp (5 CP)
               </button>
             </div>
+            <button type="button" onclick="openMediaManagerModal()" style="background: #F0F9FF; border: 1.5px solid #0284C7; color: #0284C7; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(2,132,199,0.12);">
+              <i class="fa-solid fa-photo-film"></i> 📸 Kho Ảnh Báo Chí (<span id="global_photo_count_badge">0</span>)
+            </button>
             <div style="display: flex; align-items: center; gap: 6px; background: #F8FAFC; border: 1px solid #CBD5E1; padding: 6px 12px; border-radius: 8px;">
               <span style="font-size: 11.5px; font-weight: 700; color: #0369A1;"><i class="fa-solid fa-robot me-1"></i> AI:</span>
               <select id="ai_engine_selector" onchange="localStorage.setItem('ai_engine_preference', this.value)" style="border: none; background: transparent; font-size: 12px; font-weight: 700; color: #0284C7; outline: none; cursor: pointer;">
@@ -861,14 +864,14 @@
             <!-- STAGE 4 -->
             <div id="stage_indicator_4" class="studio-stepper-item" onclick="goToStage(4)" style="flex: 1; min-width: 140px; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; background: #F8FAFC; color: #64748B; border: 1px solid #E2E8F0; cursor: pointer; transition: all 0.2s;">
               <span class="stage-num-badge" style="display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #CBD5E1; color: #475569; font-size: 11px; font-weight: 800;">4</span>
-              <span style="font-size: 12px; font-weight: 700;">Bản Nháp <small style="color: #0284C7; font-weight: 800;">[CP 3]</small></span>
+              <span style="font-size: 12px; font-weight: 700;">Gán Ảnh <small style="color: #0284C7; font-weight: 800;">[CP 3]</small></span>
             </div>
             <div style="color: #CBD5E1; font-size: 11px;"><i class="fa-solid fa-chevron-right"></i></div>
 
             <!-- STAGE 5 -->
             <div id="stage_indicator_5" class="studio-stepper-item" onclick="goToStage(5)" style="flex: 1; min-width: 140px; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; background: #F8FAFC; color: #64748B; border: 1px solid #E2E8F0; cursor: pointer; transition: all 0.2s;">
               <span class="stage-num-badge" style="display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #CBD5E1; color: #475569; font-size: 11px; font-weight: 800;">5</span>
-              <span style="font-size: 12px; font-weight: 700;">Gán Ảnh <small style="color: #0284C7; font-weight: 800;">[CP 4]</small></span>
+              <span style="font-size: 12px; font-weight: 700;">Bản Nháp <small style="color: #0284C7; font-weight: 800;">[CP 4]</small></span>
             </div>
             <div style="color: #CBD5E1; font-size: 11px;"><i class="fa-solid fa-chevron-right"></i></div>
 
@@ -943,11 +946,13 @@
             <div>
               <label style="font-size: 11.5px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 4px; display: block;">Thể loại sự kiện:</label>
               <select id="intake_genre_selector" style="width: 100%; padding: 8px 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12.5px; font-weight: 700; color: #002855;">
-                <option value="tin_hoat_dong">📰 Tin Hoạt Động &amp; Sự Kiện Phong Trào</option>
-                <option value="phuc_loi">💖 Chăm Lo Đời Sống &amp; Phúc Lợi Đoàn Viên</option>
-                <option value="thong_bao">📋 Thông Báo - Chỉ Đạo Của BTV</option>
-                <option value="guong_sang">🌟 Gương Sáng Đoàn Viên &amp; Nhà Giáo</option>
-                <option value="khen_thuong">🏆 Khen Thưởng - Thi Đua Dạy Tốt</option>
+                <option value="tin_hoat_dong">📰 Tin Hoạt Động &amp; Sự Kiện (5W1H &amp; Thời Sự)</option>
+                <option value="phong_su">🖋️ Phóng Sự - Ghi Chép Hiện Trường (Chiều Sâu)</option>
+                <option value="xa_luan">🏛️ Xã Luận - Bình Luận - Góc Nhìn Công Đoàn (Chính Luận)</option>
+                <option value="chan_dung">🌟 Gương Sáng Đoàn Viên &amp; Chân Dung Nhân Vật (Truyền Cảm Hứng)</option>
+                <option value="phong_van">🎙️ Phỏng Vấn Chuyên Sâu &amp; Tọa Đàm (Q&amp;A Đối Thoại)</option>
+                <option value="thong_bao">📜 Thông Báo - Hướng Dẫn Chính Sách &amp; Phúc Lợi (Pháp Lý &amp; Thủ Tục)</option>
+                <option value="anh_bao_chi">📸 Phóng Sự Ảnh - Visual Story (Kể Chuyện Qua Ảnh)</option>
               </select>
             </div>
             <div>
@@ -1155,16 +1160,86 @@
             </button>
             <div style="display: flex; gap: 10px;">
               <button type="button" id="btn_approve_plan" onclick="approvePlanAndAdvance()" style="background: #002855; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 13.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 3px 10px rgba(0,40,85,0.25);">
-                <i class="fa-solid fa-check text-success"></i> ✓ Duyệt Kế Hoạch (Approve Plan) &amp; Soạn Thảo Bản Nháp <i class="fa-solid fa-arrow-right"></i>
+                <i class="fa-solid fa-check text-success"></i> ✓ Duyệt Kế Hoạch (Approve Plan) &amp; Sang Gán Ảnh <i class="fa-solid fa-arrow-right"></i>
               </button>
             </div>
           </div>
         </div>
 
         <!-- ========================================================================= -->
-        <!-- STAGE 4: CHECKPOINT 3 - DRAFT GENERATION & WORD CANVAS REVIEW -->
+        <!-- STAGE 4: CHECKPOINT 3 - MEDIA REVIEW & CAPTIONING (BEFORE DRAFT CANVAS) -->
         <!-- ========================================================================= -->
-        <div id="studio_stage_pane_4" style="display: none; margin-bottom: 24px;">
+        <div id="studio_stage_pane_4" style="display: none; background: white; border: 1px solid #CBD5E1; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,40,85,0.04);">
+          <div style="border-bottom: 1px solid #F1F5F9; padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <h3 style="font-size: 16px; font-weight: 800; color: #002855; margin: 0; display: flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-images text-primary"></i> STAGE 4: GÁN ẢNH &amp; CHÚ THÍCH BÁO CHÍ (MEDIA CURATION &bull; CHECKPOINT 3)
+                </h3>
+                <span id="media_photos_count_badge" style="background: #E0F2FE; color: #0284C7; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; border: 1px solid #BAE6FD;">0 ảnh</span>
+              </div>
+              <p style="font-size: 12.5px; color: #64748B; margin: 4px 0 0;">Quản lý toàn bộ ảnh hiện trường thực tế, biên tập chú thích ảnh theo chuẩn Nghị định 30, chỉ định ảnh đại diện và ảnh thân bài</p>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <button type="button" onclick="promptAddPhotoByUrl()" style="background: white; border: 1px solid #CBD5E1; color: #334155; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-link text-primary"></i> + Thêm Bằng Link URL
+              </button>
+              <label for="media_stage_upload_input_top" style="background: #F0F9FF; border: 1px solid #0284C7; color: #0284C7; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-cloud-arrow-up"></i> + Tải Thêm Ảnh Từ Máy
+                <input type="file" id="media_stage_upload_input_top" multiple accept="image/*" style="display: none;" onchange="handleMediaStageUpload(this.files)">
+              </label>
+              <button type="button" onclick="batchSetAspectRatio('16/9')" title="Căn toàn bộ ảnh sang tỷ lệ 16:9 chuẩn báo điện tử" style="background: #F8FAFC; border: 1px solid #CBD5E1; color: #0369A1; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                <i class="fa-solid fa-crop-simple"></i> 📐 Căn Tất Cả 16:9
+              </button>
+              <button type="button" onclick="clearAllPhotosFromStudio()" title="Xóa toàn bộ ảnh đang nạp" style="background: #FEF2F2; border: 1px solid #FECACA; color: #DC2626; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                <i class="fa-solid fa-trash-can"></i> Xóa Tất Cả Ảnh
+              </button>
+            </div>
+          </div>
+
+          <!-- KHUNG THÔNG BÁO KHI KHÔNG CÓ ẢNH ĐƯỢC TẢI LÊN -->
+          <div id="media_empty_notice" style="display: none; background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 36px 24px; text-align: center; margin-bottom: 20px;">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: #E2E8F0; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+              <i class="fa-regular fa-image" style="font-size: 26px; color: #64748B;"></i>
+            </div>
+            <h4 style="font-size: 15px; font-weight: 800; color: #002855; margin: 0 0 8px;">Không Có Tệp Ảnh Hiện Trường Đính Kèm</h4>
+            <p style="font-size: 13px; color: #64748B; max-width: 540px; margin: 0 auto 20px; line-height: 1.6;">
+              Hồ sơ ban đầu chỉ có văn bản/công văn. Hệ thống tuân thủ nghiêm ngặt nguyên tắc <b>Không Ảo Giác Ảnh</b>: Sẽ tạo bài báo thuần văn bản chuẩn mực, tuyệt đối không tự chèn ảnh mẫu cũ hay lấy ảnh sai lệch sự kiện.
+            </p>
+            <div style="display: flex; gap: 12px; justify-content: center; align-items: center; flex-wrap: wrap;">
+              <button type="button" onclick="promptAddPhotoByUrl()" style="background: white; border: 1.5px solid #CBD5E1; color: #334155; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-link text-primary"></i> + Nhập Link URL Ảnh
+              </button>
+              <label for="media_stage_upload_input_empty" style="background: white; border: 1.5px solid #0284C7; color: #0284C7; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(2,132,199,0.15);">
+                <i class="fa-solid fa-cloud-arrow-up"></i> + Tải Ảnh Hiện Trường Lên Ngay
+                <input type="file" id="media_stage_upload_input_empty" multiple accept="image/*" style="display: none;" onchange="handleMediaStageUpload(this.files)">
+              </label>
+              <button type="button" onclick="approveMediaAndAdvance()" style="background: #002855; color: white; border: none; padding: 10px 22px; border-radius: 8px; font-size: 13px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,40,85,0.2);">
+                Tiếp Tục Soạn Thảo (Không Kèm Ảnh) <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- DYNAMIC PHOTO CARDS GRID (HIỂN THỊ TOÀN BỘ ẢNH HIỆN TRƯỜNG ĐÃ NẠP) -->
+          <div id="media_photos_container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 18px; margin-bottom: 20px;">
+            <!-- Danh sách các ảnh sẽ được render linh hoạt thông qua renderMediaReviewUI() -->
+          </div>
+
+          <!-- CHECKPOINT 3 BUTTONS -->
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button type="button" onclick="goToStage(3)" style="background: white; border: 1px solid #CBD5E1; color: #475569; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;">
+              <i class="fa-solid fa-arrow-left me-1"></i> Quay Lại Kế Hoạch (Stage 3)
+            </button>
+            <button type="button" id="btn_approve_media" onclick="approveMediaAndAdvance()" style="background: #002855; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 13.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 3px 10px rgba(0,40,85,0.25);">
+              <i class="fa-solid fa-check text-success"></i> ✓ Duyệt Bộ Ảnh Báo Chí (Approve Media) &amp; Sang Soạn Bản Nháp <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- STAGE 5: CHECKPOINT 4 - DRAFT GENERATION & WORD CANVAS REVIEW -->
+        <!-- ========================================================================= -->
+        <div id="studio_stage_pane_5" style="display: none; margin-bottom: 24px;">
           <!-- TABS CHUYỂN KÊNH PHÁT HÀNH -->
           <div style="display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 2px;">
             <button type="button" class="package-tab-btn active" id="tab_btn_pkg_web" onclick="switchPackageTab('web')" style="background: #002855; color: white; border: none; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;">
@@ -1270,7 +1345,10 @@
                     <div style="font-size: 11px; color: #64748B;">Vừa xong &bull; <i class="fa-solid fa-earth-americas"></i></div>
                   </div>
                 </div>
-                <div id="preview_fb_text" style="font-size: 13px; line-height: 1.6; color: #1E293B; white-space: pre-wrap;"></div>
+                <div id="preview_fb_text" style="font-size: 13px; line-height: 1.6; color: #1E293B; white-space: pre-wrap; margin-bottom: 12px;"></div>
+                <div id="preview_fb_image_container" style="display: none; border-radius: 8px; overflow: hidden; border: 1px solid #E2E8F0;">
+                  <img id="preview_fb_img" src="" style="width: 100%; max-height: 240px; object-fit: cover; display: block;">
+                </div>
               </div>
             </div>
           </div>
@@ -1301,76 +1379,13 @@
             <textarea id="infographic_points_input" rows="8" style="width: 100%; padding: 14px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 13px; line-height: 1.7; outline: none; box-sizing: border-box; font-family: monospace;"></textarea>
           </div>
 
-          <!-- CHECKPOINT 3 BUTTONS -->
+          <!-- CHECKPOINT 4 BUTTONS -->
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-            <button type="button" id="btn_stage4_back" onclick="handleStage4Back()" style="background: white; border: 1px solid #CBD5E1; color: #475569; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;">
-              <i class="fa-solid fa-arrow-left me-1"></i> Quay Lại Kế Hoạch (Stage 3)
+            <button type="button" id="btn_stage5_back" onclick="handleStage5Back()" style="background: white; border: 1px solid #CBD5E1; color: #475569; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;">
+              <i class="fa-solid fa-arrow-left me-1"></i> Quay Lại Gán Ảnh (Stage 4)
             </button>
             <button type="button" id="btn_approve_draft" onclick="approveDraftAndAdvance()" style="background: #002855; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 13.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 3px 10px rgba(0,40,85,0.25);">
-              <i class="fa-solid fa-check text-success"></i> ✓ Duyệt Bản Nháp (Approve Draft) &amp; Sang Khâu Gán Ảnh <i class="fa-solid fa-arrow-right"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- ========================================================================= -->
-        <!-- STAGE 5: CHECKPOINT 4 - MEDIA REVIEW & CAPTIONING -->
-        <!-- ========================================================================= -->
-        <div id="studio_stage_pane_5" style="display: none; background: white; border: 1px solid #CBD5E1; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,40,85,0.04);">
-          <div style="border-bottom: 1px solid #F1F5F9; padding-bottom: 12px; margin-bottom: 18px;">
-            <h3 style="font-size: 16px; font-weight: 800; color: #002855; margin: 0; display: flex; align-items: center; gap: 8px;">
-              <i class="fa-solid fa-images text-primary"></i> STAGE 5: GÁN ẢNH &amp; CHÚ THÍCH BÁO CHÍ (MEDIA REVIEW &bull; CHECKPOINT 4)
-            </h3>
-            <p style="font-size: 12.5px; color: #64748B; margin: 4px 0 0;">AI tự động quét ảnh sự kiện đã nạp, chọn ảnh đại diện, ảnh thân bài và viết chú thích theo chuẩn Nghị định 30</p>
-          </div>
-
-          <!-- 2 CARDS: ẢNH ĐẠI DIỆN VÀ ẢNH THÂN BÀI -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-            <!-- CARD 1: ẢNH ĐẠI DIỆN -->
-            <div style="background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 10px; padding: 18px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <span style="font-size: 12px; font-weight: 800; color: #002855; text-transform: uppercase;">1. Ảnh Đại Diện (Featured Image)</span>
-                <span id="media_featured_name" style="font-size: 11px; color: #64748B;">banner.jpg</span>
-              </div>
-              <div style="text-align: center; margin-bottom: 12px; background: white; padding: 8px; border-radius: 8px; border: 1px solid #E2E8F0;">
-                <img id="media_featured_preview" src="images/banner.jpg" style="max-width: 100%; max-height: 180px; object-fit: cover; border-radius: 6px;">
-              </div>
-              <div style="margin-bottom: 8px;">
-                <label style="font-size: 11px; font-weight: 800; color: #334155; display: block; margin-bottom: 2px;">Chú thích ảnh báo chí (Caption NĐ 30):</label>
-                <input type="text" id="media_featured_caption" style="width: 100%; padding: 8px 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12px;">
-              </div>
-              <div>
-                <label style="font-size: 11px; font-weight: 800; color: #334155; display: block; margin-bottom: 2px;">Thẻ Alt Text (Mô tả tiếp cận &amp; SEO):</label>
-                <input type="text" id="media_featured_alt" style="width: 100%; padding: 8px 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12px;">
-              </div>
-            </div>
-
-            <!-- CARD 2: ẢNH THÂN BÀI -->
-            <div style="background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 10px; padding: 18px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <span style="font-size: 12px; font-weight: 800; color: #002855; text-transform: uppercase;">2. Ảnh Thân Bài (In-Body Image)</span>
-                <span id="media_inbody_name" style="font-size: 11px; color: #64748B;">sports.jpg</span>
-              </div>
-              <div style="text-align: center; margin-bottom: 12px; background: white; padding: 8px; border-radius: 8px; border: 1px solid #E2E8F0;">
-                <img id="media_inbody_preview" src="images/sports.jpg" style="max-width: 100%; max-height: 180px; object-fit: cover; border-radius: 6px;">
-              </div>
-              <div style="margin-bottom: 8px;">
-                <label style="font-size: 11px; font-weight: 800; color: #334155; display: block; margin-bottom: 2px;">Chú thích ảnh báo chí (Caption NĐ 30):</label>
-                <input type="text" id="media_inbody_caption" style="width: 100%; padding: 8px 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12px;">
-              </div>
-              <div>
-                <label style="font-size: 11px; font-weight: 800; color: #334155; display: block; margin-bottom: 2px;">Thẻ Alt Text (Mô tả tiếp cận &amp; SEO):</label>
-                <input type="text" id="media_inbody_alt" style="width: 100%; padding: 8px 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12px;">
-              </div>
-            </div>
-          </div>
-
-          <!-- CHECKPOINT 4 BUTTONS -->
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <button type="button" onclick="goToStage(4)" style="background: white; border: 1px solid #CBD5E1; color: #475569; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;">
-              <i class="fa-solid fa-arrow-left me-1"></i> Quay Lại Bản Nháp (Stage 4)
-            </button>
-            <button type="button" id="btn_approve_media" onclick="approveMediaAndAdvance()" style="background: #002855; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 13.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 3px 10px rgba(0,40,85,0.25);">
-              <i class="fa-solid fa-check text-success"></i> ✓ Duyệt Bộ Ảnh Báo Chí (Approve Media) &amp; Sang Thẩm Định <i class="fa-solid fa-arrow-right"></i>
+              <i class="fa-solid fa-check text-success"></i> ✓ Duyệt Bản Nháp (Approve Draft) &amp; Sang Thẩm Định Xuất Bản <i class="fa-solid fa-arrow-right"></i>
             </button>
           </div>
         </div>
@@ -1384,7 +1399,7 @@
               <h3 style="font-size: 16px; font-weight: 800; color: #002855; margin: 0; display: flex; align-items: center; gap: 8px;">
                 <i class="fa-solid fa-shield-halved text-success"></i> STAGE 6: GÁC CỔNG THẨM ĐỊNH COMPLIANCE &amp; XUẤT BẢN (FINAL GATE &bull; CHECKPOINT 5)
               </h3>
-              <p style="font-size: 12.5px; color: #64748B; margin: 4px 0 0;">AI chạy bảng kiểm tra 8 tiêu chuẩn xuất bản nghiêm ngặt. Nếu vi phạm sẽ KHÓA nút xuất bản.</p>
+              <p style="font-size: 12.5px; color: #64748B; margin: 4px 0 0;">Thẩm định thông minh thích ứng theo từng thể loại báo chí, loại bỏ rập khuôn máy móc</p>
             </div>
             <div style="display: flex; align-items: center; gap: 10px;">
               <span id="compliance_overall_score" style="font-size: 20px; font-weight: 800; color: #059669;">98/100</span>
@@ -1394,7 +1409,36 @@
             </div>
           </div>
 
-          <!-- BẢNG 8 TIÊU CHÍ COMPLIANCE CHECKLIST -->
+          <!-- THANH CHỌN THỂ LOẠI THẨM ĐỊNH TỰ ĐỘNG THÍCH ỨNG -->
+          <div style="background: #F0F9FF; border: 1px solid #BAE6FD; border-radius: 10px; padding: 12px 18px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 12px; font-weight: 800; color: #0369A1; text-transform: uppercase;">
+                <i class="fa-solid fa-layer-group me-1"></i> Khung Tiêu Chí Thẩm Định Theo Thể Loại:
+              </span>
+              <select id="compliance_genre_selector" onchange="switchComplianceGenre(this.value)" style="padding: 6px 12px; border: 1.5px solid #0284C7; border-radius: 6px; font-size: 12.5px; font-weight: 800; color: #002855; background: white; cursor: pointer;">
+                <option value="tin_hoat_dong">📰 Tin Hoạt Động &amp; Sự Kiện (5W1H &amp; Thời Sự)</option>
+                <option value="phong_su">🖋️ Phóng Sự - Ghi Chép Thực Tế (Hiện Trường &amp; Chiều Sâu)</option>
+                <option value="xa_luan">🏛️ Xã Luận - Bình Luận - Góc Nhìn Công Đoàn (Chính Luận)</option>
+                <option value="chan_dung">🌟 Gương Sáng Đoàn Viên &amp; Chân Dung (Truyền Cảm Hứng)</option>
+                <option value="phong_van">🎙️ Phỏng Vấn Chuyên Sâu &amp; Tọa Đàm (Q&amp;A Đối Thoại)</option>
+                <option value="thong_bao">📜 Thông Báo - Hướng Dẫn Chính Sách (Pháp Lý &amp; Thủ Tục)</option>
+                <option value="anh_bao_chi">📸 Phóng Sự Ảnh - Visual Story (Kể Chuyện Qua Ảnh)</option>
+              </select>
+            </div>
+            <div style="font-size: 11.5px; color: #0284C7; font-weight: 600;">
+              <i class="fa-solid fa-circle-check text-success me-1"></i> Đánh giá theo chuẩn riêng của từng thể loại báo chí
+            </div>
+          </div>
+
+          <!-- KHUNG GỢI Ý NÂNG TẦM BÀI BÁO TỪ THƯ KÝ TÒA SOẠN -->
+          <div id="compliance_editorial_box" style="background: #FAF5FF; border: 1px solid #E9D5FF; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+            <h4 style="font-size: 12.5px; font-weight: 800; color: #6B21A8; margin: 0 0 8px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-feather text-primary"></i> GÓP Ý NÂNG CAO TỪ THƯ KÝ TÒA SOẠN (EDITORIAL INSIGHTS):
+            </h4>
+            <div id="compliance_editorial_insights_content" style="font-size: 12.5px; color: #581C87; line-height: 1.6;"></div>
+          </div>
+
+          <!-- BẢNG TIÊU CHÍ COMPLIANCE CHECKLIST -->
           <div id="compliance_checklist_container" style="margin-bottom: 22px;"></div>
 
           <!-- REVISION LOOP BOX (VÒNG LẶP SỬA ĐỔI THÔNG MINH) -->
@@ -1408,8 +1452,8 @@
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
               <select id="revision_target_stage_selector" style="padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12.5px; font-weight: 700; color: #002855;">
                 <option value="3">← Trả về Stage 3: Kế hoạch &amp; Góc truyền thông</option>
-                <option value="4" selected>← Trả về Stage 4: Soạn thảo lại bản nháp Canvas</option>
-                <option value="5">← Trả về Stage 5: Chọn lại bộ ảnh sự kiện</option>
+                <option value="4">← Trả về Stage 4: Chọn lại &amp; Chú thích bộ ảnh</option>
+                <option value="5" selected>← Trả về Stage 5: Soạn thảo lại bản nháp Canvas</option>
               </select>
               <input type="text" id="revision_reason_input" placeholder="Lý do điều chỉnh (VD: Văn phong hơi quảng cáo, cần viết khách quan hơn)..." style="flex: 1; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12.5px;">
               <button type="button" onclick="executeRevisionLoop()" style="background: #D97706; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer;">
@@ -1423,7 +1467,7 @@
             <label style="font-size: 12px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 10px; display: block;">Hành Động Xuất Bản &amp; Phê Duyệt:</label>
             <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
               <button type="button" id="btn_stage6_back" onclick="handleStage6Back()" style="background: white; border: 1px solid #CBD5E1; color: #475569; font-weight: 700; padding: 11px 18px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                <i class="fa-solid fa-arrow-left"></i> Quay Lại
+                <i class="fa-solid fa-arrow-left"></i> Quay Lại Bản Nháp (Stage 5)
               </button>
               <button type="button" class="btn final-publish-action-btn" onclick="savePackageDraft()" style="background: white; border: 1px solid #CBD5E1; color: #334155; font-weight: 700; padding: 11px 20px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
                 <i class="fa-solid fa-floppy-disk text-primary"></i> 1. Lưu Thành Bản Nháp (Draft)
@@ -1843,6 +1887,74 @@
   <script src="js/admin/admin-editor.js?v=1788874000000"></script>
   <script src="js/admin/admin-copilot.js?v=1788874000000"></script>
   <script src="js/admin.js?v=1788874000000"></script>
+
+  <!-- MODAL QUẢN LÝ KHO TÀI NGUYÊN ẢNH BÁO CHÍ & KHUÔN HÌNH CHUẨN (MEDIA RESOURCE MANAGER) -->
+  <div id="modal_media_resource_manager" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: white; border-radius: 14px; width: 920px; max-width: 95vw; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); overflow: hidden;">
+      
+      <!-- MODAL HEADER -->
+      <div style="background: #002855; color: white; padding: 16px 22px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fa-solid fa-photo-film" style="color: #38BDF8; font-size: 20px;"></i>
+          <div>
+            <h3 style="font-size: 16px; font-weight: 800; color: white; margin: 0; display: flex; align-items: center; gap: 8px;">
+              KHO TÀI NGUYÊN ẢNH BÁO CHÍ &amp; QUẢN LÝ KHUÔN HÌNH
+              <span id="modal_media_mode_badge" style="background: #0284C7; color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Quản Lý Tài Nguyên</span>
+            </h3>
+            <p id="modal_media_subtitle" style="font-size: 12px; color: #94A3B8; margin: 3px 0 0;">Quản lý toàn bộ ảnh hiện trường, chuẩn hóa tỷ lệ khung hình &amp; kiểm soát tài nguyên bài viết</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeMediaManagerModal()" style="background: none; border: none; font-size: 22px; color: #CBD5E1; cursor: pointer; line-height: 1;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- QUICK ACTION BAR -->
+      <div style="background: #F8FAFC; border-bottom: 1px solid #E2E8F0; padding: 12px 22px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <label for="modal_media_file_input" style="background: #0284C7; color: white; border: none; padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-cloud-arrow-up"></i> + Tải Thêm Ảnh Từ Máy
+            <input type="file" id="modal_media_file_input" multiple accept="image/*" style="display: none;" onchange="handleModalUpload(this.files)">
+          </label>
+          <button type="button" onclick="promptAddPhotoByUrl()" style="background: white; border: 1px solid #CBD5E1; color: #334155; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-link text-primary"></i> + Thêm Link URL
+          </button>
+          <button type="button" onclick="batchSetAspectRatio('16/9')" title="Căn toàn bộ ảnh sang chuẩn 16:9" style="background: #F0F9FF; border: 1px solid #BAE6FD; color: #0369A1; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-crop-simple"></i> 📐 Căn Tất Cả 16:9
+          </button>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button type="button" onclick="clearAllPhotosFromStudio()" title="Xóa toàn bộ ảnh đang nạp" style="background: #FEF2F2; border: 1px solid #FECACA; color: #DC2626; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-trash-can"></i> Xóa Tất Cả Ảnh
+          </button>
+        </div>
+      </div>
+
+      <!-- MODAL BODY / MEDIA GRID -->
+      <div id="modal_media_grid_container" style="flex: 1; overflow-y: auto; padding: 20px 22px; background: white; max-height: 60vh;">
+        <!-- DYNAMIC GRID OF PHOTOS -->
+        <div id="modal_media_photos_list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px;"></div>
+        <!-- EMPTY STATE IF NO PHOTOS -->
+        <div id="modal_media_empty" style="display: none; text-align: center; padding: 48px 20px;">
+          <div style="width: 56px; height: 56px; border-radius: 50%; background: #F1F5F9; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+            <i class="fa-regular fa-image" style="font-size: 26px; color: #94A3B8;"></i>
+          </div>
+          <h4 style="font-size: 15px; font-weight: 800; color: #334155; margin: 0 0 6px;">Chưa có ảnh nào trong kho tài nguyên của bài</h4>
+          <p style="font-size: 12.5px; color: #64748B; max-width: 440px; margin: 0 auto 16px; line-height: 1.5;">Thầy/Cô có thể tải ảnh hiện trường từ máy tính hoặc dán link URL ảnh sự kiện để tự động gắn vào bài báo.</p>
+          <button type="button" onclick="document.getElementById('modal_media_file_input').click()" style="background: #0284C7; color: white; border: none; padding: 8px 18px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer;">
+            <i class="fa-solid fa-cloud-arrow-up me-1"></i> Tải Ảnh Lên Ngay
+          </button>
+        </div>
+      </div>
+
+      <!-- MODAL FOOTER -->
+      <div style="background: #F8FAFC; border-top: 1px solid #E2E8F0; padding: 12px 22px; display: flex; justify-content: space-between; align-items: center;">
+        <span id="modal_media_total_text" style="font-size: 12.5px; color: #64748B; font-weight: 700;">Tổng số ảnh: 0 ảnh</span>
+        <button type="button" onclick="closeMediaManagerModal()" style="background: #E2E8F0; color: #334155; border: none; padding: 8px 20px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer;">
+          Đóng
+        </button>
+      </div>
+
+    </div>
+  </div>
 
   <!-- MODAL CHÈN ẢNH BÁO CHÍ (POLLINATIONS AI FLUX / KHO TƯ LIỆU / URL) -->
   <div id="modal_journalism_image" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center;">
