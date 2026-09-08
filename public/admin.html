@@ -55,9 +55,7 @@
       box-shadow: 4px 0 20px rgba(0, 40, 85, 0.12);
       transition: width 0.25s ease;
     }
-    .admin-sidebar.collapsed {
-      width: 76px;
-    }
+    
     .sidebar-header {
       height: var(--header-height);
       padding: 0 16px;
@@ -72,9 +70,7 @@
       flex-direction: column;
       overflow: hidden;
     }
-    .admin-sidebar.collapsed .sidebar-brand-text {
-      display: none;
-    }
+    
     .brand-title {
       font-size: 13.5px;
       font-weight: 800;
@@ -113,9 +109,7 @@
       letter-spacing: 0.8px;
       padding: 14px 12px 6px 12px;
     }
-    .admin-sidebar.collapsed .nav-section-label {
-      display: none;
-    }
+    
     .sidebar-nav-link {
       display: flex;
       align-items: center;
@@ -156,9 +150,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .admin-sidebar.collapsed .nav-text {
-      display: none;
-    }
+    
     .nav-badge-ai {
       background: linear-gradient(135deg, #F59E0B, #D97706);
       color: #FFFFFF;
@@ -168,9 +160,7 @@
       border-radius: 4px;
       letter-spacing: 0.5px;
     }
-    .admin-sidebar.collapsed .nav-badge-ai {
-      display: none;
-    }
+    
     .sidebar-footer {
       padding: 12px 16px;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -178,9 +168,7 @@
       font-size: 11px;
       color: #94A3B8;
     }
-    .admin-sidebar.collapsed .sidebar-footer {
-      display: none;
-    }
+    
 
     /* MAIN CONTAINER */
     .admin-main-wrapper {
@@ -192,9 +180,7 @@
       transition: margin-left 0.25s ease;
       background: var(--bg-body);
     }
-    .admin-sidebar.collapsed ~ .admin-main-wrapper {
-      margin-left: 76px;
-    }
+    
 
     /* TOP HEADER */
     .admin-top-header {
@@ -401,6 +387,114 @@
       color: #0284C7;
       border-color: #0284C7;
     }
+      /* COLLAPSED STATE ENHANCEMENTS */
+    .admin-sidebar.collapsed {
+      width: 72px;
+    }
+    .admin-sidebar.collapsed .sidebar-header {
+      padding: 0;
+      justify-content: center;
+    }
+    .admin-sidebar.collapsed .sidebar-header a {
+      justify-content: center !important;
+      padding: 0;
+      gap: 0 !important;
+    }
+    .admin-sidebar.collapsed .sidebar-header img {
+      margin: 0 auto;
+      height: 38px;
+    }
+    .admin-sidebar.collapsed .sidebar-brand-text {
+      display: none !important;
+    }
+    .admin-sidebar.collapsed .sidebar-nav {
+      padding: 16px 8px;
+      align-items: center;
+    }
+    .admin-sidebar.collapsed .nav-section-label {
+      display: none !important;
+    }
+    .admin-sidebar.collapsed .sidebar-nav-link {
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      margin: 4px auto;
+      justify-content: center;
+      border-radius: 12px;
+      position: relative;
+    }
+    .admin-sidebar.collapsed .sidebar-nav-link .nav-icon {
+      width: auto;
+      font-size: 17px;
+      margin: 0;
+    }
+    .admin-sidebar.collapsed .sidebar-nav-link .nav-text {
+      display: none !important;
+    }
+    .admin-sidebar.collapsed .sidebar-nav-link .nav-badge-ai {
+      display: none !important;
+    }
+    .admin-sidebar.collapsed .sidebar-nav-link:hover {
+      transform: none;
+      background: rgba(255, 255, 255, 0.14);
+      color: #FFFFFF;
+    }
+    .admin-sidebar.collapsed .sidebar-nav-link.active {
+      background: #0284C7;
+      color: #FFFFFF;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.45);
+      border-color: #38BDF8;
+    }
+    .admin-sidebar.collapsed .sidebar-nav-link.active i {
+      color: #FFFFFF !important;
+    }
+
+    /* FLOATING TOOLTIP ON HOVER WHEN COLLAPSED */
+    .admin-sidebar.collapsed .sidebar-nav-link::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: calc(100% + 12px);
+      top: 50%;
+      transform: translateY(-50%) scale(0.95);
+      background: #0F172A;
+      color: #FFFFFF;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      padding: 7px 12px;
+      border-radius: 6px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 2500;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .admin-sidebar.collapsed .sidebar-nav-link::before {
+      content: '';
+      position: absolute;
+      left: calc(100% + 6px);
+      top: 50%;
+      transform: translateY(-50%);
+      border-width: 5px 6px 5px 0;
+      border-style: solid;
+      border-color: transparent #0F172A transparent transparent;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 2500;
+    }
+    .admin-sidebar.collapsed .sidebar-nav-link:hover::after,
+    .admin-sidebar.collapsed .sidebar-nav-link:hover::before {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(-50%) scale(1);
+    }
+
+    .admin-sidebar.collapsed ~ .admin-main-wrapper {
+      margin-left: 72px;
+    }
   </style>
 </head>
 <body>
@@ -422,40 +516,40 @@
       <!-- Sidebar Navigation Menu -->
       <nav class="sidebar-nav">
         <div class="nav-section-label">TỔNG QUAN</div>
-        <a href="#dashboard" class="sidebar-nav-link" id="menu_dashboard" onclick="showAdminTab('dashboard')">
+        <a href="#dashboard" class="sidebar-nav-link" id="menu_dashboard" data-tooltip="Bảng Điều Hành" onclick="showAdminTab('dashboard')">
           <i class="fa-solid fa-gauge-high nav-icon" style="color: #38BDF8;"></i>
           <span class="nav-text">Bảng Điều Hành</span>
         </a>
 
         <div class="nav-section-label">TRUYỀN THÔNG ĐA KÊNH</div>
-        <a href="#articles" class="sidebar-nav-link" id="menu_articles" onclick="showAdminTab('articles', 'all')">
+        <a href="#articles" class="sidebar-nav-link" id="menu_articles" data-tooltip="Quản Lý Tin Tức" onclick="showAdminTab('articles', 'all')">
           <i class="fa-solid fa-newspaper nav-icon" style="color: #60A5FA;"></i>
           <span class="nav-text">Quản Lý Tin Tức</span>
         </a>
-        <a href="#ai-creator" class="sidebar-nav-link active" id="menu_ai-creator" onclick="showAdminTab('ai-creator')">
+        <a href="#ai-creator" class="sidebar-nav-link active" id="menu_ai-creator" data-tooltip="Phòng Biên Tập Đa Kênh" onclick="showAdminTab('ai-creator')">
           <i class="fa-solid fa-wand-magic-sparkles nav-icon" style="color: #F59E0B;"></i>
           <span class="nav-text">Phòng Biên Tập Đa Kênh</span>
           <span class="nav-badge-ai">CMS</span>
         </a>
-        <a href="#schedule" class="sidebar-nav-link" id="menu_schedule" onclick="showAdminTab('schedule')">
+        <a href="#schedule" class="sidebar-nav-link" id="menu_schedule" data-tooltip="Lịch Xuất Bản" onclick="showAdminTab('schedule')">
           <i class="fa-solid fa-calendar-check nav-icon" style="color: #C084FC;"></i>
           <span class="nav-text">Lịch Xuất Bản</span>
         </a>
-        <a href="#documents" class="sidebar-nav-link" id="menu_documents" onclick="showAdminTab('documents')">
+        <a href="#documents" class="sidebar-nav-link" id="menu_documents" data-tooltip="Kho Văn Bản" onclick="showAdminTab('documents')">
           <i class="fa-solid fa-folder-open nav-icon" style="color: #34D399;"></i>
           <span class="nav-text">Kho Văn Bản</span>
         </a>
 
         <div class="nav-section-label">NGHIỆP VỤ CÔNG ĐOÀN</div>
-        <a href="#reports" class="sidebar-nav-link" id="menu_reports" onclick="showAdminTab('reports')">
+        <a href="#reports" class="sidebar-nav-link" id="menu_reports" data-tooltip="Báo Cáo 16 Tổ CĐ" onclick="showAdminTab('reports')">
           <i class="fa-solid fa-file-invoice nav-icon" style="color: #FBBF24;"></i>
           <span class="nav-text">Báo Cáo 16 Tổ CĐ</span>
         </a>
-        <a href="#users" class="sidebar-nav-link" id="menu_users" onclick="showAdminTab('users')">
+        <a href="#users" class="sidebar-nav-link" id="menu_users" data-tooltip="Cán Bộ &amp; Phân Quyền" onclick="showAdminTab('users')">
           <i class="fa-solid fa-users-gear nav-icon" style="color: #F87171;"></i>
           <span class="nav-text">Cán Bộ &amp; Phân Quyền</span>
         </a>
-        <a href="#audits" class="sidebar-nav-link" id="menu_audits" onclick="showAdminTab('audits')">
+        <a href="#audits" class="sidebar-nav-link" id="menu_audits" data-tooltip="Nhật Ký Tác Nghiệp" onclick="showAdminTab('audits')">
           <i class="fa-solid fa-clock-rotate-left nav-icon" style="color: #A78BFA;"></i>
           <span class="nav-text">Nhật Ký Tác Nghiệp</span>
         </a>
