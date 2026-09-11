@@ -287,8 +287,6 @@ tdmu-congdoan-web/
 ├── database/                                  # Cơ sở dữ liệu & Kịch bản SQL
 │   ├── schema_15_tables_mssql.sql             # DDL Schema 15 bảng & 19 khóa ngoại (MSSQL)
 │   ├── seed_15_tables_mssql.sql               # DML Seed nạp dữ liệu chuẩn 16 Tổ CĐ & nghiệp vụ (MSSQL)
-│   ├── schema_15_tables_mysql.sql             # DDL Schema bản MySQL/MariaDB
-│   └── seed_15_tables_mysql.sql               # DML Seed bản MySQL
 ├── frontend/                                  # Ứng dụng Single Page Application (React 18 + Vite)
 │   ├── src/
 │   │   ├── pages/                             # Các trang chức năng React (Home, PhucLoiDoanVien...)
