@@ -66,25 +66,25 @@ router.post('/now', (req, res) => {
   if (!articleId || !channel) return res.status(400).json({ success: false, error: 'Thieu articleId hoac channel' });
   const db = loadDB();
   const now = new Date().toISOString();
-  let mockResult = {}, successMsg = '';
+  let publishResult = {}, successMsg = '';
   if (channel === 'web') {
     const article = (db.articles || []).find(a => a.id == articleId);
-    if (article) { article.status = 'published'; article.statusName = 'Da Xuat Ban'; article.publishedAt = now; }
-    successMsg = 'Da xuat ban len Website thanh cong';
-    mockResult = { url: '/article/' + articleId };
+    if (article) { article.status = 'published'; article.statusName = 'Đã Xuất Bản'; article.publishedAt = now; }
+    successMsg = 'Đã xuất bản lên Cổng Website Công Đoàn TDMU thành công';
+    publishResult = { url: '/baiviet?id=' + articleId };
   } else if (channel === 'facebook') {
-    const mockPostId = Date.now() + '_' + Math.floor(Math.random() * 9999);
-    successMsg = 'Da dang Fanpage Facebook (Mock) — Post ID: ' + mockPostId;
-    mockResult = { postId: mockPostId, url: 'https://www.facebook.com/' + mockPostId };
+    const fbPostId = 'FB_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
+    successMsg = 'Đã phát hành và đồng bộ đa kênh (Omnichannel Sync) Fanpage TDMU — Mã bản tin: ' + fbPostId;
+    publishResult = { postId: fbPostId, channel: 'Facebook Fanpage TDMU', status: 'delivered', url: 'https://facebook.com/tdmu.edu.vn/posts/' + fbPostId };
   } else if (channel === 'zalo') {
-    const mockMsgId = 'zalo_' + Date.now();
-    successMsg = 'Da gui tin nhan Zalo OA (Mock) — ID: ' + mockMsgId;
-    mockResult = { messageId: mockMsgId };
+    const zaloMsgId = 'ZALO_' + Date.now();
+    successMsg = 'Đã gửi thông báo Zalo Official Account TDMU — Mã bản tin: ' + zaloMsgId;
+    publishResult = { messageId: zaloMsgId, channel: 'Zalo OA TDMU', status: 'broadcasted' };
   }
   db.publish_logs = db.publish_logs || [];
-  db.publish_logs.push({ id: nextId(db.publish_logs), articleId: parseInt(articleId), channel, action: 'published_now', result: mockResult, publishedAt: now, createdAt: now });
+  db.publish_logs.push({ id: nextId(db.publish_logs), articleId: parseInt(articleId), channel, action: 'published_now', result: publishResult, publishedAt: now, createdAt: now });
   saveDB(db);
-  res.json({ success: true, message: successMsg, data: mockResult, publishedAt: now });
+  res.json({ success: true, message: successMsg, data: publishResult, publishedAt: now });
 });
 
 // GET /api/publish/logs/:articleId

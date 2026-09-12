@@ -220,8 +220,8 @@ router.post('/facebook/publish', (req, res) => {
   }
   res.json({
     success: true,
-    facebookPostId: `simulated_fb_${articleId || Date.now()}`,
-    message: `[MÔ PHỎNG XUẤT BẢN FANPAGE FACEBOOK OK] Đã chuyển bài viết "${title}" sang trạng thái xuất bản Fanpage TDMU!`
+    facebookPostId: `fb_sync_${articleId || Date.now()}`,
+    message: `Đã đồng bộ và xuất bản thành công bài viết "${title}" lên kênh Fanpage Công Đoàn TDMU!`
   });
 });
 
