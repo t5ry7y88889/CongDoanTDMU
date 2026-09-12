@@ -31,7 +31,45 @@ function readFileAsDataUrl(file) {
   });
 }
 
-function readDocumentText(file) {
+async function parseDocxOnServer(file) {
+  try {
+    const base64 = await readFileAsDataUrl(file);
+    const res = await fetch('/api/documents/parse-docx', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName: file.name,
+        fileBase64: base64
+      })
+    }).then(r => r.json());
+
+    if (res.success) {
+      if (res.images && res.images.length > 0) {
+        res.images.forEach(img => {
+          composerState.photos.push({
+            url: img.url,
+            caption: img.caption || ('Ảnh trích xuất từ: ' + file.name),
+            isFeatured: composerState.photos.length === 0
+          });
+        });
+        logComposerActivity('docx_imgs', 'Đã tự động trích xuất ' + res.images.length + ' ảnh nhúng từ tệp Word ' + file.name + '!', 'done');
+      }
+      return { text: res.text || '', html: res.html || '' };
+    }
+  } catch (e) {
+    console.warn('[Docx Server Parse Warning]:', e.message);
+  }
+  return null;
+}
+
+async function readDocumentText(file) {
+  if (file.name.endsWith('.docx')) {
+    const parsed = await parseDocxOnServer(file);
+    if (parsed && parsed.text) {
+      return parsed.text;
+    }
+  }
+
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -39,17 +77,6 @@ function readDocumentText(file) {
         const buffer = e.target.result;
         const decoder = new TextDecoder('utf-8', { fatal: false });
         const text = decoder.decode(buffer);
-        
-        // Extract Word docx XML tags (<w:t>)
-        const matches = text.match(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g);
-        if (matches && matches.length > 0) {
-          const extracted = matches.map(m => m.replace(/<[^>]+>/g, '')).join(' ');
-          if (extracted.trim().length > 10) {
-            return resolve(extracted.trim());
-          }
-        }
-        
-        // Clean printable strings for plain text/PDF fallback
         const cleaned = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, ' ').replace(/\s+/g, ' ').trim();
         if (cleaned.length > 30) {
           return resolve(cleaned.slice(0, 15000));
@@ -248,7 +275,25 @@ async function runComposerGeneration() {
           if (evt.step === 'web_chunk') {
             webHtml += evt.chunk;
             if (canvas) {
-              canvas.innerHTML = webHtml;
+              // Dynamic block routing
+              const titleMatch = webHtml.match(/<h1[^>]*>(.*?)<\/h1>/i);
+              if (titleMatch) {
+                const curTitle = titleMatch[1].replace(/<[^>]*>/g, '').trim();
+                safeSetVal('composer_title_input', curTitle);
+                composerState.masterArticle.title = curTitle;
+              }
+              const sapoMatch = webHtml.match(/<p class="sapo"[^>]*>.*?<strong>(.*?)<\/strong>/i);
+              if (sapoMatch) {
+                const curSapo = sapoMatch[1].replace(/<[^>]*>/g, '').trim();
+                safeSetVal('composer_sapo_input', curSapo);
+                composerState.masterArticle.sapo = curSapo;
+              }
+
+              // Strip h1 and sapo from canvas so they live in dedicated semantic blocks
+              let bodyClean = webHtml;
+              if (titleMatch) bodyClean = bodyClean.replace(/<h1[^>]*>.*?<\/h1>/i, '');
+              if (sapoMatch) bodyClean = bodyClean.replace(/<p class="sapo"[^>]*>.*?<\/p>/i, '');
+              canvas.innerHTML = bodyClean.trim();
               canvas.scrollTop = canvas.scrollHeight;
               updateComposerMetrics();
             }
@@ -676,21 +721,59 @@ async function loadComposerSchedules() {
     }
     container.innerHTML = '<div style="font-weight: 800; font-size: 13px; color: #002855; margin-bottom: 8px;">Lịch Hẹn Đã Thiết Lập:</div>' +
       list.map(s => {
-        const dt = new Date(s.scheduledAt).toLocaleString('vi-VN');
+        const schedTime = new Date(s.scheduledAt);
+        const dt = schedTime.toLocaleString('vi-VN');
         const ch = s.channel === 'web' ? '📰 Website' : s.channel === 'facebook' ? '📘 Facebook' : '💬 Zalo';
+        
+        let diffMs = schedTime - Date.now();
+        let countdownStr = '';
+        if (s.status === 'done') {
+          countdownStr = '<span style="color: #16A34A; font-weight: 700;">✓ Đã xuất bản thành công</span>';
+        } else if (diffMs <= 0) {
+          countdownStr = '<span style="color: #2563EB; font-weight: 700;">⚡ Đang trong hàng đợi xuất bản</span>';
+        } else {
+          const mins = Math.floor(diffMs / 60000);
+          const hrs = Math.floor(mins / 60);
+          countdownStr = '<span style="color: #D97706; font-weight: 600;">(còn ' + (hrs > 0 ? (hrs + 'h ' + (mins % 60) + 'm') : (mins + ' phút')) + ')</span>';
+        }
+
         return (
-          '<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 8px 12px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">' +
+          '<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">' +
             '<div>' +
-              '<span style="font-weight: 700; color: #002855;">' + ch + '</span> &bull; ' +
-              '<span style="color: #64748B;">' + dt + '</span> &bull; ' +
-              '<span style="font-size: 11px; font-weight: 700; color: ' + (s.status === 'done' ? '#16A34A' : '#D97706') + ';">' + (s.status === 'done' ? 'Đã chạy' : 'Đang chờ') + '</span>' +
+              '<div style="font-weight: 700; color: #002855; font-size: 13px;">' + ch + ' &bull; Bài #' + (s.articleId || '') + ' ' + (s.title ? ('- ' + escapeHtml(s.title)) : '') + '</div>' +
+              '<div style="color: #64748B; font-size: 11.5px; margin-top: 3px;">' + dt + ' ' + countdownStr + '</div>' +
             '</div>' +
-            (s.status === 'pending' ? '<button onclick="cancelComposerSchedule(' + s.id + ')" style="background: none; border: none; color: #EF4444; font-size: 11px; cursor: pointer; font-weight: 700;">Hủy</button>' : '') +
+            '<div style="display: flex; gap: 8px; align-items: center;">' +
+              (s.status === 'pending' ? '<button onclick="publishComposerScheduledNow(' + s.id + ', ' + s.articleId + ', \'' + s.channel + '\')" style="background: #0284C7; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: 700; cursor: pointer;">⚡ Đăng Ngay</button>' : '') +
+              (s.status === 'pending' ? '<button onclick="cancelComposerSchedule(' + s.id + ')" style="background: none; border: 1px solid #CBD5E1; color: #EF4444; border-radius: 4px; padding: 3px 8px; font-size: 11px; cursor: pointer; font-weight: 600;">Hủy</button>' : '') +
+            '</div>' +
           '</div>'
         );
       }).join('');
   } catch (e) {
     container.innerHTML = '<div style="color: #EF4444;">Không thể tải lịch hẹn.</div>';
+  }
+}
+
+
+async function publishComposerScheduledNow(schedId, articleId, channel) {
+  if (!confirm("Xuất bản ngay lập tức mà không cần đợi đến giờ hẹn?")) return;
+  try {
+    const res = await fetch('/api/publish/now', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ articleId, channel })
+    }).then(r => r.json());
+
+    if (res.success) {
+      alert("✅ Đã xuất bản thành công!");
+      await fetch('/api/publish/schedule/' + schedId, { method: 'DELETE' });
+      loadComposerSchedules();
+    } else {
+      alert("Lỗi: " + res.error);
+    }
+  } catch (e) {
+    alert("Lỗi: " + e.message);
   }
 }
 
@@ -748,3 +831,210 @@ function runManusGeneration() { runComposerGeneration(); }
 document.addEventListener('DOMContentLoaded', () => {
   updateComposerMetrics();
 });
+
+
+// =============================================================================
+// PHASE 2: SEMANTIC BLOCK MANAGER, BUBBLE MENU & AUTO-SAVE ENGINE
+// =============================================================================
+
+const BlockManager = {
+  createFigureHtml(url, caption, id) {
+    const figId = id || ('fig_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
+    return (
+      '<figure id="' + figId + '" class="journalism-figure" style="margin: 24px 0; text-align: center; position: relative; border-radius: 8px; overflow: hidden; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 8px;">' +
+        '<div style="position: absolute; top: 12px; right: 12px; display: flex; gap: 6px; z-index: 10;">' +
+          '<button type="button" onclick="BlockManager.removeFigure(\'' + figId + '\')" style="background: rgba(15, 23, 42, 0.75); color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; cursor: pointer;" title="Xóa ảnh">✕ Xóa</button>' +
+        '</div>' +
+        '<img src="' + url + '" alt="' + escapeHtml(caption) + '" style="max-width: 100%; max-height: 480px; border-radius: 6px; display: block; margin: 0 auto; object-fit: contain;" />' +
+        '<figcaption contenteditable="true" style="font-size: 13px; font-style: italic; color: #64748B; margin-top: 10px; outline: none; padding: 4px 12px; cursor: text;">Ảnh: ' + escapeHtml(caption || 'Hình ảnh sự kiện tại Trường Đại học Thủ Dầu Một') + '</figcaption>' +
+      '</figure>' +
+      '<p><br></p>'
+    );
+  },
+
+  removeFigure(id) {
+    const fig = document.getElementById(id);
+    if (fig) {
+      fig.remove();
+      updateComposerMetrics();
+      saveComposerAutosave();
+    }
+  }
+};
+
+// ── BUBBLE MENU INTERACTION ──────────────────────────────────────────────────
+
+function initBubbleMenu() {
+  const canvas = document.getElementById('composer_canvas_editor');
+  const menu = document.getElementById('composer_bubble_menu');
+  if (!canvas || !menu) return;
+
+  const handleSelection = () => {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || !selection.toString().trim()) {
+      menu.style.display = 'none';
+      return;
+    }
+
+    // Ensure selection is inside canvas
+    const anchor = selection.anchorNode;
+    if (!canvas.contains(anchor)) {
+      menu.style.display = 'none';
+      return;
+    }
+
+    try {
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      const canvasRect = canvas.getBoundingClientRect();
+
+      if (rect.width === 0) {
+        menu.style.display = 'none';
+        return;
+      }
+
+      // Position menu centered above selection
+      const left = Math.max(10, rect.left - canvasRect.left + (rect.width / 2) - 140);
+      const top = Math.max(0, rect.top - canvasRect.top - 44);
+
+      menu.style.left = left + 'px';
+      menu.style.top = top + 'px';
+      menu.style.display = 'flex';
+    } catch (e) {
+      menu.style.display = 'none';
+    }
+  };
+
+  canvas.addEventListener('mouseup', () => setTimeout(handleSelection, 20));
+  canvas.addEventListener('keyup', (e) => {
+    if (['Shift', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+      setTimeout(handleSelection, 20);
+    }
+  });
+
+  document.addEventListener('mousedown', (e) => {
+    if (menu && !menu.contains(e.target) && !canvas.contains(e.target)) {
+      menu.style.display = 'none';
+    }
+  });
+}
+
+function formatBlockSelection(action) {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return;
+
+  if (action === 'bold') {
+    document.execCommand('bold', false, null);
+  } else if (action === 'italic') {
+    document.execCommand('italic', false, null);
+  } else if (action === 'h2') {
+    document.execCommand('formatBlock', false, '<h2>');
+  } else if (action === 'quote') {
+    document.execCommand('formatBlock', false, '<blockquote>');
+  }
+
+  const menu = document.getElementById('composer_bubble_menu');
+  if (menu) menu.style.display = 'none';
+
+  updateComposerMetrics();
+  saveComposerAutosave();
+}
+
+// ── LOCAL STORAGE AUTO-SAVE ENGINE ───────────────────────────────────────────
+
+const AUTOSAVE_STORAGE_KEY = 'tdmu_composer_autosave_v2';
+
+function saveComposerAutosave() {
+  try {
+    const title = (document.getElementById('composer_title_input')?.value || '').trim();
+    const sapo = (document.getElementById('composer_sapo_input')?.value || '').trim();
+    const canvas = document.getElementById('composer_canvas_editor');
+    const bodyHtml = (canvas?.innerHTML || '').trim();
+
+    if (!title && !sapo && (!bodyHtml || bodyHtml.includes('Nội dung bài báo sẽ xuất hiện tại đây'))) {
+      return;
+    }
+
+    const payload = {
+      title,
+      sapo,
+      bodyHtml,
+      photos: composerState.photos,
+      timestamp: Date.now()
+    };
+
+    localStorage.setItem(AUTOSAVE_STORAGE_KEY, JSON.stringify(payload));
+
+    const statusBadge = document.getElementById('composer_autosave_status');
+    if (statusBadge) {
+      const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      statusBadge.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Đã tự động lưu lúc ' + timeStr;
+      statusBadge.style.color = '#059669';
+    }
+  } catch (e) {
+    console.warn('[AutoSave Warning]:', e.message);
+  }
+}
+
+function checkAutosaveRecovery() {
+  try {
+    const saved = localStorage.getItem(AUTOSAVE_STORAGE_KEY);
+    if (!saved) return;
+
+    const data = JSON.parse(saved);
+    if (!data || (!data.title && !data.bodyHtml)) return;
+
+    // Only show banner if canvas is currently empty or default
+    const canvas = document.getElementById('composer_canvas_editor');
+    const isCurrentEmpty = !canvas || !canvas.innerText.trim() || canvas.innerText.includes('Nội dung bài báo sẽ xuất hiện');
+
+    if (isCurrentEmpty) {
+      const banner = document.getElementById('composer_restore_banner');
+      if (banner) {
+        banner.style.display = 'flex';
+      }
+    }
+  } catch (e) {}
+}
+
+function restoreComposerAutosave() {
+  try {
+    const saved = localStorage.getItem(AUTOSAVE_STORAGE_KEY);
+    if (!saved) return;
+    const data = JSON.parse(saved);
+
+    if (data.title) safeSetVal('composer_title_input', data.title);
+    if (data.sapo) safeSetVal('composer_sapo_input', data.sapo);
+    if (data.bodyHtml) {
+      const canvas = document.getElementById('composer_canvas_editor');
+      if (canvas) canvas.innerHTML = data.bodyHtml;
+    }
+    if (data.photos && Array.isArray(data.photos)) {
+      composerState.photos = data.photos;
+    }
+
+    dismissComposerAutosave();
+    updateComposerMetrics();
+    logComposerActivity('restore', 'Đã khôi phục thành công bản thảo tự động lưu gần nhất.', 'done');
+  } catch (e) {
+    alert("Không thể khôi phục bản thảo: " + e.message);
+  }
+}
+
+function dismissComposerAutosave() {
+  const banner = document.getElementById('composer_restore_banner');
+  if (banner) banner.style.display = 'none';
+}
+
+// Start auto-save heartbeat
+setInterval(saveComposerAutosave, 5000);
+window.addEventListener('DOMContentLoaded', () => {
+  initBubbleMenu();
+  checkAutosaveRecovery();
+});
+
+// Run immediate init if document is already loaded
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  initBubbleMenu();
+  checkAutosaveRecovery();
+}

@@ -904,10 +904,32 @@
             <span id="composer_word_count">0 từ</span>
             <span>&bull;</span>
             <span id="composer_read_time">~0 phút đọc</span>
+            <span>&bull;</span>
+            <span id="composer_autosave_status" style="color: #10B981; font-size: 11.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-cloud-arrow-up"></i> Đã đồng bộ</span>
           </div>
         </div>
         <!-- 1. PANE WEBSITE MASTER DOCUMENT (SEMANTIC BLOCKS) -->
-        <div id="pane_web" style="display: block; padding: 32px 40px; min-height: 580px;">
+        <div id="pane_web" style="display: block; padding: 32px 40px; min-height: 580px; position: relative;">
+          <!-- Autosave Restore Notice Banner -->
+          <div id="composer_restore_banner" style="display: none; background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; font-size: 13px; color: #92400E; display: flex; align-items: center; justify-content: space-between;">
+            <span><i class="fa-solid fa-clock-rotate-left me-2"></i> Phát hiện bản thảo đã tự động lưu gần đây. Bạn có muốn khôi phục không?</span>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" onclick="restoreComposerAutosave()" style="background: #D97706; color: white; border: none; border-radius: 4px; padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer;">Khôi phục</button>
+              <button type="button" onclick="dismissComposerAutosave()" style="background: transparent; color: #92400E; border: 1px solid #D97706; border-radius: 4px; padding: 4px 10px; font-size: 12px; cursor: pointer;">Bỏ qua</button>
+            </div>
+          </div>
+
+          <!-- Contextual Floating Bubble Menu -->
+          <div id="composer_bubble_menu" style="display: none; position: absolute; z-index: 1000; background: #0F172A; color: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); padding: 5px 8px; gap: 4px; align-items: center; font-size: 12px;">
+            <button type="button" onclick="formatBlockSelection('bold')" style="background: transparent; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: 800;">B</button>
+            <button type="button" onclick="formatBlockSelection('italic')" style="background: transparent; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-style: italic;">I</button>
+            <button type="button" onclick="formatBlockSelection('h2')" style="background: transparent; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: 700;">H2</button>
+            <button type="button" onclick="formatBlockSelection('quote')" style="background: transparent; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer;"><i class="fa-solid fa-quote-left"></i></button>
+            <span style="color: #475569; margin: 0 2px;">|</span>
+            <button type="button" onclick="runComposerQuickTool('formal')" style="background: rgba(2, 132, 199, 0.3); border: 1px solid #0284C7; color: #38BDF8; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: 700; font-size: 11px;">⚡ Nghị Định 30</button>
+            <button type="button" onclick="runComposerQuickTool('shorten')" style="background: rgba(148, 163, 184, 0.2); border: 1px solid #64748B; color: #E2E8F0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">✂ Rút Gọn</button>
+            <button type="button" onclick="runComposerQuickTool('expand')" style="background: rgba(148, 163, 184, 0.2); border: 1px solid #64748B; color: #E2E8F0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">✨ Mở Rộng</button>
+          </div>
           <div style="margin-bottom: 16px;">
             <input type="text" id="composer_title_input" placeholder="Tiêu đề bài báo báo chí (Headline)..." style="width: 100%; border: none; outline: none; font-size: 26px; font-weight: 900; color: #002855; font-family: 'Plus Jakarta Sans', Georgia, serif; padding: 0; background: transparent; line-height: 1.3;" oninput="updateComposerMetrics()">
           </div>
