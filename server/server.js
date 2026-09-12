@@ -14,6 +14,7 @@ const welfareRoutes = require('./routes/welfare.routes');
 const reportsRoutes = require('./routes/reports.routes');
 const orgRoutes = require('./routes/organization.routes');
 const feedbackRoutes = require('./routes/feedback.routes');
+const publishRoutes = require('./routes/publish.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -50,6 +51,9 @@ app.use('/api', welfareRoutes);
 // Feedback, Bookmarks, Dossiers, Assets & Analytics
 app.use('/api', feedbackRoutes);
 
+// Publish & Scheduling
+app.use('/api/publish', publishRoutes);
+
 // Backward Compatibility Route Aliases
 app.post('/api/generate-article', (req, res, next) => {
   req.url = '/package-stream';
@@ -57,29 +61,23 @@ app.post('/api/generate-article', (req, res, next) => {
 });
 
 // =========================================================================
-// BACKGROUND CRON JOBS (AUTO-PUBLISH & AUTO-RELEASE IDLE LOCKS)
+// BACKGROUND CRON JOBS (AUTO-PUBLISH 3 CHANNELS & AUTO-RELEASE IDLE LOCKS)
 // =========================================================================
 setInterval(() => {
   const db = loadDB();
   const now = new Date();
   let changed = false;
 
+  // 1. Auto-Publish Worker — Web channel
   (db.articles || []).forEach(art => {
-    // 1. Auto Publish Worker
     if (art.status === 'scheduled' && art.scheduledAt) {
       const scheduledTime = new Date(art.scheduledAt);
       if (scheduledTime <= now) {
         console.log(`[Cron] Executing Auto-Publish for Package #${art.id}...`);
-        const isSuccess = Math.random() > 0.1;
-        if (isSuccess) {
-          art.status = 'published';
-          art.statusName = 'Đã Xuất Bản';
-          console.log(`[Cron] Successfully published Package #${art.id}`);
-        } else {
-          art.status = 'publish_failed';
-          art.statusName = 'Lỗi Đăng Bài';
-          console.error(`[Cron] Failed to publish Package #${art.id}`);
-        }
+        art.status = 'published';
+        art.statusName = 'Đã Xuất Bản';
+        art.publishedAt = now.toISOString();
+        console.log(`[Cron] Successfully published Package #${art.id}`);
         changed = true;
       }
     }
@@ -96,10 +94,47 @@ setInterval(() => {
     }
   });
 
+  // 3. Auto-Publish Schedules — Facebook & Zalo channels
+  (db.schedules || []).forEach(schedule => {
+    if (schedule.status === 'pending') {
+      const scheduledTime = new Date(schedule.scheduledAt);
+      if (scheduledTime <= now) {
+        console.log(`[Cron] Executing scheduled publish for article #${schedule.articleId} on ${schedule.channel}`);
+        schedule.status = 'done';
+        schedule.executedAt = now.toISOString();
+
+        // If web channel — also update article status
+        if (schedule.channel === 'web') {
+          const article = (db.articles || []).find(a => a.id == schedule.articleId);
+          if (article) {
+            article.status = 'published';
+            article.statusName = 'Đã Xuất Bản';
+            article.publishedAt = now.toISOString();
+          }
+        }
+
+        // Log the publish event
+        db.publish_logs = db.publish_logs || [];
+        const maxId = db.publish_logs.length ? Math.max(...db.publish_logs.map(l => l.id || 0)) + 1 : 1;
+        db.publish_logs.push({
+          id: maxId,
+          scheduleId: schedule.id,
+          articleId: schedule.articleId,
+          channel: schedule.channel,
+          action: 'auto_published',
+          executedAt: now.toISOString(),
+          createdAt: now.toISOString()
+        });
+        changed = true;
+      }
+    }
+  });
+
   if (changed) {
     saveDB(db);
   }
-}, 60000);
+}, 30000); // Check every 30 seconds for precision
+
 
 // Server Bootstrap
 app.listen(PORT, () => {

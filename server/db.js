@@ -53,7 +53,9 @@ const defaultData = {
   comments: [],
   audits: [
     { id: 1, articleId: 101, userId: 1, userName: "Thầy Nguyễn Văn A (Admin)", action: "Khởi Tạo Hệ Thống", details: "Khởi tạo thành công hệ thống CSDL vĩnh viễn", timestamp: "2026-08-17 08:30" }
-  ]
+  ],
+  schedules: [],
+  publish_logs: []
 };
 
 function initDB() {

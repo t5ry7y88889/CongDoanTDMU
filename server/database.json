@@ -1594,5 +1594,19 @@
       "GhiChu": "Xuất bản bài báo Tọa đàm dinh dưỡng lên Cổng thông tin",
       "ThoiGian": "2026-09-01T08:00:00Z"
     }
+  ],
+  "publish_logs": [
+    {
+      "id": 1,
+      "articleId": 101,
+      "channel": "facebook",
+      "action": "published_now",
+      "result": {
+        "postId": "1789227888095_930",
+        "url": "https://www.facebook.com/1789227888095_930"
+      },
+      "publishedAt": "2026-09-12T15:44:48.095Z",
+      "createdAt": "2026-09-12T15:44:48.095Z"
+    }
   ]
 }

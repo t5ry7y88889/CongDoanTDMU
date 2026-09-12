@@ -1753,5 +1753,193 @@ TRẢ VỀ JSON DUY NHẤT:
 router.post('/package-generator', handlePackageGenerator);
 router.post('/studio-package', handlePackageGenerator);
 
-module.exports = router;
+// =========================================================================
+// 15. AUTO-PILOT GENERATE — Upload docs + prompt → 3-channel content (SSE)
+// =========================================================================
+router.post('/autopilot-generate', async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
 
+  const { sourceText, filesInfo, photos, userPrompt, genre, apiKey } = req.body;
+  const activeKey = apiKey || process.env.GEMINI_API_KEY;
+
+  if (!activeKey) {
+    res.write('data: ' + JSON.stringify({ error: 'Chua cau hinh Gemini API Key' }) + '\n\n');
+    return res.end();
+  }
+
+  const ai = new GoogleGenAI({ apiKey: activeKey });
+
+  // Build source material block
+  const fileTexts = (filesInfo || []).map((f, i) =>
+    `--- TAI LIEU ${i + 1}: ${f.name} ---\n${f.text || ''}`
+  ).join('\n\n');
+
+  const photoList = (photos || []).map((p, i) =>
+    `Anh ${i + 1}: ${p.caption || p.fileName || 'Hinh anh su kien'} (URL: ${p.url})`
+  ).join('\n');
+
+  const sourceBlock = [
+    userPrompt ? `YEU CAU CUA NGUOI DUNG:\n${userPrompt}` : '',
+    fileTexts ? `TAI LIEU DINH KEM:\n${fileTexts}` : '',
+    photoList ? `ANH DINH KEM:\n${photoList}` : '',
+    sourceText ? `NOI DUNG BO SUNG:\n${sourceText}` : ''
+  ].filter(Boolean).join('\n\n---\n\n');
+
+  const genreNames = {
+    tin_hoat_dong: 'Tin Hoat Dong',
+    phong_su: 'Phong Su',
+    xa_luan: 'Xa Luan',
+    chan_dung: 'Chan Dung',
+    phong_van: 'Phong Van',
+    thong_bao: 'Thong Bao Chi Dao',
+    anh_bao_chi: 'Anh Bao Chi'
+  };
+  const genreName = genreNames[genre] || 'Tin Hoat Dong';
+
+  try {
+    // ── STEP 1: Stream Web Article ──────────────────────────────────────────
+    res.write('data: ' + JSON.stringify({ step: 'status', message: 'Buoc 1/3: Dang phan tich tai lieu va viet bai bao Website...' }) + '\n\n');
+
+    const webSystemPrompt = `BAN LA TONG THU KY TOA SOAN CUA CONG DOAN DAI HOC THU DAU MOT (TDMU).
+The loai bai viet: ${genreName}
+
+NHIEM VU: Phan tich toan bo tai lieu dinh kem duoi day va viet mot bai bao hoan chinh cho Website Cong Doan TDMU.
+
+YEU CAU BAT BUOC:
+- Tra ve HTML RAW (khong boc trong markdown).
+- Bat dau bang <h1 class="article-title">Tieu de bai bao chinh xac</h1>
+- Tiep theo la Sapo in dam: <p class="sapo"><strong>Tom tat 5W1H...</strong></p>
+- Than bai chia <h2> mach lac (khong ghi Phan 1, Phan 2).
+- Co it nhat 1 trich dan <blockquote> tu tai lieu.
+- Chen <figure class="journalism-figure"> cho moi anh co trong danh sach anh.
+- Van phong trang trong, chuan hanh chinh Cong doan, giau tinh thuyet phuc.
+- Tuyet doi KHONG bịa dat so lieu, ngay gio, ten nguoi khong co trong tai lieu.
+
+TAI LIEU DAU VAO:
+${sourceBlock}`;
+
+    let webContent = '';
+    const webStream = await ai.models.generateContentStream({
+      model: 'gemini-2.5-flash',
+      contents: webSystemPrompt
+    });
+
+    for await (const chunk of webStream) {
+      if (chunk.text) {
+        const textChunk = chunk.text.replace(/```html|```/g, '');
+        webContent += textChunk;
+        res.write('data: ' + JSON.stringify({ step: 'web_chunk', chunk: textChunk }) + '\n\n');
+      }
+    }
+    res.write('data: ' + JSON.stringify({ step: 'web_done' }) + '\n\n');
+
+    // ── STEP 2: Facebook + Zalo + Video in parallel ─────────────────────────
+    res.write('data: ' + JSON.stringify({ step: 'status', message: 'Buoc 2/3: Dang chuyen the Facebook & Zalo...' }) + '\n\n');
+
+    const fbPrompt = `Viet 1 bai dang Facebook Fanpage hap dan tu bai bao Cong Doan TDMU sau day.
+Yeu cau:
+- 3 dong mo dau (hook) thu hut nguoi doc dung ngay
+- Co icon/emoji phu hop (khong spam)
+- Hashtag: #CongDoanTDMU #TDMU2026 #${genreName.replace(/\s+/g, '')}
+- Ket thuc bang loi keu goi chia se (CTA)
+- Do dai: 150-250 tu
+- Tra ve PLAINTEXT, khong HTML
+
+BAI BAO WEBSITE:
+${webContent.replace(/<[^>]*>/g, '').slice(0, 2000)}`;
+
+    const zaloPrompt = `Viet tin thong bao Zalo OA ngan gon tu bai bao sau.
+Yeu cau:
+- Toi da 80 tu, van phong trang trong truc tiep
+- Co the them link chia se neu phu hop: [Xem toan bai tren Web Cong Doan TDMU]
+- Khong co emoji thua, khong hashtag
+- Tra ve PLAINTEXT
+
+BAI BAO WEBSITE:
+${webContent.replace(/<[^>]*>/g, '').slice(0, 1500)}`;
+
+    const [fbRes, zaloRes] = await Promise.all([
+      ai.models.generateContent({ model: 'gemini-2.5-flash', contents: fbPrompt }),
+      ai.models.generateContent({ model: 'gemini-2.5-flash', contents: zaloPrompt })
+    ]);
+
+    const facebookContent = fbRes.text || '';
+    const zaloContent = zaloRes.text || '';
+
+    res.write('data: ' + JSON.stringify({
+      step: 'social_done',
+      facebook: {
+        caption: facebookContent,
+        photos: (photos || []).slice(0, 3)
+      },
+      zalo: {
+        message: zaloContent,
+        shareLink: ''
+      }
+    }) + '\n\n');
+
+    // ── STEP 3: Extract title + summary for save ─────────────────────────────
+    res.write('data: ' + JSON.stringify({ step: 'status', message: 'Buoc 3/3: Dang luu bai vao he thong...' }) + '\n\n');
+
+    const titleMatch = webContent.match(/<h1[^>]*>(.*?)<\/h1>/i);
+    const sapoMatch = webContent.match(/<p class="sapo"[^>]*>.*?<strong>(.*?)<\/strong>/i);
+    const extractedTitle = titleMatch ? titleMatch[1].replace(/<[^>]*>/g, '').trim() : (userPrompt ? userPrompt.slice(0, 100) : 'Bai Bao Moi');
+    const extractedSummary = sapoMatch ? sapoMatch[1].replace(/<[^>]*>/g, '').trim() : webContent.replace(/<[^>]*>/g, '').slice(0, 200);
+
+    // Save article to DB
+    const { loadDB, saveDB } = require('../db');
+    const db = loadDB();
+    db.articles = db.articles || [];
+    const newId = db.articles.length ? Math.max(...db.articles.map(a => a.id || 0)) + 1 : 200;
+    const featuredPhoto = (photos || []).find(p => p.isFeatured) || (photos || [])[0];
+
+    const newArticle = {
+      id: newId,
+      title: extractedTitle,
+      slug: extractedTitle.toLowerCase().replace(/[^a-z0-9]+/gi, '-').slice(0, 80) + '-' + newId,
+      categoryId: 2,
+      categoryName: genreName,
+      summary: extractedSummary,
+      content: webContent,
+      image: featuredPhoto ? featuredPhoto.url : 'images/banner.jpg',
+      author: 'Auto-Pilot AI',
+      authorId: 1,
+      status: 'draft',
+      statusName: 'Ban Nhap (Auto-Pilot)',
+      isAiGenerated: true,
+      aiPrompt: userPrompt || '',
+      genre: genre || 'tin_hoat_dong',
+      packageData: {
+        facebook: { caption: facebookContent, photos: (photos || []).slice(0, 3) },
+        zalo: { message: zaloContent }
+      },
+      photos: photos || [],
+      viewsCount: 0,
+      likesCount: 0,
+      sharesCount: 0,
+      createdAt: new Date().toISOString()
+    };
+
+    db.articles.push(newArticle);
+    saveDB(db);
+
+    res.write('data: ' + JSON.stringify({
+      step: 'all_done',
+      articleId: newId,
+      title: extractedTitle,
+      summary: extractedSummary,
+      message: 'Hoan tat! Bai bao da duoc tao va luu vao he thong.'
+    }) + '\n\n');
+
+    res.end();
+
+  } catch (err) {
+    console.error('[AutoPilot] Error:', err.message);
+    res.write('data: ' + JSON.stringify({ error: err.message }) + '\n\n');
+    res.end();
+  }
+});
+
+module.exports = router;
