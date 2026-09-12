@@ -33,14 +33,14 @@ app.use((req, res, next) => {
 // 1. Uploads directory (user-uploaded documents, templates, images)
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
-// 2. Official Production Portal & Admin CMS (All pages: index, tin-tuc, bai-viet, etc.)
-app.use(express.static(path.join(__dirname, '../public'), {
+// 2. React Production SPA (Primary client-facing bundle)
+app.use(express.static(path.join(__dirname, '../frontend/dist'), {
   etag: false,
   maxAge: 0
 }));
 
-// 3. Optional React SPA bundle mounted under /spa
-app.use('/spa', express.static(path.join(__dirname, '../frontend/dist'), {
+// 3. Fallback static directory for Admin CMS & legacy assets
+app.use(express.static(path.join(__dirname, '../public'), {
   etag: false,
   maxAge: 0
 }));
@@ -149,19 +149,11 @@ setInterval(() => {
 }, 30000); // Check every 30 seconds for precision
 
 
-// Clean URL routes for portal pages without .html extension
-const cleanRoutes = [
-  'gioi-thieu', 'co-cau-to-chuc', 'tin-tuc', 'bai-viet',
-  'phuc-loi-doan-vien', 'van-ban', 'bieu-mau', 'lien-he', 'admin', 'bao-cao-thang'
-];
-cleanRoutes.forEach(slug => {
-  app.get(`/${slug}`, (req, res) => {
-    res.sendFile(path.join(__dirname, `../public/${slug}.html`));
-  });
-});
-
-// Optional React SPA fallback for /spa/*
-app.get('/spa/*', (req, res) => {
+// SPA Fallback Handler for React Router
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.includes('.')) {
+    return next();
+  }
   res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
 });
 
