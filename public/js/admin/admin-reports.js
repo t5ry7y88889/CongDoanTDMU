@@ -139,7 +139,8 @@ function renderReportsPage() {
 let adminDocumentsPager = null;
 let rawDocumentsData = [];
 
-async function loadAdminDocuments() {
+// DEPRECATED (Moved to admin-documents.js)
+async function _deprecated_loadAdminDocuments() {
   const tbody = document.getElementById('admin_documents_table_body');
   if (!tbody) return;
 

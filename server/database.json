@@ -1450,13 +1450,73 @@
       "id": 1,
       "full_name": "ThS. Huỳnh Thị Lệ Kha",
       "unit": "Trường Luật và Quản lý phát triển",
+      "phone": "0912.345.678",
+      "email": "khatl@tdmu.edu.vn",
       "type": "Chế độ nghỉ dưỡng thai sản",
       "amount_requested": 2000000,
+      "amount_approved": 2000000,
       "reason": "Thực hiện chế độ chăm lo nữ công thai sản quý 3",
+      "proof_url": "/uploads/documents/18_CV_CDCS_UngHoBaoSo3.pdf",
       "submitted_at": "2026-08-25T08:30:00Z",
+      "status": "disbursed",
+      "approved_by": "TS. Lê Thị Kim Út",
+      "approved_at": "2026-08-26T09:00:00Z",
+      "disbursed_at": "2026-08-28T15:00:00Z",
+      "decision_note": "Đã hoàn tất chi chuyển khoản qua KHTC, mã giao dịch TDMU-WELF-001"
+    },
+    {
+      "id": 2,
+      "full_name": "Đ/c Phạm Văn Minh",
+      "unit": "Tổ Công đoàn 15 - Phòng Quản trị & CSVC",
+      "phone": "0909.876.543",
+      "email": "minhpv@tdmu.edu.vn",
+      "type": "Trợ cấp khó khăn đột xuất do tai nạn / bệnh hiểm nghèo",
+      "amount_requested": 5000000,
+      "amount_approved": 4000000,
+      "reason": "Đoàn viên phẫu thuật dây chằng chấn thương khi làm việc, viện phí cao ngoài BHYT.",
+      "proof_url": "/uploads/documents/18_CV_CDCS_UngHoBaoSo3.pdf",
+      "submitted_at": "2026-09-02T10:15:00Z",
       "status": "approved",
       "approved_by": "TS. Lê Thị Kim Út",
-      "note": "Đã duyệt chi chuyển khoản qua KHTC"
+      "approved_at": "2026-09-04T14:30:00Z",
+      "disbursed_at": null,
+      "decision_note": "BTV thống nhất hỗ trợ 4.000.000đ trích từ Quỹ Tương trợ Công đoàn. Chờ kế toán xuất phiếu chi."
+    },
+    {
+      "id": 3,
+      "full_name": "TS. Đặng Minh Tuấn",
+      "unit": "Tổ Công đoàn 4 - Khoa Khoa học Tự nhiên",
+      "phone": "0933.221.100",
+      "email": "tuandm@tdmu.edu.vn",
+      "type": "Học bổng khuyến học con đoàn viên vượt khó học giỏi",
+      "amount_requested": 1500000,
+      "amount_approved": null,
+      "reason": "Con đạt giải Ba kỳ thi Học sinh giỏi cấp Tỉnh năm học 2025 - 2026.",
+      "proof_url": null,
+      "submitted_at": "2026-09-10T14:00:00Z",
+      "status": "pending",
+      "approved_by": null,
+      "approved_at": null,
+      "disbursed_at": null,
+      "decision_note": "Hồ sơ đầy đủ giấy khen, chờ Ban Thi đua - Khuyến học xét duyệt chung đợt 20/11."
+    },
+    {
+      "id": 4,
+      "full_name": "Đ/c Lê Hoàng Quân",
+      "unit": "Tổ Công đoàn 16 - Trung tâm Ngoại ngữ - Tin học",
+      "phone": "0971.556.778",
+      "email": "quanlh@tdmu.edu.vn",
+      "type": "Trợ cấp tang chế tứ thân phụ mẫu",
+      "amount_requested": 2000000,
+      "amount_approved": null,
+      "reason": "Gia đình có tang thân mẫu mất ngày 09/09/2026.",
+      "proof_url": null,
+      "submitted_at": "2026-09-12T08:00:00Z",
+      "status": "pending",
+      "approved_by": null,
+      "approved_at": null,
+      "disbursed_at": null,
+      "decision_note": "Đang chờ giấy chứng tử bổ sung."
     }
   ],
   "inbox_feedback": [
@@ -1467,11 +1527,58 @@
       "phone": "0977.797.378",
       "unit": "Viện Công nghệ số",
       "category": "Đề xuất chuyển đổi số",
-      "title": "Đề xuất tích hợp biểu mẫu điện tử cho 16 Tổ công đoàn",
+      "title": "Đề xuất tích hợp chữ ký số và biểu mẫu điện tử",
       "content": "Kính gửi Ban Thường vụ, Viện CNS đề xuất tích hợp chữ ký số và biểu mẫu trực tuyến để giảm thiểu in ấn giấy tờ báo cáo tháng.",
       "submitted_at": "2026-08-29T14:15:00Z",
-      "status": "processed",
-      "response": "Ban Thường vụ đã ghi nhận và giao Ban Tuyên giáo triển khai trên Cổng thông tin mới."
+      "status": "resolved",
+      "response": "Ban Thường vụ đã ghi nhận và giao Ban Tuyên giáo phối hợp triển khai phân hệ Kho biểu mẫu điện tử trên Cổng thông tin mới.",
+      "resolved_by": "TS. Lê Thị Kim Út",
+      "resolved_at": "2026-08-30T10:00:00Z"
+    },
+    {
+      "id": 2,
+      "sender_name": "Đ/c Trần Thị Mai Lan",
+      "email": "lan_ttm@tdmu.edu.vn",
+      "phone": "0982.112.334",
+      "unit": "Tổ Công đoàn 7 - Khoa Ngoại ngữ",
+      "category": "Chế độ chính sách",
+      "title": "Đề nghị mở rộng khám sức khỏe định kỳ chuyên khoa nữ",
+      "content": "Kính gửi BCH Công đoàn Trường, kính mong BCH xem xét bổ sung gói tầm soát chuyên sâu phụ khoa và ung thư sớm trong đợt khám sức khỏe định kỳ quý 4 năm 2026.",
+      "submitted_at": "2026-09-08T09:30:00Z",
+      "status": "processing",
+      "response": "Ban Nữ công đang làm việc cùng Bệnh viện Đa khoa Tỉnh để đàm phán danh mục ưu đãi bổ sung cho đoàn viên nữ.",
+      "resolved_by": "Đ/c Nguyễn Thị Nga",
+      "resolved_at": null
+    },
+    {
+      "id": 3,
+      "sender_name": "Đ/c Nguyễn Văn Cường",
+      "email": "cuongnv@tdmu.edu.vn",
+      "phone": "0918.456.789",
+      "unit": "Tổ Công đoàn 15 - Phòng Quản trị & CSVC",
+      "category": "Hoạt động phong trào",
+      "title": "Góp ý thời gian tổ chức Hội thao Chào mừng 20/11",
+      "content": "Kính đề nghị Ban Tổ chức sắp xếp các trận thi đấu cầu lông và bóng chuyền hơi vào buổi sáng thứ Bảy hoặc sau 17h00 để cán bộ phòng ban kỹ thuật có thể tham gia đầy đủ.",
+      "submitted_at": "2026-09-11T16:20:00Z",
+      "status": "pending",
+      "response": null,
+      "resolved_by": null,
+      "resolved_at": null
+    },
+    {
+      "id": 4,
+      "sender_name": "Đoàn viên Ẩn danh",
+      "email": "doanvien_andanh@tdmu.edu.vn",
+      "phone": "",
+      "unit": "Tổ Công đoàn 8 - Khoa Kỹ thuật Công nghệ",
+      "category": "Nguyện vọng đời sống",
+      "title": "Đề xuất bố trí thêm máy nước nóng lạnh tại khu nhà xưởng thực hành",
+      "content": "Kính mong Công đoàn phối hợp nhà trường trang bị thêm máy lọc nước uống nóng lạnh tại khu nhà xưởng X1 để phục vụ giảng viên hướng dẫn đồ án.",
+      "submitted_at": "2026-09-12T11:00:00Z",
+      "status": "pending",
+      "response": null,
+      "resolved_by": null,
+      "resolved_at": null
     }
   ],
   "users": [
@@ -1607,7 +1714,8 @@
       "dung_luong": "1.8 MB",
       "DungLuong": "1.8 MB",
       "luot_tai": 582,
-      "LuotTai": 582
+      "LuotTai": 582,
+      "hieu_luc": "con_hieu_luc"
     },
     {
       "id": 1,
@@ -1630,7 +1738,8 @@
       "dung_luong": "1.2 MB",
       "DungLuong": "1.2 MB",
       "luot_tai": 2524,
-      "LuotTai": 2524
+      "LuotTai": 2524,
+      "hieu_luc": "con_hieu_luc"
     },
     {
       "id": 2,
@@ -1653,7 +1762,8 @@
       "dung_luong": "2.4 MB",
       "DungLuong": "2.4 MB",
       "luot_tai": 3915,
-      "LuotTai": 3915
+      "LuotTai": 3915,
+      "hieu_luc": "con_hieu_luc"
     },
     {
       "id": 3,
@@ -1676,7 +1786,8 @@
       "dung_luong": "1.5 MB",
       "DungLuong": "1.5 MB",
       "luot_tai": 3041,
-      "LuotTai": 3041
+      "LuotTai": 3041,
+      "hieu_luc": "con_hieu_luc"
     },
     {
       "id": 4,
@@ -1699,7 +1810,8 @@
       "dung_luong": "3.1 MB",
       "DungLuong": "3.1 MB",
       "luot_tai": 1478,
-      "LuotTai": 1478
+      "LuotTai": 1478,
+      "hieu_luc": "con_hieu_luc"
     },
     {
       "id": 5,
@@ -1721,8 +1833,9 @@
       "nguoi_ky": "Chủ Tịch Quốc Hội",
       "dung_luong": "5.2 MB",
       "DungLuong": "5.2 MB",
-      "luot_tai": 8920,
-      "LuotTai": 8920
+      "luot_tai": 8921,
+      "LuotTai": 8921,
+      "hieu_luc": "con_hieu_luc"
     },
     {
       "id": 6,
@@ -1745,7 +1858,8 @@
       "dung_luong": "2.1 MB",
       "DungLuong": "2.1 MB",
       "luot_tai": 4120,
-      "LuotTai": 4120
+      "LuotTai": 4120,
+      "hieu_luc": "con_hieu_luc"
     }
   ],
   "article_audits": [

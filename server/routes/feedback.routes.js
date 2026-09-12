@@ -1,13 +1,47 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const { loadDB, saveDB } = require('../db');
 
 // =========================================================================
 // 1. INBOX FEEDBACK (Ý KIẾN ĐOÀN VIÊN)
 // =========================================================================
+function stripVietnamese(str) {
+  if (!str) return '';
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+}
+
+// =========================================================================
+// 1. INBOX FEEDBACK (Ý KIẾN & HÒM THƯ GÓP Ý ĐOÀN VIÊN)
+// =========================================================================
 router.get('/feedback', (req, res) => {
   const db = loadDB();
-  res.json({ success: true, data: db.inbox_feedback || [] });
+  let list = db.inbox_feedback || [];
+  const { status, search } = req.query;
+
+  if (status && status !== 'all') {
+    list = list.filter(f => f.status === status);
+  }
+
+  if (search) {
+    const q = stripVietnamese(search.trim());
+    list = list.filter(f =>
+      stripVietnamese(f.title).includes(q) ||
+      stripVietnamese(f.content).includes(q) ||
+      stripVietnamese(f.sender_name).includes(q) ||
+      stripVietnamese(f.unit).includes(q) ||
+      stripVietnamese(f.category).includes(q)
+    );
+  }
+
+  res.json({ success: true, count: list.length, data: list });
+});
+
+router.get('/feedback/:id', (req, res) => {
+  const db = loadDB();
+  const id = parseInt(req.params.id);
+  const item = (db.inbox_feedback || []).find(f => f.id === id);
+  if (!item) return res.status(404).json({ success: false, error: 'Không tìm thấy ý kiến góp ý!' });
+  res.json({ success: true, data: item });
 });
 
 router.post('/feedback', (req, res) => {
@@ -19,23 +53,63 @@ router.post('/feedback', (req, res) => {
     return res.status(400).json({ success: false, error: 'Họ tên, tiêu đề và nội dung là bắt buộc' });
   }
 
+  const nextId = db.inbox_feedback.length ? Math.max(...db.inbox_feedback.map(f => f.id || 0)) + 1 : 1;
   const newFeedback = {
-    id: db.inbox_feedback.length ? Math.max(...db.inbox_feedback.map(f => f.id || 0)) + 1 : 1,
-    sender_name,
-    email: email || '',
-    phone: phone || '',
-    unit: unit || 'Đoàn viên TDMU',
-    category: category || 'Góp ý chung',
-    title,
-    content,
+    id: nextId,
+    sender_name: sender_name.trim(),
+    email: (email || '').trim(),
+    phone: (phone || '').trim(),
+    unit: (unit || 'Đoàn viên TDMU').trim(),
+    category: (category || 'Góp ý chung').trim(),
+    title: title.trim(),
+    content: content.trim(),
     submitted_at: new Date().toISOString(),
-    status: 'pending',
-    response: null
+    status: 'pending', // pending | processing | resolved
+    response: null,
+    resolved_by: null,
+    resolved_at: null
   };
 
-  db.inbox_feedback.push(newFeedback);
+  db.inbox_feedback.unshift(newFeedback);
   saveDB(db);
   res.json({ success: true, data: newFeedback, message: 'Cảm ơn bạn! Ý kiến đã được chuyển trực tiếp đến Ban Chấp Hành Công đoàn.' });
+});
+
+router.put('/feedback/:id', (req, res) => {
+  const db = loadDB();
+  db.inbox_feedback = db.inbox_feedback || [];
+  const id = parseInt(req.params.id);
+  const idx = db.inbox_feedback.findIndex(f => f.id === id);
+
+  if (idx === -1) {
+    return res.status(404).json({ success: false, error: 'Không tìm thấy ý kiến góp ý cần cập nhật!' });
+  }
+
+  const { status, response, resolved_by } = req.body;
+  if (status) db.inbox_feedback[idx].status = status;
+  if (response !== undefined) db.inbox_feedback[idx].response = response;
+  if (resolved_by) db.inbox_feedback[idx].resolved_by = resolved_by;
+  if (status === 'resolved' && !db.inbox_feedback[idx].resolved_at) {
+    db.inbox_feedback[idx].resolved_at = new Date().toISOString();
+  }
+
+  saveDB(db);
+  res.json({ success: true, data: db.inbox_feedback[idx], message: 'Đã cập nhật xử lý ý kiến thành công!' });
+});
+
+router.delete('/feedback/:id', (req, res) => {
+  const db = loadDB();
+  db.inbox_feedback = db.inbox_feedback || [];
+  const id = parseInt(req.params.id);
+  const idx = db.inbox_feedback.findIndex(f => f.id === id);
+
+  if (idx === -1) {
+    return res.status(404).json({ success: false, error: 'Không tìm thấy ý kiến góp ý!' });
+  }
+
+  const removed = db.inbox_feedback.splice(idx, 1)[0];
+  saveDB(db);
+  res.json({ success: true, message: 'Đã xóa ý kiến góp ý thành công!', data: removed });
 });
 
 router.get('/inbox-feedback', (req, res) => {
