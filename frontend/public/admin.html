@@ -794,259 +794,222 @@
             <!-- TAB 3: PHÒNG BIÊN TẬP & SẢN XUẤT ĐA KÊNH TRỌN GÓI (ENTERPRISE AI STUDIO) -->
       <!-- TAB 3: PHÒNG BIÊN TẬP MANUS & JENNI AI WORKSPACE -->
       <section id="tab_ai-creator_content" style="display: block;">
-        <div style="max-width: 1560px; margin: 0 auto;">
-
-          <!-- TOP MANUS BAR -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; background: white; padding: 14px 22px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 10px rgba(0,0,0,0.03); flex-wrap: wrap; gap: 12px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #002855, #0284C7); display: flex; align-items: center; justify-content: center; color: #FCD34D; font-size: 18px; font-weight: 900; box-shadow: 0 2px 8px rgba(0,40,85,0.25);">
-                ✨
-              </div>
-              <div>
-                <h1 style="margin: 0; font-size: 18px; font-weight: 900; color: #002855; display: flex; align-items: center; gap: 8px;">
-                  Manus Editorial Studio
-                  <span style="background: #EFF6FF; color: #1D4ED8; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 12px; border: 1px solid #BFDBFE;">AI AGENT</span>
-                </h1>
-                <p style="margin: 2px 0 0; font-size: 12px; color: #64748B;">Hệ thống biên tập tài liệu &amp; xuất bản báo chí đa kênh Công Đoàn TDMU</p>
-              </div>
-            </div>
-
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-<!-- MODEL BADGE -->
-              <div style="display: flex; align-items: center; gap: 6px; background: #F0FDF4; border: 1px solid #BBF7D0; padding: 6px 12px; border-radius: 8px;">
-                <span style="width: 8px; height: 8px; border-radius: 50%; background: #16A34A; display: inline-block;"></span>
-                <span style="font-size: 12px; font-weight: 700; color: #15803D;">Gemini 2.5 Flash Live</span>
-              </div>
-
-              <!-- QUICK ACTIONS -->
-              <button type="button" onclick="manusSaveDraft()" style="background: white; border: 1.5px solid #CBD5E1; color: #475569; padding: 7px 16px; border-radius: 8px; font-size: 12.5px; font-weight: 700; cursor: pointer;">
-                <i class="fa-regular fa-floppy-disk me-1"></i> Lưu Nháp
-              </button>
-              <button type="button" onclick="manusPublishNow()" style="background: #002855; color: #FCD34D; border: none; padding: 8px 18px; border-radius: 8px; font-size: 12.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,40,85,0.25);">
-                <i class="fa-solid fa-paper-plane"></i> Xuất Bản Ngay
-              </button>
-            </div>
-          </div>
-
-          <!-- MAIN DUAL-PANE WORKSPACE -->
-          <div style="display: grid; grid-template-columns: 390px 1fr; gap: 20px; align-items: start;" id="manus_dual_workspace">
-
-            <!-- LEFT COLUMN: MANUS AI AGENT COPILOT -->
-            <div style="display: flex; flex-direction: column; gap: 16px;">
-
-              <!-- INPUT CARD -->
-              <div style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
-                <div style="font-size: 13px; font-weight: 800; color: #002855; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
-                  <span><i class="fa-solid fa-paperclip text-primary me-1"></i> Tài Liệu Nguồn &amp; Chỉ Đạo</span>
-                  <span style="font-size: 11px; color: #64748B;">Word, PDF, TXT, Ảnh</span>
-                </div>
-
-                <!-- DROPZONE -->
-                <div id="manus_dropzone" onclick="document.getElementById('manus_file_input').click()"
-                  ondragover="event.preventDefault(); this.style.borderColor='#0284C7'; this.style.background='#F0F9FF';"
-                  ondragleave="this.style.borderColor='#BAE6FD'; this.style.background='#F8FAFC';"
-                  ondrop="event.preventDefault(); this.style.borderColor='#BAE6FD'; this.style.background='#F8FAFC'; handleManusFilesSelected(event.dataTransfer.files);"
-                  style="border: 2px dashed #BAE6FD; background: #F8FAFC; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 12px;">
-                  <i class="fa-solid fa-cloud-arrow-up" style="font-size: 24px; color: #0284C7; margin-bottom: 6px;"></i>
-                  <div style="font-size: 13px; font-weight: 700; color: #002855;">Kéo thả tệp hoặc click chọn file</div>
-                  <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Word (.docx), Công văn PDF, Báo cáo TXT, Ảnh</div>
-                  <input type="file" id="manus_file_input" multiple accept=".docx,.doc,.pdf,.txt,image/*" style="display: none;" onchange="handleManusFilesSelected(this.files)">
-                </div>
-
-                <!-- UPLOADED FILES LIST -->
-                <div id="manus_files_list" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px;"></div>
-
-                <!-- PROMPT TEXTAREA -->
-                <div style="margin-bottom: 14px;">
-                  <label style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">
-                    Yêu cầu / Hướng dẫn biên tập (Tùy chọn):
-                  </label>
-                  <textarea id="manus_prompt_input" rows="4" placeholder="VD: Nhấn mạnh 120 đoàn viên tham gia, trao 60 suất quà, văn phong trang trọng... (hoặc để trống để AI tự phân tích tài liệu)" style="width: 100%; padding: 12px; border: 1.5px solid #CBD5E1; border-radius: 8px; font-size: 13px; outline: none; box-sizing: border-box; resize: vertical; line-height: 1.6; font-family: inherit;"></textarea>
-                </div>
-
-                <!-- GENERATE BUTTON -->
-                <button type="button" id="btn_manus_generate" onclick="runManusGeneration()" style="width: 100%; background: linear-gradient(135deg, #002855 0%, #0284C7 100%); color: #FCD34D; border: none; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 16px rgba(0,40,85,0.3); transition: all 0.2s;">
-                  <i class="fa-solid fa-wand-magic-sparkles text-warning"></i> ✨ MANUS CHẤP BÚT BÀI BÁO →
-                </button>
-              </div>
-
-              <!-- AGENT THOUGHT & EXECUTION STREAM (MANUS STYLE) -->
-              <div id="manus_thought_card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                  <span style="font-size: 12px; font-weight: 800; color: #002855; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
-                    <i class="fa-solid fa-terminal text-primary"></i> Dòng Suy Nghĩ (Agent Thought)
-                  </span>
-                  <span id="manus_thought_badge" style="font-size: 10.5px; font-weight: 700; background: #F1F5F9; color: #64748B; padding: 2px 8px; border-radius: 10px;">Chờ tác vụ</span>
-                </div>
-
-                <div id="manus_thought_stream" style="display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: #475569; max-height: 220px; overflow-y: auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                  <div style="color: #94A3B8; font-style: italic;">Chưa có tác vụ nào đang chạy. Tải tệp lên và bấm Chấp Bút để bắt đầu.</div>
-                </div>
-              </div>
-
-              <!-- JENNI AI INLINE TOOLS -->
-              <div style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
-                <div style="font-size: 12px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 10px;">
-                  <i class="fa-solid fa-bolt text-warning me-1"></i> Tinh Chỉnh Nhanh (Jenni Tools)
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                  <button type="button" onclick="manusInlineTool('formal')" style="background: #F8FAFC; border: 1px solid #CBD5E1; color: #334155; padding: 8px; border-radius: 6px; font-size: 11.5px; font-weight: 700; cursor: pointer; text-align: left;">
-                    🎩 Trang Trọng
-                  </button>
-                  <button type="button" onclick="manusInlineTool('shorten')" style="background: #F8FAFC; border: 1px solid #CBD5E1; color: #334155; padding: 8px; border-radius: 6px; font-size: 11.5px; font-weight: 700; cursor: pointer; text-align: left;">
-                    ✂️ Rút Gọn
-                  </button>
-                  <button type="button" onclick="manusInlineTool('expand')" style="background: #F8FAFC; border: 1px solid #CBD5E1; color: #334155; padding: 8px; border-radius: 6px; font-size: 11.5px; font-weight: 700; cursor: pointer; text-align: left;">
-                    📝 Mở Rộng
-                  </button>
-                  <button type="button" onclick="manusInlineTool('factcheck')" style="background: #F8FAFC; border: 1px solid #CBD5E1; color: #334155; padding: 8px; border-radius: 6px; font-size: 11.5px; font-weight: 700; cursor: pointer; text-align: left;">
-                    🔍 Soát Số Liệu
-                  </button>
-                </div>
-              </div>
-
-            </div>
-
-            <!-- RIGHT COLUMN: DOCUMENT CANVAS & MULTI-CHANNEL -->
-            <div style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 4px 20px rgba(0,0,0,0.03); overflow: hidden; display: flex; flex-direction: column;">
-
-              <!-- TABS BAR: WEBSITE / FACEBOOK / ZALO / SCHEDULE -->
-              <div style="display: flex; align-items: center; border-bottom: 1.5px solid #E2E8F0; background: #F8FAFC; padding: 0 12px; flex-wrap: wrap;">
-                <button type="button" id="manus_tab_web" onclick="switchManusTab('web')" style="background: white; color: #002855; border: none; border-bottom: 3px solid #002855; padding: 14px 20px; font-size: 13px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                  <i class="fa-solid fa-globe text-primary"></i> 📰 Bài Báo Website
-                </button>
-                <button type="button" id="manus_tab_fb" onclick="switchManusTab('fb')" style="background: transparent; color: #64748B; border: none; border-bottom: 3px solid transparent; padding: 14px 18px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                  <i class="fa-brands fa-facebook" style="color: #1877F2;"></i> 📘 Fanpage Facebook
-                </button>
-                <button type="button" id="manus_tab_zalo" onclick="switchManusTab('zalo')" style="background: transparent; color: #64748B; border: none; border-bottom: 3px solid transparent; padding: 14px 18px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                  <i class="fa-solid fa-comment-dots" style="color: #0068FF;"></i> 💬 Zalo OA
-                </button>
-                <button type="button" id="manus_tab_schedule" onclick="switchManusTab('schedule')" style="background: transparent; color: #64748B; border: none; border-bottom: 3px solid transparent; padding: 14px 18px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                  <i class="fa-regular fa-clock" style="color: #8B5CF6;"></i> ⏰ Hẹn Lịch &amp; Xuất Bản
-                </button>
-
-                <!-- METRICS -->
-                <div style="margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: #64748B; font-weight: 700; padding: 10px 0;">
-                  <span id="manus_word_count">0 từ</span>
-                  <span>&bull;</span>
-                  <span id="manus_read_time">~0 phút đọc</span>
-                </div>
-              </div>
-
-              <!-- 1. PANE WEBSITE: WORD CANVAS -->
-              <div id="manus_pane_web" style="display: block; padding: 28px 36px; min-height: 560px;">
-                <!-- TITLE -->
-                <input type="text" id="manus_title_input" placeholder="Tiêu đề bài báo báo chí..." style="width: 100%; border: none; outline: none; font-size: 24px; font-weight: 900; color: #002855; font-family: 'Plus Jakarta Sans', Georgia, serif; margin-bottom: 14px; padding: 0; background: transparent;" oninput="updateManusWordCount()">
-
-                <!-- SAPO 5W1H -->
-                <div style="margin-bottom: 18px;">
-                  <textarea id="manus_sapo_input" rows="2" placeholder="Đoạn mở đầu Sapo 5W1H tóm tắt sự kiện..." style="width: 100%; border: none; border-left: 3px solid #0284C7; background: #F8FAFC; padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 13.5px; font-weight: 600; color: #334155; line-height: 1.6; outline: none; resize: vertical; box-sizing: border-box; font-family: inherit;" oninput="updateManusWordCount()"></textarea>
-                </div>
-
-                <!-- MINIMAL FORMATTING RIBBON -->
-                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; margin-bottom: 16px; flex-wrap: wrap;">
-                  <button type="button" onclick="execFormat('bold')" style="background: white; border: 1px solid #CBD5E1; padding: 4px 10px; border-radius: 4px; font-weight: 800; font-size: 12px; cursor: pointer;">B</button>
-                  <button type="button" onclick="execFormat('italic')" style="background: white; border: 1px solid #CBD5E1; padding: 4px 10px; border-radius: 4px; font-style: italic; font-size: 12px; cursor: pointer;">I</button>
-                  <button type="button" onclick="execFormat('underline')" style="background: white; border: 1px solid #CBD5E1; padding: 4px 10px; border-radius: 4px; text-decoration: underline; font-size: 12px; cursor: pointer;">U</button>
-                  <span style="color: #CBD5E1;">|</span>
-                  <button type="button" onclick="insertCustomH2()" style="background: white; border: 1px solid #CBD5E1; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 12px; cursor: pointer;">+ Đề mục H2</button>
-                  <button type="button" onclick="insertCustomQuote()" style="background: white; border: 1px solid #CBD5E1; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;"><i class="fa-solid fa-quote-left me-1"></i> Trích dẫn</button>
-                  <button type="button" onclick="document.getElementById('canvas_quick_img_input').click()" style="background: white; border: 1px solid #CBD5E1; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
-              <i class="fa-solid fa-image text-success"></i> + Thêm Ảnh Vào Bài
-            </button>
-            <input type="file" id="canvas_quick_img_input" accept="image/*" multiple style="display: none;" onchange="insertDirectImageToCanvas(this.files)">
-                </div>
-
-                <!-- THE CANVAS -->
-                <div id="manus_canvas_editor" contenteditable="true" oninput="updateManusWordCount()" style="min-height: 420px; outline: none; font-size: 15px; line-height: 1.85; font-family: Georgia, 'Times New Roman', serif; color: #1E293B;">
-                  <p style="color: #94A3B8; font-style: italic;">Nội dung bài báo website sẽ xuất hiện ở đây khi AI chấp bút, hoặc bạn có thể bắt đầu gõ trực tiếp ngay bây giờ...</p>
-                </div>
-              </div>
-
-              <!-- 2. PANE FACEBOOK -->
-              <div id="manus_pane_fb" style="display: none; padding: 28px 36px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                  <div>
-                    <label style="font-size: 12px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 8px; display: block;">Nội Dung Caption Facebook:</label>
-                    <textarea id="manus_fb_caption" rows="12" style="width: 100%; padding: 14px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 13.5px; line-height: 1.65; outline: none; box-sizing: border-box; font-family: inherit;" oninput="safeSetText('manus_fb_preview_text', this.value)"></textarea>
-                  </div>
-                  <div>
-                    <label style="font-size: 12px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 8px; display: block;">Mockup Fanpage:</label>
-                    <div style="background: #F0F2F5; border-radius: 10px; padding: 16px; border: 1px solid #CBD5E1;">
-                      <div style="background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); padding: 14px;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                          <div style="width: 38px; height: 38px; border-radius: 50%; background: #1877F2; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px;">CĐ</div>
-                          <div>
-                            <div style="font-weight: 700; color: #002855; font-size: 13px;">Công Đoàn Trường Đại Học Thủ Dầu Một</div>
-                            <div style="font-size: 11px; color: #64748B;">Vừa xong &bull; <i class="fa-solid fa-earth-americas"></i></div>
-                          </div>
-                        </div>
-                        <div id="manus_fb_preview_text" style="font-size: 13px; line-height: 1.6; color: #1E293B; white-space: pre-wrap;"></div>
-                        <div id="manus_fb_img_preview" style="margin-top: 10px; border-radius: 6px; overflow: hidden; display: none;"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 3. PANE ZALO -->
-              <div id="manus_pane_zalo" style="display: none; padding: 28px 36px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                  <div>
-                    <label style="font-size: 12px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 8px; display: block;">Nội Dung Tin Nhắn Zalo OA:</label>
-                    <textarea id="manus_zalo_caption" rows="8" style="width: 100%; padding: 14px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 13.5px; line-height: 1.65; outline: none; box-sizing: border-box; font-family: inherit;" oninput="safeSetText('manus_zalo_preview_text', this.value)"></textarea>
-                  </div>
-                  <div>
-                    <label style="font-size: 12px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 8px; display: block;">Xem Trước Zalo OA:</label>
-                    <div style="background: #E8F0FE; border-radius: 10px; padding: 16px; border: 1px solid #BFDBFE;">
-                      <div style="background: white; border-radius: 10px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
-                        <div style="font-size: 12px; font-weight: 800; color: #0068FF; margin-bottom: 6px;"><i class="fa-solid fa-comment-dots me-1"></i> Tin nhắn nhóm Công Đoàn TDMU</div>
-                        <div id="manus_zalo_preview_text" style="font-size: 13px; line-height: 1.6; color: #1E293B; white-space: pre-wrap;"></div>
-                        <button type="button" onclick="manusCopyZalo()" style="margin-top: 10px; background: #0068FF; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 11.5px; font-weight: 700; cursor: pointer;">
-                          <i class="fa-solid fa-copy me-1"></i> Copy tin nhắn
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 4. PANE SCHEDULE -->
-              <div id="manus_pane_schedule" style="display: none; padding: 28px 36px;">
-                <h3 style="margin: 0 0 16px; font-size: 16px; font-weight: 800; color: #002855;">
-                  <i class="fa-solid fa-calendar-check text-primary me-2"></i> Lịch Xuất Bản Đa Kênh Tự Động
-                </h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px;">
-                  <div style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 18px;">
-                    <div style="font-weight: 800; font-size: 14px; color: #002855; margin-bottom: 4px;">📰 Cổng Website TDMU</div>
-                    <div style="font-size: 12px; color: #64748B; margin-bottom: 12px;">Đăng trực tiếp lên cơ sở dữ liệu</div>
-                    <button type="button" onclick="manusPublishChannel('web')" style="width: 100%; background: #002855; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-bottom: 6px;">Đăng Ngay</button>
-                    <button type="button" onclick="openScheduleModalForChannel('web')" style="width: 100%; background: #F0F9FF; border: 1px solid #BAE6FD; color: #0284C7; padding: 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer;">Hẹn Giờ Đăng</button>
-                  </div>
-                  <div style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 18px;">
-                    <div style="font-weight: 800; font-size: 14px; color: #1877F2; margin-bottom: 4px;">📘 Fanpage Facebook</div>
-                    <div style="font-size: 12px; color: #64748B; margin-bottom: 12px;">Kèm hình ảnh và hashtag</div>
-                    <button type="button" onclick="manusPublishChannel('facebook')" style="width: 100%; background: #1877F2; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-bottom: 6px;">Đăng Ngay (Mock)</button>
-                    <button type="button" onclick="openScheduleModalForChannel('facebook')" style="width: 100%; background: #F0F9FF; border: 1px solid #BAE6FD; color: #0284C7; padding: 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer;">Hẹn Giờ Đăng</button>
-                  </div>
-                  <div style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 18px;">
-                    <div style="font-weight: 800; font-size: 14px; color: #0068FF; margin-bottom: 4px;">💬 Zalo OA</div>
-                    <div style="font-size: 12px; color: #64748B; margin-bottom: 12px;">Thông báo ngắn cho đoàn viên</div>
-                    <button type="button" onclick="manusPublishChannel('zalo')" style="width: 100%; background: #0068FF; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-bottom: 6px;">Copy &amp; Gửi</button>
-                    <button type="button" onclick="openScheduleModalForChannel('zalo')" style="width: 100%; background: #F0F9FF; border: 1px solid #BAE6FD; color: #0284C7; padding: 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer;">Hẹn Giờ Đăng</button>
-                  </div>
-                </div>
-                <div id="manus_schedule_list" style="font-size: 12px; color: #64748B;"></div>
-              </div>
-
-            </div>
-
-          </div>
-
+  <div style="max-width: 1560px; margin: 0 auto;">
+    <!-- TOP NEWSROOM COMPOSER HEADER -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 16px 24px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 10px rgba(0,0,0,0.02); flex-wrap: wrap; gap: 14px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #002855, #0284C7); display: flex; align-items: center; justify-content: center; color: #FCD34D; font-size: 20px; font-weight: 900; box-shadow: 0 2px 8px rgba(0,40,85,0.25);">
+          <i class="fa-solid fa-pen-nib"></i>
         </div>
-      </section>
+        <div>
+          <h1 style="margin: 0; font-size: 19px; font-weight: 900; color: #002855; display: flex; align-items: center; gap: 8px;">
+            Tòa Soạn AI Công Đoàn TDMU
+            <span style="background: #EFF6FF; color: #1D4ED8; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 12px; border: 1px solid #BFDBFE;">COMPOSER 2.0</span>
+          </h1>
+          <p style="margin: 2px 0 0; font-size: 12.5px; color: #64748B;">Mô hình tòa soạn hiện đại (The Washington Post Arc XP &amp; NYT Oak): Tiếp nhận tư liệu &rarr; Lập bài báo gốc &rarr; Phân phối đa kênh</p>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 6px; background: #F0FDF4; border: 1px solid #BBF7D0; padding: 6px 12px; border-radius: 8px;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #16A34A; display: inline-block;"></span>
+          <span style="font-size: 12px; font-weight: 700; color: #15803D;">Gemini 2.5 Flash Live</span>
+        </div>
+        <button type="button" onclick="saveComposerDraft()" style="background: white; border: 1.5px solid #CBD5E1; color: #334155; padding: 8px 16px; border-radius: 8px; font-size: 12.5px; font-weight: 700; cursor: pointer;">
+          <i class="fa-regular fa-floppy-disk me-1"></i> Lưu Nháp
+        </button>
+        <button type="button" onclick="publishComposerLive()" style="background: #002855; color: #FCD34D; border: none; padding: 9px 20px; border-radius: 8px; font-size: 13px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,40,85,0.25);">
+          <i class="fa-solid fa-paper-plane"></i> Xuất Bản Live
+        </button>
+      </div>
+    </div>
+    <!-- MAIN 2-COLUMN NEWSROOM WORKSPACE -->
+    <div style="display: grid; grid-template-columns: 380px 1fr; gap: 22px; align-items: start;">
+      <!-- CỘT 1: KHAY TIẾP NHẬN TƯ LIỆU (INGESTION TRAY) -->
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="font-size: 13px; font-weight: 800; color: #002855; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-paperclip text-primary"></i> Khay Tiếp Nhận Tư Liệu (Ingest)
+            </span>
+            <span style="font-size: 11px; color: #64748B;">Word, PDF, TXT, Ảnh</span>
+          </div>
+          <div id="composer_dropzone" onclick="document.getElementById('composer_file_input').click()"
+            ondragover="event.preventDefault(); this.style.borderColor='#0284C7'; this.style.background='#F0F9FF';"
+            ondragleave="this.style.borderColor='#CBD5E1'; this.style.background='#F8FAFC';"
+            ondrop="event.preventDefault(); this.style.borderColor='#CBD5E1'; this.style.background='#F8FAFC'; handleComposerFiles(event.dataTransfer.files);"
+            style="border: 2px dashed #CBD5E1; background: #F8FAFC; border-radius: 10px; padding: 22px 16px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 12px;">
+            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 26px; color: #0284C7; margin-bottom: 6px;"></i>
+            <div style="font-size: 13.5px; font-weight: 800; color: #002855;">Kéo thả tệp hoặc click chọn</div>
+            <div style="font-size: 11.5px; color: #64748B; margin-top: 3px;">Kế hoạch Word (.docx), Công văn PDF, Báo cáo TXT và Ảnh sự kiện</div>
+            <input type="file" id="composer_file_input" multiple accept=".docx,.doc,.pdf,.txt,image/*" style="display: none;" onchange="handleComposerFiles(this.files)">
+          </div>
+          <div id="composer_files_list" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px;"></div>
+          <div style="margin-bottom: 14px;">
+            <label style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">
+              Chỉ đạo bổ sung của Thư ký Tòa soạn (Tùy chọn):
+            </label>
+            <textarea id="composer_prompt_input" rows="3" placeholder="Gõ lưu ý riêng (VD: Nhấn mạnh 120 đoàn viên tham gia, đội Khoa CNTT vô địch... hoặc để trống để AI tự phân tích tài liệu)" style="width: 100%; padding: 10px 12px; border: 1.5px solid #CBD5E1; border-radius: 8px; font-size: 13px; outline: none; box-sizing: border-box; resize: vertical; line-height: 1.5; font-family: inherit;"></textarea>
+          </div>
+          <button type="button" id="btn_composer_generate" onclick="runComposerGeneration()" style="width: 100%; background: linear-gradient(135deg, #002855 0%, #0284C7 100%); color: #FCD34D; border: none; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 16px rgba(0,40,85,0.3); transition: all 0.2s;">
+            <i class="fa-solid fa-wand-magic-sparkles text-warning"></i> ⚡ LẬP BÀI BÁO GỐC (MASTER STORY) &rarr;
+          </button>
+        </div>
+        <div style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="font-size: 12px; font-weight: 800; color: #002855; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-bolt text-warning"></i> Tiến Trình Tòa Soạn AI
+            </span>
+            <span id="composer_activity_badge" style="font-size: 10.5px; font-weight: 700; background: #F1F5F9; color: #64748B; padding: 2px 8px; border-radius: 10px;">Chờ tác vụ</span>
+          </div>
+          <div id="composer_activity_stream" style="display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: #475569; max-height: 200px; overflow-y: auto;">
+            <div class="empty-placeholder" style="color: #94A3B8; font-style: italic;">Chưa có tác vụ nào đang chạy. Thả tài liệu và bấm Lập bài báo gốc để bắt đầu.</div>
+          </div>
+        </div>
+        <div style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+          <div style="font-size: 12px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 10px;">
+            <i class="fa-solid fa-feather-pointed text-primary me-1"></i> Tinh Chỉnh Báo Chí (1 Chạm)
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <button type="button" onclick="runComposerQuickTool('formal')" style="background: #F8FAFC; border: 1px solid #CBD5E1; color: #334155; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: left;">
+              ⚖️ Nghị Định 30
+            </button>
+            <button type="button" onclick="runComposerQuickTool('shorten')" style="background: #F8FAFC; border: 1px solid #CBD5E1; color: #334155; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: left;">
+              ✂️ Rút Gọn Súc Tích
+            </button>
+            <button type="button" onclick="runComposerQuickTool('expand')" style="background: #F8FAFC; border: 1px solid #CBD5E1; color: #334155; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: left;">
+              📝 Mở Rộng Chiều Sâu
+            </button>
+            <button type="button" onclick="runComposerQuickTool('factcheck')" style="background: #F8FAFC; border: 1px solid #CBD5E1; color: #334155; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: left;">
+              🔍 Kiểm Số Liệu
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- CỘT 2: TRANG SOẠN THẢO KHỐI BÁO CHÍ (SEMANTIC CANVAS & SYNDICATION) -->
+      <div style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 4px 20px rgba(0,0,0,0.03); overflow: hidden; display: flex; flex-direction: column;">
+        <div style="display: flex; align-items: center; border-bottom: 1.5px solid #E2E8F0; background: #F8FAFC; padding: 0 16px; flex-wrap: wrap;">
+          <button type="button" id="tab_btn_web" onclick="switchComposerTab('web')" style="background: white; color: #002855; border: none; border-bottom: 3px solid #002855; padding: 15px 22px; font-size: 13.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-globe text-primary"></i> 📰 Bài Báo Website (Gốc)
+          </button>
+          <button type="button" id="tab_btn_fb" onclick="switchComposerTab('fb')" style="background: transparent; color: #64748B; border: none; border-bottom: 3px solid transparent; padding: 15px 18px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-brands fa-facebook" style="color: #1877F2;"></i> 📘 Fanpage Facebook
+          </button>
+          <button type="button" id="tab_btn_zalo" onclick="switchComposerTab('zalo')" style="background: transparent; color: #64748B; border: none; border-bottom: 3px solid transparent; padding: 15px 18px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-comment-dots" style="color: #0068FF;"></i> 💬 Zalo OA
+          </button>
+          <button type="button" id="tab_btn_schedule" onclick="switchComposerTab('schedule')" style="background: transparent; color: #64748B; border: none; border-bottom: 3px solid transparent; padding: 15px 18px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-regular fa-clock" style="color: #8B5CF6;"></i> ⏰ Hẹn Lịch Đăng
+          </button>
+          <div style="margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 12px; color: #64748B; font-weight: 700; padding: 10px 0;">
+            <span id="composer_word_count">0 từ</span>
+            <span>&bull;</span>
+            <span id="composer_read_time">~0 phút đọc</span>
+          </div>
+        </div>
+        <!-- 1. PANE WEBSITE MASTER DOCUMENT (SEMANTIC BLOCKS) -->
+        <div id="pane_web" style="display: block; padding: 32px 40px; min-height: 580px;">
+          <div style="margin-bottom: 16px;">
+            <input type="text" id="composer_title_input" placeholder="Tiêu đề bài báo báo chí (Headline)..." style="width: 100%; border: none; outline: none; font-size: 26px; font-weight: 900; color: #002855; font-family: 'Plus Jakarta Sans', Georgia, serif; padding: 0; background: transparent; line-height: 1.3;" oninput="updateComposerMetrics()">
+          </div>
+          <div style="margin-bottom: 20px;">
+            <textarea id="composer_sapo_input" rows="2" placeholder="Đoạn mở đầu Sapo 5W1H (Deck): Tóm lược thời gian, địa điểm, sự kiện và thông điệp trọng tâm..." style="width: 100%; border: none; border-left: 3.5px solid #0284C7; background: #F8FAFC; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 14px; font-weight: 600; color: #334155; line-height: 1.6; outline: none; resize: vertical; box-sizing: border-box; font-family: inherit;" oninput="updateComposerMetrics()"></textarea>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; margin-bottom: 20px; flex-wrap: wrap;">
+            <button type="button" onclick="execComposerFormat('bold')" style="background: white; border: 1px solid #CBD5E1; padding: 5px 12px; border-radius: 4px; font-weight: 800; font-size: 12px; cursor: pointer;">B</button>
+            <button type="button" onclick="execComposerFormat('italic')" style="background: white; border: 1px solid #CBD5E1; padding: 5px 12px; border-radius: 4px; font-style: italic; font-size: 12px; cursor: pointer;">I</button>
+            <button type="button" onclick="execComposerFormat('underline')" style="background: white; border: 1px solid #CBD5E1; padding: 5px 12px; border-radius: 4px; text-decoration: underline; font-size: 12px; cursor: pointer;">U</button>
+            <span style="color: #CBD5E1;">|</span>
+            <button type="button" onclick="insertComposerH2()" style="background: white; border: 1px solid #CBD5E1; padding: 5px 12px; border-radius: 4px; font-weight: 700; font-size: 12px; cursor: pointer;">+ Đề mục H2</button>
+            <button type="button" onclick="insertComposerQuote()" style="background: white; border: 1px solid #CBD5E1; padding: 5px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;"><i class="fa-solid fa-quote-left me-1 text-warning"></i> Trích dẫn</button>
+            <span style="color: #CBD5E1;">|</span>
+            <button type="button" onclick="document.getElementById('composer_direct_img_input').click()" style="background: white; border: 1px solid #CBD5E1; padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 700; color: #0284C7; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-image text-success"></i> + Ném Ảnh Vào Bài
+            </button>
+            <input type="file" id="composer_direct_img_input" accept="image/*" multiple style="display: none;" onchange="insertDirectPhotoToCanvas(this.files)">
+          </div>
+          <div id="composer_canvas_editor" contenteditable="true" oninput="updateComposerMetrics()" style="min-height: 440px; outline: none; font-size: 16px; line-height: 1.85; font-family: Georgia, 'Times New Roman', serif; color: #1E293B;">
+            <p style="color: #94A3B8; font-style: italic;">Nội dung bài báo sẽ xuất hiện tại đây khi AI lập bài gốc, hoặc bạn có thể bắt đầu gõ trực tiếp như trên Google Docs...</p>
+          </div>
+        </div>
+        <!-- 2. PANE FACEBOOK (SYNDICATION) -->
+        <div id="pane_fb" style="display: none; padding: 32px 40px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <div>
+              <label style="font-size: 12.5px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 8px; display: block;">Nội Dung Caption Facebook:</label>
+              <textarea id="composer_fb_caption" rows="12" style="width: 100%; padding: 14px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 13.5px; line-height: 1.65; outline: none; box-sizing: border-box; font-family: inherit;" oninput="safeSetText('composer_fb_preview_text', this.value)"></textarea>
+            </div>
+            <div>
+              <label style="font-size: 12.5px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 8px; display: block;">Mockup Fanpage:</label>
+              <div style="background: #F0F2F5; border-radius: 10px; padding: 16px; border: 1px solid #CBD5E1;">
+                <div style="background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); padding: 14px;">
+                  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <div style="width: 38px; height: 38px; border-radius: 50%; background: #1877F2; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px;">CĐ</div>
+                    <div>
+                      <div style="font-weight: 700; color: #002855; font-size: 13px;">Công Đoàn Trường Đại Học Thủ Dầu Một</div>
+                      <div style="font-size: 11px; color: #64748B;">Vừa xong &bull; <i class="fa-solid fa-earth-americas"></i></div>
+                    </div>
+                  </div>
+                  <div id="composer_fb_preview_text" style="font-size: 13px; line-height: 1.6; color: #1E293B; white-space: pre-wrap;"></div>
+                  <div id="composer_fb_img_preview" style="margin-top: 10px; border-radius: 6px; overflow: hidden; display: none;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 3. PANE ZALO OA (SYNDICATION) -->
+        <div id="pane_zalo" style="display: none; padding: 32px 40px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <div>
+              <label style="font-size: 12.5px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 8px; display: block;">Nội Dung Tin Nhắn Zalo OA:</label>
+              <textarea id="composer_zalo_caption" rows="8" style="width: 100%; padding: 14px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 13.5px; line-height: 1.65; outline: none; box-sizing: border-box; font-family: inherit;" oninput="safeSetText('composer_zalo_preview_text', this.value)"></textarea>
+            </div>
+            <div>
+              <label style="font-size: 12.5px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 8px; display: block;">Xem Trước Zalo OA:</label>
+              <div style="background: #E8F0FE; border-radius: 10px; padding: 16px; border: 1px solid #BFDBFE;">
+                <div style="background: white; border-radius: 10px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
+                  <div style="font-size: 12px; font-weight: 800; color: #0068FF; margin-bottom: 6px;"><i class="fa-solid fa-comment-dots me-1"></i> Tin nhắn nhóm Công Đoàn TDMU</div>
+                  <div id="composer_zalo_preview_text" style="font-size: 13px; line-height: 1.6; color: #1E293B; white-space: pre-wrap;"></div>
+                  <button type="button" onclick="copyComposerZalo()" style="margin-top: 10px; background: #0068FF; color: white; border: none; padding: 7px 16px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
+                    <i class="fa-solid fa-copy me-1"></i> Copy tin nhắn
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 4. PANE SCHEDULE (SYNDICATION) -->
+        <div id="pane_schedule" style="display: none; padding: 32px 40px;">
+          <h3 style="margin: 0 0 16px; font-size: 16px; font-weight: 800; color: #002855;">
+            <i class="fa-solid fa-calendar-check text-primary me-2"></i> Lịch Hẹn Đăng Đa Nền Tảng (Cron Tự Động)
+          </h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+            <div style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 18px;">
+              <div style="font-weight: 800; font-size: 14px; color: #002855; margin-bottom: 4px;">📰 Cổng Website TDMU</div>
+              <div style="font-size: 12px; color: #64748B; margin-bottom: 12px;">Đăng chính thức lên trang chủ</div>
+              <button type="button" onclick="publishComposerChannel('web')" style="width: 100%; background: #002855; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-bottom: 6px;">Đăng Ngay</button>
+              <button type="button" onclick="openComposerScheduleModal('web')" style="width: 100%; background: #F0F9FF; border: 1px solid #BAE6FD; color: #0284C7; padding: 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer;">Hẹn Giờ Đăng</button>
+            </div>
+            <div style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 18px;">
+              <div style="font-weight: 800; font-size: 14px; color: #1877F2; margin-bottom: 4px;">📘 Fanpage Facebook</div>
+              <div style="font-size: 12px; color: #64748B; margin-bottom: 12px;">Kèm hình ảnh và hashtag</div>
+              <button type="button" onclick="publishComposerChannel('facebook')" style="width: 100%; background: #1877F2; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-bottom: 6px;">Đăng Ngay (Mock)</button>
+              <button type="button" onclick="openComposerScheduleModal('facebook')" style="width: 100%; background: #F0F9FF; border: 1px solid #BAE6FD; color: #0284C7; padding: 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer;">Hẹn Giờ Đăng</button>
+            </div>
+            <div style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 18px;">
+              <div style="font-weight: 800; font-size: 14px; color: #0068FF; margin-bottom: 4px;">💬 Zalo OA</div>
+              <div style="font-size: 12px; color: #64748B; margin-bottom: 12px;">Thông báo ngắn cho đoàn viên</div>
+              <button type="button" onclick="publishComposerChannel('zalo')" style="width: 100%; background: #0068FF; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-bottom: 6px;">Copy &amp; Gửi</button>
+              <button type="button" onclick="openComposerScheduleModal('zalo')" style="width: 100%; background: #F0F9FF; border: 1px solid #BAE6FD; color: #0284C7; padding: 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer;">Hẹn Giờ Đăng</button>
+            </div>
+          </div>
+          <div id="composer_schedule_list" style="font-size: 12px; color: #64748B;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-      <section id="tab_reports_content" style="display: none;">
+<section id="tab_reports_content" style="display: none;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
           <div>
             <h1 style="font-size: 24px; font-weight: 800; color: #003865; margin: 0 0 4px;">
