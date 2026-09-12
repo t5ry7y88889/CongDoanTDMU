@@ -812,12 +812,7 @@
             </div>
 
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-              <!-- MEDIA MANAGER BUTTON -->
-              <button type="button" onclick="openMediaManagerModal()" style="background: #F8FAFC; border: 1.5px solid #CBD5E1; color: #334155; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                <i class="fa-solid fa-photo-film text-primary"></i> Kho Ảnh (<span id="global_photo_count_badge">0</span>)
-              </button>
-
-              <!-- MODEL BADGE -->
+<!-- MODEL BADGE -->
               <div style="display: flex; align-items: center; gap: 6px; background: #F0FDF4; border: 1px solid #BBF7D0; padding: 6px 12px; border-radius: 8px;">
                 <span style="width: 8px; height: 8px; border-radius: 50%; background: #16A34A; display: inline-block;"></span>
                 <span style="font-size: 12px; font-weight: 700; color: #15803D;">Gemini 2.5 Flash Live</span>
@@ -956,7 +951,10 @@
                   <span style="color: #CBD5E1;">|</span>
                   <button type="button" onclick="insertCustomH2()" style="background: white; border: 1px solid #CBD5E1; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 12px; cursor: pointer;">+ Đề mục H2</button>
                   <button type="button" onclick="insertCustomQuote()" style="background: white; border: 1px solid #CBD5E1; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;"><i class="fa-solid fa-quote-left me-1"></i> Trích dẫn</button>
-                  <button type="button" onclick="openMediaManagerModal()" style="background: white; border: 1px solid #CBD5E1; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;"><i class="fa-solid fa-image me-1 text-success"></i> Chèn ảnh báo chí</button>
+                  <button type="button" onclick="document.getElementById('canvas_quick_img_input').click()" style="background: white; border: 1px solid #CBD5E1; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+              <i class="fa-solid fa-image text-success"></i> + Thêm Ảnh Vào Bài
+            </button>
+            <input type="file" id="canvas_quick_img_input" accept="image/*" multiple style="display: none;" onchange="insertDirectImageToCanvas(this.files)">
                 </div>
 
                 <!-- THE CANVAS -->
@@ -1438,136 +1436,6 @@
   <script src="js/admin/admin-editor.js?v=1788874000000"></script>
   <script src="js/admin/admin-copilot.js?v=1788874000000"></script>
 <script src="js/admin.js?v=1788874000000"></script>
-
-  <!-- MODAL QUẢN LÝ KHO TÀI NGUYÊN ẢNH BÁO CHÍ & KHUÔN HÌNH CHUẨN (MEDIA RESOURCE MANAGER) -->
-  <div id="modal_media_resource_manager" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-    <div style="background: white; border-radius: 14px; width: 920px; max-width: 95vw; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); overflow: hidden;">
-      
-      <!-- MODAL HEADER -->
-      <div style="background: #002855; color: white; padding: 16px 22px; display: flex; justify-content: space-between; align-items: center;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <i class="fa-solid fa-photo-film" style="color: #38BDF8; font-size: 20px;"></i>
-          <div>
-            <h3 style="font-size: 16px; font-weight: 800; color: white; margin: 0; display: flex; align-items: center; gap: 8px;">
-              KHO TÀI NGUYÊN ẢNH BÁO CHÍ &amp; QUẢN LÝ KHUÔN HÌNH
-              <span id="modal_media_mode_badge" style="background: #0284C7; color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Quản Lý Tài Nguyên</span>
-            </h3>
-            <p id="modal_media_subtitle" style="font-size: 12px; color: #94A3B8; margin: 3px 0 0;">Quản lý toàn bộ ảnh hiện trường, chuẩn hóa tỷ lệ khung hình &amp; kiểm soát tài nguyên bài viết</p>
-          </div>
-        </div>
-        <button type="button" onclick="closeMediaManagerModal()" style="background: none; border: none; font-size: 22px; color: #CBD5E1; cursor: pointer; line-height: 1;"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-
-      <!-- QUICK ACTION BAR -->
-      <div style="background: #F8FAFC; border-bottom: 1px solid #E2E8F0; padding: 12px 22px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-          <label for="modal_media_file_input" style="background: #0284C7; color: white; border: none; padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-cloud-arrow-up"></i> + Tải Thêm Ảnh Từ Máy
-            <input type="file" id="modal_media_file_input" multiple accept="image/*" style="display: none;" onchange="handleModalUpload(this.files)">
-          </label>
-          <button type="button" onclick="promptAddPhotoByUrl()" style="background: white; border: 1px solid #CBD5E1; color: #334155; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-link text-primary"></i> + Thêm Link URL
-          </button>
-          <button type="button" onclick="batchSetAspectRatio('16/9')" title="Căn toàn bộ ảnh sang chuẩn 16:9" style="background: #F0F9FF; border: 1px solid #BAE6FD; color: #0369A1; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-crop-simple"></i> 📐 Căn Tất Cả 16:9
-          </button>
-        </div>
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <button type="button" onclick="clearAllPhotosFromStudio()" title="Xóa toàn bộ ảnh đang nạp" style="background: #FEF2F2; border: 1px solid #FECACA; color: #DC2626; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-trash-can"></i> Xóa Tất Cả Ảnh
-          </button>
-        </div>
-      </div>
-
-      <!-- MODAL BODY / MEDIA GRID -->
-      <div id="modal_media_grid_container" style="flex: 1; overflow-y: auto; padding: 20px 22px; background: white; max-height: 60vh;">
-        <!-- DYNAMIC GRID OF PHOTOS -->
-        <div id="modal_media_photos_list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px;"></div>
-        <!-- EMPTY STATE IF NO PHOTOS -->
-        <div id="modal_media_empty" style="display: none; text-align: center; padding: 48px 20px;">
-          <div style="width: 56px; height: 56px; border-radius: 50%; background: #F1F5F9; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
-            <i class="fa-regular fa-image" style="font-size: 26px; color: #94A3B8;"></i>
-          </div>
-          <h4 style="font-size: 15px; font-weight: 800; color: #334155; margin: 0 0 6px;">Chưa có ảnh nào trong kho tài nguyên của bài</h4>
-          <p style="font-size: 12.5px; color: #64748B; max-width: 440px; margin: 0 auto 16px; line-height: 1.5;">Thầy/Cô có thể tải ảnh hiện trường từ máy tính hoặc dán link URL ảnh sự kiện để tự động gắn vào bài báo.</p>
-          <button type="button" onclick="document.getElementById('modal_media_file_input').click()" style="background: #0284C7; color: white; border: none; padding: 8px 18px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer;">
-            <i class="fa-solid fa-cloud-arrow-up me-1"></i> Tải Ảnh Lên Ngay
-          </button>
-        </div>
-      </div>
-
-      <!-- MODAL FOOTER -->
-      <div style="background: #F8FAFC; border-top: 1px solid #E2E8F0; padding: 12px 22px; display: flex; justify-content: space-between; align-items: center;">
-        <span id="modal_media_total_text" style="font-size: 12.5px; color: #64748B; font-weight: 700;">Tổng số ảnh: 0 ảnh</span>
-        <button type="button" onclick="closeMediaManagerModal()" style="background: #E2E8F0; color: #334155; border: none; padding: 8px 20px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer;">
-          Đóng
-        </button>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- MODAL CHÈN ẢNH BÁO CHÍ (POLLINATIONS AI FLUX / KHO TƯ LIỆU / URL) -->
-  <div id="modal_journalism_image" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center;">
-    <div style="background: white; border-radius: 12px; width: 560px; max-width: 95vw; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #E2E8F0; padding-bottom: 12px;">
-        <h3 style="font-size: 17px; font-weight: 800; color: #003865; margin: 0; display: flex; align-items: center; gap: 8px;">
-          <i class="fa-solid fa-camera" style="color: #D97706;"></i> Chèn Ảnh Báo Chí Kèm Chú Thích
-        </h3>
-        <button type="button" onclick="closeJournalismImageModal()" style="background: none; border: none; font-size: 18px; color: #94A3B8; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-
-      <!-- Tab chọn nguồn ảnh -->
-      <div style="display: flex; gap: 8px; margin-bottom: 16px; background: #F1F5F9; padding: 4px; border-radius: 8px;">
-        <button type="button" id="tab_img_src_ai" class="btn btn-sm" onclick="switchImageSourceTab('ai')" style="flex: 1; font-weight: 700; background: white; color: #0284C7; border: none; border-radius: 6px; padding: 6px;">✨ Thiết Kế Đồ Họa Mới</button>
-        <button type="button" id="tab_img_src_url" class="btn btn-sm" onclick="switchImageSourceTab('url')" style="flex: 1; font-weight: 700; background: transparent; color: #475569; border: none; border-radius: 6px; padding: 6px;">🔗 Dán Link Ảnh</button>
-        <button type="button" id="tab_img_src_upload" class="btn btn-sm" onclick="switchImageSourceTab('upload')" style="flex: 1; font-weight: 700; background: transparent; color: #475569; border: none; border-radius: 6px; padding: 6px;">📁 Kho Tư Liệu</button>
-      </div>
-
-      <!-- Form Nguồn AI -->
-      <div id="panel_img_src_ai">
-        <label style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Chủ đề hoặc mô tả ảnh sự kiện:</label>
-        <input type="text" id="img_modal_prompt" placeholder="VD: Hội nghị tuyên dương giảng viên tiêu biểu TDMU, hội trường trang trọng..." style="width: 100%; padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; margin-bottom: 12px; box-sizing: border-box;">
-        <button type="button" class="btn btn-sm" id="btn_modal_gen_img" onclick="generateImageFromModal()" style="background: linear-gradient(135deg, #0284C7, #0369A1); color: white; border: none; font-weight: 700; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
-          <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Khởi Tạo Đồ Họa Báo Chí
-        </button>
-        <div id="img_modal_preview_wrap" style="margin-top: 12px; display: none; text-align: center;">
-          <img id="img_modal_preview" src="" style="max-width: 100%; max-height: 200px; border-radius: 6px; border: 1px solid #CBD5E1;">
-        </div>
-      </div>
-
-      <!-- Form Nguồn URL -->
-      <div id="panel_img_src_url" style="display: none;">
-        <label style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Đường dẫn ảnh (URL):</label>
-        <input type="text" id="img_modal_url" placeholder="https://..." style="width: 100%; padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; margin-bottom: 12px; box-sizing: border-box;" onchange="previewUrlImage(this.value)">
-      </div>
-
-      <!-- Form Nguồn Kho tư liệu -->
-      <div id="panel_img_src_upload" style="display: none;">
-        <p style="font-size: 12.5px; color: #64748B; margin-bottom: 8px;">Chọn ảnh từ Kho Tư Liệu Sự Kiện của trường:</p>
-        <div style="display: flex; gap: 8px; overflow-x: auto; padding: 6px 0;" id="img_modal_dam_list">
-          <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400" onclick="selectDamImage(this.src)" style="width: 110px; height: 75px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent;" class="dam-pick-thumb">
-          <img src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=400" onclick="selectDamImage(this.src)" style="width: 110px; height: 75px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent;" class="dam-pick-thumb">
-          <img src="https://images.unsplash.com/photo-1577495508048-b635879837f1?w=400" onclick="selectDamImage(this.src)" style="width: 110px; height: 75px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent;" class="dam-pick-thumb">
-          <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400" onclick="selectDamImage(this.src)" style="width: 110px; height: 75px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent;" class="dam-pick-thumb">
-        </div>
-      </div>
-
-      <!-- Chú thích ảnh (Photo Caption) -->
-      <div style="margin-top: 14px; border-top: 1px dashed #E2E8F0; padding-top: 12px;">
-        <label style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Chú thích ảnh báo chí (Caption):</label>
-        <input type="text" id="img_modal_caption" placeholder="VD: Ảnh: Đ/c Chủ tịch Công đoàn phát biểu khai mạc tại Hội trường trung tâm" style="width: 100%; padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
-      </div>
-
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px;">
-        <button type="button" class="btn btn-sm" onclick="closeJournalismImageModal()" style="background: #F1F5F9; color: #475569; border: none; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Hủy Bỏ</button>
-        <button type="button" class="btn btn-sm" onclick="confirmInsertJournalismImage()" style="background: #D97706; color: white; border: none; font-weight: 700; padding: 8px 20px; border-radius: 6px; cursor: pointer;">
-          <i class="fa-solid fa-plus me-1"></i> Chèn Vào Bài Báo
-        </button>
-      </div>
-    </div>
-  </div>
-
 
   <!-- MODAL HEN LICH XUAT BAN AUTO-PILOT -->
   <div id="modal_ap_schedule" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.75);z-index:99999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">

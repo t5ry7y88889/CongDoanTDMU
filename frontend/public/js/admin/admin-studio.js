@@ -101,16 +101,19 @@ function renderManusFilesList() {
     return;
   }
 
-  container.innerHTML = studioState.uploadedFiles.map((f, idx) => `
-    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px 10px; font-size: 12px; display: flex; align-items: center; justify-content: space-between;">
-      <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
-        <i class="fa-solid ${f.type.startsWith('image/') ? 'fa-image text-success' : 'fa-file-lines text-primary'}"></i>
-        <span style="font-weight: 700; color: #002855; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${f.name}">${f.name}</span>
-        <span style="color: #64748B; font-size: 11px;">(${f.size})</span>
+  container.innerHTML = studioState.uploadedFiles.map((f, idx) => {
+    const isImg = f.type.startsWith('image/') || f.dataUrl;
+    return `
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px 10px; font-size: 12px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
+          ${isImg && f.dataUrl ? `<img src="${f.dataUrl}" style="width: 24px; height: 24px; object-fit: cover; border-radius: 4px;">` : `<i class="fa-solid ${isImg ? 'fa-image text-success' : 'fa-file-lines text-primary'}"></i>`}
+          <span style="font-weight: 700; color: #002855; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${f.name}">${f.name}</span>
+          <span style="color: #64748B; font-size: 11px;">(${f.size})</span>
+        </div>
+        <button type="button" onclick="removeManusFile(${idx})" style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 12px; padding: 0 4px;">✕</button>
       </div>
-      <button type="button" onclick="removeManusFile(${idx})" style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 12px; padding: 0 4px;">✕</button>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function removeManusFile(idx) {
@@ -693,4 +696,46 @@ async function apConfirmSchedule() {
   } catch (err) {
     alert('Lỗi kết nối: ' + err.message);
   }
+}
+
+
+// ── DIRECT IMAGE INSERTION (NÉM ẢNH TRỰC TIẾP VÀO BÀI) ─────────────────────────
+
+async function insertDirectImageToCanvas(files) {
+  if (!files || !files.length) return;
+  const editor = document.getElementById('manus_canvas_editor');
+  if (!editor) return;
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const dataUrl = await readFileAsDataUrl(file);
+    const caption = file.name.replace(/\.[^/.]+$/, '');
+
+    studioState.photos.push({
+      url: dataUrl,
+      caption,
+      isFeatured: studioState.photos.length === 0
+    });
+
+    const figureHtml = `
+      <figure class="journalism-figure" style="margin: 20px 0; text-align: center;">
+        <img src="${dataUrl}" alt="${escapeHtml(caption)}" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: block; margin: 0 auto;" />
+        <figcaption contenteditable="true" style="font-size: 13px; font-style: italic; color: #64748B; margin-top: 8px; outline: none;">Ảnh: ${escapeHtml(caption)}</figcaption>
+      </figure>
+      <p></p>
+    `;
+
+    editor.focus();
+    document.execCommand('insertHTML', false, figureHtml);
+
+    // Also update Facebook preview image
+    const fbImg = document.getElementById('manus_fb_img_preview');
+    if (fbImg) {
+      fbImg.style.display = 'block';
+      fbImg.innerHTML = `<img src="${dataUrl}" style="width:100%;max-height:220px;object-fit:cover;">`;
+    }
+  }
+
+  updateManusWordCount();
+  addManusThought('img_direct', `Đã chèn ${files.length} hình ảnh trực tiếp vào bài báo.`, 'done');
 }
