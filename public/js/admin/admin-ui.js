@@ -86,11 +86,10 @@ function switchUserRole(role) {
 }
 
 function showAdminTab(tabName, subFilter = null) {
-  const tabs = ['dashboard', 'articles', 'auto-pilot', 'ai-creator', 'reports', 'documents', 'schedule', 'users', 'audits'];
+  const tabs = ['dashboard', 'articles', 'ai-creator', 'reports', 'documents', 'schedule', 'users', 'audits'];
   const titles = {
     'dashboard': 'Bảng Điều Hành & Thống Kê',
     'articles': 'Quản Lý Tin Tức & Bài Viết',
-    'auto-pilot': '⚡ Auto-Pilot Journalism Engine',
     'ai-creator': 'Phòng Biên Tập & Sản Xuất Đa Kênh',
     'reports': 'Báo Cáo Định Kỳ 16 Tổ Công Đoàn',
     'documents': 'Kho Văn Bản Chỉ Đạo & Điều Hành',
@@ -125,10 +124,6 @@ function showAdminTab(tabName, subFilter = null) {
   if (tabName === 'schedule') loadScheduleTable();
   if (tabName === 'users') loadUsersTable();
   if (tabName === 'audits') loadAuditLogs();
-  if (tabName === 'auto-pilot') {
-    // Initialize auto-pilot tab if needed
-    if (typeof apSwitchPreviewTab === 'function') apSwitchPreviewTab('web');
-  }
 }
 
 function toggleSidebarCollapse() {

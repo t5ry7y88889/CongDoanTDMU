@@ -292,6 +292,39 @@ function readFileAsDataUrl(file) {
   });
 }
 
+async function readDocumentText(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const buffer = e.target.result;
+        const decoder = new TextDecoder('utf-8', { fatal: false });
+        const text = decoder.decode(buffer);
+        
+        // Check for Word docx XML tags (<w:t>)
+        const matches = text.match(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g);
+        if (matches && matches.length > 0) {
+          const extracted = matches.map(m => m.replace(/<[^>]+>/g, '')).join(' ');
+          if (extracted.trim().length > 10) {
+            return resolve(extracted.trim());
+          }
+        }
+        
+        // Clean printable strings for txt/pdf/doc
+        const cleaned = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, ' ').replace(/\s+/g, ' ').trim();
+        if (cleaned.length > 30) {
+          return resolve(cleaned.slice(0, 10000));
+        }
+        resolve(`[Tệp: ${file.name} - ${(file.size/1024).toFixed(1)} KB]`);
+      } catch(err) {
+        resolve(`[Tệp: ${file.name}]`);
+      }
+    };
+    reader.onerror = () => resolve(`[Tệp: ${file.name}]`);
+    reader.readAsArrayBuffer(file);
+  });
+}
+
 async function handleIntakeFilesSelected(files) {
   if (!files || !files.length) return;
   for (let i = 0; i < files.length; i++) {
@@ -304,14 +337,17 @@ async function handleIntakeFilesSelected(files) {
       dataUrl: ''
     };
 
-    if (f.type.startsWith('text/') || f.name.endsWith('.txt') || f.name.endsWith('.csv') || f.name.endsWith('.json')) {
+    if (f.type.startsWith('image/')) {
+      fileObj.dataUrl = await readFileAsDataUrl(f);
+    } else if (f.type.startsWith('text/') || f.name.endsWith('.txt') || f.name.endsWith('.csv') || f.name.endsWith('.json') || f.name.endsWith('.md')) {
       fileObj.text = await new Promise((res) => {
         const reader = new FileReader();
         reader.onload = (e) => res(e.target.result);
         reader.readAsText(f);
       });
-    } else if (f.type.startsWith('image/')) {
-      fileObj.dataUrl = await readFileAsDataUrl(f);
+    } else {
+      // Word .docx, .doc, PDF or other docs
+      fileObj.text = await readDocumentText(f);
     }
     studioState.uploadedFiles.push(fileObj);
   }
@@ -1730,3 +1766,150 @@ document.addEventListener('DOMContentLoaded', () => {
   setGovernanceMode('full_review');
   renderAuditTrailUI();
 });
+
+
+// =========================================================================
+// AUTO-ARTICLE FROM FILE: 1-TOUCH GENERATION DIRECTLY TO WORD CANVAS
+// =========================================================================
+async function runAutoArticleFromFile() {
+  const sourceText = (document.getElementById('intake_source_text')?.value || '').trim();
+  const brief = (document.getElementById('intake_instructions_text')?.value || '').trim();
+  const btn = document.getElementById('btn_auto_article_file');
+  const statusBar = document.getElementById('auto_file_status_bar');
+  const statusText = document.getElementById('auto_file_status_text');
+
+  if (!sourceText && !brief && !studioState.uploadedFiles.length) {
+    alert("⚠️ Vui lòng tải lên ít nhất một tệp tài liệu (Word, PDF, TXT) hoặc dán thông tin sự kiện để AI bắt đầu viết bài!");
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> ⚡ Đang đọc tài liệu & sinh bài báo web...';
+  }
+  if (statusBar) statusBar.style.display = 'flex';
+  if (statusText) statusText.innerText = 'Bước 1/3: AI đang đọc hiểu hồ sơ tài liệu và trích xuất dữ kiện...';
+
+  try {
+    const photos = studioState.uploadedFiles
+      .filter(f => f.type.startsWith('image/') || f.dataUrl)
+      .map((f, i) => ({ url: f.dataUrl, caption: f.name, isFeatured: i === 0 }));
+
+    if (studioState.mediaPackage && studioState.mediaPackage.photos && studioState.mediaPackage.photos.length > 0) {
+      studioState.mediaPackage.photos.forEach(p => {
+        if (!photos.some(existing => existing.url === p.url)) {
+          photos.push(p);
+        }
+      });
+    }
+
+    const payload = {
+      sourceText,
+      userPrompt: brief || sourceText || "Viết bài báo website truyền thông Công Đoàn TDMU từ tài liệu đính kèm.",
+      filesInfo: studioState.uploadedFiles.map(f => ({
+        name: f.name,
+        size: f.size,
+        type: f.type,
+        text: f.text || ''
+      })),
+      photos,
+      genre: 'tin_hoat_dong',
+      apiKey: localStorage.getItem('gemini_api_key') || ''
+    };
+
+    if (statusText) statusText.innerText = 'Bước 2/3: AI đang chấp bút bài báo Website và chuyển thể đa kênh...';
+
+    const response = await fetch('/api/ai/autopilot-generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let webHtml = '';
+    let fbCaption = '';
+    let zaloMessage = '';
+    let articleId = null;
+    let extractedTitle = '';
+    let extractedSummary = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const evt = JSON.parse(line.slice(6));
+          if (evt.step === 'status' && statusText) {
+            statusText.innerText = evt.message;
+          } else if (evt.step === 'web_chunk') {
+            webHtml += evt.chunk;
+          } else if (evt.step === 'social_done') {
+            fbCaption = evt.facebook?.caption || '';
+            zaloMessage = evt.zalo?.message || '';
+          } else if (evt.step === 'all_done') {
+            articleId = evt.articleId;
+            extractedTitle = evt.title || '';
+            extractedSummary = evt.summary || '';
+          }
+        } catch (e) {}
+      }
+    }
+
+    if (!webHtml.trim()) {
+      throw new Error("Không nhận được nội dung bài báo từ AI");
+    }
+
+    if (statusText) statusText.innerText = 'Bước 3/3: Hoàn tất! Đang nạp bài báo vào Word Canvas...';
+
+    if (!extractedTitle) {
+      const titleMatch = webHtml.match(/<h1[^>]*>(.*?)<\/h1>/i);
+      extractedTitle = titleMatch ? titleMatch[1].replace(/<[^>]*>/g, '').trim() : "Hoạt động Công Đoàn TDMU 2026";
+    }
+    if (!extractedSummary) {
+      const sapoMatch = webHtml.match(/<p class="sapo"[^>]*>.*?<strong>(.*?)<\/strong>/i);
+      extractedSummary = sapoMatch ? sapoMatch[1].replace(/<[^>]*>/g, '').trim() : webHtml.replace(/<[^>]*>/g, '').slice(0, 180);
+    }
+
+    // Strip <h1> out because Word Canvas has dedicated studio_title_input
+    let bodyHtml = webHtml.replace(/<h1[^>]*>.*?<\/h1>/i, '').trim();
+
+    studioState.contentDraft = {
+      website: {
+        title: extractedTitle,
+        sapo: extractedSummary,
+        contentHtml: bodyHtml
+      },
+      facebook: {
+        caption: fbCaption || extractedSummary
+      },
+      zalo: {
+        caption: zaloMessage || extractedSummary.slice(0, 150)
+      }
+    };
+
+    renderDraftToCanvasUI(studioState.contentDraft);
+
+    logStudioAudit("Tạo bài báo tự động từ file (Auto Article 1-Touch)", "Stage 5: Word Canvas", `Đã tạo bài "${extractedTitle}" và chuyển tới Word Canvas`);
+
+    // Jump directly to Stage 5 Word Canvas!
+    goToStage(5);
+
+  } catch (err) {
+    console.error("Auto article generation error:", err);
+    alert("❌ Lỗi khi tự động tạo bài từ file: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-bolt text-warning"></i> ⚡ TỰ ĐỘNG TẠO BÀI BÁO WEB TỪ FILE (1 CHẠM) →';
+    }
+    if (statusBar) statusBar.style.display = 'none';
+  }
+}
