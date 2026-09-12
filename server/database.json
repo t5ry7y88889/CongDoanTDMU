@@ -618,7 +618,7 @@
       "author": "Auto-Pilot AI",
       "authorId": 1,
       "status": "published",
-      "statusName": "Da Xuat Ban",
+      "statusName": "Đã Xuất Bản",
       "isAiGenerated": true,
       "aiPrompt": "Lễ Khai Mạc Tháng Công Nhân và Tuyên Dương Cán Bộ Tiêu Biểu 2026",
       "genre": "tin_hoat_dong",
@@ -646,7 +646,7 @@
       "likesCount": 0,
       "sharesCount": 0,
       "createdAt": "2026-09-12T17:14:47.934Z",
-      "publishedAt": "2026-09-12T17:15:00.418Z"
+      "publishedAt": "2026-09-12T18:15:25.829Z"
     },
     {
       "id": 8,
@@ -1671,13 +1671,14 @@
       "articleId": 7,
       "channel": "web",
       "scheduledAt": "2026-09-12T18:15:00.401Z",
-      "status": "pending",
+      "status": "done",
       "title": "",
       "contentSnapshot": "",
       "facebookSnapshot": {},
       "zaloSnapshot": {},
       "photos": [],
-      "createdAt": "2026-09-12T17:15:00.405Z"
+      "createdAt": "2026-09-12T17:15:00.405Z",
+      "executedAt": "2026-09-12T18:15:25.829Z"
     },
     {
       "id": 4,
@@ -1981,6 +1982,15 @@
       },
       "publishedAt": "2026-09-12T18:13:38.995Z",
       "createdAt": "2026-09-12T18:13:38.995Z"
+    },
+    {
+      "id": 11,
+      "scheduleId": 3,
+      "articleId": 7,
+      "channel": "web",
+      "action": "auto_published",
+      "executedAt": "2026-09-12T18:15:25.829Z",
+      "createdAt": "2026-09-12T18:15:25.829Z"
     }
   ],
   "templates": [

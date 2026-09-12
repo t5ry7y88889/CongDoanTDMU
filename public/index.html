@@ -191,8 +191,8 @@
           <div class="panel-tdmu">
             <div class="panel-heading-tdmu"><i class="fa-solid fa-chart-simple me-2 text-warning"></i>Thống kê truy cập</div>
             <div class="p-3" style="font-size: 13px;">
-              <p class="mb-2"><i class="fa-solid fa-users text-primary me-2"></i> Đang trực tuyến: <strong>12</strong></p>
-              <p class="mb-0"><i class="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong>811,221</strong></p>
+              <p class="mb-2"><i class="fa-solid fa-users text-primary me-2"></i> Đang trực tuyến: <strong id="stat_online">12</strong></p>
+              <p class="mb-0"><i class="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong id="stat_views">811,221</strong></p>
             </div>
           </div>
         </div>
@@ -209,7 +209,7 @@
           <div class="tieudelon-section">
             <i class="fa-solid fa-folder-open me-2 text-danger"></i>VĂN BẢN CHỈ ĐẠO &amp; ĐIỀU HÀNH
           </div>
-          <div class="list-group-vb">
+          <div class="list-group-vb" id="home_documents_list">
             <a href="van-ban.html#tuyen-truyen" class="list-group-vb-item">
               <span><i class="fa-regular fa-file-pdf text-danger me-2 fa-lg"></i> <strong>[18/CV-CĐCS]</strong> Vận động ủng hộ đồng bào bị thiệt hại do bão số 3</span>
               <span class="badge bg-light text-primary border"><i class="fa-solid fa-download me-1"></i> 1.2 MB</span>
@@ -348,12 +348,52 @@
         <div style="font-size: 14.5px; line-height: 1.8; color: #2d3748;">
           ${a.content || a.summary || ''}
         </div>
+        <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+          <a href="bai-viet.html?id=${a.id}" class="btn btn-sm btn-primary">
+            <i class="fa-solid fa-up-right-from-square me-1"></i> Xem bài viết trang riêng
+          </a>
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        </div>
       `;
       const modal = new bootstrap.Modal(document.getElementById('articleDetailModal'));
       modal.show();
     }
 
-    document.addEventListener('DOMContentLoaded', loadHomeArticles);
+    async function loadHomeDocuments() {
+      try {
+        const res = await fetch('/api/documents');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          const container = document.getElementById('home_documents_list');
+          if (!container) return;
+          container.innerHTML = data.data.slice(0, 5).map(doc => `
+            <a href="van-ban.html#${doc.loai_van_ban || 'tuyen-truyen'}" class="list-group-vb-item">
+              <span><i class="fa-regular fa-file-pdf text-danger me-2 fa-lg"></i> <strong>[${doc.so_hieu}]</strong> ${doc.tieu_de}</span>
+              <span class="badge bg-light text-primary border"><i class="fa-solid fa-download me-1"></i> ${doc.dung_luong || '1.5 MB'}</span>
+            </a>
+          `).join('');
+        }
+      } catch (e) {}
+    }
+
+    async function loadHomeStats() {
+      try {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        if (data) {
+          const elOnline = document.getElementById('stat_online');
+          const elViews = document.getElementById('stat_views');
+          if (elOnline) elOnline.innerText = (data.online || 12).toLocaleString('vi-VN');
+          if (elViews) elViews.innerText = (data.totalViews || 811221).toLocaleString('vi-VN');
+        }
+      } catch (e) {}
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadHomeArticles();
+      loadHomeDocuments();
+      loadHomeStats();
+    });
 
     const staticArticles = {
       1: {
@@ -403,6 +443,12 @@
         <img src="${a.image}" class="img-fluid rounded mb-3 w-100" style="max-height: 360px; object-fit: cover;">
         <div style="font-size: 14.5px; line-height: 1.8; color: #2d3748;">
           ${a.content}
+        </div>
+        <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+          <a href="bai-viet.html?id=${id}" class="btn btn-sm btn-primary">
+            <i class="fa-solid fa-up-right-from-square me-1"></i> Xem bài viết trang riêng
+          </a>
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng</button>
         </div>
       `;
       const modal = new bootstrap.Modal(document.getElementById('articleDetailModal'));
