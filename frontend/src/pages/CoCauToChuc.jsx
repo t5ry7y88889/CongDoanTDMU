@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const CoCauToChuc = () => {
-  const [activeTab, setActiveTab] = useState('ban-thuong-vu');
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const tabParam = searchParams.get('tab');
+
+  const [activeTab, setActiveTab] = useState(tabParam || 'ban-thuong-vu');
   const [orgData, setOrgData] = useState({ boards: [], units: [], cadres: [], stats: {} });
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
 
   useEffect(() => {
     fetchOrgData();

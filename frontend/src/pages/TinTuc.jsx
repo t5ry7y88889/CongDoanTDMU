@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import PaginationBar from '../components/PaginationBar';
 
 const TinTuc = () => {
   const [articles, setArticles] = useState([]);
@@ -7,6 +8,8 @@ const TinTuc = () => {
   const [currentCategory, setCurrentCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [savedIds, setSavedIds] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6);
 
   useEffect(() => {
     fetchArticles();
@@ -63,7 +66,7 @@ const TinTuc = () => {
   };
 
   const strip = (str) =>
-    (str || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+    (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
 
   const filteredArticles = articles.filter(a => {
     if (currentCategory === 'saved') {
@@ -279,6 +282,20 @@ const TinTuc = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Bộ Phân Trang Tin Tức */}
+              <PaginationBar
+                currentPage={currentPage}
+                totalItems={gridArticlesAll.length}
+                pageSize={pageSize}
+                pageSizeOptions={[6, 12, 24]}
+                onPageChange={(p) => setCurrentPage(p)}
+                onPageSizeChange={(s) => {
+                  setPageSize(s);
+                  setCurrentPage(1);
+                }}
+                itemLabel="bài viết"
+              />
             </>
           )}
         </div>

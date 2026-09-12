@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
-import Header from './components/Header';
+import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import BookmarksDrawer from './components/BookmarksDrawer';
 import Home from './pages/Home';
 import GioiThieu from './pages/GioiThieu';
 import CoCauToChuc from './pages/CoCauToChuc';
@@ -12,17 +13,19 @@ import BieuMau from './pages/BieuMau';
 import LienHe from './pages/LienHe';
 import BaiViet from './pages/BaiViet';
 
+export const BookmarkContext = createContext();
+
+export const useBookmarks = () => useContext(BookmarkContext);
+
 const LinkInterceptor = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 1. Link click interception for seamless SPA navigation
     const handleLinkClick = (e) => {
       const a = e.target.closest('a');
       if (a && a.href) {
         const url = new URL(a.href);
         if (url.origin === window.location.origin) {
-          // Keep admin and external links native
           if (url.pathname === '/admin.html' || url.pathname === '/admin' || url.pathname === '/bao-cao-thang.html') {
             return;
           }
@@ -36,66 +39,73 @@ const LinkInterceptor = ({ children }) => {
       }
     };
 
-    // 2. Global Bootstrap Event Delegation for React DOM
-    const handleBootstrapEvents = (e) => {
-      if (typeof window === 'undefined' || !window.bootstrap) return;
-
-      // Dropdown toggle
-      const dropdownToggle = e.target.closest('[data-bs-toggle="dropdown"]');
-      if (dropdownToggle) {
-        e.preventDefault();
-        const instance = window.bootstrap.Dropdown.getOrCreateInstance(dropdownToggle);
-        instance.toggle();
-        return;
-      }
-
-      // Close dropdowns if click is outside any open dropdown
-      if (!e.target.closest('.dropdown')) {
-        document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
-          menu.classList.remove('show');
-          const toggle = menu.closest('.dropdown')?.querySelector('[data-bs-toggle="dropdown"]');
-          if (toggle) {
-            toggle.classList.remove('show');
-            toggle.setAttribute('aria-expanded', 'false');
-          }
-        });
-      }
-
-      // Navbar Collapse toggle (Mobile view)
-      const collapseToggle = e.target.closest('[data-bs-toggle="collapse"]');
-      if (collapseToggle) {
-        const targetSelector = collapseToggle.getAttribute('data-bs-target');
-        if (targetSelector) {
-          const targetEl = document.querySelector(targetSelector);
-          if (targetEl) {
-            e.preventDefault();
-            const collapse = window.bootstrap.Collapse.getOrCreateInstance(targetEl);
-            collapse.toggle();
-          }
-        }
-      }
-    };
-
     document.addEventListener('click', handleLinkClick);
-    document.addEventListener('click', handleBootstrapEvents);
-
-    return () => {
-      document.removeEventListener('click', handleLinkClick);
-      document.removeEventListener('click', handleBootstrapEvents);
-    };
+    return () => document.removeEventListener('click', handleLinkClick);
   }, [navigate]);
 
   return <>{children}</>;
 };
 
-function App() {
+function AppContent() {
+  const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
+  const [bookmarks, setBookmarks] = useState([]);
+
+  // Load bookmarks from localStorage on initial render
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('tdmu_read_later') || '[]');
+      setBookmarks(saved);
+    } catch (e) {
+      setBookmarks([]);
+    }
+  }, []);
+
+  const saveBookmarksToStorage = (newList) => {
+    setBookmarks(newList);
+    localStorage.setItem('tdmu_read_later', JSON.stringify(newList));
+  };
+
+  const toggleBookmark = (article) => {
+    const articleId = parseInt(article.id || article.article_id);
+    const exists = bookmarks.some(b => (b.id == articleId || b.article_id == articleId));
+
+    if (exists) {
+      const updated = bookmarks.filter(b => (b.id != articleId && b.article_id != articleId));
+      saveBookmarksToStorage(updated);
+      return false;
+    } else {
+      const item = {
+        id: articleId,
+        article_id: articleId,
+        title: article.title || article.tieu_de || 'Bài viết Công đoàn',
+        thumbnail: article.image || article.thumbnail || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600',
+        date: article.createdAt || article.date || new Date().toISOString()
+      };
+      const updated = [item, ...bookmarks];
+      saveBookmarksToStorage(updated);
+      return true;
+    }
+  };
+
+  const removeBookmark = (articleId) => {
+    const updated = bookmarks.filter(b => (b.id != articleId && b.article_id != articleId));
+    saveBookmarksToStorage(updated);
+  };
+
+  const isBookmarked = (articleId) => {
+    return bookmarks.some(b => (b.id == articleId || b.article_id == articleId));
+  };
+
   return (
-    <BrowserRouter>
+    <BookmarkContext.Provider value={{ bookmarks, toggleBookmark, removeBookmark, isBookmarked }}>
       <LinkInterceptor>
         <div className="main-content-wrapper">
-          <Header />
+          <Navbar
+            onOpenBookmarks={() => setIsBookmarksOpen(true)}
+            bookmarkCount={bookmarks.length}
+          />
+
           <Routes>
-            {/* Standard Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/index" element={<Home />} />
             <Route path="/gioi-thieu" element={<GioiThieu />} />
@@ -107,7 +117,7 @@ function App() {
             <Route path="/lien-he" element={<LienHe />} />
             <Route path="/bai-viet" element={<BaiViet />} />
 
-            {/* Path aliases without hyphens */}
+            {/* Aliases without hyphens */}
             <Route path="/gioithieu" element={<GioiThieu />} />
             <Route path="/cocautochuc" element={<CoCauToChuc />} />
             <Route path="/tintuc" element={<TinTuc />} />
@@ -117,12 +127,27 @@ function App() {
             <Route path="/lienhe" element={<LienHe />} />
             <Route path="/baiviet" element={<BaiViet />} />
 
-            {/* Fallback */}
             <Route path="*" element={<Home />} />
           </Routes>
         </div>
+
         <Footer />
+
+        <BookmarksDrawer
+          isOpen={isBookmarksOpen}
+          onClose={() => setIsBookmarksOpen(false)}
+          bookmarks={bookmarks}
+          onRemoveBookmark={removeBookmark}
+        />
       </LinkInterceptor>
+    </BookmarkContext.Provider>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }

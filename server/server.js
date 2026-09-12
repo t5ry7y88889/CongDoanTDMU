@@ -39,7 +39,8 @@ app.use(express.static(path.join(__dirname, '../public'), {
   maxAge: 0
 }));
 
-// 3. Optional React SPA bundle mounted under /spa
+// 3. React Production Assets & SPA bundle mounted under /spa
+app.use('/assets', express.static(path.join(__dirname, '../frontend/dist/assets')));
 app.use('/spa', express.static(path.join(__dirname, '../frontend/dist'), {
   etag: false,
   maxAge: 0

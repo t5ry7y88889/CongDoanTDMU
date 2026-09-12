@@ -1,10 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
 const VanBan = () => {
+  const location = useLocation();
+  const initialCat = location.hash.replace('#', '').replace('-', '') || 'all';
+
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState(initialCat);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const hash = location.hash.replace('#', '').replace('-', '');
+    if (hash) {
+      setSelectedCategory(hash);
+    }
+  }, [location.hash]);
 
   useEffect(() => {
     fetchDocuments();
@@ -25,7 +36,7 @@ const VanBan = () => {
   };
 
   const strip = (str) =>
-    (str || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+    (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
 
   const filteredDocs = documents.filter(d => {
     const cat = d.loai_van_ban || d.LoaiVanBan;
