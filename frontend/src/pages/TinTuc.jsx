@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import PaginationBar from '../components/PaginationBar';
 import { useBookmarks } from '../App';
 
 const TinTuc = () => {
+  const navigate = useNavigate();
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentCategory, setCurrentCategory] = useState('all');
@@ -17,7 +18,6 @@ const TinTuc = () => {
     fetchArticles();
   }, []);
 
-  // Reset page when category or search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [currentCategory, searchQuery]);
@@ -64,68 +64,67 @@ const TinTuc = () => {
   const heroArticle = filteredArticles.length > 0 ? filteredArticles[0] : null;
   const allGridArticles = filteredArticles.length > 1 ? filteredArticles.slice(1) : (currentCategory !== 'all' ? filteredArticles : []);
 
-  // Pagination slice for grid
   const startIndex = (currentPage - 1) * pageSize;
   const currentGridArticles = allGridArticles.slice(startIndex, startIndex + pageSize);
 
   return (
-    <div className="container my-4">
+    <div className="container my-3">
       {/* Breadcrumb */}
       <div className="breadcrumb-box mb-3">
         <Link to="/">Trang chủ</Link> / <span className="text-muted">Tạp chí Tin tức &amp; Sự kiện</span>
       </div>
 
-      {/* Bộ Lọc Chuyên Mục & Thanh Tìm Kiếm */}
+      {/* BỘ LỌC CHUYÊN MỤC & THANH TÌM KIẾM BÀI VIẾT */}
       <div className="content-box mb-4 py-3">
         <div className="row g-3 align-items-center">
           <div className="col-lg-8">
-            <div className="d-flex flex-wrap gap-2">
+            <div className="doc-filter-bar mb-0 border-0 pb-0" id="articleCategoryFilter">
               <button
-                className={`btn btn-sm ${currentCategory === 'all' ? 'btn-primary fw-bold' : 'btn-light border'}`}
+                className={`doc-tab-btn ${currentCategory === 'all' ? 'active' : ''}`}
                 onClick={() => setCurrentCategory('all')}
               >
-                <i className="fa-solid fa-newspaper me-1 text-primary"></i> Tất cả tin tức
+                <i className="fa-solid fa-newspaper text-primary me-1"></i> Tất cả tin tức
               </button>
               <button
-                className={`btn btn-sm ${currentCategory === 'Hoạt động công đoàn' ? 'btn-primary fw-bold' : 'btn-light border'}`}
+                className={`doc-tab-btn ${currentCategory === 'Hoạt động công đoàn' ? 'active' : ''}`}
                 onClick={() => setCurrentCategory('Hoạt động công đoàn')}
               >
-                <i className="fa-solid fa-users me-1 text-primary"></i> Hoạt động CĐ
+                <i className="fa-solid fa-users text-primary me-1"></i> Hoạt động CĐ
               </button>
               <button
-                className={`btn btn-sm ${currentCategory === 'Phong trào thi đua' ? 'btn-warning fw-bold text-dark' : 'btn-light border'}`}
+                className={`doc-tab-btn ${currentCategory === 'Phong trào thi đua' ? 'active' : ''}`}
                 onClick={() => setCurrentCategory('Phong trào thi đua')}
               >
-                <i className="fa-solid fa-trophy me-1 text-warning"></i> Phong trào thi đua
+                <i className="fa-solid fa-trophy text-warning me-1"></i> Phong trào thi đua
               </button>
               <button
-                className={`btn btn-sm ${currentCategory === 'Chăm lo đời sống' ? 'btn-danger fw-bold' : 'btn-light border'}`}
+                className={`doc-tab-btn ${currentCategory === 'Chăm lo đời sống' ? 'active' : ''}`}
                 onClick={() => setCurrentCategory('Chăm lo đời sống')}
               >
-                <i className="fa-solid fa-heart-pulse me-1 text-danger"></i> Chăm lo đời sống
+                <i className="fa-solid fa-heart-pulse text-danger me-1"></i> Chăm lo đời sống
               </button>
               <button
-                className={`btn btn-sm ${currentCategory === 'Văn hóa - Thể thao' ? 'btn-success fw-bold' : 'btn-light border'}`}
+                className={`doc-tab-btn ${currentCategory === 'Văn hóa - Thể thao' ? 'active' : ''}`}
                 onClick={() => setCurrentCategory('Văn hóa - Thể thao')}
               >
-                <i className="fa-solid fa-futbol me-1 text-success"></i> Văn hóa - Thể thao
+                <i className="fa-solid fa-futbol text-success me-1"></i> Văn hóa - Thể thao
               </button>
               <button
-                className={`btn btn-sm ${currentCategory === 'saved' ? 'btn-danger fw-bold' : 'btn-light border'}`}
+                className={`doc-tab-btn ${currentCategory === 'saved' ? 'active' : ''}`}
                 onClick={() => setCurrentCategory('saved')}
               >
-                <i className="fa-solid fa-bookmark me-1 text-danger"></i> Đã lưu ({bookmarks ? bookmarks.length : 0})
+                <i className="fa-solid fa-bookmark text-danger me-1"></i> Đã lưu ({bookmarks ? bookmarks.length : 0})
               </button>
             </div>
           </div>
           <div className="col-lg-4">
-            <div className="input-group">
-              <span className="input-group-text bg-white border-end-0">
-                <i className="fa-solid fa-magnifying-glass text-muted"></i>
-              </span>
+            <div className="position-relative">
+              <i className="fa-solid fa-magnifying-glass position-absolute text-muted" style={{ left: '14px', top: '12px' }}></i>
               <input
                 type="text"
-                className="form-control border-start-0 ps-0"
+                id="articleSearchInput"
+                className="form-control"
+                style={{ borderRadius: '20px', paddingLeft: '38px', fontSize: '13px', border: '1px solid #CBD5E1' }}
                 placeholder="Tìm kiếm bài viết, tác giả..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -136,7 +135,7 @@ const TinTuc = () => {
       </div>
 
       <div className="row g-4">
-        {/* CỘT TRÁI: DANH SÁCH BÀI VIẾT */}
+        {/* LEFT COLUMN (9 PHẦN): FEED TẠP CHÍ QUỐC TẾ */}
         <div className="col-lg-9">
           {loading ? (
             <div className="text-center py-5 text-muted">
@@ -144,115 +143,138 @@ const TinTuc = () => {
               <div>Đang tải bài viết từ CSDL SQL Server...</div>
             </div>
           ) : filteredArticles.length === 0 ? (
-            <div className="text-center py-5 text-muted" style={{ background: '#F8FAFC', borderRadius: '10px' }}>
-              <i className="fa-regular fa-newspaper fa-3x mb-3 text-secondary opacity-50"></i>
-              <div className="fw-bold fs-5">Không tìm thấy bài viết nào!</div>
-              <small>Thử chọn chuyên mục khác hoặc tìm kiếm với từ khóa khác.</small>
+            <div className="col-12 text-center p-5 text-muted bg-white rounded border">
+              <i className="fa-solid fa-inbox fa-3x mb-3 text-secondary"></i>
+              <p className="mb-0">Không tìm thấy bài viết nào trong chuyên mục này.</p>
             </div>
           ) : (
             <>
-              {/* BÀI VIẾT TIÊU ĐIỂM (CHỈ HIỂN THỊ Ở TRANG 1 VÀ KHI CÓ HERO) */}
+              {/* BÀI BÁO TIÊU ĐIỂM HERO */}
               {heroArticle && currentPage === 1 && currentCategory === 'all' && !searchQuery && (
-                <div className="card mb-4 border shadow-sm overflow-hidden" style={{ borderRadius: '12px' }}>
+                <div
+                  className="news-hero-headline"
+                  onClick={() => navigate(`/bai-viet?id=${heroArticle.id}`)}
+                  title="Bấm vào để đọc toàn văn bài viết"
+                >
                   <div className="row g-0">
-                    <div className="col-md-7 position-relative">
-                      <img
-                        src={heroArticle.image || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800'}
-                        className="img-fluid h-100 w-100"
-                        alt={heroArticle.title}
-                        style={{ minHeight: '260px', objectFit: 'cover' }}
-                      />
-                      <span
-                        className="badge position-absolute top-0 start-0 m-3 px-3 py-2"
-                        style={{ background: '#002855', color: '#FEF08A', fontWeight: 'bold' }}
-                      >
-                        <i className="fa-solid fa-star me-1 text-warning"></i> TIÊU ĐIỂM
-                      </span>
-                    </div>
-                    <div className="col-md-5 p-4 d-flex flex-column justify-content-between bg-white">
-                      <div>
-                        <div className="text-primary small fw-bold mb-2">
-                          {heroArticle.categoryName || heroArticle.category || 'Hoạt động công đoàn'}
+                    <div className="col-md-7">
+                      <div className="hero-img-wrap">
+                        <img
+                          src={heroArticle.image || 'https://tdmu.edu.vn/hinh/thuvien/hinhanh/DSC02559(1).JPG'}
+                          className="hero-img"
+                          alt={heroArticle.title}
+                        />
+                        <div className="live-reader-badge">
+                          <span className="live-dot"></span> <span>24 cán bộ đang đọc</span>
                         </div>
-                        <h4 className="fw-bold" style={{ lineHeight: '1.4' }}>
-                          <Link to={`/bai-viet?id=${heroArticle.id}`} className="text-decoration-none" style={{ color: '#002855' }}>
-                            {heroArticle.title}
-                          </Link>
-                        </h4>
-                        <p className="text-secondary small mt-2 mb-3" style={{ lineHeight: '1.5' }}>
-                          {heroArticle.summary || ''}
-                        </p>
+                      </div>
+                    </div>
+                    <div className="col-md-5 p-4 d-flex flex-column justify-content-between">
+                      <div>
+                        <div className="d-flex align-items-center gap-2 mb-2">
+                          <span className="badge" style={{ background: '#002855', color: '#FEF08A', fontWeight: 700, fontSize: '11px' }}>
+                            TIÊU ĐIỂM HÔM NAY
+                          </span>
+                          <span className="text-muted small">
+                            <i className="fa-regular fa-clock me-1"></i> 3 phút đọc
+                          </span>
+                        </div>
+                        <h3 className="fw-bold mt-1" style={{ fontSize: '18px', lineHeight: 1.45, color: '#002855' }}>
+                          {heroArticle.title}
+                        </h3>
+
+                        {/* AI 30s Takeaways */}
+                        <div className="ai-takeaway-box">
+                          <div className="ai-takeaway-title">
+                            <i className="fa-solid fa-bolt text-warning"></i> Điểm Nhấn Bản Tin (30 Giây)
+                          </div>
+                          <ul className="ai-takeaway-list">
+                            <li>{heroArticle.summary ? heroArticle.summary.slice(0, 100) + '...' : 'Thông tin cập nhật mới nhất từ Công đoàn TDMU.'}</li>
+                            <li>Đồng hành chăm lo và bảo vệ quyền lợi chính đáng cho toàn thể đoàn viên.</li>
+                          </ul>
+                        </div>
                       </div>
 
                       <div>
                         <div className="d-flex justify-content-between align-items-center text-muted small mb-3 border-top pt-2">
-                          <div>
-                            <span className="me-2"><i className="fa-regular fa-calendar me-1 text-primary"></i> {heroArticle.createdAt ? String(heroArticle.createdAt).split('T')[0] : '2026-09-13'}</span>
-                            <span><i className="fa-regular fa-eye text-success me-1"></i> {heroArticle.viewsCount || heroArticle.views || 350}</span>
+                          <div className="d-flex align-items-center gap-3">
+                            <span><i className="fa-regular fa-calendar me-1 text-primary"></i> {heroArticle.createdAt ? String(heroArticle.createdAt).split('T')[0] : '26/06/2026'}</span>
+                            <span><i className="fa-regular fa-eye text-success me-1"></i> <strong>{heroArticle.viewsCount || heroArticle.views || 450}</strong></span>
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-link p-0 text-secondary"
+                              onClick={(e) => handleBookmarkToggle(e, heroArticle)}
+                              title="Lưu đọc sau"
+                            >
+                              <i className={`fa-${isBookmarked && isBookmarked(heroArticle.id) ? 'solid text-danger' : 'regular'} fa-bookmark fs-6`}></i>
+                            </button>
                           </div>
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-link p-0 text-secondary"
-                            onClick={(e) => handleBookmarkToggle(e, heroArticle)}
-                            title="Lưu đọc sau"
-                          >
-                            <i className={`fa-${isBookmarked && isBookmarked(heroArticle.id) ? 'solid text-danger' : 'regular'} fa-bookmark fs-6`}></i>
-                          </button>
+                          <span className="text-primary fw-bold">{heroArticle.author || 'Ban Thường Vụ'}</span>
                         </div>
-                        <Link
-                          to={`/bai-viet?id=${heroArticle.id}`}
+                        <button
                           className="btn btn-sm btn-primary w-100 fw-bold py-2"
-                          style={{ background: '#002855', borderColor: '#002855' }}
+                          style={{ background: '#002855', borderColor: '#002855', borderRadius: '6px' }}
                         >
                           <i className="fa-solid fa-book-open-reader me-2 text-warning"></i> ĐỌC TOÀN VĂN BÀI VIẾT
-                        </Link>
+                        </button>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* LƯỚI BÀI VIẾT TIẾP THEO */}
+              {/* LƯỚI TẠP CHÍ CÁC BÀI VIẾT (MAGAZINE GRID) */}
               <div className="row g-3">
                 {currentGridArticles.map(a => (
                   <div className="col-md-6" key={a.id}>
-                    <div className="card h-100 border shadow-sm" style={{ borderRadius: '10px', overflow: 'hidden' }}>
-                      <div className="position-relative">
+                    <div
+                      className="magazine-card"
+                      onClick={() => navigate(`/bai-viet?id=${a.id}`)}
+                      title="Bấm vào để đọc toàn văn bài viết"
+                    >
+                      <div className="magazine-thumb-wrap">
                         <img
                           src={a.image || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500'}
-                          className="card-img-top"
+                          className="magazine-thumb"
                           alt={a.title}
-                          style={{ height: '180px', objectFit: 'cover' }}
                         />
-                        <span
-                          className="badge position-absolute bottom-0 start-0 m-2"
-                          style={{ background: 'rgba(0, 40, 85, 0.85)', color: '#FEF08A' }}
-                        >
-                          {a.categoryName || a.category || 'Tin tức'}
-                        </span>
+                        <div className="position-absolute bottom-0 start-0 m-2">
+                          <span className="badge" style={{ background: 'rgba(0,40,85,0.88)', color: '#FEF08A', fontWeight: 700, fontSize: '11px' }}>
+                            {a.categoryName || a.category || a.ChuyenMuc || 'Tin tức'}
+                          </span>
+                        </div>
                       </div>
-                      <div className="card-body d-flex flex-column justify-content-between">
+
+                      <div className="p-3 d-flex flex-column justify-content-between flex-grow-1">
                         <div>
-                          <h6 className="card-title fw-bold" style={{ lineHeight: '1.45' }}>
-                            <Link to={`/bai-viet?id=${a.id}`} className="text-decoration-none" style={{ color: '#002855' }}>
-                              {a.title}
-                            </Link>
-                          </h6>
-                          <p className="card-text text-secondary small" style={{ lineClamp: 2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          <h4 className="fw-bold mb-2" style={{ fontSize: '15.5px', lineHeight: 1.45, color: '#002855' }}>
+                            {a.title}
+                          </h4>
+                          <p
+                            className="text-muted small mb-3"
+                            style={{
+                              fontSize: '12.5px',
+                              lineHeight: 1.5,
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden'
+                            }}
+                          >
                             {a.summary || ''}
                           </p>
                         </div>
 
-                        <div className="d-flex justify-content-between align-items-center text-muted small border-top pt-2 mt-3">
-                          <div className="d-flex align-items-center gap-2">
-                            <span><i className="fa-regular fa-calendar text-primary me-1"></i> {a.createdAt ? String(a.createdAt).split('T')[0] : '2026-09-13'}</span>
-                            <span><i className="fa-regular fa-eye text-success me-1"></i> {a.viewsCount || a.views || 180}</span>
+                        <div className="d-flex justify-content-between align-items-center text-muted small pt-2 border-top">
+                          <div>
+                            <span className="me-2"><i className="fa-regular fa-calendar me-1 text-primary"></i> {a.createdAt ? String(a.createdAt).split('T')[0] : '26/06/2026'}</span>
+                            <span><i className="fa-regular fa-eye text-success me-1"></i> {a.viewsCount || a.views || 140}</span>
                           </div>
                           <button
                             type="button"
-                            className="btn btn-sm btn-link p-0 text-secondary"
+                            className="btn btn-sm btn-link text-secondary p-0"
                             onClick={(e) => handleBookmarkToggle(e, a)}
-                            title="Lưu đọc sau"
+                            title="Lưu bài viết đọc sau"
                           >
                             <i className={`fa-${isBookmarked && isBookmarked(a.id) ? 'solid text-danger' : 'regular'} fa-bookmark fs-6`}></i>
                           </button>
@@ -263,27 +285,30 @@ const TinTuc = () => {
                 ))}
               </div>
 
-              {/* Bộ Phân Trang Tin Tức */}
+              {/* Phân trang */}
               {allGridArticles.length > 0 && (
-                <PaginationBar
-                  currentPage={currentPage}
-                  totalItems={allGridArticles.length}
-                  pageSize={pageSize}
-                  pageSizeOptions={[6, 12, 24]}
-                  onPageChange={(p) => setCurrentPage(p)}
-                  onPageSizeChange={(s) => {
-                    setPageSize(s);
-                    setCurrentPage(1);
-                  }}
-                  itemLabel="bài viết"
-                />
+                <div className="mt-4">
+                  <PaginationBar
+                    currentPage={currentPage}
+                    totalItems={allGridArticles.length}
+                    pageSize={pageSize}
+                    pageSizeOptions={[6, 12, 24]}
+                    onPageChange={(p) => setCurrentPage(p)}
+                    onPageSizeChange={(s) => {
+                      setPageSize(s);
+                      setCurrentPage(1);
+                    }}
+                    itemLabel="bài viết"
+                  />
+                </div>
               )}
             </>
           )}
         </div>
 
-        {/* CỘT PHẢI: WIDGET THỊNH HÀNH & LIÊN KẾT */}
+        {/* RIGHT COLUMN (3 PHẦN): WIDGET THÔNG MINH */}
         <div className="col-lg-3">
+          {/* Widget Chủ Đề Thịnh Hành */}
           <div className="panel-tdmu mb-4">
             <div className="panel-heading-tdmu">
               <i className="fa-solid fa-fire me-2 text-danger"></i>Chủ đề thịnh hành
@@ -297,6 +322,7 @@ const TinTuc = () => {
             </div>
           </div>
 
+          {/* Widget Liên Kết */}
           <div className="panel-tdmu mb-4">
             <div className="panel-heading-tdmu">
               <i className="fa-solid fa-link me-2 text-primary"></i>Liên kết website
@@ -306,7 +332,7 @@ const TinTuc = () => {
                 <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đại học Thủ Dầu Một
               </a>
               <a href="http://danguy.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
-                <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đảng Bộ ĐH Thủ Dầu Một
+                <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đảng Bộ Đại học TDMU
               </a>
               <a href="http://www.congdoan.vn" target="_blank" rel="noreferrer" className="list-group-item">
                 <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Tổng LĐLĐ Việt Nam
@@ -314,9 +340,13 @@ const TinTuc = () => {
               <a href="http://congdoanbinhduong.org.vn/" target="_blank" rel="noreferrer" className="list-group-item">
                 <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> LĐLĐ Tỉnh Bình Dương
               </a>
+              <a href="http://lib.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+                <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> TT Học Liệu ĐH TDMU
+              </a>
             </div>
           </div>
 
+          {/* Thống Kê */}
           <div className="panel-tdmu">
             <div className="panel-heading-tdmu">
               <i className="fa-solid fa-chart-simple me-2 text-warning"></i>Thống kê tương tác

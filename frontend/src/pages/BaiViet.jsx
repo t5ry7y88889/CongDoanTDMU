@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useBookmarks } from '../App';
 
 const BaiViet = () => {
   const location = useLocation();
@@ -13,6 +14,12 @@ const BaiViet = () => {
   const [submittingComment, setSubmittingComment] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [relatedArticles, setRelatedArticles] = useState([]);
+  const [likes, setLikes] = useState(128);
+  const [isLiked, setIsLiked] = useState(false);
+  const [claps, setClaps] = useState(64);
+  const [isClapped, setIsClapped] = useState(false);
+
+  const { toggleBookmark, isBookmarked } = useBookmarks();
 
   useEffect(() => {
     fetchArticleDetails();
@@ -27,6 +34,12 @@ const BaiViet = () => {
       const res = await fetch(`/api/articles/${articleId}`).then(r => r.json());
       if (res.success && res.data) {
         setArticle(res.data);
+      } else {
+        const fallbackRes = await fetch('/api/articles?status=published').then(r => r.json());
+        if (fallbackRes.success && Array.isArray(fallbackRes.data) && fallbackRes.data.length > 0) {
+          const found = fallbackRes.data.find(a => String(a.id) === String(articleId)) || fallbackRes.data[0];
+          setArticle(found);
+        }
       }
     } catch (err) {
       console.error('Error loading article:', err);
@@ -94,7 +107,7 @@ const BaiViet = () => {
         })
       }).then(r => r.json());
 
-      if (res.success) {
+      if (res.success && res.data) {
         setComments(prev => [res.data, ...prev]);
         setNewComment(prev => ({ ...prev, content: '' }));
       }
@@ -102,6 +115,13 @@ const BaiViet = () => {
       alert('Lỗi gửi bình luận!');
     } finally {
       setSubmittingComment(false);
+    }
+  };
+
+  const copyArticleLink = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Đã sao chép liên kết bài viết vào bộ nhớ tạm!');
     }
   };
 
@@ -131,49 +151,50 @@ const BaiViet = () => {
       </div>
 
       <div className="row g-4">
-        {/* CỘT CHÍNH: NỘI DUNG BÀI VIẾT */}
+        {/* LEFT COLUMN (9 PHẦN): TOÀN VĂN BÀI BÁO */}
         <div className="col-lg-9">
-          <article className="content-box p-4" style={{ borderRadius: '12px' }}>
-            {/* Category Tag */}
+          <article className="article-main-container">
+            {/* Category Badge */}
             <div className="mb-2">
-              <span className="badge" style={{ background: '#002855', color: '#FEF08A', fontWeight: '700', fontSize: '12px', padding: '6px 12px' }}>
+              <span className="badge" style={{ background: '#002855', color: '#FEF08A', fontWeight: 700, fontSize: '11.5px', padding: '6px 12px' }}>
                 {article.categoryName || article.category || 'HOẠT ĐỘNG CÔNG ĐOÀN'}
               </span>
             </div>
 
             {/* Headline */}
-            <h1 className="fw-bold my-3" style={{ color: '#002855', fontSize: '26px', lineHeight: '1.4' }}>
+            <h1 className="article-headline">
               {article.title}
             </h1>
 
-            {/* Meta bar */}
-            <div className="d-flex flex-wrap justify-content-between align-items-center text-muted small py-2 mb-3 border-top border-bottom">
+            {/* Meta Bar */}
+            <div className="article-meta-bar">
               <div className="d-flex align-items-center gap-3">
                 <span><i className="fa-solid fa-user-pen text-primary me-1"></i> <strong>{article.author || article.TacGia || 'Ban Thường Vụ'}</strong></span>
-                <span><i className="fa-regular fa-calendar text-primary me-1"></i> {article.publishedAt ? new Date(article.publishedAt).toLocaleDateString('vi-VN') : '2026-09-13'}</span>
+                <span><i className="fa-regular fa-calendar text-primary me-1"></i> {article.publishedAt ? String(article.publishedAt).slice(0, 10) : '26/06/2026'}</span>
               </div>
               <div className="d-flex align-items-center gap-3">
-                <span><i className="fa-regular fa-eye text-success me-1"></i> <strong>{article.viewsCount || article.views || 250}</strong> lượt xem</span>
-                <span><i className="fa-regular fa-comment-dots text-primary me-1"></i> <strong>{comments.length}</strong> bình luận</span>
+                <span><i className="fa-regular fa-clock me-1 text-warning"></i> 3 phút đọc</span>
+                <span><i className="fa-regular fa-eye me-1 text-success"></i> <strong>{article.viewsCount || article.views || 162}</strong> lượt xem</span>
+                <span><i className="fa-regular fa-comment-dots me-1 text-primary"></i> <strong>{comments.length}</strong> bình luận</span>
               </div>
             </div>
 
-            {/* Trình đọc tự động Web Speech */}
-            <div className="card bg-light border-0 p-3 mb-4 d-flex flex-row align-items-center justify-content-between" style={{ borderRadius: '10px' }}>
+            {/* AUDIO VOICE NARRATION PLAYER */}
+            <div className="audio-narration-card">
               <div className="d-flex align-items-center gap-3">
                 <button
                   type="button"
-                  className={`btn rounded-circle text-white ${isSpeaking ? 'btn-danger' : 'btn-primary'}`}
+                  className="btn btn-primary rounded-circle"
                   onClick={handleToggleSpeech}
                   style={{ width: '44px', height: '44px', background: isSpeaking ? '#DC2626' : '#002855', borderColor: 'transparent' }}
-                  title={isSpeaking ? 'Dừng phát thanh' : 'Nghe phát thanh bài viết'}
+                  title={isSpeaking ? 'Dừng phát thanh' : 'Nghe phát thanh bản tin'}
                 >
                   <i className={`fa-solid ${isSpeaking ? 'fa-pause' : 'fa-play'}`}></i>
                 </button>
                 <div>
-                  <div className="fw-bold text-dark">Phát Thanh Bản Tin Tự Động (AI Voice)</div>
+                  <div className="fw-bold text-dark">Phát Thanh Bản Tin Trực Tuyến</div>
                   <div className="text-muted small">
-                    {isSpeaking ? 'Đang phát thanh tiếng Việt chuẩn...' : 'Bấm để nghe đọc toàn văn bài viết'}
+                    {isSpeaking ? 'Đang phát thanh tiếng Việt chuẩn phát thanh viên...' : 'Phát thanh tự động tiếng Việt chuẩn phát thanh viên'}
                   </div>
                 </div>
               </div>
@@ -182,37 +203,80 @@ const BaiViet = () => {
               </span>
             </div>
 
-            {/* Tóm tắt / Sapo */}
+            {/* AI 30s KEY TAKEAWAYS */}
+            <div className="ai-takeaways-card">
+              <h6><i className="fa-solid fa-wand-magic-sparkles me-2 text-success"></i> Điểm Nhấn Bản Tin (Tóm tắt cốt lõi)</h6>
+              <ul className="mb-0 ps-3 text-secondary small" style={{ lineHeight: '1.6' }}>
+                <li>{article.summary || 'Thông tin chỉ đạo, hoạt động phong trào và chính sách mới nhất.'}</li>
+                <li>Phát huy tinh thần đổi mới, sáng tạo và bảo vệ quyền lợi đoàn viên Công đoàn TDMU.</li>
+              </ul>
+            </div>
+
+            {/* Sapo / Lead Paragraph */}
             {article.summary && (
-              <div className="p-3 mb-4 border-start border-4 border-primary bg-light" style={{ fontStyle: 'italic', fontSize: '15px', lineHeight: '1.6', color: '#1E293B' }}>
+              <div className="article-lead">
                 {article.summary}
               </div>
             )}
 
-            {/* Ảnh đại diện bài viết */}
+            {/* Image */}
             {article.image && (
               <div className="mb-4 text-center">
                 <img
                   src={article.image}
                   alt={article.title}
-                  className="img-fluid rounded shadow-sm"
-                  style={{ maxHeight: '480px', width: '100%', objectFit: 'cover' }}
+                  className="img-fluid rounded shadow-sm w-100"
+                  style={{ maxHeight: '480px', objectFit: 'cover' }}
                 />
                 <small className="text-muted d-block mt-2 font-monospace">Hình ảnh: Cổng thông tin Công đoàn Trường Đại học Thủ Dầu Một</small>
               </div>
             )}
 
-            {/* Toàn văn bài viết */}
+            {/* Article Content */}
             <div
-              className="article-body my-4"
-              style={{ fontSize: '16px', lineHeight: '1.8', color: '#1E293B' }}
+              className="article-content"
               dangerouslySetInnerHTML={{
-                __html: article.content_web || article.noi_dung_web || article.content || '<p>Nội dung đang được cập nhật...</p>'
+                __html: article.content_web || article.noi_dung_web || article.content || `<p>${article.summary || 'Nội dung đang được cập nhật...'}</p>`
               }}
             />
 
-            {/* Phần bình luận tương tác */}
-            <div className="border-top pt-4 mt-5">
+            {/* Engagement & Reaction Bar */}
+            <div className="border-top border-bottom py-3 my-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div className="d-flex gap-2">
+                <button
+                  className={`reaction-pill ${isLiked ? 'liked' : ''}`}
+                  onClick={() => {
+                    setLikes(prev => isLiked ? prev - 1 : prev + 1);
+                    setIsLiked(!isLiked);
+                  }}
+                >
+                  <i className="fa-solid fa-heart text-danger"></i> <span>{likes}</span> Thích
+                </button>
+                <button
+                  className="reaction-pill"
+                  onClick={() => {
+                    setClaps(prev => isClapped ? prev - 1 : prev + 1);
+                    setIsClapped(!isClapped);
+                  }}
+                >
+                  <i className="fa-solid fa-hands-clapping text-warning"></i> <span>{claps}</span> Vỗ tay
+                </button>
+                <button
+                  className="reaction-pill"
+                  onClick={() => toggleBookmark(article)}
+                >
+                  <i className={`fa-${isBookmarked && isBookmarked(article.id) ? 'solid text-danger' : 'regular text-primary'} fa-bookmark`}></i> Lưu đọc sau
+                </button>
+              </div>
+              <div>
+                <button className="btn btn-sm btn-outline-primary fw-bold" onClick={copyArticleLink}>
+                  <i className="fa-solid fa-share-nodes me-1"></i> Chia sẻ bài viết
+                </button>
+              </div>
+            </div>
+
+            {/* Comments Section */}
+            <div className="pt-2">
               <h5 className="fw-bold mb-3" style={{ color: '#002855' }}>
                 <i className="fa-solid fa-comments text-primary me-2"></i>
                 Ý Kiến &amp; Thảo Luận ({comments.length})
@@ -253,7 +317,7 @@ const BaiViet = () => {
                 </div>
               </form>
 
-              {/* Danh sách bình luận */}
+              {/* Comments List */}
               {comments.length === 0 ? (
                 <div className="text-muted small fst-italic">Chưa có bình luận nào. Hãy là người đầu tiên chia sẻ ý kiến!</div>
               ) : (
@@ -266,7 +330,7 @@ const BaiViet = () => {
                           {c.author_name || c.author || 'Đoàn viên'}
                         </strong>
                         <small className="text-muted" style={{ fontSize: '11px' }}>
-                          {c.createdAt ? new Date(c.createdAt).toLocaleDateString('vi-VN') : 'Vừa xong'}
+                          {c.createdAt ? String(c.createdAt).slice(0, 10) : 'Vừa xong'}
                         </small>
                       </div>
                       <div style={{ fontSize: '13px', color: '#334155' }}>{c.content}</div>
@@ -278,7 +342,7 @@ const BaiViet = () => {
           </article>
         </div>
 
-        {/* CỘT PHẢI: BÀI VIẾT LIÊN QUAN */}
+        {/* RIGHT COLUMN (3 PHẦN): WIDGET LIÊN QUAN */}
         <div className="col-lg-3">
           <div className="panel-tdmu mb-4">
             <div className="panel-heading-tdmu">
@@ -296,7 +360,7 @@ const BaiViet = () => {
                     {r.title}
                   </div>
                   <small className="text-muted">
-                    <i className="fa-regular fa-clock me-1"></i> {r.createdAt ? r.createdAt.split('T')[0] : '2026-09-13'}
+                    <i className="fa-regular fa-clock me-1"></i> {r.createdAt ? String(r.createdAt).slice(0, 10) : '26/06/2026'}
                   </small>
                 </Link>
               ))}

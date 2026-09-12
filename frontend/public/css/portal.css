@@ -910,3 +910,363 @@ blockquote cite {
   cursor: default !important;
   pointer-events: none !important;
 }
+
+
+/* =========================================================================
+   MIGRATED PAGE STYLES (PORTAL PARITY WITH HTML PAGES)
+   ========================================================================= */
+
+/* 1. Tin Tuc & Magazine Cards */
+.news-hero-headline {
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle, #E2E8F0);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card, 0 4px 12px rgba(0,0,0,0.05));
+  margin-bottom: 30px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.news-hero-headline:hover {
+  box-shadow: 0 10px 25px rgba(0, 40, 85, 0.12);
+  transform: translateY(-3px);
+  border-color: #005696;
+}
+.hero-img-wrap {
+  position: relative;
+  overflow: hidden;
+  height: 380px;
+}
+.hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.news-hero-headline:hover .hero-img {
+  transform: scale(1.04);
+}
+.live-reader-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  color: #38BDF8;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 5;
+}
+.live-dot {
+  width: 8px;
+  height: 8px;
+  background: #10B981;
+  border-radius: 50%;
+  animation: pulse 1.8s infinite;
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.ai-takeaway-box {
+  background: linear-gradient(135deg, #F0F7FF 0%, #F8FAFC 100%);
+  border: 1px solid #BFDBFE;
+  border-left: 4px solid #0284C7;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 16px 0;
+}
+.ai-takeaway-title {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #0369A1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.ai-takeaway-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.magazine-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle, #E2E8F0);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,40,85,0.04);
+  margin-bottom: 20px;
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  cursor: pointer;
+}
+.magazine-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 40, 85, 0.12);
+  border-color: #005696;
+}
+.magazine-thumb-wrap {
+  position: relative;
+  height: 190px;
+  overflow: hidden;
+}
+.magazine-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.magazine-card:hover .magazine-thumb {
+  transform: scale(1.06);
+}
+
+/* 2. Bai Viet Journalism Detail */
+.article-main-container {
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle, #E2E8F0);
+  border-radius: 8px;
+  padding: 36px 44px;
+  box-shadow: var(--shadow-card, 0 4px 12px rgba(0,0,0,0.05));
+  margin-bottom: 30px;
+}
+.article-headline {
+  font-size: 24px;
+  font-weight: 800;
+  color: #002855;
+  line-height: 1.35;
+  margin-bottom: 16px;
+  letter-spacing: -0.3px;
+}
+.article-meta-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 14px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--border-subtle, #E2E8F0);
+  font-size: 13px;
+  color: var(--text-muted, #64748B);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.article-lead {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1E293B;
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+.article-lead::first-letter {
+  font-size: 46px;
+  float: left;
+  font-weight: 800;
+  line-height: 0.8;
+  padding-right: 10px;
+  padding-top: 4px;
+  color: #002855;
+  font-family: 'Times New Roman', serif;
+}
+.article-content {
+  font-size: 15.5px;
+  line-height: 1.85;
+  color: #2D3748;
+}
+.article-content p {
+  margin-bottom: 18px;
+}
+.editorial-quote {
+  border-left: 4px solid var(--tdmu-yellow, #FEF08A);
+  background: #F8FAFC;
+  padding: 18px 24px;
+  margin: 24px 0;
+  font-style: italic;
+  color: #1E293B;
+  font-size: 15px;
+  line-height: 1.65;
+  border-radius: 0 8px 8px 0;
+}
+.quote-icon {
+  color: var(--tdmu-gold, #D97706);
+  margin-right: 8px;
+  font-size: 18px;
+}
+.audio-narration-card {
+  background: linear-gradient(135deg, #EFF6FF 0%, #F8FAFC 100%);
+  border: 1px solid #BFDBFE;
+  border-radius: 8px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.ai-takeaways-card {
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-left: 4px solid #16A34A;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 22px;
+}
+.ai-takeaways-card h6 {
+  color: #15803D;
+  font-weight: 800;
+  font-size: 13px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.reaction-pill {
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+.reaction-pill:hover {
+  background: #EFF6FF;
+  color: #005696;
+  transform: translateY(-1px);
+}
+.reaction-pill.liked {
+  background: #FEE2E2;
+  border-color: #EF4444;
+  color: #DC2626;
+}
+
+/* 3. Co Cau To Chuc Cadres & Drilldown */
+.cadre-card-item {
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle, #E2E8F0);
+  border-left: 4px solid var(--tdmu-blue, #002855);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 40, 85, 0.03);
+  cursor: pointer;
+}
+.cadre-card-item:hover {
+  border-left-color: var(--tdmu-yellow, #FEF08A);
+  background: #F8FAFC;
+  transform: translateX(4px);
+  box-shadow: 0 6px 18px rgba(0, 40, 85, 0.1);
+}
+.cadre-real-avatar {
+  width: 66px;
+  height: 85px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 2px solid #CBD5E1;
+  box-shadow: 0 3px 8px rgba(0, 40, 85, 0.15);
+  flex-shrink: 0;
+}
+.cadre-role-tag {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.tag-president {
+  background: #FEE2E2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+}
+.tag-vice-president {
+  background: #EFF6FF;
+  color: #0284C7;
+  border: 1px solid #BAE6FD;
+}
+.tag-executive {
+  background: #F0FDF4;
+  color: #16A34A;
+  border: 1px solid #BBF7D0;
+}
+.tag-inspector {
+  background: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FDE68A;
+}
+.profile-modal-header {
+  background: #002855;
+  color: #FFFFFF;
+  padding: 16px 22px;
+}
+.profile-large-img {
+  width: 140px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 3px solid #FEF08A;
+  box-shadow: 0 4px 14px rgba(0, 40, 85, 0.2);
+}
+.profile-info-row {
+  display: flex;
+  padding: 8px 0;
+  border-bottom: 1px dashed #E2E8F0;
+  font-size: 13.5px;
+}
+.profile-info-label {
+  width: 165px;
+  font-weight: 700;
+  color: #475569;
+  flex-shrink: 0;
+}
+.profile-info-val {
+  color: #0F172A;
+  font-weight: 500;
+}
+
+/* 4. Phuc Loi Doan Vien Cards */
+.welfare-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle, #E2E8F0);
+  border-left: 4px solid var(--tdmu-blue, #002855);
+  border-radius: 8px;
+  padding: 18px 20px;
+  transition: all 0.25s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.welfare-card:hover {
+  border-left-color: var(--tdmu-yellow, #FEF08A);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card, 0 4px 12px rgba(0,0,0,0.05));
+}
+.welfare-badge-budget {
+  background: #EFF6FF;
+  color: #0284C7;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid #BAE6FD;
+}
