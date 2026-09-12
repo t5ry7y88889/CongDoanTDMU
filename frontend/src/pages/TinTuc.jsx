@@ -1,20 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PaginationBar from '../components/PaginationBar';
+import { useBookmarks } from '../App';
 
 const TinTuc = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentCategory, setCurrentCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [savedIds, setSavedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
 
+  const { bookmarks, toggleBookmark, isBookmarked } = useBookmarks();
+
   useEffect(() => {
     fetchArticles();
-    loadSavedBookmarks();
   }, []);
+
+  // Reset page when category or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [currentCategory, searchQuery]);
 
   const fetchArticles = async () => {
     try {
@@ -30,39 +36,10 @@ const TinTuc = () => {
     }
   };
 
-  const loadSavedBookmarks = async () => {
-    try {
-      const res = await fetch('/api/bookmarks').then(r => r.json());
-      if (res.success && Array.isArray(res.data)) {
-        setSavedIds(res.data.map(b => b.article_id));
-      }
-    } catch (err) {
-      console.warn('Bookmarks load error:', err);
-    }
-  };
-
-  const toggleBookmark = async (e, article) => {
+  const handleBookmarkToggle = (e, article) => {
+    e.preventDefault();
     e.stopPropagation();
-    try {
-      const res = await fetch('/api/bookmarks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          article_id: article.id,
-          article_title: article.title
-        })
-      }).then(r => r.json());
-
-      if (res.success) {
-        if (res.action === 'added') {
-          setSavedIds(prev => [...prev, article.id]);
-        } else {
-          setSavedIds(prev => prev.filter(id => id !== article.id));
-        }
-      }
-    } catch (err) {
-      console.error('Bookmark error:', err);
-    }
+    toggleBookmark(article);
   };
 
   const strip = (str) =>
@@ -70,7 +47,7 @@ const TinTuc = () => {
 
   const filteredArticles = articles.filter(a => {
     if (currentCategory === 'saved') {
-      return savedIds.includes(a.id);
+      return isBookmarked(a.id);
     }
     const cat = a.categoryName || a.category || a.ChuyenMuc || '';
     const matchCat = currentCategory === 'all' || cat.toLowerCase().includes(currentCategory.toLowerCase());
@@ -85,7 +62,11 @@ const TinTuc = () => {
   });
 
   const heroArticle = filteredArticles.length > 0 ? filteredArticles[0] : null;
-  const gridArticles = filteredArticles.length > 1 ? filteredArticles.slice(1) : (currentCategory !== 'all' ? filteredArticles : []);
+  const allGridArticles = filteredArticles.length > 1 ? filteredArticles.slice(1) : (currentCategory !== 'all' ? filteredArticles : []);
+
+  // Pagination slice for grid
+  const startIndex = (currentPage - 1) * pageSize;
+  const currentGridArticles = allGridArticles.slice(startIndex, startIndex + pageSize);
 
   return (
     <div className="container my-4">
@@ -133,14 +114,14 @@ const TinTuc = () => {
                 className={`btn btn-sm ${currentCategory === 'saved' ? 'btn-danger fw-bold' : 'btn-light border'}`}
                 onClick={() => setCurrentCategory('saved')}
               >
-                <i className="fa-solid fa-bookmark me-1 text-danger"></i> Đã lưu ({savedIds.length})
+                <i className="fa-solid fa-bookmark me-1 text-danger"></i> Đã lưu ({bookmarks ? bookmarks.length : 0})
               </button>
             </div>
           </div>
           <div className="col-lg-4">
             <div className="input-group">
-              <span className="input-group-text bg-white border-end-0 text-muted">
-                <i className="fa-solid fa-magnifying-glass"></i>
+              <span className="input-group-text bg-white border-end-0">
+                <i className="fa-solid fa-magnifying-glass text-muted"></i>
               </span>
               <input
                 type="text"
@@ -155,46 +136,45 @@ const TinTuc = () => {
       </div>
 
       <div className="row g-4">
-        {/* CỘT TRÁI: TIÊU ĐIỂM + LƯỚI TẠP CHÍ */}
+        {/* CỘT TRÁI: DANH SÁCH BÀI VIẾT */}
         <div className="col-lg-9">
           {loading ? (
             <div className="text-center py-5 text-muted">
-              <i className="fa-solid fa-circle-notch fa-spin me-2 fs-4"></i>
-              <div>Đang tải tin tức từ CSDL SQL Server...</div>
+              <i className="fa-solid fa-circle-notch fa-spin fa-2x text-primary mb-3"></i>
+              <div>Đang tải bài viết từ CSDL SQL Server...</div>
             </div>
           ) : filteredArticles.length === 0 ? (
             <div className="text-center py-5 text-muted" style={{ background: '#F8FAFC', borderRadius: '10px' }}>
-              <i className="fa-solid fa-inbox fa-3x mb-3 text-secondary"></i>
-              <div className="fw-semibold">Không tìm thấy bài viết nào phù hợp.</div>
+              <i className="fa-regular fa-newspaper fa-3x mb-3 text-secondary opacity-50"></i>
+              <div className="fw-bold fs-5">Không tìm thấy bài viết nào!</div>
+              <small>Thử chọn chuyên mục khác hoặc tìm kiếm với từ khóa khác.</small>
             </div>
           ) : (
             <>
-              {/* BÀI VIẾT TIÊU ĐIỂM HERO */}
-              {heroArticle && (
+              {/* BÀI VIẾT TIÊU ĐIỂM (CHỈ HIỂN THỊ Ở TRANG 1 VÀ KHI CÓ HERO) */}
+              {heroArticle && currentPage === 1 && currentCategory === 'all' && !searchQuery && (
                 <div className="card mb-4 border shadow-sm overflow-hidden" style={{ borderRadius: '12px' }}>
                   <div className="row g-0">
                     <div className="col-md-7 position-relative">
                       <img
-                        src={heroArticle.image || 'https://tdmu.edu.vn/hinh/thuvien/hinhanh/DSC02559(1).JPG'}
+                        src={heroArticle.image || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800'}
                         className="img-fluid h-100 w-100"
                         alt={heroArticle.title}
-                        style={{ objectFit: 'cover', minHeight: '300px' }}
+                        style={{ minHeight: '260px', objectFit: 'cover' }}
                       />
-                      <div className="position-absolute top-0 start-0 m-3">
-                        <span className="badge" style={{ background: 'rgba(0, 40, 85, 0.9)', color: '#FEF08A' }}>
-                          TIÊU ĐIỂM HÔM NAY
-                        </span>
-                      </div>
+                      <span
+                        className="badge position-absolute top-0 start-0 m-3 px-3 py-2"
+                        style={{ background: '#002855', color: '#FEF08A', fontWeight: 'bold' }}
+                      >
+                        <i className="fa-solid fa-star me-1 text-warning"></i> TIÊU ĐIỂM
+                      </span>
                     </div>
-                    <div className="col-md-5 p-4 d-flex flex-column justify-content-between">
+                    <div className="col-md-5 p-4 d-flex flex-column justify-content-between bg-white">
                       <div>
-                        <div className="d-flex align-items-center gap-2 mb-2 small text-muted">
-                          <span className="badge bg-light text-primary border">
-                            {heroArticle.categoryName || heroArticle.category || 'Tin tức'}
-                          </span>
-                          <span><i className="fa-regular fa-clock me-1 text-warning"></i> 3 phút đọc</span>
+                        <div className="text-primary small fw-bold mb-2">
+                          {heroArticle.categoryName || heroArticle.category || 'Hoạt động công đoàn'}
                         </div>
-                        <h4 className="fw-bold" style={{ color: '#002855', lineHeight: '1.4' }}>
+                        <h4 className="fw-bold" style={{ lineHeight: '1.4' }}>
                           <Link to={`/bai-viet?id=${heroArticle.id}`} className="text-decoration-none" style={{ color: '#002855' }}>
                             {heroArticle.title}
                           </Link>
@@ -207,16 +187,16 @@ const TinTuc = () => {
                       <div>
                         <div className="d-flex justify-content-between align-items-center text-muted small mb-3 border-top pt-2">
                           <div>
-                            <span className="me-2"><i className="fa-regular fa-calendar me-1 text-primary"></i> {heroArticle.createdAt ? heroArticle.createdAt.split('T')[0] : '2026-09-13'}</span>
+                            <span className="me-2"><i className="fa-regular fa-calendar me-1 text-primary"></i> {heroArticle.createdAt ? String(heroArticle.createdAt).split('T')[0] : '2026-09-13'}</span>
                             <span><i className="fa-regular fa-eye text-success me-1"></i> {heroArticle.viewsCount || heroArticle.views || 350}</span>
                           </div>
                           <button
                             type="button"
                             className="btn btn-sm btn-link p-0 text-secondary"
-                            onClick={(e) => toggleBookmark(e, heroArticle)}
+                            onClick={(e) => handleBookmarkToggle(e, heroArticle)}
                             title="Lưu đọc sau"
                           >
-                            <i className={`fa-${savedIds.includes(heroArticle.id) ? 'solid text-danger' : 'regular'} fa-bookmark fs-6`}></i>
+                            <i className={`fa-${isBookmarked && isBookmarked(heroArticle.id) ? 'solid text-danger' : 'regular'} fa-bookmark fs-6`}></i>
                           </button>
                         </div>
                         <Link
@@ -234,7 +214,7 @@ const TinTuc = () => {
 
               {/* LƯỚI BÀI VIẾT TIẾP THEO */}
               <div className="row g-3">
-                {gridArticles.map(a => (
+                {currentGridArticles.map(a => (
                   <div className="col-md-6" key={a.id}>
                     <div className="card h-100 border shadow-sm" style={{ borderRadius: '10px', overflow: 'hidden' }}>
                       <div className="position-relative">
@@ -265,16 +245,16 @@ const TinTuc = () => {
 
                         <div className="d-flex justify-content-between align-items-center text-muted small border-top pt-2 mt-3">
                           <div className="d-flex align-items-center gap-2">
-                            <span><i className="fa-regular fa-calendar text-primary me-1"></i> {a.createdAt ? a.createdAt.split('T')[0] : '2026-09-13'}</span>
+                            <span><i className="fa-regular fa-calendar text-primary me-1"></i> {a.createdAt ? String(a.createdAt).split('T')[0] : '2026-09-13'}</span>
                             <span><i className="fa-regular fa-eye text-success me-1"></i> {a.viewsCount || a.views || 180}</span>
                           </div>
                           <button
                             type="button"
                             className="btn btn-sm btn-link p-0 text-secondary"
-                            onClick={(e) => toggleBookmark(e, a)}
+                            onClick={(e) => handleBookmarkToggle(e, a)}
                             title="Lưu đọc sau"
                           >
-                            <i className={`fa-${savedIds.includes(a.id) ? 'solid text-danger' : 'regular'} fa-bookmark fs-6`}></i>
+                            <i className={`fa-${isBookmarked && isBookmarked(a.id) ? 'solid text-danger' : 'regular'} fa-bookmark fs-6`}></i>
                           </button>
                         </div>
                       </div>
@@ -284,18 +264,20 @@ const TinTuc = () => {
               </div>
 
               {/* Bộ Phân Trang Tin Tức */}
-              <PaginationBar
-                currentPage={currentPage}
-                totalItems={gridArticlesAll.length}
-                pageSize={pageSize}
-                pageSizeOptions={[6, 12, 24]}
-                onPageChange={(p) => setCurrentPage(p)}
-                onPageSizeChange={(s) => {
-                  setPageSize(s);
-                  setCurrentPage(1);
-                }}
-                itemLabel="bài viết"
-              />
+              {allGridArticles.length > 0 && (
+                <PaginationBar
+                  currentPage={currentPage}
+                  totalItems={allGridArticles.length}
+                  pageSize={pageSize}
+                  pageSizeOptions={[6, 12, 24]}
+                  onPageChange={(p) => setCurrentPage(p)}
+                  onPageSizeChange={(s) => {
+                    setPageSize(s);
+                    setCurrentPage(1);
+                  }}
+                  itemLabel="bài viết"
+                />
+              )}
             </>
           )}
         </div>
@@ -342,7 +324,7 @@ const TinTuc = () => {
             <div className="p-3" style={{ fontSize: '13px' }}>
               <p className="mb-2"><i className="fa-solid fa-newspaper text-primary me-2"></i> Tổng bài viết: <strong>{articles.length}</strong></p>
               <p className="mb-2"><i className="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong>{articles.reduce((sum, a) => sum + (a.viewsCount || a.views || 0), 0).toLocaleString('vi-VN')}</strong></p>
-              <p className="mb-0"><i className="fa-solid fa-bookmark text-danger me-2"></i> Bài viết đã lưu: <strong>{savedIds.length}</strong></p>
+              <p className="mb-0"><i className="fa-solid fa-bookmark text-danger me-2"></i> Bài viết đã lưu: <strong>{bookmarks ? bookmarks.length : 0}</strong></p>
             </div>
           </div>
         </div>

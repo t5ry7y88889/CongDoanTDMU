@@ -17,6 +17,41 @@ export const BookmarkContext = createContext();
 
 export const useBookmarks = () => useContext(BookmarkContext);
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error('ErrorBoundary caught error:', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="container my-5 py-5 text-center">
+          <div className="alert alert-warning p-4 shadow-sm mx-auto" style={{ maxWidth: '600px', borderRadius: '12px' }}>
+            <i className="fa-solid fa-triangle-exclamation fa-3x text-warning mb-3"></i>
+            <h4 className="fw-bold text-dark">Đã có lỗi xảy ra khi tải nội dung</h4>
+            <p className="text-muted small mb-3">Hệ thống đã tự động ghi nhận nhật ký lỗi. Vui lòng bấm làm mới hoặc quay lại trang chủ.</p>
+            <div className="d-flex justify-content-center gap-2">
+              <button className="btn btn-primary" onClick={() => window.location.reload()}>
+                <i className="fa-solid fa-rotate-right me-1"></i> Làm mới trang
+              </button>
+              <a href="/" className="btn btn-outline-secondary">
+                <i className="fa-solid fa-house me-1"></i> Về trang chủ
+              </a>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const LinkInterceptor = ({ children }) => {
   const navigate = useNavigate();
 
@@ -62,10 +97,15 @@ function AppContent() {
 
   const saveBookmarksToStorage = (newList) => {
     setBookmarks(newList);
-    localStorage.setItem('tdmu_read_later', JSON.stringify(newList));
+    try {
+      localStorage.setItem('tdmu_read_later', JSON.stringify(newList));
+    } catch (e) {
+      console.warn('LocalStorage save error:', e);
+    }
   };
 
   const toggleBookmark = (article) => {
+    if (!article) return false;
     const articleId = parseInt(article.id || article.article_id);
     const exists = bookmarks.some(b => (b.id == articleId || b.article_id == articleId));
 
@@ -93,6 +133,7 @@ function AppContent() {
   };
 
   const isBookmarked = (articleId) => {
+    if (!articleId) return false;
     return bookmarks.some(b => (b.id == articleId || b.article_id == articleId));
   };
 
@@ -105,30 +146,32 @@ function AppContent() {
             bookmarkCount={bookmarks.length}
           />
 
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/index" element={<Home />} />
-            <Route path="/gioi-thieu" element={<GioiThieu />} />
-            <Route path="/co-cau-to-chuc" element={<CoCauToChuc />} />
-            <Route path="/tin-tuc" element={<TinTuc />} />
-            <Route path="/phuc-loi-doan-vien" element={<PhucLoiDoanVien />} />
-            <Route path="/van-ban" element={<VanBan />} />
-            <Route path="/bieu-mau" element={<BieuMau />} />
-            <Route path="/lien-he" element={<LienHe />} />
-            <Route path="/bai-viet" element={<BaiViet />} />
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/index" element={<Home />} />
+              <Route path="/gioi-thieu" element={<GioiThieu />} />
+              <Route path="/co-cau-to-chuc" element={<CoCauToChuc />} />
+              <Route path="/tin-tuc" element={<TinTuc />} />
+              <Route path="/phuc-loi-doan-vien" element={<PhucLoiDoanVien />} />
+              <Route path="/van-ban" element={<VanBan />} />
+              <Route path="/bieu-mau" element={<BieuMau />} />
+              <Route path="/lien-he" element={<LienHe />} />
+              <Route path="/bai-viet" element={<BaiViet />} />
 
-            {/* Aliases without hyphens */}
-            <Route path="/gioithieu" element={<GioiThieu />} />
-            <Route path="/cocautochuc" element={<CoCauToChuc />} />
-            <Route path="/tintuc" element={<TinTuc />} />
-            <Route path="/phucloi" element={<PhucLoiDoanVien />} />
-            <Route path="/vanban" element={<VanBan />} />
-            <Route path="/bieumau" element={<BieuMau />} />
-            <Route path="/lienhe" element={<LienHe />} />
-            <Route path="/baiviet" element={<BaiViet />} />
+              {/* Aliases without hyphens */}
+              <Route path="/gioithieu" element={<GioiThieu />} />
+              <Route path="/cocautochuc" element={<CoCauToChuc />} />
+              <Route path="/tintuc" element={<TinTuc />} />
+              <Route path="/phucloi" element={<PhucLoiDoanVien />} />
+              <Route path="/vanban" element={<VanBan />} />
+              <Route path="/bieumau" element={<BieuMau />} />
+              <Route path="/lienhe" element={<LienHe />} />
+              <Route path="/baiviet" element={<BaiViet />} />
 
-            <Route path="*" element={<Home />} />
-          </Routes>
+              <Route path="*" element={<Home />} />
+            </Routes>
+          </ErrorBoundary>
         </div>
 
         <Footer />
