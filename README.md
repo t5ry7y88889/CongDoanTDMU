@@ -1,6 +1,6 @@
 # 🇻🇳 HỆ THỐNG TRUYỀN THÔNG CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT (TDMU) TÍCH HỢP TRÍ TUỆ NHÂN TẠO (AI)
 
-[![React](https://img.shields.io/badge/Frontend-React%2018%20%7C%20Vite-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![React](https://img.shields.io/badge/Frontend-React%2019%20%7C%20Vite%208-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Node.js](https://img.shields.io/badge/Backend-Node.js%20%7C%20Express-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Database](https://img.shields.io/badge/Database-Microsoft%20SQL%20Server%202022-CC292B?logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server/)
 [![AI Engine](https://img.shields.io/badge/AI-Google%20Gemini%20%7C%20Groq%20LLaMA-4285F4?logo=google&logoColor=white)](https://ai.google.dev/)
@@ -23,51 +23,81 @@
 
 Hệ thống **Truyền Thông & Quản Trị Công Đoàn TDMU Tích Hợp Trí Tuệ Nhân Tạo (AI)** là giải pháp chuyển đổi số toàn diện được nghiên cứu và thiết kế chuyên biệt cho **Công đoàn Cơ sở Trường Đại học Thủ Dầu Một** (`congdoan.tdmu.edu.vn`).
 
-Dự án giải quyết 3 bài toán cấp thiết trong quản trị và tuyên truyền đoàn thể giáo dục đại học:
-1. **Số hóa quy trình tác nghiệp & Báo cáo thi đua**: Tự động hóa công tác thu thập, tổng hợp số liệu báo cáo định kỳ tháng từ **16 Tổ Công đoàn trực thuộc** (khớp chuẩn Biểu mẫu `BM-02/CĐ`), quản lý hồ sơ nhân sự, lưu trữ công văn và tiếp nhận đơn đề nghị trợ cấp phúc lợi đoàn viên.
-2. **Tòa soạn số AI Content Studio 2.0 & Trợ lý Manus Copilot**:
-   - Ứng dụng mô hình ngôn ngữ lớn tiên tiến (**Google Gemini 2.5 Flash** & **Groq LLaMA 3.3 70B Versatile**) với kiến trúc **Multi-Pass SSE Streaming** (Server-Sent Events) tạo nội dung đồng bộ cho **5 kênh truyền thông**: *Website báo chí (5W1H), Facebook Fanpage, Zalo Official Account, Kịch bản Video 60s TikTok/Reels, Tóm tắt Infographic*.
+Dự án giải quyết 4 bài toán cấp thiết trong quản trị và tuyên truyền đoàn thể giáo dục đại học:
+1. **Kiến Trúc Kép Dual-Mode & Hiện Đại Hóa React 19 (Zero-Downtime)**:
+   - Bảo toàn 100% cổng thông tin đang hoạt động ổn định trên cổng 3000 (`public/`), đồng thời phát triển cổng Single Page Application (SPA) trên nền tảng **React 19 + Vite 8 + React Router v7** tại cổng 5173 và `/spa/`.
+   - Sao chép 1:1 toàn bộ thiết kế, bố cục, hiệu ứng tương tác từ HTML sang React với 5 component lõi thuần React Hooks, loại bỏ hoàn toàn các đoạn mã jQuery/Bootstrap DOM scanning gây xung đột.
+   - Bổ sung chốt chặn lỗi cấp cao **`<ErrorBoundary>`** ngăn chặn triệt để hiện tượng trắng trang (white-screen crash).
+2. **Số Hóa Quy Trình Tác Nghiệp & Báo Cáo Thi Đua**:
+   - Tự động hóa công tác thu thập, tổng hợp số liệu báo cáo định kỳ tháng từ **16 Tổ Công đoàn trực thuộc** (khớp chuẩn Biểu mẫu `BM-02/CĐ`).
+   - Quản lý hồ sơ nhân sự, lưu trữ công văn chỉ đạo DMS, tiếp nhận trực tuyến đơn đề nghị trợ cấp khó khăn và hòm thư góp ý phản ánh tâm tư đoàn viên.
+3. **Tòa Soạn Số AI Content Studio 2.0 & Trợ Lý Manus Copilot**:
+   - Ứng dụng mô hình ngôn ngữ lớn tiên tiến (**Google Gemini 2.5 Flash** & **Groq LLaMA 3.3 70B Versatile**) với kiến trúc **Multi-Pass SSE Streaming** tạo nội dung đồng bộ cho **5 kênh truyền thông**: *Website báo chí (5W1H), Facebook Fanpage, Zalo Official Account, Kịch bản Video 60s TikTok/Reels, Tóm tắt Infographic*.
    - **Manus AI Copilot 2.0** tích hợp công nghệ so sánh an toàn (*Safe-Zone Diff*), biên tập tuân thủ thể thức văn bản hành chính theo **Nghị định 30/2020/NĐ-CP**, trang bị cơ chế ngắt tức thời `AbortController`.
-3. **Kiến trúc CSDL quan hệ chuẩn 3NF (Microsoft SQL Server)**: Hệ thống gồm **15 bảng dữ liệu được liên kết chặt chẽ qua 19 khóa ngoại**, loại bỏ hoàn toàn bảng cô lập (orphan tables), vận hành với Transaction ACID, Prepared Statements chống SQL Injection và cơ chế dự phòng nhúng an toàn.
+4. **Kiến Trúc CSDL Quan Hệ Chuẩn 3NF (Microsoft SQL Server Enterprise)**:
+   - Hệ thống gồm **15 bảng dữ liệu được liên kết chặt chẽ qua 19 khóa ngoại**, loại bỏ hoàn toàn bảng cô lập (orphan tables).
+   - Vận hành với Transaction ACID, Prepared Statements chống SQL Injection và cơ chế bộ đệm dự phòng nhúng an toàn.
 
 ---
 
 ## 🏗️ 2. KIẾN TRÚC HỆ THỐNG (SYSTEM ARCHITECTURE)
 
-Hệ thống được xây dựng theo mô hình **3 tầng chuẩn doanh nghiệp (Enterprise 3-Tier Architecture)**:
+Hệ thống vận hành song song theo mô hình **Dual-Mode Enterprise Architecture**:
 
 ```mermaid
 graph TB
-    subgraph ClientLayer ["1. TẦNG GIAO DIỆN & TRÌNH DIỄN (Presentation Layer)"]
-        ReactApp["⚛️ React 18 SPA (Vite Dev / Prod)<br>Routing, Client Cache, Responsive UI"]
-        PortalApp["🌐 Public Portal (Static & Dynamic SSR)<br>Tin tức, Văn bản, Phúc lợi, Tổ chức"]
-        AdminCMS["⚙️ Tòa soạn AI Content Studio & CMS<br>Ribbon Toolbar, Manus Copilot, Diff View"]
+    subgraph ClientLayer ["1. TẦNG GIAO DIỆN & TRÌNH DIỄN (Dual-Mode Presentation Layer)"]
+        ReactApp["⚛️ React 19 SPA (Vite Dev Port 5173)<br>React Router v7, Hooks, BookmarkContext<br>ErrorBoundary, 100% HTML Parity"]
+        SPABuild["📦 React 19 Prod Bundle (/spa/)<br>Compiled Static Assets (dist/assets)"]
+        PortalApp["🌐 Official Public Portal (Port 3000)<br>HTML5, Bootstrap 5, TOAST UI Pagination"]
+        AdminCMS["⚙️ Tòa soạn AI Content Studio & CMS (/admin)<br>Ribbon Toolbar, Manus Copilot, Diff View"]
     end
 
-    subgraph ServiceLayer ["2. TẦNG DỊCH VỤ TRUNG GIAN (Business & Application Layer)"]
-        Express["🚀 Node.js Express REST API (Port 3000)<br>JWT Auth, RBAC, Data Validation"]
+    subgraph ServiceLayer ["2. TẦNG DỊCH VỤ TRUNG GIAN (Business & API Engine)"]
+        Express["🚀 Node.js Express Server (Port 3000)<br>Clean Routing, Static Asset Dispatcher, JWT Auth"]
+        APIRouter["📡 10 Module API RESTful<br>/api/articles, /api/documents, /api/welfare..."]
         SSEHub["⚡ Server-Sent Events (SSE) Streamer<br>Multi-Pass Real-time Content Pipeline"]
         AIGateway["🤖 Unified AI Hub<br>Gemini 2.5 Flash & Groq LLaMA-3.3 70B<br>Auto-Fallback & Heuristic Local NLP"]
     end
 
     subgraph DataLayer ["3. TẦNG DỮ LIỆU & LƯU TRỮ (Persistence & Data Layer)"]
-        MSSQL[("🟢 Microsoft SQL Server 2022<br>15 Tables | 19 Foreign Keys (3NF)<br>Connection Pooling & Transactions")]
+        MSSQL[("🟢 Microsoft SQL Server Enterprise Edition<br>Host: RTX-ON\MSSQLVESE | DB: TDMU_TradeUnion_DB<br>15 Tables | 19 Foreign Keys (3NF)")]
         JSONDB[("🟡 JSON Embedded DB Engine<br>Offline Fallback Resilience")]
-        FileDAM[("📁 Static Assets & DAM Storage<br>PDF Documents, Official Photos, Avatars")]
+        FileDAM[("📁 Static Assets & DAM Storage<br>PDF Documents, Official Photos, Cadre Avatars")]
     end
 
-    ClientLayer <-->|HTTP / JSON REST & Vite Proxy| ServiceLayer
-    ClientLayer <-->|SSE Streaming Events| ServiceLayer
-    ServiceLayer <-->|mssql Native Driver / T-SQL Prepared| MSSQL
-    ServiceLayer <-->|Fallback Read/Write| JSONDB
-    ServiceLayer <-->|File Stream| FileDAM
+    ReactApp <-->|Vite Proxy /api| Express
+    SPABuild <-->|Mounted under /spa| Express
+    PortalApp <-->|Direct Local Dispatch| Express
+    AdminCMS <-->|AJAX / Fetch API| Express
+    Express --> APIRouter
+    APIRouter --> SSEHub
+    APIRouter --> AIGateway
+    APIRouter <-->|mssql v12.1.0 Native Driver / T-SQL| MSSQL
+    APIRouter <-->|Fallback Read/Write| JSONDB
+    Express <-->|File Stream /uploads| FileDAM
 ```
 
 ---
 
 ## 🌟 3. CÁC PHÂN HỆ TÍNH NĂNG CHÍNH
 
-### 🤖 A. Tòa Soạn AI Content Studio 2.0 (`admin.html`)
+### ⚛️ A. Cổng Thông Tin Đoàn Viên React 19 (SPA & 100% HTML Parity)
+* **Khung Component Lõi Thuần React State**:
+  1. **[`Navbar.jsx`](frontend/src/components/Navbar.jsx)**: Quản lý đóng/mở dropdown *"Cơ cấu tổ chức"* & *"Văn bản"* bằng React state, bắt sự kiện click-outside tự động đóng, menu Hamburger co giãn trên Mobile và badge hiển thị số bài đọc sau thời gian thực.
+  2. **[`HeroCarousel.jsx`](frontend/src/components/HeroCarousel.jsx)**: Slider tin tức tự động chuyển slide sau mỗi 5000ms với hook dọn dẹp bộ nhớ (`clearInterval`), đầy đủ phím điều hướng Prev/Next và dãy chấm chỉ báo trạng thái.
+  3. **[`PaginationBar.jsx`](frontend/src/components/PaginationBar.jsx)**: Phân trang chuẩn TOAST UI: dải số trang `[1] [2] [3]...`, nút First/Prev/Next/Last, bộ chọn số dòng (4, 8, 12, 24 bài/trang) và tóm tắt số lượng bản ghi.
+  4. **[`ArticleQuickModal.jsx`](frontend/src/components/ArticleQuickModal.jsx)**: Modal xem nhanh toàn văn bài viết ngay trên trang chủ không cần chuyển trang.
+  5. **[`BookmarksDrawer.jsx`](frontend/src/components/BookmarksDrawer.jsx)**: Ngăn kéo trượt từ mép phải (Right Drawer) hiển thị danh sách bài đọc sau, đồng bộ hai chiều với `localStorage` qua `BookmarkContext`.
+* **Sao Chép 1:1 Thiết Kế Báo Chí Từ HTML Sang React**:
+  - **Trang Tin tức (`TinTuc.jsx`)**: Giữ nguyên bài báo tiêu điểm Hero có chấm xanh nhấp nháy `live-dot` *"24 cán bộ đang đọc"*, hộp điểm nhấn AI 30 giây (`ai-takeaway-box`), lưới thẻ bài viết `.magazine-card` với hiệu ứng zoom ảnh mượt mà khi rê chuột.
+  - **Cơ cấu tổ chức (`CoCauToChuc.jsx`)**: Thẻ `.cadre-card-item` kèm **ảnh chân dung thực tế** của 13 đồng chí Ban Chấp Hành, nhãn chức danh phân màu sắc (`tag-president`, `tag-vice-president`...), popup Modal lý lịch cán bộ chi tiết.
+  - **Trang Đọc báo chi tiết (`BaiViet.jsx`)**: Khung bài báo `.article-main-container`, chữ cái đầu đoạn thụt dòng lớn (Drop Cap) chuẩn tòa soạn, **trình phát thanh giọng đọc tự động AI Voice (Web Speech API)**, các nút tương tác Thích / Vỗ tay / Lưu bài và bình luận trực tiếp.
+  - **Trang Phúc lợi đoàn viên (`PhucLoiDoanVien.jsx`)**: 4 gói chăm lo chính sách (`welfare-card`), form nộp đơn đề nghị trợ cấp khó khăn trực tuyến với mã phiếu `#TC-xxx`.
+  - **Kho Văn bản & Biểu mẫu (`VanBan.jsx`, `BieuMau.jsx`)**: Lọc và tìm kiếm tức thì theo số hiệu, trích yếu, người ký; đếm lượt tải file văn bản PDF và biểu mẫu Word.
+  - **Hòm thư liên hệ (`LienHe.jsx`)**: Hòm thư điện tử tiếp nhận đóng góp ý kiến của đoàn viên gửi trực tiếp tới Ban Thường Vụ, cấp mã tiếp nhận `#FB-xxx`.
+
+### 🤖 B. Tòa Soạn AI Content Studio 2.0 (`/admin`)
 * **Xuất bản đa kênh tức thì (Multi-Pass SSE Streaming):**
   - Cán bộ nhập chủ đề/tóm tắt sự kiện, AI tiến hành sinh đồng thời 5 định dạng truyền thông đặc thù:
     1. **Website Báo chí**: Chuẩn 5W1H (Sapo, Thân bài phân mục H2, Trích dẫn, Kết luận).
@@ -83,16 +113,6 @@ graph TB
 * **Studio Thiết kế Banner & Sinh ảnh báo chí:**
   - Tích hợp công cụ sinh ảnh báo chí tỷ lệ 16:9 với chú thích báo chí chuẩn mực.
   - Bộ biên tập đồ họa HTML5 Canvas Studio hỗ trợ tự động vẽ banner sự kiện chuẩn kích thước 600x340px theo nhận diện TDMU.
-
-### 🌐 B. Cổng Thông Tin Đoàn Viên (React SPA & Public Portal)
-* **Trang chủ hiện đại (`/`):** Tích hợp thông tin tiêu điểm, luồng tin hoạt động phong trào mới nhất, badge nhận diện trạng thái `MSSQL Live`.
-* **Chi tiết bài báo (`/bai-viet.html?id=...`):** Đọc nội dung bài viết định dạng chuẩn, số lượt xem, tác giả, chuyên mục, bình luận phản hồi.
-* **Chính sách & Phúc lợi đoàn viên (`/phuc-loi-doan-vien`):** 
-  - Hiển thị trực quan 4 gói phúc lợi chính thức: *Chăm lo Tết/Lễ, Chính sách Nữ công & Trẻ em, Trợ cấp khó khăn đột xuất, Quỹ trợ vốn CEP*.
-  - Modal tiếp nhận trực tuyến đơn đề nghị trợ cấp, kết nối bảng `DON_TRO_CAP` trong CSDL.
-* **Kho Văn bản & Biểu mẫu điện tử (`/van-ban.html`, `/bieu-mau.html`):** Tra cứu công văn chỉ đạo theo 4 chuyên mục (*Tuyên truyền, Kế hoạch, Luật Công đoàn, Quyết định*), hỗ trợ tải tài liệu file đính kèm.
-* **Cơ cấu tổ chức & Danh bạ (`/co-cau-to-chuc.html`, `/lien-he.html`):** Sơ đồ nhân sự Ban Thường vụ, BCH, UBKT, Ban Nữ công và thông tin liên hệ 16 Tổ Công đoàn.
-* **Tủ sách đọc sau (Offline Bookmarks):** Lưu trữ bài viết yêu thích đọc offline không cần mạng thông qua công nghệ PWA Service Worker & Local Storage.
 
 ### 📊 C. Phân Hệ Quản Lý Báo Cáo Tháng & Thi Đua 16 Tổ Công Đoàn
 * **Bảng tổng hợp KPI 16 Tổ CĐ:** Thống kê tổng số cán bộ, đoàn viên, đoàn viên nữ, mức xếp loại tự đánh giá và BTV đánh giá.
@@ -111,28 +131,28 @@ Cơ sở dữ liệu được thiết kế đạt chuẩn **Chuẩn hóa dạng 
                                          | 1
                                          | (MaToChuc)
                                          | n
-   +--------------------+ 1    n +--------------------+ 1    n +--------------------+
-   |    TO_CONG_DOAN    |--------|      NHAN_SU       |--------|      ARTICLES      |
-   +--------------------+        +--------------------+        +--------------------+
-             | 1                           | 1                   | 1    | 1     | 1
-             | (MaToCongDoan)              |                     |      |       |
-             | n                           |                     |      |       |
-   +--------------------+                  |                     | n    | n     | n
-   |  MONTHLY_REPORTS   |                  |                   +----+ +----+ +----+
-   +--------------------+                  |                   |SCH | |COM | |BMK |
-                                           |                   +----+ +----+ +----+
-                                           |                     |      |      |
-                                           |                     +------+------+
-                                           |                            |
-                                           | 1                          | n
-                                           | (MaNhanSu)       +--------------------+
-                                           +------------------|       USERS        |
-                                                              +--------------------+
-                                                                        | 1
-                                                                        | n
-                                                              +--------------------+
-                                                              |   ARTICLE_AUDITS   |
-                                                              +--------------------+
+    +--------------------+ 1    n +--------------------+ 1    n +--------------------+
+    |    TO_CONG_DOAN    |--------|      NHAN_SU       |--------|      ARTICLES      |
+    +--------------------+        +--------------------+        +--------------------+
+              | 1                           | 1                   | 1    | 1     | 1
+              | (MaToCongDoan)              |                     |      |       |
+              | n                           |                     |      |       |
+    +--------------------+                  |                     | n    | n     | n
+    |  MONTHLY_REPORTS   |                  |                   +----+ +----+ +----+
+    +--------------------+                  |                   |SCH | |COM | |BMK |
+                                            |                   +----+ +----+ +----+
+                                            |                     |      |      |
+                                            |                     +------+------+
+                                            |                            |
+                                            | 1                          | n
+                                            | (MaNhanSu)       +--------------------+
+                                            +------------------|       USERS        |
+                                                               +--------------------+
+                                                                         | 1
+                                                                         | n
+                                                               +--------------------+
+                                                               |   ARTICLE_AUDITS   |
+                                                               +--------------------+
 
                  [ PHÂN HỆ CHĂM LO PHÚC LỢI & Ý KIẾN ĐOÀN VIÊN ]
             +--------------------+ 1          n +--------------------+
@@ -170,10 +190,6 @@ Cơ sở dữ liệu được thiết kế đạt chuẩn **Chuẩn hóa dạng 
 | **14**| `DON_TRO_CAP` | Đơn đề nghị hỗ trợ khó khăn & theo dõi phê duyệt giải ngân | `PhucLoiId` → `PHUC_LOI`, `MaNhanSu` → `NHAN_SU` |
 | **15**| `INBOX_FEEDBACK`| Hòm thư tư liệu, góp ý, phản ánh tâm tư nguyện vọng gửi về BTV | `MaNhanSu` → `NHAN_SU`, `UserId` → `USERS` |
 
-> Các kịch bản DDL Schema & DML Seed chuẩn đã sẵn sàng trong thư mục `database/`:
-> - `database/schema_15_tables_mssql.sql` (Tạo 15 bảng, 19 khóa ngoại, ràng buộc CASCADE/SET NULL)
-> - `database/seed_15_tables_mssql.sql` (Nạp 16 Tổ CĐ, cơ cấu tổ chức, cán bộ mẫu, tin tức, văn bản, gói phúc lợi)
-
 ---
 
 ## 📡 5. DANH MỤC API ENDPOINTS CHÍNH THỨC
@@ -188,11 +204,14 @@ Cơ sở dữ liệu được thiết kế đạt chuẩn **Chuẩn hóa dạng 
 | **AI Content Studio** | `POST` | `/api/generate-article` | Sinh bài báo đa kênh tự động bằng SSE Streaming |
 | | `POST` | `/api/ai/copilot` | Trợ lý Manus Copilot trau chuốt thể thức văn bản hành chính |
 | **Kho Văn Bản** | `GET` | `/api/documents` | Lấy danh sách văn bản pháp quy (Phân loại, tìm kiếm) |
-| **Cơ Cấu Tổ Chức** | `GET` | `/api/to-chuc` | Dữ liệu các Ban, 16 Tổ CĐ và danh bạ cán bộ |
-| **Báo Cáo Tháng** | `GET` | `/api/monthly-reports`| Bảng tổng hợp thi đua và chi tiết báo cáo 16 Tổ |
+| **Kho Biểu Mẫu** | `GET` | `/api/templates` | Danh mục biểu mẫu Word/Excel tải về |
+| **Cơ Cấu Tổ Chức** | `GET` | `/api/org-full-tree` | Cây tổ chức đầy đủ (Ban, 16 Tổ CĐ, nhân sự & chức danh) |
 | **Chăm Lo Phúc Lợi** | `GET` | `/api/welfare` | Danh mục 4 gói phúc lợi chính thức (`dbo.PHUC_LOI`) |
 | | `POST` | `/api/welfare/apply` | Tiếp nhận đơn đề nghị trợ cấp vào `dbo.DON_TRO_CAP` |
 | | `GET` | `/api/welfare/applications`| Danh sách đơn đề nghị trợ cấp chờ xét duyệt |
+| **Hòm Thư Góp Ý** | `POST` | `/api/feedback` | Gửi thư góp ý, phản ánh trực tiếp tới Ban Thường Vụ |
+| **Báo Cáo Tháng** | `GET` | `/api/monthly-reports`| Bảng tổng hợp thi đua và chi tiết báo cáo 16 Tổ |
+| **Thống Kê Truy Cập**| `GET` | `/api/stats` | Thống kê số lượng truy cập online & tổng lượt xem |
 
 ---
 
@@ -202,7 +221,8 @@ Cơ sở dữ liệu được thiết kế đạt chuẩn **Chuẩn hóa dạng 
 * **Runtime:** Node.js `>= 18.x` (khuyến nghị Node.js LTS `v20.x`).
 * **Hệ quản trị CSDL:** Microsoft SQL Server 2019 / 2022 (hoặc Azure SQL Database).
 * **Gói thư viện phía Server:** `express`, `mssql`, `cors`, `dotenv`.
-* **Gói thư viện phía Client:** `react`, `react-dom`, `react-router-dom`, `vite`.
+* **Gói thư viện phía Client:** `react` (^19.2.8), `react-dom` (^19.2.8), `react-router-dom` (^7.18.3), `vite` (^8.2.2).
+* **Công cụ kiểm định mã nguồn (Linter):** `oxlint` (tốc độ cao, 0 errors).
 * **Khóa API AI (Tùy chọn):** Google Gemini API Key và/hoặc Groq Cloud API Key (hệ thống có sẵn chế độ Fallback nếu không có internet hoặc thiếu key).
 
 ---
@@ -218,17 +238,17 @@ cd CongDoanTDMU
 ### Bước 2: Khởi tạo Cơ sở dữ liệu Microsoft SQL Server
 1. Mở công cụ **SQL Server Management Studio (SSMS)** hoặc Azure Data Studio.
 2. Tạo cơ sở dữ liệu mới (ví dụ: `TDMU_TradeUnion_DB`).
-3. Mở và thực thi (Execute) file kịch bản tạo 15 bảng:
+3. Mở và thực thi file kịch bản tạo 15 bảng:
    ```sql
    -- Thực thi file: database/schema_15_tables_mssql.sql
    ```
-4. Mở và thực thi tiếp file nạp dữ liệu mẫu chuẩn:
+4. Mở và thực thi tiếp file nạp dữ liệu chuẩn:
    ```sql
    -- Thực thi file: database/seed_15_tables_mssql.sql
    ```
 
 ### Bước 3: Thiết lập biến môi trường (`.env`)
-Tạo file `.env` tại thư mục gốc của dự án hoặc trong thư mục `server/`:
+Tạo file `.env` tại thư mục `server/` (hoặc thư mục gốc):
 ```env
 PORT=3000
 
@@ -263,7 +283,7 @@ Khi kết nối thành công, màn hình console sẽ hiển thị:
 ====================================================
 ```
 
-### Bước 5: Khởi động Frontend React SPA (Port 5173)
+### Bước 5: Khởi động Frontend React 19 SPA (Port 5173)
 Mở cửa sổ Terminal thứ hai:
 ```bash
 cd frontend
@@ -271,63 +291,77 @@ npm install
 npm run dev
 ```
 
-### Bước 6: Truy cập trải nghiệm các cổng thông tin
-* ⚛️ **Cổng Thông tin Đoàn viên (React SPA):** [http://localhost:5173](http://localhost:5173)
-* 🌐 **Cổng Portal Báo chí:** [http://localhost:3000](http://localhost:3000)
-* ⚙️ **Tòa soạn AI Content Studio & Quản trị CMS:** [http://localhost:3000/admin.html](http://localhost:3000/admin.html)
-* 💖 **Trang Phúc lợi đoàn viên (Live MSSQL):** [http://localhost:5173/phuc-loi-doan-vien](http://localhost:5173/phuc-loi-doan-vien)
-* 📊 **Module Báo cáo Tháng 16 Tổ Công đoàn:** [http://localhost:3000/admin.html#reports](http://localhost:3000/admin.html#reports)
+### Bước 6: Biên dịch Bản Build Production (Tùy chọn)
+Để đóng gói ứng dụng React 19 ra bản tĩnh chạy trực tiếp tại `/spa/` trên Port 3000:
+```bash
+cd frontend
+npm run build
+```
+*(Bản build được đóng gói vào `frontend/dist/` và được Express tự động phục vụ tại `http://localhost:3000/spa/`)*.
 
 ---
 
-## 📂 8. CẤU TRÚC DỰ ÁN
+## 🧭 8. ĐỊA CHỈ TRUY CẬP CÁC PHÂN HỆ
+
+| Phân Hệ | Cổng / URL | Mô Tả Kỹ Thuật |
+| :--- | :--- | :--- |
+| ⚛️ **Cổng Thông Tin Đoàn Viên (React 19)** | [http://localhost:5173](http://localhost:5173) | Single Page Application mượt mà, 100% thiết kế HTML parity, Virtual DOM, Client Routing. |
+| 📦 **Cổng React SPA Production Bundle** | [http://localhost:3000/spa/](http://localhost:3000/spa/) | Bản build tĩnh đã compile của React 19 phục vụ trực tiếp từ Express backend. |
+| 🌐 **Cổng Thông Tin Chính Thức** | [http://localhost:3000](http://localhost:3000) | Giao diện chuẩn mực ổn định cao (`public/*.html`) với Clean URL routes. |
+| ⚙️ **Tòa Soạn AI Studio & Quản Trị CMS** | [http://localhost:3000/admin](http://localhost:3000/admin) | Soạn thảo báo chí AI đa kênh, trợ lý Manus Copilot 2.0, duyệt bài, quản lý đơn trợ cấp. |
+| 📊 **Module Báo Cáo Tháng 16 Tổ CĐ** | [http://localhost:3000/admin#reports](http://localhost:3000/admin#reports) | Đánh giá KPI & số hóa nộp mẫu BM-02/CĐ trực tiếp về SQL Server. |
+
+---
+
+## 📂 9. CẤU TRÚC THƯ MỤC DỰ ÁN
 
 ```text
 tdmu-congdoan-web/
-├── database/                                  # Cơ sở dữ liệu & Kịch bản SQL
-│   ├── schema_15_tables_mssql.sql             # DDL Schema 15 bảng & 19 khóa ngoại (MSSQL)
-│   ├── seed_15_tables_mssql.sql               # DML Seed nạp dữ liệu chuẩn 16 Tổ CĐ & nghiệp vụ (MSSQL)
-├── frontend/                                  # Ứng dụng Single Page Application (React 18 + Vite)
+├── database/                                  # Cơ sở dữ liệu & Kịch bản SQL Server
+│   ├── schema_15_tables_mssql.sql             # DDL Schema 15 bảng & 19 khóa ngoại chuẩn 3NF
+│   ├── seed_15_tables_mssql.sql               # DML Seed nạp dữ liệu thực tế 16 Tổ CĐ & nghiệp vụ
+├── frontend/                                  # Ứng dụng Single Page Application (React 19 + Vite 8)
 │   ├── src/
-│   │   ├── pages/                             # Các trang chức năng React (Home, PhucLoiDoanVien...)
-│   │   ├── components/                        # Navbar, Footer, Widgets, Badges
-│   │   ├── App.jsx                            # React Router Root Component
-│   │   └── main.jsx                           # Entry Point
-│   ├── public/                                # Public assets cho Vite
+│   │   ├── pages/                             # 9 Trang chức năng React (Home, TinTuc, BaiViet, CoCauToChuc...)
+│   │   ├── components/                        # Navbar, HeroCarousel, PaginationBar, ArticleQuickModal, BookmarksDrawer
+│   │   ├── App.jsx                            # React Router Root Component & ErrorBoundary
+│   │   └── main.jsx                           # Entry Point (ReactDOM.createRoot)
+│   ├── public/                                # Static assets (CSS, Images, Logos)
+│   ├── dist/                                  # Production Bundle sau khi build
 │   ├── vite.config.js                         # Cấu hình Vite & Proxy /api sang Port 3000
-│   └── package.json                           # Dependencies phía Frontend
-├── public/                                    # Giao diện Portal & Tòa soạn CMS
+│   └── package.json                           # Dependencies: React 19.2.8, React-Router-DOM 7.18.3
+├── public/                                    # Cổng Thông Tin Chính Thống & Tòa Soạn CMS
 │   ├── index.html                             # Trang chủ Cổng thông tin
 │   ├── admin.html                             # Tòa soạn AI Content Studio 2.0 & Admin CMS
-│   ├── tin-tuc.html                           # Danh mục tin tức & hoạt động phong trào
-│   ├── bai-viet.html                          # Trang đọc toàn văn bài viết
-│   ├── co-cau-to-chuc.html                    # Sơ đồ Cơ cấu Tổ chức BCH & các Ban
-│   ├── van-ban.html                           # Kho Văn bản pháp quy 4 loại
-│   ├── bieu-mau.html                          # Kho Biểu mẫu hành chính đoàn thể
-│   ├── phuc-loi-doan-vien.html                # Trang Chăm lo & Phúc lợi đoàn viên
-│   ├── lien-he.html                           # Danh bạ 16 Tổ Công đoàn
-│   ├── sw.js                                  # PWA Service Worker hỗ trợ đọc offline
-│   ├── css/                                   # File định kiểu (portal.css, style.css)
+│   ├── tin-tuc.html                           # Tạp chí Tin tức & hoạt động phong trào
+│   ├── bai-viet.html                          # Toàn văn bài viết báo chí
+│   ├── co-cau-to-chuc.html                    # Sơ đồ Cơ cấu Tổ chức BCH & 16 Tổ CĐ
+│   ├── van-ban.html                           # Kho Văn bản pháp quy 4 chuyên mục
+│   ├── bieu-mau.html                          # Kho Biểu mẫu nghiệp vụ Word/Excel
+│   ├── phuc-loi-doan-vien.html                # Chính sách Chăm lo & Phúc lợi đoàn viên
+│   ├── lien-he.html                           # Danh bạ 16 Tổ Công đoàn & Hòm thư góp ý
+│   ├── css/                                   # Định kiểu portal.css chuẩn hóa toàn hệ thống
 │   └── js/                                    # Logic Manus Copilot, Undo/Redo, SSE Streaming
-├── server/                                    # Tầng Dịch vụ Backend (Node.js Express)
-│   ├── server.js                              # REST API Server, SSE Pipeline & AI Handlers
-│   ├── mssql_db.js                            # Module kết nối Microsoft SQL Server & Prepared Queries
+├── server/                                    # Tầng Dịch Vụ Backend (Node.js Express)
+│   ├── server.js                              # REST API Server, Clean Routes & Dual Static Dispatcher
+│   ├── mssql_db.js                            # Module kết nối Microsoft SQL Server Enterprise
+│   ├── routes/                                # 10 Module API (articles, documents, welfare, org...)
 │   └── database.json                          # Bộ dữ liệu đệm dự phòng (Fallback Engine)
-├── .env.example                               # File mẫu cấu hình biến môi trường
-├── .gitignore                                 # Khai báo các file không đưa lên Git
-├── package.json                               # Dependencies & Scripts phía Server
-└── README.md                                  # Tài liệu hướng dẫn kỹ thuật toàn diện
+├── .env.example                               # Mẫu cấu hình biến môi trường
+├── .gitignore                                 # Khai báo loại trừ Git
+├── package.json                               # Dependencies phía Server
+└── README.md                                  # Tài liệu kỹ thuật toàn diện của dự án
 ```
 
 ---
 
-## 👥 9. THÔNG TIN NHÓM THỰC HIỆN
+## 👥 10. THÔNG TIN NHÓM THỰC HIỆN
 
 | Họ và Tên | Mã Số SV | Lớp Sinh Hoạt | Vai Trò & Phân Công Nhiệm Vụ |
 |:---|:---:|:---:|:---|
 | **Nguyễn Bình Dương** | `2424802010319` | D24CNTT05 | **Nhóm trưởng** - Phụ trách kiến trúc CSDL quan hệ 3NF (MSSQL), thiết kế Backend RESTful API, xây dựng AI Content Studio 2.0, Multi-Pass SSE Streaming Pipeline & Trợ lý Manus Copilot. |
-| **Trần Hồng Thanh** | `2424802010439` | D24CNTT03 | **Thành viên** - Thiết kế giao diện Cổng thông tin đoàn viên (React SPA & Portal), Module số hóa Báo cáo Tháng BM-02/CĐ, tối ưu hóa giao diện đa nền tảng Responsive & PWA. |
-| **Phạm Anh Tuấn** | `2324802010393` | D23CNTT03 | **Thành viên** - Xây dựng phân hệ Quản lý Kho Văn bản pháp quy, Quản lý tài nguyên số (DAM), chuẩn bị dữ liệu kiểm thử và tài liệu đặc tả hệ thống. |
+| **Trần Hồng Thanh** | `2424802010439` | D24CNTT03 | **Thành viên** - Thiết kế giao diện Cổng thông tin đoàn viên (React 19 SPA & Portal), tối ưu hóa kiến trúc Dual-Mode, 100% HTML design parity, ErrorBoundary & PWA. |
+| **Phạm Anh Tuấn** | `2324802010393` | D23CNTT03 | **Thành viên** - Xây dựng phân hệ Quản lý Kho Văn bản pháp quy, Kho Biểu mẫu nghiệp vụ, Module số hóa Báo cáo Tháng BM-02/CĐ và tài liệu kiểm thử hệ thống. |
 
 ---
 
