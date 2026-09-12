@@ -582,6 +582,11 @@
           <i class="fa-solid fa-folder-open nav-icon" style="color: #34D399;"></i>
           <span class="nav-text">Kho Văn Bản</span>
         </a>
+        <a href="#templates" class="sidebar-nav-link" id="menu_templates" data-tooltip="Kho Biểu Mẫu" onclick="showAdminTab('templates')">
+          <i class="fa-solid fa-file-word nav-icon" style="color: #0284C7;"></i>
+          <span class="nav-text">Kho Biểu Mẫu</span>
+          <span class="badge bg-primary" id="sidebar_templates_count" style="font-size: 10px;">5</span>
+        </a>
 
         <div class="nav-section-label">NGHIỆP VỤ CÔNG ĐOÀN</div>
         <a href="#reports" class="sidebar-nav-link" id="menu_reports" data-tooltip="Báo Cáo 16 Tổ CĐ" onclick="showAdminTab('reports')">
@@ -1272,6 +1277,57 @@
       </section>
 
       <!-- TAB 6: SCHEDULE -->
+      
+      <!-- TAB 5.5: TEMPLATES (KHO BIỂU MẪU WORD) -->
+      <section id="tab_templates_content" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <h1 style="font-size: 24px; font-weight: 800; color: #003865; margin: 0 0 4px;">
+              <i class="fa-solid fa-file-word text-primary me-2"></i>Kho Biểu Mẫu Nghiệp Vụ Công Đoàn
+            </h1>
+            <p style="font-size: 13px; color: #64748B; margin: 0;">Quản lý và cung cấp biểu mẫu Word (.docx) chuẩn hóa dành cho đoàn viên và 16 Tổ công đoàn</p>
+          </div>
+          <button type="button" onclick="openAddTemplateModal()" style="background: linear-gradient(135deg, #0284C7, #0369A1); color: white; border: none; border-radius: 8px; padding: 10px 18px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px rgba(2,132,199,0.3);">
+            <i class="fa-solid fa-plus"></i> + Thêm Biểu Mẫu Word
+          </button>
+        </div>
+
+        <!-- Filter & Search Bar -->
+        <div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="btn-tpl-filter" data-cat="all" onclick="filterTemplatesCategory('all')" style="background: #0284C7; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer;">Tất Cả</button>
+            <button type="button" class="btn-tpl-filter" data-cat="doan_vien" onclick="filterTemplatesCategory('doan_vien')" style="background: #F1F5F9; color: #475569; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer;">Đoàn Viên</button>
+            <button type="button" class="btn-tpl-filter" data-cat="to_cong_doan" onclick="filterTemplatesCategory('to_cong_doan')" style="background: #F1F5F9; color: #475569; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer;">Tổ Công Đoàn</button>
+            <button type="button" class="btn-tpl-filter" data-cat="tro_cap" onclick="filterTemplatesCategory('tro_cap')" style="background: #F1F5F9; color: #475569; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer;">Chăm Lo &amp; Trợ Cấp</button>
+            <button type="button" class="btn-tpl-filter" data-cat="thi_dua" onclick="filterTemplatesCategory('thi_dua')" style="background: #F1F5F9; color: #475569; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer;">Thi Đua</button>
+            <button type="button" class="btn-tpl-filter" data-cat="tro_von" onclick="filterTemplatesCategory('tro_von')" style="background: #F1F5F9; color: #475569; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer;">Quỹ Trợ Vốn</button>
+          </div>
+          <div style="position: relative; min-width: 260px;">
+            <input type="text" id="admin_templates_search" placeholder="Tìm kiếm biểu mẫu..." oninput="searchAdminTemplates(this.value)" style="width: 100%; padding: 7px 12px 7px 34px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; outline: none; box-sizing: border-box;">
+            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 10px; color: #94A3B8; font-size: 13px;"></i>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <thead>
+              <tr style="background: #F8FAFC; border-bottom: 2px solid #E2E8F0; text-align: left;">
+                <th style="padding: 12px 16px; font-weight: 800; color: #002855;">MÃ HIỆU</th>
+                <th style="padding: 12px 16px; font-weight: 800; color: #002855;">TÊN BIỂU MẪU &amp; TRÍCH YẾU</th>
+                <th style="padding: 12px 16px; font-weight: 800; color: #002855;">PHÂN LOẠI</th>
+                <th style="padding: 12px 16px; font-weight: 800; color: #002855;">ĐỊNH DẠNG</th>
+                <th style="padding: 12px 16px; font-weight: 800; color: #002855; text-align: center;">LƯỢT TẢI</th>
+                <th style="padding: 12px 16px; font-weight: 800; color: #002855; text-align: right;">THAO TÁC</th>
+              </tr>
+            </thead>
+            <tbody id="admin_templates_table_body"></tbody>
+          </table>
+        </div>
+      </section>
+
+
+      <!-- TAB 6: SCHEDULE -->
       <section id="tab_schedule_content" style="display: none;">
         <div style="margin-bottom: 24px;">
           <h1 style="font-size: 24px; font-weight: 800; color: #003865; margin: 0 0 4px;">Lịch Hẹn Giờ Xuất Bản Đa Kênh</h1>
@@ -1417,6 +1473,7 @@
   <script src="js/admin/admin-ui.js?v=1788874000000"></script>
   <script src="js/admin/admin-articles.js?v=1788874000000"></script>
   <script src="js/admin/admin-reports.js?v=1788874000000"></script>
+  <script src="js/admin/admin-templates.js?v=1788874000000"></script>
   <script src="js/admin/admin-studio.js?v=1788874000000"></script>
   <script src="js/admin/admin-editor.js?v=1788874000000"></script>
   <script src="js/admin/admin-copilot.js?v=1788874000000"></script>
@@ -1440,6 +1497,52 @@
           <i class="fa-solid fa-check"></i> Xac Nhan Lich Hen
         </button>
         <button onclick="document.getElementById('modal_ap_schedule').style.display='none'" style="padding:12px 20px;background:#F1F5F9;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;color:#475569;">Huy</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL THÊM BIỂU MẪU WORD MỚI -->
+  <div id="modal_add_template" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.75); z-index: 99999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: white; border-radius: 14px; width: 520px; max-width: 95vw; padding: 28px; box-shadow: 0 25px 50px rgba(0,0,0,0.35);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 800; color: #002855;">
+          <i class="fa-solid fa-file-word text-primary me-2"></i>Thêm Biểu Mẫu Word Mới
+        </h2>
+        <button type="button" onclick="closeAddTemplateModal()" style="background: none; border: none; font-size: 20px; color: #64748B; cursor: pointer;">✕</button>
+      </div>
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 12.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 5px;">Mã hiệu biểu mẫu (*):</label>
+        <input type="text" id="tpl_code_input" placeholder="VD: BM-06/CĐ" style="width: 100%; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13.5px; box-sizing: border-box;">
+      </div>
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 12.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 5px;">Tên biểu mẫu (*):</label>
+        <input type="text" id="tpl_title_input" placeholder="VD: Đơn Đề Nghị Cấp Học Bổng Cho Con Đoàn Viên" style="width: 100%; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13.5px; box-sizing: border-box;">
+      </div>
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 12.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 5px;">Mô tả / Hướng dẫn áp dụng:</label>
+        <textarea id="tpl_desc_input" rows="2" placeholder="VD: Áp dụng cho các cháu đạt học sinh giỏi năm học 2025 - 2026..." style="width: 100%; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; box-sizing: border-box; resize: vertical;"></textarea>
+      </div>
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 12.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 5px;">Phân loại chuyên mục:</label>
+        <select id="tpl_category_select" style="width: 100%; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+          <option value="doan_vien">Đoàn Viên &amp; Gia Nhập</option>
+          <option value="to_cong_doan">Tổ Công Đoàn Bộ Phận</option>
+          <option value="tro_cap">Chăm Lo &amp; Trợ Cấp</option>
+          <option value="thi_dua">Thi Đua Khen Thưởng</option>
+          <option value="tro_von">Quỹ Trợ Vốn</option>
+        </select>
+      </div>
+      <div style="margin-bottom: 20px;">
+        <label style="font-size: 12.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 5px;">Tệp Word đính kèm (.docx):</label>
+        <input type="file" id="tpl_file_input" accept=".docx,.doc" style="width: 100%; padding: 7px; border: 1px dashed #0284C7; border-radius: 6px; font-size: 12.5px; box-sizing: border-box; background: #F8FAFC;">
+        <p style="font-size: 11px; color: #64748B; margin: 4px 0 0;">Định dạng chuẩn Microsoft Word (.docx). Dung lượng khuyến nghị &lt; 10 MB.</p>
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button type="button" onclick="closeAddTemplateModal()" style="padding: 9px 16px; background: #F1F5F9; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; color: #475569;">Đóng</button>
+        <button type="button" onclick="submitNewTemplate()" style="padding: 9px 20px; background: #0284C7; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer;">
+          <i class="fa-solid fa-check me-1"></i> Lưu Biểu Mẫu
+        </button>
       </div>
     </div>
   </div>

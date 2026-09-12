@@ -80,7 +80,7 @@ function renderArticles(articles) {
           ${art.summary || ''}
         </p>
         <button class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 12px;" onclick="openArticleModal(${art.id})">
-          <i class="fa-regular fa-eye me-1"></i> Đọc tin & AI Sapo
+          <i class="fa-regular fa-eye me-1"></i> Xem chi tiết & Tóm tắt
         </button>
       </div>
     </div>

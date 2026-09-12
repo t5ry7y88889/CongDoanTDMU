@@ -1840,5 +1840,72 @@
       "publishedAt": "2026-09-12T17:30:44.712Z",
       "createdAt": "2026-09-12T17:30:44.712Z"
     }
+  ],
+  "templates": [
+    {
+      "id": 1,
+      "code": "BM-01/CĐ",
+      "title": "Phiếu Lý Lịch & Đơn Xin Gia Nhập Công Đoàn TDMU",
+      "description": "Dành cho Cán bộ, Giảng viên mới tuyển dụng gia nhập tổ chức công đoàn",
+      "category": "doan_vien",
+      "categoryName": "Đoàn Viên & Gia Nhập",
+      "file_url": "uploads/templates/BM_01_Don_Gia_Nhap_Cong_Doan.docx",
+      "file_type": "docx",
+      "file_size": "4.1 KB",
+      "downloads_count": 146,
+      "created_at": "2026-09-01T08:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "code": "BM-02/CĐ",
+      "title": "Mẫu Báo Cáo Hoạt Động Định Kỳ Tháng của Tổ Công Đoàn",
+      "description": "Biểu mẫu chuẩn hóa dành cho 16 Tổ công đoàn cơ sở",
+      "category": "to_cong_doan",
+      "categoryName": "Tổ Công Đoàn Bộ Phận",
+      "file_url": "uploads/templates/BM_02_Mau_Bao_Cao_Thang_To_Cong_Doan.docx",
+      "file_type": "docx",
+      "file_size": "3.9 KB",
+      "downloads_count": 89,
+      "created_at": "2026-09-01T08:00:00.000Z"
+    },
+    {
+      "id": 3,
+      "code": "BM-03/CĐ",
+      "title": "Đơn Đề Nghị Hỗ Trợ Chăm Lo Khó Khăn & Bệnh Hiểm Nghèo",
+      "description": "Hồ sơ xét duyệt trợ cấp Quỹ tương thân tương ái Công đoàn TDMU",
+      "category": "tro_cap",
+      "categoryName": "Chăm Lo & Trợ Cấp",
+      "file_url": "uploads/templates/BM_03_Don_Ho_Tro_Kho_Khan.docx",
+      "file_type": "docx",
+      "file_size": "3.8 KB",
+      "downloads_count": 65,
+      "created_at": "2026-09-01T08:00:00.000Z"
+    },
+    {
+      "id": 4,
+      "code": "BM-04/CĐ",
+      "title": "Phiếu Đánh Giá & Xếp Loại Đoàn Viên Cuối Năm",
+      "description": "Dùng cho công tác bình bầu thi đua và khen thưởng cán bộ đoàn viên",
+      "category": "thi_dua",
+      "categoryName": "Thi Đua Khen Thưởng",
+      "file_url": "uploads/templates/BM_04_Danh_Gia_Xep_Loai.docx",
+      "file_type": "docx",
+      "file_size": "3.7 KB",
+      "downloads_count": 210,
+      "created_at": "2026-09-01T08:00:00.000Z"
+    },
+    {
+      "id": 5,
+      "code": "BM-05/CĐ",
+      "title": "Đơn Đề Nghị Vay Vốn Phát Triển Kinh Tế Gia Đình",
+      "description": "Đơn đề nghị vay vốn Quỹ trợ vốn công đoàn viên TDMU",
+      "category": "tro_von",
+      "categoryName": "Quỹ Trợ Vốn",
+      "file_url": "uploads/templates/BM_05_Don_Xin_Vay_Von_Quy_Tro_Von.docx",
+      "file_type": "docx",
+      "file_size": "3.6 KB",
+      "downloads_count": 48,
+      "created_at": "2026-09-01T08:00:00.000Z"
+    }
   ]
 }

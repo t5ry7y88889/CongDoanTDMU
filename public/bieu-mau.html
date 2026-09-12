@@ -89,48 +89,34 @@
         <div class="content-box">
           <div class="tieudelon"><i class="fa-solid fa-file-word me-2"></i>KHO BIỂU MẪU NGHIỆP VỤ CÔNG ĐOÀN TDMU</div>
           
-          <div class="p-3 border rounded mb-3 d-flex justify-content-between align-items-center bg-white shadow-sm">
-            <div class="d-flex align-items-center gap-3">
-              <i class="fa-regular fa-file-word text-primary fa-2x"></i>
-              <div>
-                <h6 class="fw-bold mb-1">BM-01/CĐ: Phiếu Lý Lịch &amp; Đơn Xin Gia Nhập Công Đoàn TDMU</h6>
-                <small class="text-muted">Dành cho Cán bộ, Giảng viên mới tuyển dụng gia nhập tổ chức công đoàn</small>
+          <!-- Search & Filter Controls -->
+          <div class="bg-light p-3 rounded mb-4 border">
+            <div class="row g-2 align-items-center">
+              <div class="col-md-7">
+                <div class="input-group">
+                  <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                  <input type="text" id="portal_tpl_search" class="form-control" placeholder="Tìm kiếm tên biểu mẫu, mã hiệu..." oninput="onSearchTemplates(this.value)">
+                </div>
+              </div>
+              <div class="col-md-5">
+                <select id="portal_tpl_cat" class="form-select" onchange="onFilterTemplatesCategory(this.value)">
+                  <option value="all">-- Tất cả chuyên mục --</option>
+                  <option value="doan_vien">Đoàn Viên &amp; Gia Nhập</option>
+                  <option value="to_cong_doan">Tổ Công Đoàn Bộ Phận</option>
+                  <option value="tro_cap">Chăm Lo &amp; Trợ Cấp</option>
+                  <option value="thi_dua">Thi Đua Khen Thưởng</option>
+                  <option value="tro_von">Quỹ Trợ Vốn</option>
+                </select>
               </div>
             </div>
-            <a href="uploads/templates/BM_01_Don_Gia_Nhap_Cong_Doan.docx" class="btn-portal-access"><i class="fa-solid fa-download me-1"></i> Tải về (.docx)</a>
           </div>
 
-          <div class="p-3 border rounded mb-3 d-flex justify-content-between align-items-center bg-white shadow-sm">
-            <div class="d-flex align-items-center gap-3">
-              <i class="fa-regular fa-file-word text-primary fa-2x"></i>
-              <div>
-                <h6 class="fw-bold mb-1">BM-02/CĐ: Mẫu Báo Cáo Hoạt Động Định Kỳ Tháng của Tổ Công Đoàn</h6>
-                <small class="text-muted">Biểu mẫu chuẩn hóa dành cho 16 Tổ công đoàn cơ sở</small>
-              </div>
+          <!-- Dynamic Templates Container -->
+          <div id="portal_templates_list">
+            <div class="text-center py-5 text-muted">
+              <i class="fa-solid fa-circle-notch fa-spin fa-2x mb-2"></i>
+              <div>Đang tải kho biểu mẫu trực tuyến...</div>
             </div>
-            <a href="uploads/templates/BM_02_Mau_Bao_Cao_Thang_To_Cong_Doan.docx" class="btn-portal-access"><i class="fa-solid fa-download me-1"></i> Tải về (.docx)</a>
-          </div>
-
-          <div class="p-3 border rounded mb-3 d-flex justify-content-between align-items-center bg-white shadow-sm">
-            <div class="d-flex align-items-center gap-3">
-              <i class="fa-regular fa-file-word text-primary fa-2x"></i>
-              <div>
-                <h6 class="fw-bold mb-1">BM-03/CĐ: Đơn Đề Nghị Hỗ Trợ Chăm Lo Khó Khăn &amp; Bệnh Hiểm Nghèo</h6>
-                <small class="text-muted">Hồ sơ xét duyệt trợ cấp Quỹ tương thân tương ái Công đoàn TDMU</small>
-              </div>
-            </div>
-            <a href="uploads/templates/BM_03_Don_Ho_Tro_Kho_Khan.docx" class="btn-portal-access"><i class="fa-solid fa-download me-1"></i> Tải về (.docx)</a>
-          </div>
-
-          <div class="p-3 border rounded mb-3 d-flex justify-content-between align-items-center bg-white shadow-sm">
-            <div class="d-flex align-items-center gap-3">
-              <i class="fa-regular fa-file-word text-primary fa-2x"></i>
-              <div>
-                <h6 class="fw-bold mb-1">BM-04/CĐ: Phiếu Đánh Giá &amp; Xếp Loại Đoàn Viên Cuối Năm</h6>
-                <small class="text-muted">Dùng cho công tác bình bầu thi đua và khen thưởng cán bộ đoàn viên</small>
-              </div>
-            </div>
-            <a href="uploads/templates/BM_04_Danh_Gia_Xep_Loai.docx" class="btn-portal-access"><i class="fa-solid fa-download me-1"></i> Tải về (.docx)</a>
           </div>
         </div>
       </div>
@@ -207,5 +193,84 @@
       });
     }
   </script>
+
+  <script>
+    let allPortalTemplates = [];
+    let activeCat = 'all';
+
+    async function loadPortalTemplates() {
+      try {
+        const res = await fetch('/api/templates').then(r => r.json());
+        if (res.success) {
+          allPortalTemplates = res.data || [];
+          renderPortalTemplates();
+        } else {
+          document.getElementById('portal_templates_list').innerHTML = '<div class="alert alert-danger">Không thể tải kho biểu mẫu.</div>';
+        }
+      } catch (e) {
+        document.getElementById('portal_templates_list').innerHTML = '<div class="alert alert-warning">Lỗi kết nối máy chủ.</div>';
+      }
+    }
+
+    function onFilterTemplatesCategory(cat) {
+      activeCat = cat;
+      renderPortalTemplates();
+    }
+
+    function onSearchTemplates(q) {
+      renderPortalTemplates(q);
+    }
+
+    function renderPortalTemplates(searchQuery = '') {
+      const container = document.getElementById('portal_templates_list');
+      if (!container) return;
+
+      const strip = str => (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+      const q = strip(searchQuery || document.getElementById('portal_tpl_search')?.value || '');
+
+      let filtered = allPortalTemplates;
+      if (activeCat !== 'all') {
+        filtered = filtered.filter(t => t.category === activeCat);
+      }
+      if (q) {
+        filtered = filtered.filter(t => strip(t.title).includes(q) || strip(t.code).includes(q) || strip(t.description).includes(q));
+      }
+
+      if (!filtered.length) {
+        container.innerHTML = '<div class="text-center py-5 text-muted fst-italic">Không tìm thấy biểu mẫu nào phù hợp với yêu cầu tìm kiếm.</div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(t => `
+        <div class="p-3 border rounded mb-3 d-flex justify-content-between align-items-center bg-white shadow-sm flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <i class="fa-regular fa-file-word text-primary fa-2x flex-shrink-0"></i>
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                <span class="badge bg-primary">${escapeHtml(t.code)}</span>
+                <h6 class="fw-bold mb-0 text-dark">${escapeHtml(t.title)}</h6>
+              </div>
+              <small class="text-muted d-block">${escapeHtml(t.description || '')}</small>
+              <div class="mt-1 small text-muted">
+                <span class="badge bg-light text-secondary me-2"><i class="fa-solid fa-download me-1"></i>${t.downloads_count || 0} lượt tải</span>
+                <span>Dung lượng: ${t.file_size || '4 KB'}</span>
+              </div>
+            </div>
+          </div>
+          <a href="/api/templates/download/${t.id}" class="btn-portal-access flex-shrink-0 text-nowrap">
+            <i class="fa-solid fa-download me-1"></i> Tải về (.docx)
+          </a>
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    document.addEventListener('DOMContentLoaded', loadPortalTemplates);
+  </script>
+
 </body>
 </html>

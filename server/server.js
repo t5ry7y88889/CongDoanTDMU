@@ -15,6 +15,7 @@ const reportsRoutes = require('./routes/reports.routes');
 const orgRoutes = require('./routes/organization.routes');
 const feedbackRoutes = require('./routes/feedback.routes');
 const publishRoutes = require('./routes/publish.routes');
+const templatesRoutes = require('./routes/templates.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +29,17 @@ app.use((req, res, next) => {
   res.setHeader('Expires', '0');
   next();
 });
+// Static Assets Priority:
+// 1. Uploads directory (user-uploaded documents, templates, images)
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+
+// 2. React Production SPA (Primary client-facing bundle)
+app.use(express.static(path.join(__dirname, '../frontend/dist'), {
+  etag: false,
+  maxAge: 0
+}));
+
+// 3. Fallback static directory for Admin CMS & legacy assets
 app.use(express.static(path.join(__dirname, '../public'), {
   etag: false,
   maxAge: 0
@@ -53,6 +65,7 @@ app.use('/api', feedbackRoutes);
 
 // Publish & Scheduling
 app.use('/api/publish', publishRoutes);
+app.use('/api/templates', templatesRoutes);
 
 // Backward Compatibility Route Aliases
 app.post('/api/generate-article', (req, res, next) => {
@@ -135,6 +148,14 @@ setInterval(() => {
   }
 }, 30000); // Check every 30 seconds for precision
 
+
+// SPA Fallback Handler for React Router
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.includes('.')) {
+    return next();
+  }
+  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+});
 
 // Server Bootstrap
 app.listen(PORT, () => {

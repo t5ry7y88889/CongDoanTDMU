@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadAdminArticles();
   loadAdminMonthlyReports();
   loadAdminDocuments();
+  loadAdminTemplates();
   loadUsersTable();
   loadScheduleTable();
   loadAuditLogs();
@@ -86,12 +87,13 @@ function switchUserRole(role) {
 }
 
 function showAdminTab(tabName, subFilter = null) {
-  const tabs = ['dashboard', 'articles', 'ai-creator', 'reports', 'documents', 'schedule', 'users', 'audits'];
+  const tabs = ['dashboard', 'articles', 'ai-creator', 'reports', 'templates', 'templates', 'documents', 'schedule', 'users', 'audits'];
   const titles = {
     'dashboard': 'Bảng Điều Hành & Thống Kê',
     'articles': 'Quản Lý Tin Tức & Bài Viết',
     'ai-creator': 'Phòng Biên Tập & Sản Xuất Đa Kênh',
     'reports': 'Báo Cáo Định Kỳ 16 Tổ Công Đoàn',
+    'templates': 'Kho Biểu Mẫu Nghiệp Vụ Công Đoàn',
     'documents': 'Kho Văn Bản Chỉ Đạo & Điều Hành',
     'schedule': 'Lịch Xuất Bản Đa Kênh',
     'users': 'Quản Lý Cán Bộ & Phân Quyền (3 Roles)',
@@ -117,10 +119,12 @@ function showAdminTab(tabName, subFilter = null) {
     }
   });
 
+  if (tabName === 'templates') loadAdminTemplates();
   if (tabName === 'dashboard') loadAdminDashboard();
   if (tabName === 'articles') loadAdminArticles(subFilter || 'all');
   if (tabName === 'reports') loadAdminMonthlyReports();
   if (tabName === 'documents') loadAdminDocuments();
+  loadAdminTemplates();
   if (tabName === 'schedule') loadScheduleTable();
   if (tabName === 'users') loadUsersTable();
   if (tabName === 'audits') loadAuditLogs();
