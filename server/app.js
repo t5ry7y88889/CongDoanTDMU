@@ -13,6 +13,8 @@ const welfareRoutes = require('./routes/welfare.routes');
 const reportsRoutes = require('./routes/reports.routes');
 const orgRoutes = require('./routes/organization.routes');
 const feedbackRoutes = require('./routes/feedback.routes');
+const publishRoutes = require('./routes/publish.routes');
+const templatesRoutes = require('./routes/templates.routes');
 
 const app = express();
 
@@ -33,6 +35,9 @@ app.use(express.static(path.join(__dirname, '../public'), {
   maxAge: 0
 }));
 
+// User-uploaded files (welfare proofs, documents, docx-extracted images, templates)
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+
 // =========================================================================
 // API ROUTER MOUNTING
 // =========================================================================
@@ -50,6 +55,10 @@ app.use('/api', welfareRoutes);
 
 // Feedback, Bookmarks, Dossiers, Assets & Analytics
 app.use('/api', feedbackRoutes);
+
+// Publish & Scheduling
+app.use('/api/publish', publishRoutes);
+app.use('/api/templates', templatesRoutes);
 
 // Backward Compatibility Route Aliases
 app.post('/api/generate-article', (req, res, next) => {

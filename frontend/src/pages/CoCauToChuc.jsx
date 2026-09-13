@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
 const bchMembers = [
   { id: 1, name: 'TS. Lê Thị Kim Út', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/images/Picture1.jpg', title: 'Chủ tịch Công đoàn Trường', degree: 'Tiến sĩ Quản lý', unit: 'Phòng Quản lý Khoa học', email: 'utltk@tdmu.edu.vn', duties: 'Phụ trách chung công tác Công đoàn, trực tiếp chỉ đạo kế hoạch hoạt động, tài chính và quan hệ đối ngoại.', tag: 'tag-president', tagText: 'Chủ tịch' },
@@ -22,248 +23,287 @@ const ubktMembers = [
   { id: 15, name: 'ThS. Nguyễn Văn Trường', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Truong.jpg', title: 'Ủy viên UBKT', degree: 'Thạc sĩ', unit: 'Phòng Khảo thí & Đảm bảo Chất lượng', email: 'truongnv@tdmu.edu.vn', duties: 'Kiểm tra tài chính, chứng từ thu chi và quản lý tài sản công đoàn định kỳ.', tag: 'tag-executive', tagText: 'Ủy viên UBKT' }
 ];
 
-const unionUnits = [
-  { id: 1, name: 'Tổ Công đoàn 1', unitName: 'Khối Phòng Ban Chức Năng 1', desc: 'Phòng Đào tạo Đại học, Phòng Sau đại học & Khảo thí', lead: 'Đ/c Nguyễn Thị Nhi', role: 'Tổ trưởng Tổ CĐ 1', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Nguyen%20Thi%20Nhi%20-%20NV.jpg', phone: '0918.370.363', email: 'tcd01@tdmu.edu.vn', members: 48, females: 26, party: 14 },
-  { id: 2, name: 'Tổ Công đoàn 2', unitName: 'Khối Phòng Ban Chức Năng 2', desc: 'Phòng Công tác Sinh viên, Truyền thông & Khởi nghiệp', lead: 'Đ/c Huỳnh Thanh Thúy', role: 'Tổ trưởng Tổ CĐ 2', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/HuynhThanhThuy.jpg', phone: '0938.662.185', email: 'tcd02@tdmu.edu.vn', members: 42, females: 22, party: 12 },
-  { id: 3, name: 'Tổ Công đoàn 3', unitName: 'Khối Phòng Ban Chức Năng 3', desc: 'Phòng Tổ chức Cán bộ, Hành chính - Tổng hợp & Pháp chế', lead: 'Đ/c Lê Thanh Tâm', role: 'Tổ trưởng Tổ CĐ 3', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/LeThanhTam.jpg', phone: '0945.460.712', email: 'tcd03@tdmu.edu.vn', members: 55, females: 34, party: 20 },
-  { id: 4, name: 'Tổ Công đoàn 4', unitName: 'Khối Cơ Sở Vật Chất', desc: 'Phòng Quản trị Thiết bị, Dự án Đầu tư & Trạm Y tế', lead: 'Đ/c Ngô Hương Hoa', role: 'Tổ trưởng Tổ CĐ 4', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/NgoHuongHoa.jpg', phone: '0792.122.291', email: 'tcd04@tdmu.edu.vn', members: 39, females: 15, party: 11 },
-  { id: 5, name: 'Tổ Công đoàn 5', unitName: 'Khối Tài Chính & Kế Hoạch', desc: 'Phòng Kế hoạch Tài chính & Ban Quản lý Thu - Chi', lead: 'Đ/c Nguyễn Thị Hương', role: 'Tổ trưởng Tổ CĐ 5', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/NguyenThiHuong.jpg', phone: '0387.840.422', email: 'tcd05@tdmu.edu.vn', members: 35, females: 24, party: 10 },
-  { id: 6, name: 'CĐBP Khoa Sư phạm', unitName: 'Công đoàn bộ phận Khoa Sư phạm', desc: 'Khoa Sư phạm, Giáo dục Mầm non, Giáo dục Tiểu học', lead: 'Đ/c Ngô Thị Kiều Oanh', role: 'Chủ tịch CĐBP Khoa Sư phạm', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/NgoThiKieuOanh.jpg', phone: '0915.854.251', email: 'oanhntk@tdmu.edu.vn', members: 62, females: 45, party: 19 },
-  { id: 7, name: 'CĐBP Trường Kinh tế Tài chính', unitName: 'Công đoàn bộ phận Trường Kinh tế Tài chính', desc: 'Khoa Quản trị Kinh doanh, Tài chính - Ngân hàng, Kế toán - Kiểm toán', lead: 'Đ/c Hồ Thị Hà', role: 'Chủ tịch CĐBP Trường KTTC', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/HoThiHa.png', phone: '0909.528.522', email: 'haht@tdmu.edu.vn', members: 58, females: 38, party: 18 },
-  { id: 8, name: 'CĐBP Trường Luật & QLPT', unitName: 'Công đoàn bộ phận Trường Luật và Quản lý phát triển', desc: 'Khoa Luật, Quản lý Nhà nước, Quản trị Nhân lực', lead: 'Đ/c Đỗ Mạnh Tuấn', role: 'Chủ tịch CĐBP Trường Luật', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/DoManhTuan.jpg', phone: '0908.184.560', email: 'tuandm@tdmu.edu.vn', members: 45, females: 25, party: 15 },
-  { id: 9, name: 'Tổ CĐ Viện Công nghệ số', unitName: 'Viện Đào tạo CNTT, Chuyển đổi số & Trí tuệ nhân tạo', desc: 'Khoa Công nghệ Thông tin, Kỹ thuật Phần mềm, Hệ thống Thông tin', lead: 'ThS. Hồ Ngọc Trung Kiên', role: 'Tổ trưởng CĐ Viện CNS', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/HoNgocTrungKien.jpg', phone: '0977.797.378', email: 'kienhnt@tdmu.edu.vn', members: 52, females: 28, party: 16 },
-  { id: 10, name: 'Tổ CĐ Viện Đào tạo Ngoại ngữ', unitName: 'Viện Đào tạo Ngoại ngữ & Hợp tác Quốc tế', desc: 'Ngành Ngôn ngữ Anh, Ngôn ngữ Hàn, Ngôn ngữ Trung, Ngôn ngữ Nhật', lead: 'Đ/c Âu Minh Triết', role: 'Tổ trưởng CĐ Viện Ngoại ngữ', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/AuMinhTriet.jpg', phone: '0918.875.507', email: 'trietam@tdmu.edu.vn', members: 50, females: 38, party: 14 },
-  { id: 11, name: 'Tổ CĐ Viện Kỹ thuật Công nghệ', unitName: 'Viện Kỹ thuật Công nghệ & Cơ Điện tử', desc: 'Ngành Công nghệ Kỹ thuật Điện - Điện tử, Kỹ thuật Cơ điện tử, Ô tô', lead: 'Đ/c Trần Thị Thanh', role: 'Tổ trưởng CĐ Viện KTCN', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/TranThiThanh.jpg', phone: '0975.483.404', email: 'thanhtt@tdmu.edu.vn', members: 46, females: 18, party: 14 },
-  { id: 12, name: 'Tổ CĐ Viện Đào tạo Kiến trúc', unitName: 'Viện Đào tạo Kiến trúc, Xây dựng & Giao thông', desc: 'Ngành Kiến trúc, Kỹ thuật Xây dựng, Thiết kế Đồ họa, Mỹ thuật Ứng dụng', lead: 'Đ/c Phú Thị Tuyết Nga', role: 'Tổ trưởng CĐ Viện Kiến trúc', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/PhuThiTuyetNga.jpg', phone: '0913.788.800', email: 'ngaptt@tdmu.edu.vn', members: 44, females: 22, party: 12 },
-  { id: 13, name: 'Tổ CĐ Khoa Kiến thức chung', unitName: 'Khoa Khoa học Cơ bản & Lý luận Chính trị', desc: 'Bộ môn Lý luận Chính trị, Pháp luật đại cương, Toán - Lý - Hóa', lead: 'Đ/c Biện Thị Ngọc Anh', role: 'Tổ trưởng CĐ Khoa KTC', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/BienThiNgocAnh.jpg', phone: '0909.762.656', email: 'anhbtn@tdmu.edu.vn', members: 40, females: 28, party: 16 },
-  { id: 14, name: 'Tổ CĐ Khoa CN Văn hóa - TT & DL', unitName: 'Khoa Công nghiệp Văn hóa, Thể thao & Du lịch', desc: 'Ngành Quản trị Dịch vụ Du lịch & Lữ hành, Quản lý Văn hóa, Thể thao', lead: 'Đ/c Nguyễn Thị Hướng', role: 'Tổ trưởng CĐ Khoa CNVHTT&DL', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/NguyenThiHuong_2.jpg', phone: '0396.902.367', email: 'huongnt@tdmu.edu.vn', members: 38, females: 26, party: 11 },
-  { id: 15, name: 'Tổ CĐ Viện Đào tạo Y Dược', unitName: 'Viện Đào tạo Y Dược & Khoa học Sức khỏe', desc: 'Ngành Y đa khoa, Dược học, Điều dưỡng & Kỹ thuật Xét nghiệm Y học', lead: 'TS. Lưu Kim Lệ Hằng', role: 'Tổ trưởng CĐ Viện Y Dược', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/LeThanhTam.jpg', phone: '0918.450.184', email: 'hanglkl@tdmu.edu.vn', members: 46, females: 31, party: 13 },
-  { id: 16, name: 'Tổ CĐ Trung tâm Học liệu & DV', unitName: 'Trung tâm Học liệu, CNTT & Dịch vụ Đào tạo', desc: 'Thư viện số, Trung tâm Dữ liệu Server, Ban Quản trị Ký túc xá', lead: 'Đ/c Bùi Văn Dũng', role: 'Tổ trưởng CĐ TT Học liệu', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Triet.jpg', phone: '0979.184.221', email: 'dungbv@tdmu.edu.vn', members: 47, females: 29, party: 12 }
-];
-
-const FALLBACK_AVATAR = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100';
-
-const TABS = [
-  { key: 'ban-thuong-vu', label: 'Ban Thường Vụ', icon: 'fa-crown', cls: 'text-warning' },
-  { key: 'ban-chap-hanh', label: 'Ban Chấp Hành (13 Đ/C)', icon: 'fa-users', cls: 'text-primary' },
-  { key: 'uy-ban-kiem-tra', label: 'Ủy Ban Kiểm Tra', icon: 'fa-scale-balanced', cls: 'text-success' },
-  { key: '16-to-cong-doan', label: '16 Tổ Công Đoàn Cơ Sở', icon: 'fa-sitemap', cls: 'text-danger' }
-];
-
-const CadreCard = ({ m, onClick }) => (
-  <div className="cadre-card-item" onClick={() => onClick(m)} title={`Xem hồ sơ chi tiết của ${m.name}`}>
-    <div className="d-flex align-items-center gap-3">
-      <img src={m.photo} className="cadre-real-avatar" alt={m.name} onError={(e) => { e.currentTarget.src = FALLBACK_AVATAR; }} />
-      <div>
-        <h5 className="fw-bold mb-1" style={{ fontSize: '15px', color: '#002855' }}>{m.name}</h5>
-        <div className="text-muted small">
-          <span><i className="fa-solid fa-briefcase text-primary me-1"></i> {m.unit}</span>
-          <span className="ms-3"><i className="fa-solid fa-envelope text-primary me-1"></i> {m.email}</span>
-        </div>
-      </div>
-    </div>
-    <div className="text-end">
-      <span className={`cadre-role-tag ${m.tag}`}>{m.tagText}</span>
-      <div className="text-muted" style={{ fontSize: '11px', marginTop: '4px' }}><i className="fa-solid fa-circle-info text-primary me-1"></i> Chi tiết »</div>
-    </div>
-  </div>
-);
+const btvMembers = bchMembers.slice(0, 3);
 
 const CoCauToChuc = () => {
-  const [tab, setTab] = useState('ban-thuong-vu');
-  const [stats, setStats] = useState({ total_members: 760, total_units: 16, total_boards: 5 });
-  const [cadre, setCadre] = useState(null);
-  const [unit, setUnit] = useState(null);
-  const cadreModalRef = useRef(null);
-  const unitModalRef = useRef(null);
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const tabParam = searchParams.get('tab');
+
+  const [activeTab, setActiveTab] = useState(tabParam || 'ban-thuong-vu');
+  const [selectedCadre, setSelectedCadre] = useState(null);
+  const [units, setUnits] = useState([]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const requested = params.get('tab');
-    if (requested && TABS.some(t => t.key === requested)) setTab(requested);
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
 
-    (async () => {
-      try {
-        const res = await fetch('/api/org-full-tree');
-        const json = await res.json();
-        if (json.success && json.data && json.data.stats) setStats(json.data.stats);
-      } catch {
-        // Keep pre-rendered static stats.
-      }
-    })();
+  useEffect(() => {
+    fetch('/api/units')
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+          setUnits(data.data);
+        }
+      })
+      .catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (cadre && cadreModalRef.current) bootstrap.Modal.getOrCreateInstance(cadreModalRef.current).show();
-  }, [cadre]);
-
-  useEffect(() => {
-    if (unit && unitModalRef.current) bootstrap.Modal.getOrCreateInstance(unitModalRef.current).show();
-  }, [unit]);
 
   return (
     <div className="container my-3">
-      <div className="breadcrumb-box"><a href="/">Trang chủ</a> / <span className="text-muted">Cơ cấu tổ chức Công đoàn TDMU</span></div>
+      {/* Breadcrumb */}
+      <div className="breadcrumb-box mb-3">
+        <Link to="/">Trang chủ</Link> / <span className="text-muted">Cơ cấu tổ chức Công đoàn TDMU</span>
+      </div>
 
-      <div className="content-box mb-4 py-3">
-        <div className="doc-filter-bar mb-0 border-0 pb-0">
-          {TABS.map((t) => (
-            <button key={t.key} className={`doc-tab-btn${tab === t.key ? ' active' : ''}`} onClick={() => setTab(t.key)}>
-              <i className={`fa-solid ${t.icon} ${t.cls}`}></i> {t.label}
-            </button>
-          ))}
-        </div>
+      {/* Tabs */}
+      <div className="doc-filter-bar mb-4" id="orgTabs">
+        <button
+          className={`doc-tab-btn ${activeTab === 'ban-thuong-vu' ? 'active' : ''}`}
+          onClick={() => setActiveTab('ban-thuong-vu')}
+        >
+          <i className="fa-solid fa-crown text-warning me-1"></i> Ban Thường Vụ
+        </button>
+        <button
+          className={`doc-tab-btn ${activeTab === 'ban-chap-hanh' ? 'active' : ''}`}
+          onClick={() => setActiveTab('ban-chap-hanh')}
+        >
+          <i className="fa-solid fa-users text-primary me-1"></i> Ban Chấp Hành (13 Đ/C)
+        </button>
+        <button
+          className={`doc-tab-btn ${activeTab === 'uy-ban-kiem-tra' ? 'active' : ''}`}
+          onClick={() => setActiveTab('uy-ban-kiem-tra')}
+        >
+          <i className="fa-solid fa-scale-balanced text-success me-1"></i> Ủy Ban Kiểm Tra
+        </button>
+        <button
+          className={`doc-tab-btn ${activeTab === '16-to-cong-doan' ? 'active' : ''}`}
+          onClick={() => setActiveTab('16-to-cong-doan')}
+        >
+          <i className="fa-solid fa-sitemap text-danger me-1"></i> 16 Tổ Công Đoàn Cơ Sở
+        </button>
       </div>
 
       <div className="row g-4">
+        {/* CỘT TRÁI: NỘI DUNG TỔ CHỨC */}
         <div className="col-lg-9">
-          {tab === 'ban-thuong-vu' && (
+          {/* TAB 1: BAN THƯỜNG VỤ */}
+          {activeTab === 'ban-thuong-vu' && (
             <div className="content-box mb-4">
-              <div className="tieudelon"><span><i className="fa-solid fa-crown text-warning me-2"></i>BAN THƯỜNG VỤ CÔNG ĐOÀN KHÓA X (NHIỆM KỲ 2023 – 2028)</span></div>
-              <p className="text-muted small mb-3">Ban Thường vụ là cơ quan lãnh đạo cao nhất giữa hai kỳ họp Ban Chấp hành, trực tiếp chỉ đạo và điều hành mọi hoạt động phong trào đoàn viên. <em>(Bấm vào thẻ để xem hồ sơ phân công chi tiết)</em></p>
-              {bchMembers.slice(0, 3).map((m) => <CadreCard key={m.id} m={m} onClick={setCadre} />)}
-            </div>
-          )}
+              <div className="tieudelon">
+                <span><i className="fa-solid fa-crown text-warning me-2"></i>BAN THƯỜNG VỤ CÔNG ĐOÀN KHÓA X (NHIỆM KỲ 2023 – 2028)</span>
+              </div>
+              <p className="text-muted small mb-3">
+                Ban Thường vụ là cơ quan lãnh đạo cao nhất giữa hai kỳ họp Ban Chấp hành, trực tiếp chỉ đạo và điều hành mọi hoạt động phong trào đoàn viên. <em>(Bấm vào thẻ để xem hồ sơ phân công chi tiết)</em>
+              </p>
 
-          {tab === 'ban-chap-hanh' && (
-            <div className="content-box mb-4">
-              <div className="tieudelon"><span><i className="fa-solid fa-users text-primary me-2"></i>DANH SÁCH BAN CHẤP HÀNH CÔNG ĐOÀN TRƯỜNG NHIỆM KỲ 2023 - 2028 (13 ĐỒNG CHÍ)</span></div>
-              <p className="text-muted small mb-3">Ban Chấp hành đại diện cho khối Đào tạo, Nghiên cứu, Hành chính và các Viện chuyên môn trực thuộc Đại học Thủ Dầu Một. <em>(Bấm vào thẻ để xem hồ sơ chi tiết)</em></p>
-              {bchMembers.map((m) => <CadreCard key={m.id} m={m} onClick={setCadre} />)}
-            </div>
-          )}
-
-          {tab === 'uy-ban-kiem-tra' && (
-            <div className="content-box mb-4">
-              <div className="tieudelon"><span><i className="fa-solid fa-scale-balanced text-success me-2"></i>ỦY BAN KIỂM TRA CÔNG ĐOÀN CƠ SỞ KHÓA X</span></div>
-              <p className="text-muted small mb-3">Thực hiện nhiệm vụ giám sát việc chấp hành Điều lệ Công đoàn Việt Nam, kiểm tra tài chính công đoàn và bảo vệ quyền lợi hợp pháp chính đáng của người lao động. <em>(Bấm vào thẻ để xem phân công)</em></p>
-              {ubktMembers.map((m) => <CadreCard key={m.id} m={m} onClick={setCadre} />)}
-            </div>
-          )}
-
-          {tab === '16-to-cong-doan' && (
-            <div className="content-box mb-4">
-              <div className="tieudelon"><span><i className="fa-solid fa-sitemap text-danger me-2"></i>16 TỔ CÔNG ĐOÀN CƠ SỞ TRỰC THUỘC TDMU</span></div>
-              <p className="text-muted small mb-3">Mạng lưới 16 Tổ công đoàn cơ sở bám sát các khối đào tạo và phòng ban nghiệp vụ. <em>(Bấm vào tổ để xem báo cáo nhân sự &amp; bộ môn trực thuộc)</em></p>
-              {unionUnits.map((u) => (
-                <div className="cadre-card-item" key={u.id} onClick={() => setUnit(u)} title={`Bấm xem thông tin chi tiết và nhân sự của ${u.name}`}>
+              {btvMembers.map(c => (
+                <div key={c.id} className="cadre-card-item" onClick={() => setSelectedCadre(c)} title="Xem hồ sơ phân công chi tiết">
                   <div className="d-flex align-items-center gap-3">
-                    <img src={u.photo} className="cadre-real-avatar" alt={u.lead} onError={(e) => { e.currentTarget.src = FALLBACK_AVATAR; }} />
+                    <img src={c.photo} className="cadre-real-avatar" alt={c.name} />
                     <div>
-                      <h5 className="fw-bold mb-1" style={{ fontSize: '15px', color: '#002855' }}>{u.name} - {u.desc}</h5>
+                      <h5 className="fw-bold mb-1" style={{ fontSize: '15.5px', color: '#002855' }}>{c.name}</h5>
                       <div className="text-muted small">
-                        <span><i className="fa-solid fa-user-tie text-primary me-1"></i> {u.role}: <strong>{u.lead}</strong></span>
-                        <span className="ms-3"><i className="fa-solid fa-phone text-success me-1"></i> {u.phone}</span>
-                        <span className="ms-3"><i className="fa-solid fa-envelope text-primary me-1"></i> {u.email}</span>
+                        <span><i className="fa-solid fa-briefcase text-primary me-1"></i> {c.unit}</span>
+                        <span className="ms-3"><i className="fa-solid fa-envelope text-primary me-1"></i> {c.email}</span>
                       </div>
                     </div>
                   </div>
                   <div className="text-end">
-                    <span className="badge bg-light text-primary border fw-bold" style={{ fontSize: '12px', padding: '5px 10px' }}>{u.members} đoàn viên</span>
-                    <div className="text-muted" style={{ fontSize: '11px', marginTop: '4px' }}><i className="fa-solid fa-circle-info text-primary me-1"></i> Xem chi tiết »</div>
+                    <span className={`cadre-role-tag ${c.tag}`}><i className="fa-solid fa-star me-1"></i> {c.tagText}</span>
+                    <div className="text-muted" style={{ fontSize: '11px', marginTop: '4px' }}><i className="fa-solid fa-circle-info text-primary me-1"></i> Chi tiết »</div>
                   </div>
                 </div>
               ))}
             </div>
           )}
+
+          {/* TAB 2: BAN CHẤP HÀNH (13 Đ/C CÓ ẢNH THẬT) */}
+          {activeTab === 'ban-chap-hanh' && (
+            <div className="content-box mb-4">
+              <div className="tieudelon">
+                <span><i className="fa-solid fa-users text-primary me-2"></i>DANH SÁCH BAN CHẤP HÀNH CÔNG ĐOÀN TRƯỜNG NHIỆM KỲ 2023 - 2028 (13 ĐỒNG CHÍ)</span>
+              </div>
+              <p className="text-muted small mb-3">
+                Ban Chấp hành đại diện cho khối Đào tạo, Nghiên cứu, Hành chính và các Viện chuyên môn trực thuộc Đại học Thủ Dầu Một. <em>(Bấm vào thẻ để xem hồ sơ chi tiết)</em>
+              </p>
+
+              {bchMembers.map(c => (
+                <div key={c.id} className="cadre-card-item" onClick={() => setSelectedCadre(c)} title="Xem hồ sơ chi tiết">
+                  <div className="d-flex align-items-center gap-3">
+                    <img src={c.photo} className="cadre-real-avatar" alt={c.name} />
+                    <div>
+                      <h5 className="fw-bold mb-1" style={{ fontSize: '15.5px', color: '#002855' }}>{c.name}</h5>
+                      <div className="text-muted small">
+                        <span><i className="fa-solid fa-briefcase text-primary me-1"></i> {c.title} ({c.unit})</span>
+                        <span className="ms-3"><i className="fa-solid fa-envelope text-primary me-1"></i> {c.email}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-end">
+                    <span className={`cadre-role-tag ${c.tag}`}>{c.tagText}</span>
+                    <div className="text-muted" style={{ fontSize: '11px', marginTop: '4px' }}><i className="fa-solid fa-circle-info text-primary me-1"></i> Chi tiết »</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* TAB 3: ỦY BAN KIỂM TRA */}
+          {activeTab === 'uy-ban-kiem-tra' && (
+            <div className="content-box mb-4">
+              <div className="tieudelon">
+                <span><i className="fa-solid fa-scale-balanced text-success me-2"></i>ỦY BAN KIỂM TRA CÔNG ĐOÀN CƠ SỞ TDMU</span>
+              </div>
+              <p className="text-muted small mb-3">
+                Ủy ban Kiểm tra thực hiện nhiệm vụ giám sát thi hành Điều lệ Công đoàn, quản lý tài chính và bảo vệ quyền lợi hợp pháp người lao động.
+              </p>
+
+              {ubktMembers.map(c => (
+                <div key={c.id} className="cadre-card-item" onClick={() => setSelectedCadre(c)} title="Xem hồ sơ chi tiết">
+                  <div className="d-flex align-items-center gap-3">
+                    <img src={c.photo} className="cadre-real-avatar" alt={c.name} />
+                    <div>
+                      <h5 className="fw-bold mb-1" style={{ fontSize: '15.5px', color: '#002855' }}>{c.name}</h5>
+                      <div className="text-muted small">
+                        <span><i className="fa-solid fa-briefcase text-primary me-1"></i> {c.title}</span>
+                        <span className="ms-3"><i className="fa-solid fa-envelope text-primary me-1"></i> {c.email}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-end">
+                    <span className={`cadre-role-tag ${c.tag}`}>{c.tagText}</span>
+                    <div className="text-muted" style={{ fontSize: '11px', marginTop: '4px' }}><i className="fa-solid fa-circle-info text-primary me-1"></i> Chi tiết »</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* TAB 4: 16 TỔ CÔNG ĐOÀN CƠ SỞ */}
+          {activeTab === '16-to-cong-doan' && (
+            <div className="content-box mb-4">
+              <div className="tieudelon">
+                <span><i className="fa-solid fa-sitemap text-danger me-2"></i>DANH SÁCH 16 TỔ CÔNG ĐOÀN BỘ PHẬN TRỰC THUỘC</span>
+              </div>
+              <p className="text-muted small mb-3">
+                Hệ thống 16 Tổ công đoàn bộ phận tại các Viện, Khoa, Trung tâm và Phòng ban thực hiện nhiệm vụ sâu sát đến từng đoàn viên.
+              </p>
+              <div className="table-responsive">
+                <table className="table table-bordered table-hover align-middle" style={{ fontSize: '13px' }}>
+                  <thead className="table-primary">
+                    <tr>
+                      <th style={{ width: '60px', textAlign: 'center' }}>Mã</th>
+                      <th>Tên Tổ Công Đoàn</th>
+                      <th>Tổ Trưởng / Đại Diện</th>
+                      <th>Email Liên Hệ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(units.length > 0 ? units : [
+                      { id: 1, code: 'TCD01', name: 'Tổ Công đoàn Viện Công nghệ số', leader: 'TS. Võ Quốc Lương', email: 'tcd_cntt@tdmu.edu.vn' },
+                      { id: 2, code: 'TCD02', name: 'Tổ Công đoàn Khoa Kinh tế', leader: 'ThS. Trần Đức Hoàn', email: 'tcd_kinhte@tdmu.edu.vn' },
+                      { id: 3, code: 'TCD03', name: 'Tổ Công đoàn Khoa Sư phạm', leader: 'ThS. Lê Nguyễn Xuân Lan', email: 'tcd_supham@tdmu.edu.vn' },
+                      { id: 4, code: 'TCD04', name: 'Tổ Công đoàn Trường Luật và Quản lý', leader: 'ThS. Võ Nguyễn Đoan Trinh', email: 'tcd_luat@tdmu.edu.vn' },
+                      { id: 5, code: 'TCD05', name: 'Tổ Công đoàn Khoa Kỹ thuật Công nghệ', leader: 'ThS. Nguyễn Võ Thành Long', email: 'tcd_ktcn@tdmu.edu.vn' },
+                      { id: 6, code: 'TCD06', name: 'Tổ Công đoàn Khoa Ngoại ngữ', leader: 'ThS. Huỳnh Thanh Thúy', email: 'tcd_ngoainngu@tdmu.edu.vn' },
+                      { id: 7, code: 'TCD07', name: 'Tổ Công đoàn Phòng Quản lý Khoa học', leader: 'TS. Lê Thị Kim Út', email: 'tcd_qlkh@tdmu.edu.vn' },
+                      { id: 8, code: 'TCD08', name: 'Tổ Công đoàn Phòng Tổ chức Cán bộ', leader: 'ThS. Phan Nguyễn Hồng Diễm', email: 'tcd_tccb@tdmu.edu.vn' },
+                      { id: 9, code: 'TCD09', name: 'Tổ Công đoàn Phòng Đào tạo Đại học', leader: 'ThS. Phú Thị Tuyết Nga', email: 'tcd_daotao@tdmu.edu.vn' },
+                      { id: 10, code: 'TCD10', name: 'Tổ Công đoàn Phòng Quản trị Thiết bị', leader: 'ThS. Âu Minh Triết', email: 'tcd_qttb@tdmu.edu.vn' },
+                      { id: 11, code: 'TCD11', name: 'Tổ Công đoàn Phòng Kế hoạch Tài chính', leader: 'CN. Nguyễn Thị Thanh Thảo', email: 'tcd_khtc@tdmu.edu.vn' },
+                      { id: 12, code: 'TCD12', name: 'Tổ Công đoàn Phòng Công tác Sinh viên', leader: 'ThS. Nguyễn Thanh Triều', email: 'tcd_ctsv@tdmu.edu.vn' },
+                      { id: 13, code: 'TCD13', name: 'Tổ Công đoàn Trung tâm Học liệu', leader: 'ThS. Hoàng Thị Lan', email: 'tcd_thuvien@tdmu.edu.vn' },
+                      { id: 14, code: 'TCD14', name: 'Tổ Công đoàn Khoa Khoa học Tự nhiên', leader: 'TS. Nguyễn Hữu Dũng', email: 'tcd_khtn@tdmu.edu.vn' },
+                      { id: 15, code: 'TCD15', name: 'Tổ Công đoàn Khoa Khoa học Xã hội & Nhân văn', leader: 'TS. Vũ Văn Hải', email: 'tcd_khxhnv@tdmu.edu.vn' },
+                      { id: 16, code: 'TCD16', name: 'Tổ Công đoàn Khối Viện Nghiên cứu & Trạm Trại', leader: 'TS. Lê Tuấn Anh', email: 'tcd_vien@tdmu.edu.vn' }
+                    ]).map((u, i) => (
+                      <tr key={u.id || i}>
+                        <td className="text-center fw-bold text-primary">{u.code || `TCD${String(i + 1).padStart(2, '0')}`}</td>
+                        <td><strong>{u.name}</strong></td>
+                        <td>{u.leader || 'Ban Chấp Hành Tổ'}</td>
+                        <td className="text-muted"><i className="fa-regular fa-envelope me-1"></i>{u.email}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
 
+        {/* CỘT PHẢI: QUY MÔ TỔ CHỨC & LIÊN KẾT */}
         <div className="col-lg-3">
-          <div className="panel-tdmu">
-            <div className="panel-heading-tdmu"><i className="fa-solid fa-link me-2 text-primary"></i>Liên kết website</div>
-            <div className="list-group-tdmu">
-              <a href="https://tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item"><i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đại học Thủ Dầu Một</a>
-              <a href="https://danguy.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item"><i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đảng Bộ Đại học TDMU</a>
-              <a href="https://www.congdoan.vn" target="_blank" rel="noreferrer" className="list-group-item"><i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Tổng LĐLĐ Việt Nam</a>
-              <a href="https://congdoanbinhduong.org.vn/" target="_blank" rel="noreferrer" className="list-group-item"><i className="fa-solid fa-chevron-right me-1 text-muted small"></i> LĐLĐ Tỉnh Bình Dương</a>
-              <a href="https://lib.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item"><i className="fa-solid fa-chevron-right me-1 text-muted small"></i> TT Học Liệu ĐH TDMU</a>
+          <div className="panel-tdmu mb-4">
+            <div className="panel-heading-tdmu"><i className="fa-solid fa-sitemap me-2 text-primary"></i>Quy mô tổ chức</div>
+            <div className="p-3" style={{ fontSize: '13px' }}>
+              <p className="mb-2"><i className="fa-solid fa-users text-primary me-2"></i> Tổng đoàn viên: <strong>760 cán bộ</strong></p>
+              <p className="mb-2"><i className="fa-solid fa-building text-warning me-2"></i> Tổ công đoàn: <strong>16 đơn vị</strong></p>
+              <p className="mb-2"><i className="fa-solid fa-user-tie text-success me-2"></i> Cán bộ BTV/BCH: <strong>13 đồng chí</strong></p>
+              <p className="mb-0"><i className="fa-solid fa-calendar-check text-info me-2"></i> Nhiệm kỳ: <strong>2023 - 2028</strong></p>
             </div>
           </div>
 
           <div className="panel-tdmu">
-            <div className="panel-heading-tdmu"><i className="fa-solid fa-chart-pie me-2 text-warning"></i>Quy mô tổ chức</div>
-            <div className="p-3" style={{ fontSize: '13px' }}>
-              <p className="mb-2"><i className="fa-solid fa-users text-primary me-2"></i> Đoàn viên: <strong>{stats.total_members} đoàn viên</strong></p>
-              <p className="mb-2"><i className="fa-solid fa-sitemap text-danger me-2"></i> Tổ công đoàn: <strong>{stats.total_units} Tổ cơ sở</strong></p>
-              <p className="mb-0"><i className="fa-solid fa-medal text-success me-2"></i> Ban chuyên môn: <strong>{stats.total_boards} Ban nghiệp vụ</strong></p>
+            <div className="panel-heading-tdmu"><i className="fa-solid fa-link me-2 text-primary"></i>Liên kết website</div>
+            <div className="list-group-tdmu">
+              <a href="http://tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item"><i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đại học Thủ Dầu Một</a>
+              <a href="http://danguy.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item"><i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đảng Bộ ĐH Thủ Dầu Một</a>
+              <a href="http://congdoanbinhduong.org.vn/" target="_blank" rel="noreferrer" className="list-group-item"><i className="fa-solid fa-chevron-right me-1 text-muted small"></i> LĐLĐ Tỉnh Bình Dương</a>
             </div>
           </div>
         </div>
       </div>
 
-      {cadre && (
-        <div className="modal fade" ref={cadreModalRef} tabIndex="-1" aria-hidden="true">
-          <div className="modal-dialog modal-lg modal-dialog-centered">
-            <div className="modal-content" style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
-              <div className="profile-modal-header d-flex justify-content-between align-items-center">
-                <h5 className="modal-title fw-bold" style={{ fontSize: '17px' }}><i className="fa-solid fa-id-card text-warning me-2"></i> HỒ SƠ CÁN BỘ CÔNG ĐOÀN TDMU</h5>
-                <button type="button" className="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-              </div>
-              <div className="modal-body p-4 bg-light">
-                <div className="row g-4 align-items-start">
-                  <div className="col-md-4 text-center">
-                    <img src={cadre.photo} className="profile-large-img" alt={cadre.name} onError={(e) => { e.currentTarget.src = FALLBACK_AVATAR; }} />
-                    <div className="mt-3"><span className="badge" style={{ background: '#002855', color: '#FEF08A', fontSize: '12px', padding: '6px 14px' }}>{cadre.tagText.toUpperCase()}</span></div>
-                  </div>
-                  <div className="col-md-8">
-                    <h4 className="fw-bold text-dark mb-1">{cadre.name}</h4>
-                    <p className="text-primary fw-bold small mb-3">{cadre.title}</p>
-                    <div className="bg-white p-3 rounded border shadow-sm">
-                      <div className="profile-info-row"><span className="profile-info-label"><i className="fa-solid fa-graduation-cap text-primary me-2"></i> Học vị:</span><span className="profile-info-val">{cadre.degree}</span></div>
-                      <div className="profile-info-row"><span className="profile-info-label"><i className="fa-solid fa-building text-primary me-2"></i> Đơn vị công tác:</span><span className="profile-info-val">{cadre.unit}</span></div>
-                      <div className="profile-info-row"><span className="profile-info-label"><i className="fa-solid fa-briefcase text-primary me-2"></i> Nhiệm vụ phân công:</span><span className="profile-info-val">{cadre.duties}</span></div>
-                      <div className="profile-info-row border-bottom-0"><span className="profile-info-label"><i className="fa-solid fa-envelope text-primary me-2"></i> Email công vụ:</span><span className="profile-info-val">{cadre.email}</span></div>
-                    </div>
-                  </div>
+      {/* Cadre Detail Modal */}
+      {selectedCadre && (
+        <>
+          <div className="modal-backdrop fade show" style={{ zIndex: 1050 }} onClick={() => setSelectedCadre(null)}></div>
+          <div className="modal fade show d-block" tabIndex="-1" role="dialog" style={{ zIndex: 1055 }} onClick={() => setSelectedCadre(null)}>
+            <div className="modal-dialog modal-dialog-centered" onClick={e => e.stopPropagation()}>
+              <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '10px', overflow: 'hidden' }}>
+                <div className="profile-modal-header d-flex justify-content-between align-items-center">
+                  <h6 className="modal-title fw-bold mb-0 text-white">
+                    <i className="fa-solid fa-address-card me-2 text-warning"></i>
+                    HỒ SƠ CÁN BỘ CÔNG ĐOÀN TDMU
+                  </h6>
+                  <button type="button" className="btn-close btn-close-white" onClick={() => setSelectedCadre(null)}></button>
                 </div>
-              </div>
-              <div className="modal-footer bg-white py-2">
-                <button type="button" className="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng cửa sổ</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+                <div className="modal-body p-4 bg-light">
+                  <div className="text-center mb-3">
+                    <img src={selectedCadre.photo} className="profile-large-img" alt={selectedCadre.name} />
+                    <h5 className="fw-bold mt-3 mb-1" style={{ color: '#002855' }}>{selectedCadre.name}</h5>
+                    <span className={`cadre-role-tag ${selectedCadre.tag}`}>{selectedCadre.title}</span>
+                  </div>
 
-      {unit && (
-        <div className="modal fade" ref={unitModalRef} tabIndex="-1" aria-hidden="true">
-          <div className="modal-dialog modal-lg modal-dialog-centered">
-            <div className="modal-content" style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
-              <div className="profile-modal-header d-flex justify-content-between align-items-center" style={{ background: '#002855' }}>
-                <h5 className="modal-title fw-bold text-white" style={{ fontSize: '17px' }}><i className="fa-solid fa-sitemap text-warning me-2"></i> THÔNG TIN TỔ CÔNG ĐOÀN CƠ SỞ TDMU</h5>
-                <button type="button" className="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-              </div>
-              <div className="modal-body p-4 bg-light">
-                <div className="row g-4 align-items-start">
-                  <div className="col-md-4 text-center">
-                    <img src={unit.photo} className="profile-large-img" alt={unit.lead} onError={(e) => { e.currentTarget.src = FALLBACK_AVATAR; }} />
-                    <div className="mt-2"><span className="badge" style={{ background: '#002855', color: '#FEF08A', fontSize: '12px', padding: '6px 14px' }}>{unit.role.toUpperCase()}</span></div>
-                    <h5 className="fw-bold text-dark mt-2 mb-1">{unit.lead}</h5>
-                    <div className="text-muted small mb-2"><i className="fa-solid fa-phone text-success me-1"></i> <strong>{unit.phone}</strong></div>
-                    <div className="text-muted small"><i className="fa-solid fa-envelope text-primary me-1"></i> {unit.email}</div>
-                  </div>
-                  <div className="col-md-8">
-                    <h4 className="fw-bold mb-1" style={{ color: '#002855' }}>{unit.name}</h4>
-                    <p className="text-muted small mb-3">{unit.desc}</p>
-                    <div className="row g-2 mb-3">
-                      <div className="col-4 text-center p-2 border rounded bg-white shadow-sm"><div className="fs-4 fw-bold text-primary">{unit.members}</div><div className="text-muted" style={{ fontSize: '11.5px' }}>Tổng đoàn viên</div></div>
-                      <div className="col-4 text-center p-2 border rounded bg-white shadow-sm"><div className="fs-4 fw-bold text-danger">{unit.females}</div><div className="text-muted" style={{ fontSize: '11.5px' }}>Nữ đoàn viên</div></div>
-                      <div className="col-4 text-center p-2 border rounded bg-white shadow-sm"><div className="fs-4 fw-bold text-success">{unit.party}</div><div className="text-muted" style={{ fontSize: '11.5px' }}>Đoàn viên Đảng viên</div></div>
+                  <div className="bg-white p-3 rounded border shadow-sm">
+                    <div className="profile-info-row">
+                      <span className="profile-info-label"><i className="fa-solid fa-graduation-cap text-primary me-2"></i> Trình độ chuyên môn:</span>
+                      <span className="profile-info-val">{selectedCadre.degree}</span>
                     </div>
-                    <div className="bg-white p-3 rounded border shadow-sm">
-                      <div className="profile-info-row"><span className="profile-info-label"><i className="fa-solid fa-building-user text-primary me-2"></i> Khối trực thuộc:</span><span className="profile-info-val">{unit.unitName}</span></div>
-                      <div className="profile-info-row"><span className="profile-info-label"><i className="fa-solid fa-award text-primary me-2"></i> Thi đua khen thưởng:</span><span className="profile-info-val"><span className="badge bg-success">Loại A - Xuất sắc tiêu biểu</span></span></div>
-                      <div className="profile-info-row border-bottom-0"><span className="profile-info-label"><i className="fa-solid fa-calendar-check text-primary me-2"></i> Chế độ sinh hoạt:</span><span className="profile-info-val text-muted">Định kỳ tháng theo quy chế Công đoàn Trường</span></div>
+                    <div className="profile-info-row">
+                      <span className="profile-info-label"><i className="fa-solid fa-briefcase text-primary me-2"></i> Đơn vị công tác:</span>
+                      <span className="profile-info-val">{selectedCadre.unit}</span>
+                    </div>
+                    <div className="profile-info-row">
+                      <span className="profile-info-label"><i className="fa-solid fa-envelope text-primary me-2"></i> Email liên hệ:</span>
+                      <span className="profile-info-val text-primary fw-bold">{selectedCadre.email}</span>
+                    </div>
+                    <div className="profile-info-row border-bottom-0">
+                      <span className="profile-info-label"><i className="fa-solid fa-list-check text-primary me-2"></i> Phân công nhiệm vụ:</span>
+                      <span className="profile-info-val text-muted">{selectedCadre.duties}</span>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="modal-footer bg-white py-2">
-                <button type="button" className="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng cửa sổ</button>
+                <div className="modal-footer bg-white py-2">
+                  <button type="button" className="btn btn-sm btn-secondary" onClick={() => setSelectedCadre(null)}>Đóng cửa sổ</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

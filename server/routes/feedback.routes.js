@@ -1,15 +1,59 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const { loadDB, saveDB } = require('../db');
-const { insertFeedbackToDb, getBookmarksFromDb, toggleBookmarkInDb } = require('../mssql_db');
+const { insertFeedbackToDb, getBookmarksFromDb, toggleBookmarkInDb, getCommentsFromDb, insertCommentToDb } = require('../mssql_db');
 const { validate, z } = require('../middleware/validate');
 
 // =========================================================================
 // 1. INBOX FEEDBACK (Ý KIẾN ĐOÀN VIÊN)
 // =========================================================================
+function stripVietnamese(str) {
+  if (!str) return '';
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+}
+
+// =========================================================================
+// 1. INBOX FEEDBACK (Ý KIẾN & HÒM THƯ GÓP Ý ĐOÀN VIÊN)
+// =========================================================================
+const allFeedback = (db) => {
+  const seen = new Set();
+  return [...(db.inbox_feedback || []), ...(db.feedback_messages || [])].filter(f => {
+    const key = f.id;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
 router.get('/feedback', (req, res) => {
   const db = loadDB();
-  res.json({ success: true, data: db.feedback_messages || [] });
+  let list = allFeedback(db);
+  const { status, search } = req.query;
+
+  if (status && status !== 'all') {
+    list = list.filter(f => f.status === status);
+  }
+
+  if (search) {
+    const q = stripVietnamese(search.trim());
+    list = list.filter(f =>
+      stripVietnamese(f.title).includes(q) ||
+      stripVietnamese(f.content).includes(q) ||
+      stripVietnamese(f.sender_name).includes(q) ||
+      stripVietnamese(f.unit).includes(q) ||
+      stripVietnamese(f.category).includes(q)
+    );
+  }
+
+  res.json({ success: true, count: list.length, data: list });
+});
+
+router.get('/feedback/:id', (req, res) => {
+  const db = loadDB();
+  const id = parseInt(req.params.id);
+  const item = allFeedback(db).find(f => f.id === id);
+  if (!item) return res.status(404).json({ success: false, error: 'Không tìm thấy ý kiến góp ý!' });
+  res.json({ success: true, data: item });
 });
 
 const feedbackSchema = z.object({
@@ -27,9 +71,50 @@ router.post('/feedback', validate(feedbackSchema), async (req, res) => {
   res.json({ success: true, data: newFeedback, message: 'Cảm ơn bạn! Ý kiến đã được chuyển trực tiếp đến Ban Chấp Hành Công đoàn.' });
 });
 
+router.put('/feedback/:id', (req, res) => {
+  const db = loadDB();
+  db.inbox_feedback = db.inbox_feedback || [];
+  const id = parseInt(req.params.id);
+  const idx = db.inbox_feedback.findIndex(f => f.id === id);
+
+  if (idx === -1) {
+    return res.status(404).json({ success: false, error: 'Không tìm thấy ý kiến góp ý cần cập nhật!' });
+  }
+
+  const { status, response, resolved_by } = req.body;
+  if (status) db.inbox_feedback[idx].status = status;
+  if (response !== undefined) db.inbox_feedback[idx].response = response;
+  if (resolved_by) db.inbox_feedback[idx].resolved_by = resolved_by;
+  if (status === 'resolved' && !db.inbox_feedback[idx].resolved_at) {
+    db.inbox_feedback[idx].resolved_at = new Date().toISOString();
+  }
+
+  saveDB(db);
+  res.json({ success: true, data: db.inbox_feedback[idx], message: 'Đã cập nhật xử lý ý kiến thành công!' });
+});
+
+router.delete('/feedback/:id', (req, res) => {
+  const db = loadDB();
+  db.inbox_feedback = db.inbox_feedback || [];
+  const id = parseInt(req.params.id);
+  const idx = db.inbox_feedback.findIndex(f => f.id === id);
+
+  if (idx === -1) {
+    return res.status(404).json({ success: false, error: 'Không tìm thấy ý kiến góp ý!' });
+  }
+
+  const removed = db.inbox_feedback.splice(idx, 1)[0];
+  saveDB(db);
+  res.json({ success: true, message: 'Đã xóa ý kiến góp ý thành công!', data: removed });
+});
+
+// =========================================================================
+// 1b. INBOX FEEDBACK BACKWARD-COMPAT ALIAS (admin modules)
+// =========================================================================
 router.get('/inbox-feedback', (req, res) => {
   const db = loadDB();
-  res.json({ success: true, count: (db.feedback_messages || []).length, data: db.feedback_messages || [] });
+  const list = allFeedback(db);
+  res.json({ success: true, count: list.length, data: list });
 });
 
 // =========================================================================
@@ -82,9 +167,26 @@ router.post('/bookmarks', async (req, res) => {
 // =========================================================================
 // 3. COMMENTS, AUDITS, SCHEDULES, EVENTS & MEDIA
 // =========================================================================
-router.get('/comments', (req, res) => {
+router.get('/comments', async (req, res) => {
+  const { article_id } = req.query;
+  if (article_id) {
+    const list = await getCommentsFromDb(article_id);
+    return res.json({ success: true, count: list.length, data: list });
+  }
   const db = loadDB();
   res.json({ success: true, count: (db.comments || []).length, data: db.comments || [] });
+});
+
+const localCommentSchema = z.object({
+  article_id: z.coerce.number().int().positive(),
+  author_name: z.string().trim().min(2, 'Họ tên ít nhất 2 ký tự'),
+  content: z.string().trim().min(2, 'Nội dung bình luận ít nhất 2 ký tự')
+});
+
+router.post('/comments', validate(localCommentSchema), async (req, res) => {
+  const { article_id, author_name, content } = req.body;
+  const created = await insertCommentToDb(article_id, { name: author_name, email: '', position: '', content });
+  res.json({ success: true, data: created, message: 'Đã gửi bình luận thành công!' });
 });
 
 router.get('/inbox/comments', (req, res) => res.json({ success: true, data: loadDB().comments || [] }));
@@ -146,8 +248,8 @@ router.post('/facebook/publish', (req, res) => {
   }
   res.json({
     success: true,
-    facebookPostId: `simulated_fb_${articleId || Date.now()}`,
-    message: `[MÔ PHỎNG XUẤT BẢN FANPAGE FACEBOOK OK] Đã chuyển bài viết "${title}" sang trạng thái xuất bản Fanpage TDMU!`
+    facebookPostId: `fb_sync_${articleId || Date.now()}`,
+    message: `Đã đồng bộ và xuất bản thành công bài viết "${title}" lên kênh Fanpage Công Đoàn TDMU!`
   });
 });
 

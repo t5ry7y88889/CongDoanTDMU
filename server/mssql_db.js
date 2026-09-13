@@ -576,9 +576,9 @@ async function insertFeedbackToDb(data) {
   }
 
   const db = loadDB();
-  db.feedback_messages = db.feedback_messages || [];
+  db.inbox_feedback = db.inbox_feedback || [];
   const newFeedback = {
-    id: db.feedback_messages.length ? Math.max(...db.feedback_messages.map(f => f.id || 0)) + 1 : 1,
+    id: db.inbox_feedback.length ? Math.max(...db.inbox_feedback.map(f => f.id || 0)) + 1 : 1,
     sender_name: data.sender_name,
     email: data.email || '',
     phone: data.phone || '',
@@ -588,9 +588,11 @@ async function insertFeedbackToDb(data) {
     content: data.content,
     submitted_at: new Date().toISOString(),
     status: 'pending',
-    response: null
+    response: null,
+    resolved_by: null,
+    resolved_at: null
   };
-  db.feedback_messages.push(newFeedback);
+  db.inbox_feedback.unshift(newFeedback);
   saveDB(db);
   return newFeedback;
 }
@@ -631,9 +633,9 @@ async function insertWelfareApplicationToDb(data) {
   }
 
   const db = loadDB();
-  db.assistance_applications = db.assistance_applications || [];
+  db.don_tro_cap = db.don_tro_cap || [];
   const newApp = {
-    id: db.assistance_applications.length ? Math.max(...db.assistance_applications.map(d => d.id || 0)) + 1 : 1,
+    id: db.don_tro_cap.length ? Math.max(...db.don_tro_cap.map(d => d.id || 0)) + 1 : 1,
     full_name: data.full_name,
     unit: data.unit || 'Đoàn viên TDMU',
     phone: data.phone || '',
@@ -645,7 +647,7 @@ async function insertWelfareApplicationToDb(data) {
     status: 'pending',
     note: 'Chờ Ban Thường Vụ xét duyệt'
   };
-  db.assistance_applications.push(newApp);
+  db.don_tro_cap.unshift(newApp);
   saveDB(db);
   return newApp;
 }
