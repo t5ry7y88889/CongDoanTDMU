@@ -1,14 +1,14 @@
-// SERVICE WORKER - PWA CACHING FOR TDMU TRADE UNION PORTAL
-const CACHE_NAME = 'tdmu-union-cache-v1';
+// SERVICE WORKER - PWA CACHING FOR TDMU TRADE UNION SPA PORTAL
+const CACHE_NAME = 'tdmu-union-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
-  '/index.html',
-  '/tin-tuc.html',
-  '/co-cau-to-chuc.html',
-  '/phuc-loi-doan-vien.html',
-  '/van-ban.html',
-  '/bieu-mau.html',
-  '/lien-he.html',
+  '/tin-tuc',
+  '/bai-viet',
+  '/co-cau-to-chuc',
+  '/phuc-loi-doan-vien',
+  '/van-ban',
+  '/bieu-mau',
+  '/lien-he',
   '/css/portal.css'
 ];
 

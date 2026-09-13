@@ -183,13 +183,13 @@ function renderDocumentsPage() {
 
   tbody.innerHTML = displayList.map(d => `
     <tr style="border-bottom: 1px solid #E2E8F0;">
-      <td style="padding: 12px; font-weight: 700; color: #003865;">${d.so_hieu || d.SoHieuVanBan || 'N/A'}</td>
-      <td style="padding: 12px; font-weight: 600; color: #1E293B;">${d.tieu_de || d.TenVanBan || ''}</td>
-      <td style="padding: 12px;"><span class="badge badge-info" style="font-size: 11px;">${d.loai_van_ban_ten || d.loai_van_ban || 'Văn bản'}</span></td>
-      <td style="padding: 12px; font-size: 13px; color: #64748B;">${d.ngay_ban_hanh || ''}</td>
+      <td style="padding: 12px; font-weight: 700; color: #003865;">${d.reference_number || d.so_hieu || d.SoHieuVanBan || 'N/A'}</td>
+      <td style="padding: 12px; font-weight: 600; color: #1E293B;">${d.title || d.tieu_de || d.TenVanBan || ''}</td>
+      <td style="padding: 12px;"><span class="badge badge-info" style="font-size: 11px;">${d.category_name || d.category || d.loai_van_ban_ten || d.loai_van_ban || 'Văn bản'}</span></td>
+      <td style="padding: 12px; font-size: 13px; color: #64748B;">${d.issued_date || d.ngay_ban_hanh || ''}</td>
       <td style="padding: 12px; text-align: right;">
         <a href="${d.file_url || '#'}" target="_blank" class="btn btn-sm btn-outline" style="font-size: 11.5px; padding: 4px 8px; text-decoration: none; color: #0284C7; border: 1px solid #BAE6FD;">
-          <i class="fa-solid fa-download me-1"></i> Tải Về (${d.dung_luong || 'PDF'})
+          <i class="fa-solid fa-download me-1"></i> Tải Về (${d.file_size || d.dung_luong || 'PDF'})
         </a>
       </td>
     </tr>

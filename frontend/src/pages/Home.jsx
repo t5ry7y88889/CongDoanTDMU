@@ -162,13 +162,13 @@ const Home = () => {
               <div className="list-group-vb">
                 {documents.length > 0 ? (
                   documents.map(doc => (
-                    <a href={`/van-ban.html#${doc.loai_van_ban || 'all'}`} className="list-group-vb-item" key={doc.id}>
+                    <a href={`/van-ban.html#${doc.category || 'all'}`} className="list-group-vb-item" key={doc.id}>
                       <span>
                         <i className="fa-regular fa-file-pdf text-danger me-2 fa-lg"></i> 
-                        <strong>[{doc.so_hieu}]</strong> {doc.tieu_de}
+                        <strong>[{doc.reference_number}]</strong> {doc.title}
                       </span>
                       <span className="badge bg-light text-primary border">
-                        <i className="fa-solid fa-download me-1"></i> {doc.dung_luong || '1.5 MB'}
+                        <i className="fa-solid fa-download me-1"></i> {doc.file_size || '1.5 MB'}
                       </span>
                     </a>
                   ))

@@ -2,6 +2,18 @@
 const router = express.Router();
 const { loadDB, saveDB } = require('../db');
 const { getDocumentsFromDb } = require('../mssql_db');
+const { validate, z } = require('../middleware/validate');
+
+const documentSchema = z.object({
+  reference_number: z.string().trim().min(1, 'Số hiệu văn bản là bắt buộc'),
+  title: z.string().trim().min(1, 'Trích yếu văn bản là bắt buộc'),
+  category: z.enum(['tuyentruyen', 'kehoach', 'luat', 'quyetdinh']).optional(),
+  issuer: z.string().trim().optional(),
+  issued_date: z.string().trim().optional(),
+  signer: z.string().trim().optional(),
+  file_url: z.string().trim().optional(),
+  file_size: z.string().trim().optional()
+});
 
 router.get('/', async (req, res) => {
   const { category, search } = req.query;
@@ -9,11 +21,8 @@ router.get('/', async (req, res) => {
   res.json({ success: true, count: list.length, data: list });
 });
 
-router.post('/', (req, res) => {
-  const { so_hieu, tieu_de, loai_van_ban, co_quan_ban_hanh, ngay_ban_hanh, nguoi_ky, file_url, dung_luong } = req.body;
-  if (!so_hieu || !tieu_de) {
-    return res.json({ success: false, error: 'Số hiệu và Trích yếu văn bản là bắt buộc!' });
-  }
+router.post('/', validate(documentSchema), (req, res) => {
+  const { reference_number, title, category, issuer, issued_date, signer, file_url, file_size } = req.body;
 
   const categoryNames = {
     'tuyentruyen': 'Công văn tuyên truyền',
@@ -28,20 +37,16 @@ router.post('/', (req, res) => {
 
   const newDoc = {
     id: nextId,
-    MaVanBan: nextId,
-    so_hieu: so_hieu.trim(),
-    SoHieuVanBan: so_hieu.trim(),
-    tieu_de: tieu_de.trim(),
-    TenVanBan: tieu_de.trim(),
-    loai_van_ban: loai_van_ban || 'tuyentruyen',
-    loai_van_ban_ten: categoryNames[loai_van_ban] || 'Công văn tuyên truyền',
-    co_quan_ban_hanh: co_quan_ban_hanh || 'Ban Thường Vụ Công Đoàn TDMU',
-    ngay_ban_hanh: ngay_ban_hanh || new Date().toISOString().split('T')[0],
-    nguoi_ky: nguoi_ky || 'Ban Thường Vụ',
-    NguoiKy: nguoi_ky || 'Ban Thường Vụ',
+    reference_number: reference_number.trim(),
+    title: title.trim(),
+    category: category || 'tuyentruyen',
+    category_name: categoryNames[category] || 'Công văn tuyên truyền',
+    issuer: issuer || 'Ban Thường Vụ Công Đoàn TDMU',
+    issued_date: issued_date || new Date().toISOString().split('T')[0],
+    signer: signer || 'Ban Thường Vụ',
     file_url: file_url || 'uploads/documents/van_ban_' + nextId + '.pdf',
-    dung_luong: dung_luong || '1.5 MB',
-    luot_tai: 0,
+    file_size: file_size || '1.5 MB',
+    download_count: 0,
     created_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
   };
 
@@ -55,7 +60,7 @@ router.delete('/:id', (req, res) => {
   const db = loadDB();
   db.documents = db.documents || [];
   const id = parseInt(req.params.id);
-  const idx = db.documents.findIndex(d => d.id === id || d.MaVanBan === id);
+  const idx = db.documents.findIndex(d => d.id === id);
   if (idx === -1) {
     return res.json({ success: false, error: 'Không tìm thấy văn bản!' });
   }

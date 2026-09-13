@@ -1,7 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const Header = () => {
+  const { pathname } = useLocation();
+  const isExact = (path) => (path === '/' ? pathname === '/' : pathname.startsWith(path));
+  const isTinTuc = pathname.startsWith('/tin-tuc') || pathname.startsWith('/bai-viet');
+
   return (
     <>
       <header className="top-brand-header">
@@ -19,6 +23,9 @@ const Header = () => {
             <span className="badge-hotline">
               <i className="fa-solid fa-phone me-1 text-warning"></i> Hotline: (0274) 3.815.184
             </span>
+            <button className="btn-portal-access" type="button" data-bs-toggle="offcanvas" data-bs-target="#bookmarksOffcanvas" title="Tủ sách đọc sau">
+              <i className="fa-solid fa-bookmark me-1 text-warning"></i> Tủ sách đọc sau
+            </button>
             <a href="/admin.html" className="btn-portal-access">
               <i className="fa-solid fa-sliders me-1 text-warning"></i> Quản lý website truyền thông công đoàn TDMU
             </a>
@@ -33,38 +40,38 @@ const Header = () => {
           </button>
           <div className="collapse navbar-collapse" id="tdmuNavbar">
             <ul className="navbar-nav mx-auto">
-              <li className="nav-item"><Link className="nav-link active" to="/">Trang Chủ</Link></li>
-              <li className="nav-item"><a className="nav-link" href="/gioi-thieu.html">Giới Thiệu</a></li>
-              
+              <li className="nav-item"><Link className={`nav-link${pathname === '/' ? ' active' : ''}`} to="/">Trang Chủ</Link></li>
+              <li className="nav-item"><Link className={`nav-link${isExact('/gioi-thieu') ? ' active' : ''}`} to="/gioi-thieu">Giới Thiệu</Link></li>
+
               <li className="nav-item dropdown">
-                <a className="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                <a className={`nav-link dropdown-toggle${isExact('/co-cau-to-chuc') ? ' active' : ''}`} href="/co-cau-to-chuc" data-bs-toggle="dropdown">
                   Cơ Cấu Tổ Chức
                 </a>
                 <ul className="dropdown-menu">
-                  <li><a className="dropdown-item" href="/co-cau-to-chuc.html?tab=ban-thuong-vu"><i className="fa-solid fa-caret-right me-1 text-primary"></i> Ban thường vụ</a></li>
-                  <li><a className="dropdown-item" href="/co-cau-to-chuc.html?tab=ban-chap-hanh"><i className="fa-solid fa-caret-right me-1 text-primary"></i> Ban chấp hành</a></li>
-                  <li><a className="dropdown-item" href="/co-cau-to-chuc.html?tab=uy-ban-kiem-tra"><i className="fa-solid fa-caret-right me-1 text-primary"></i> Ủy ban kiểm tra</a></li>
-                  <li><a className="dropdown-item" href="/co-cau-to-chuc.html?tab=16-to-cong-doan"><i className="fa-solid fa-caret-right me-1 text-primary"></i> 16 Tổ công đoàn cơ sở</a></li>
+                  <li><Link className="dropdown-item" to="/co-cau-to-chuc?tab=ban-thuong-vu"><i className="fa-solid fa-caret-right me-1 text-primary"></i> Ban thường vụ</Link></li>
+                  <li><Link className="dropdown-item" to="/co-cau-to-chuc?tab=ban-chap-hanh"><i className="fa-solid fa-caret-right me-1 text-primary"></i> Ban chấp hành</Link></li>
+                  <li><Link className="dropdown-item" to="/co-cau-to-chuc?tab=uy-ban-kiem-tra"><i className="fa-solid fa-caret-right me-1 text-primary"></i> Ủy ban kiểm tra</Link></li>
+                  <li><Link className="dropdown-item" to="/co-cau-to-chuc?tab=16-to-cong-doan"><i className="fa-solid fa-caret-right me-1 text-primary"></i> 16 Tổ công đoàn cơ sở</Link></li>
                 </ul>
               </li>
 
-              <li className="nav-item"><a className="nav-link" href="/tin-tuc.html">Tin Tức</a></li>
-              <li className="nav-item"><a className="nav-link" href="/phuc-loi-doan-vien.html">Phúc Lợi Đoàn Viên</a></li>
+              <li className="nav-item"><Link className={`nav-link${isTinTuc ? ' active' : ''}`} to="/tin-tuc">Tin Tức</Link></li>
+              <li className="nav-item"><Link className={`nav-link${isExact('/phuc-loi-doan-vien') ? ' active' : ''}`} to="/phuc-loi-doan-vien">Phúc Lợi Đoàn Viên</Link></li>
 
               <li className="nav-item dropdown">
-                <a className="nav-link dropdown-toggle" href="/van-ban.html" data-bs-toggle="dropdown">
+                <a className={`nav-link dropdown-toggle${isExact('/van-ban') ? ' active' : ''}`} href="/van-ban" data-bs-toggle="dropdown">
                   Văn Bản
                 </a>
                 <ul className="dropdown-menu">
-                  <li><a className="dropdown-item" href="/van-ban.html#tuyen-truyen"><i className="fa-solid fa-caret-right me-1 text-primary"></i> Công văn tuyên truyền</a></li>
-                  <li><a className="dropdown-item" href="/van-ban.html#ke-hoach"><i className="fa-solid fa-caret-right me-1 text-primary"></i> Kế hoạch hoạt động</a></li>
-                  <li><a className="dropdown-item" href="/van-ban.html#luat"><i className="fa-solid fa-caret-right me-1 text-primary"></i> Văn bản luật</a></li>
-                  <li><a className="dropdown-item" href="/van-ban.html#quyet-dinh"><i className="fa-solid fa-caret-right me-1 text-primary"></i> Quyết định</a></li>
+                  <li><Link className="dropdown-item" to="/van-ban#tuyen-truyen"><i className="fa-solid fa-caret-right me-1 text-primary"></i> Công văn tuyên truyền</Link></li>
+                  <li><Link className="dropdown-item" to="/van-ban#ke-hoach"><i className="fa-solid fa-caret-right me-1 text-primary"></i> Kế hoạch hoạt động</Link></li>
+                  <li><Link className="dropdown-item" to="/van-ban#luat"><i className="fa-solid fa-caret-right me-1 text-primary"></i> Văn bản luật</Link></li>
+                  <li><Link className="dropdown-item" to="/van-ban#quyet-dinh"><i className="fa-solid fa-caret-right me-1 text-primary"></i> Quyết định</Link></li>
                 </ul>
               </li>
 
-              <li className="nav-item"><a className="nav-link" href="/bieu-mau.html">Biểu Mẫu</a></li>
-              <li className="nav-item"><a className="nav-link" href="/lien-he.html">Liên Hệ</a></li>
+              <li className="nav-item"><Link className={`nav-link${isExact('/bieu-mau') ? ' active' : ''}`} to="/bieu-mau">Biểu Mẫu</Link></li>
+              <li className="nav-item"><Link className={`nav-link${isExact('/lien-he') ? ' active' : ''}`} to="/lien-he">Liên Hệ</Link></li>
             </ul>
           </div>
         </div>

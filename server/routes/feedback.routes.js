@@ -1,64 +1,64 @@
 ﻿const express = require('express');
 const router = express.Router();
 const { loadDB, saveDB } = require('../db');
+const { insertFeedbackToDb, getBookmarksFromDb, toggleBookmarkInDb } = require('../mssql_db');
+const { validate, z } = require('../middleware/validate');
 
 // =========================================================================
 // 1. INBOX FEEDBACK (Ý KIẾN ĐOÀN VIÊN)
 // =========================================================================
 router.get('/feedback', (req, res) => {
   const db = loadDB();
-  res.json({ success: true, data: db.inbox_feedback || [] });
+  res.json({ success: true, data: db.feedback_messages || [] });
 });
 
-router.post('/feedback', (req, res) => {
-  const db = loadDB();
-  db.inbox_feedback = db.inbox_feedback || [];
-  const { sender_name, email, phone, unit, category, title, content } = req.body;
+const feedbackSchema = z.object({
+  sender_name: z.string().trim().min(2, 'Họ tên ít nhất 2 ký tự'),
+  email: z.string().trim().email('Email không hợp lệ').optional().default(''),
+  phone: z.string().trim().optional().default(''),
+  unit: z.string().trim().optional().default('Đoàn viên TDMU'),
+  category: z.string().trim().optional().default('Góp ý chung'),
+  title: z.string().trim().min(5, 'Tiêu đề ít nhất 5 ký tự'),
+  content: z.string().trim().min(5, 'Nội dung ít nhất 5 ký tự')
+});
 
-  if (!sender_name || !title || !content) {
-    return res.status(400).json({ success: false, error: 'Họ tên, tiêu đề và nội dung là bắt buộc' });
-  }
-
-  const newFeedback = {
-    id: db.inbox_feedback.length ? Math.max(...db.inbox_feedback.map(f => f.id || 0)) + 1 : 1,
-    sender_name,
-    email: email || '',
-    phone: phone || '',
-    unit: unit || 'Đoàn viên TDMU',
-    category: category || 'Góp ý chung',
-    title,
-    content,
-    submitted_at: new Date().toISOString(),
-    status: 'pending',
-    response: null
-  };
-
-  db.inbox_feedback.push(newFeedback);
-  saveDB(db);
+router.post('/feedback', validate(feedbackSchema), async (req, res) => {
+  const newFeedback = await insertFeedbackToDb(req.body);
   res.json({ success: true, data: newFeedback, message: 'Cảm ơn bạn! Ý kiến đã được chuyển trực tiếp đến Ban Chấp Hành Công đoàn.' });
 });
 
 router.get('/inbox-feedback', (req, res) => {
   const db = loadDB();
-  res.json({ success: true, count: (db.inbox_feedback || []).length, data: db.inbox_feedback || [] });
+  res.json({ success: true, count: (db.feedback_messages || []).length, data: db.feedback_messages || [] });
 });
 
 // =========================================================================
 // 2. BOOKMARKS (TỦ SÁCH ĐỌC SAU)
 // =========================================================================
-router.get('/bookmarks', (req, res) => {
-  const db = loadDB();
+router.get('/bookmarks', async (req, res) => {
   const userId = req.query.user_id || 'CB_001';
+  const sqlBookmarks = await getBookmarksFromDb(userId);
+  if (sqlBookmarks) return res.json({ success: true, data: sqlBookmarks });
+
+  const db = loadDB();
   const userBookmarks = (db.bookmarks || []).filter(b => !req.query.user_id || b.user_id === userId);
   res.json({ success: true, data: userBookmarks });
 });
 
-router.post('/bookmarks', (req, res) => {
-  const db = loadDB();
-  db.bookmarks = db.bookmarks || [];
+router.post('/bookmarks', async (req, res) => {
   const { article_id, article_title, user_id, user_name } = req.body;
   if (!article_id) return res.status(400).json({ success: false, error: 'Thiếu article_id' });
 
+  const sqlResult = await toggleBookmarkInDb({ article_id, article_title, user_id, user_name });
+  if (sqlResult) {
+    if (sqlResult.action === 'removed') {
+      return res.json({ success: true, action: 'removed', message: 'Đã bỏ lưu bài viết' });
+    }
+    return res.json({ success: true, action: 'added', data: sqlResult.data, message: 'Đã lưu bài viết vào Tủ sách đọc sau' });
+  }
+
+  const db = loadDB();
+  db.bookmarks = db.bookmarks || [];
   const existingIdx = db.bookmarks.findIndex(b => b.article_id == article_id && (!user_id || b.user_id === user_id));
   if (existingIdx >= 0) {
     db.bookmarks.splice(existingIdx, 1);

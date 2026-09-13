@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import BookmarksDrawer from './components/BookmarksDrawer';
+import { syncBookmarks } from './lib/bookmarks';
 import Home from './pages/Home';
 import GioiThieu from './pages/GioiThieu';
 import CoCauToChuc from './pages/CoCauToChuc';
@@ -12,6 +14,21 @@ import BieuMau from './pages/BieuMau';
 import LienHe from './pages/LienHe';
 import BaiViet from './pages/BaiViet';
 
+const HtmlRedirect = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const path = location.pathname;
+    if (path.endsWith('.html') && path !== '/admin.html' && path !== '/bao-cao-thang.html') {
+      const route = path.replace(/\.html$/, '');
+      navigate(route + location.search + location.hash, { replace: true });
+    }
+  }, [location, navigate]);
+
+  return null;
+};
+
 const LinkInterceptor = ({ children }) => {
   const navigate = useNavigate();
 
@@ -20,7 +37,6 @@ const LinkInterceptor = ({ children }) => {
       const a = e.target.closest('a');
       if (a && a.href) {
         const url = new URL(a.href);
-        // If it's the same origin and ends with .html, intercept it!
         if (url.origin === window.location.origin) {
           if (url.pathname.endsWith('.html') && url.pathname !== '/admin.html' && url.pathname !== '/bao-cao-thang.html') {
             e.preventDefault();
@@ -30,7 +46,7 @@ const LinkInterceptor = ({ children }) => {
         }
       }
     };
-    
+
     document.addEventListener('click', handleClick);
     return () => document.removeEventListener('click', handleClick);
   }, [navigate]);
@@ -39,6 +55,10 @@ const LinkInterceptor = ({ children }) => {
 };
 
 function App() {
+  useEffect(() => {
+    syncBookmarks();
+  }, []);
+
   return (
     <BrowserRouter>
       <LinkInterceptor>
@@ -54,10 +74,12 @@ function App() {
             <Route path="/bieu-mau" element={<BieuMau />} />
             <Route path="/lien-he" element={<LienHe />} />
             <Route path="/bai-viet" element={<BaiViet />} />
+            <Route path="*" element={<HtmlRedirect />} />
           </Routes>
         </div>
         <Footer />
       </LinkInterceptor>
+      <BookmarksDrawer />
     </BrowserRouter>
   );
 }

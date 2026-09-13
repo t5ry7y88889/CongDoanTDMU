@@ -48,6 +48,12 @@ body {
   min-height: 100vh;
 }
 
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 .main-content-wrapper {
   flex: 1 0 auto;
 }
@@ -573,6 +579,187 @@ footer a:hover {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
+
+/* =========================================================================
+   ORG STRUCTURE & CADRE LIST (CoCauToChuc)
+   ========================================================================= */
+.cadre-card-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 6px rgba(0, 40, 85, 0.05);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.cadre-card-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0, 40, 85, 0.12);
+  border-color: #005696;
+}
+.cadre-real-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #E2E8F0;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0, 40, 85, 0.18);
+}
+.cadre-role-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: #F0F7FF;
+  color: #002855;
+  border: 1px solid #BAE6FD;
+}
+.profile-modal-header {
+  background: linear-gradient(135deg, #002855, #005696);
+  color: #FFFFFF;
+  padding: 14px 20px;
+}
+.profile-large-img {
+  width: 100%;
+  max-height: 420px;
+  height: auto;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 40, 85, 0.15);
+}
+.profile-info-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--border-subtle);
+  font-size: 13.5px;
+}
+.profile-info-label {
+  font-weight: 700;
+  color: #334155;
+  white-space: nowrap;
+  min-width: 150px;
+}
+.profile-info-val {
+  color: #475569;
+}
+
+/* =========================================================================
+   HERO HEADLINE (TinTuc)
+   ========================================================================= */
+.news-hero-headline {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 40, 85, 0.05);
+  transition: all 0.3s ease;
+}
+.news-hero-headline:hover {
+  box-shadow: 0 10px 25px rgba(0, 40, 85, 0.14);
+  border-color: #005696;
+}
+.hero-img-wrap {
+  position: relative;
+  height: 340px;
+  overflow: hidden;
+}
+.hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.live-reader-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(2, 6, 23, 0.74);
+  color: #E2E8F0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #EF4444;
+  display: inline-block;
+  animation: livePulse 1.4s infinite;
+}
+@keyframes livePulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+  70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* =========================================================================
+   WELFARE CARD (PhucLoiDoanVien)
+   ========================================================================= */
+.welfare-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 16px 18px;
+  height: 100%;
+  box-shadow: 0 2px 8px rgba(0, 40, 85, 0.05);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+.welfare-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 22px rgba(0, 40, 85, 0.12);
+  border-color: #005696;
+}
+.welfare-badge-budget {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #002855;
+  background: #FEF3C7;
+  border: 1px solid #FDE68A;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* =========================================================================
+   ARTICLE TAKEAWAYS (TinTuc hero)
+   ========================================================================= */
+.ai-takeaway-box {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-left: 3px solid #F59E0B;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 10px 0;
+}
+.ai-takeaway-title {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #334155;
+  margin-bottom: 6px;
+}
+.ai-takeaway-list {
+  padding-left: 18px;
+  font-size: 12.5px;
+  color: #475569;
 }
 
 /* =========================================================================

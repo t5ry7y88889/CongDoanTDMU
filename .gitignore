@@ -5,6 +5,7 @@ database/migrations_backup_old/
 database/*.sqlite
 database/*.sqlite-journal
 backups/
+logs/
 storage/logs/*.log
 storage/framework/cache/data/*
 storage/framework/sessions/*

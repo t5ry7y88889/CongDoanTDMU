@@ -5,8 +5,25 @@ const {
   getArticlesFromDb,
   insertArticleToDb,
   updateArticleInDb,
-  deleteArticleFromDb
+  deleteArticleFromDb,
+  getCommentsFromDb,
+  insertCommentToDb
 } = require('../mssql_db');
+const { validate, z } = require('../middleware/validate');
+
+const articleSchema = z.object({
+  title: z.string().trim().min(3, 'Tiêu đề ít nhất 3 ký tự'),
+  categoryName: z.string().trim().optional(),
+  categoryId: z.coerce.number().int().positive().optional(),
+  summary: z.string().optional(),
+  content: z.string().optional(),
+  image: z.string().optional(),
+  author: z.string().optional(),
+  status: z.string().optional(),
+  isAiGenerated: z.boolean().optional(),
+  aiPrompt: z.string().optional(),
+  packageData: z.unknown().optional()
+});
 
 // =========================================================================
 // 1. ARTICLES CRUD (MSSQL 3NF + JSON FALLBACK)
@@ -25,9 +42,8 @@ router.get('/:id', async (req, res) => {
   res.json({ success: true, data: art });
 });
 
-router.post('/', async (req, res) => {
+router.post('/', validate(articleSchema), async (req, res) => {
   const { title, categoryName, categoryId, summary, content, image, author, status, isAiGenerated, aiPrompt, packageData } = req.body;
-  if (!title) return res.json({ success: false, error: 'Tiêu đề là bắt buộc' });
 
   const articleData = {
     title,
@@ -162,6 +178,31 @@ router.post('/:id/reactions', (req, res) => {
   db.article_reactions.push(newReaction);
   saveDB(db);
   res.json({ success: true, action: 'added', reaction_type });
+});
+
+// =========================================================================
+// 3. ARTICLE COMMENTS (dbo.COMMENTS + JSON FALLBACK)
+// =========================================================================
+const commentSchema = z.object({
+  name: z.string().trim().min(2, 'Họ tên ít nhất 2 ký tự'),
+  email: z.string().trim().email('Email không hợp lệ').optional().default(''),
+  position: z.string().trim().optional().default(''),
+  content: z.string().trim().min(2, 'Nội dung bình luận ít nhất 2 ký tự')
+});
+
+router.get('/:id/comments', async (req, res) => {
+  const list = await getCommentsFromDb(req.params.id);
+  res.json({ success: true, count: list.length, data: list });
+});
+
+router.post('/:id/comments', validate(commentSchema), async (req, res) => {
+  const articleList = await getArticlesFromDb('all', 'all');
+  const art = articleList.find(a => a.id == req.params.id);
+  if (!art) return res.status(404).json({ success: false, error: 'Không tìm thấy bài viết' });
+
+  const { name, email, position, content } = req.body;
+  const created = await insertCommentToDb(req.params.id, { name, email, position, content });
+  res.json({ success: true, data: created, message: 'Đã gửi bình luận thành công!' });
 });
 
 module.exports = router;

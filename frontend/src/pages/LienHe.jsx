@@ -1,187 +1,133 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
+import Sidebar from '../components/Sidebar';
+
+const units = [
+  ['1', 'Tổ Công đoàn 1 - Khối Hiệu Bộ', 'Đ/c Nguyễn Văn A', 'tcd01@tdmu.edu.vn'],
+  ['2', 'Tổ Công đoàn 2 - Phòng Đào Tạo & Khảo Thí', 'Đ/c Trần Thị B', 'tcd02@tdmu.edu.vn'],
+  ['3', 'Tổ Công đoàn 3 - Viện Công Nghệ Số', 'Đ/c Lê Văn C', 'tcd03@tdmu.edu.vn'],
+  ['4', 'Tổ Công đoàn 4 - Khoa Khoa Học Tự Nhiên', 'Đ/c Nguyễn Thị Hương', 'tcd04@tdmu.edu.vn'],
+  ['5', 'Tổ Công đoàn 5 - Khoa Khoa Học Xã Hội', 'Đ/c Phạm Văn Dũng', 'tcd05@tdmu.edu.vn'],
+  ['6', 'Tổ Công đoàn 6 - Khoa Kinh Tế', 'Đ/c Hoàng Minh Tuấn', 'tcd06@tdmu.edu.vn'],
+  ['7', 'Tổ Công đoàn 7 - Khoa Ngoại Ngữ', 'Đ/c Vũ Thị Mai', 'tcd07@tdmu.edu.vn'],
+  ['8', 'Tổ Công đoàn 8 - Khoa Kỹ Thuật Công Nghệ', 'Đ/c Đặng Văn Long', 'tcd08@tdmu.edu.vn'],
+  ['9', 'Tổ Công đoàn 9 - Khoa Kiến Trúc', 'Đ/c Bùi Thị Lan', 'tcd09@tdmu.edu.vn'],
+  ['10', 'Tổ Công đoàn 10 - Khoa Sư Phạm', 'Đ/c Đỗ Văn Hùng', 'tcd10@tdmu.edu.vn'],
+  ['11', 'Tổ Công đoàn 11 - Khoa Luật', 'Đ/c Ngô Thị Bích', 'tcd11@tdmu.edu.vn'],
+  ['12', 'Tổ Công đoàn 12 - Viện Đào Tạo Sau Đại Học', 'Đ/c Dương Văn Nam', 'tcd12@tdmu.edu.vn'],
+  ['13', 'Tổ Công đoàn 13 - Trung Tâm Học Liệu & CNTT', 'Đ/c Lý Thị Thu', 'tcd13@tdmu.edu.vn'],
+  ['14', 'Tổ Công đoàn 14 - Phòng Công Tác Sinh Viên', 'Đ/c Trịnh Văn Phát', 'tcd14@tdmu.edu.vn'],
+  ['15', 'Tổ Công đoàn 15 - Phòng Quản Trị & Cơ Sở Vật Chất', 'Đ/c Mai Thị Ngọc', 'tcd15@tdmu.edu.vn'],
+  ['16', 'Tổ Công đoàn 16 - Trung Tâm Ngoại Ngữ - Tin Học', 'Đ/c Đoàn Văn Khải', 'tcd16@tdmu.edu.vn']
+];
+
+const emptyForm = { sender_name: 'TS. Lê Thị Kim Út', unit: 'Phòng Quản lý Khoa học', email: 'utltk@tdmu.edu.vn', phone: '0918.370.363', title: '', content: '' };
 
 const LienHe = () => {
-  const htmlContent = `<div class="container my-3">
-    <div class="breadcrumb-box"><a href="index.html">Trang chủ</a> / <span class="text-muted">Liên hệ &amp; 16 Tổ công đoàn</span></div>
-    <div class="row g-4">
-      <div class="col-lg-9">
-        <div class="content-box">
-          <div class="tieudelon"><i class="fa-solid fa-address-book me-2"></i>DANH BẠ 16 TỔ CÔNG ĐOÀN CƠ SỞ TDMU</div>
-          
-          <table class="table table-bordered table-hover align-middle" style="font-size: 13px;">
-            <thead class="table-primary">
-              <tr>
-                <th style="width: 60px;">STT</th>
-                <th>Tên Tổ Công Đoàn</th>
-                <th>Tổ Trưởng</th>
-                <th>Email Liên Hệ</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>1</td><td><strong>Tổ Công đoàn 1 - Khối Hiệu Bộ</strong></td><td>Đ/c Nguyễn Văn A</td><td>tcd01@tdmu.edu.vn</td></tr>
-              <tr><td>2</td><td><strong>Tổ Công đoàn 2 - Phòng Đào Tạo &amp; Khảo Thí</strong></td><td>Đ/c Trần Thị B</td><td>tcd02@tdmu.edu.vn</td></tr>
-              <tr><td>3</td><td><strong>Tổ Công đoàn 3 - Viện Công Nghệ Số</strong></td><td>Đ/c Lê Văn C</td><td>tcd03@tdmu.edu.vn</td></tr>
-              <tr><td>4</td><td><strong>Tổ Công đoàn 4 - Khoa Khoa Học Tự Nhiên</strong></td><td>Đ/c Nguyễn Thị Hương</td><td>tcd04@tdmu.edu.vn</td></tr>
-              <tr><td>5</td><td><strong>Tổ Công đoàn 5 - Khoa Khoa Học Xã Hội</strong></td><td>Đ/c Phạm Văn Dũng</td><td>tcd05@tdmu.edu.vn</td></tr>
-              <tr><td>6</td><td><strong>Tổ Công đoàn 6 - Khoa Kinh Tế</strong></td><td>Đ/c Hoàng Minh Tuấn</td><td>tcd06@tdmu.edu.vn</td></tr>
-              <tr><td>7</td><td><strong>Tổ Công đoàn 7 - Khoa Ngoại Ngữ</strong></td><td>Đ/c Vũ Thị Mai</td><td>tcd07@tdmu.edu.vn</td></tr>
-              <tr><td>8</td><td><strong>Tổ Công đoàn 8 - Khoa Kỹ Thuật Công Nghệ</strong></td><td>Đ/c Đặng Văn Long</td><td>tcd08@tdmu.edu.vn</td></tr>
-              <tr><td>9</td><td><strong>Tổ Công đoàn 9 - Khoa Kiến Trúc</strong></td><td>Đ/c Bùi Thị Lan</td><td>tcd09@tdmu.edu.vn</td></tr>
-              <tr><td>10</td><td><strong>Tổ Công đoàn 10 - Khoa Sư Phạm</strong></td><td>Đ/c Đỗ Văn Hùng</td><td>tcd10@tdmu.edu.vn</td></tr>
-              <tr><td>11</td><td><strong>Tổ Công đoàn 11 - Khoa Luật</strong></td><td>Đ/c Ngô Thị Bích</td><td>tcd11@tdmu.edu.vn</td></tr>
-              <tr><td>12</td><td><strong>Tổ Công đoàn 12 - Viện Đào Tạo Sau Đại Học</strong></td><td>Đ/c Dương Văn Nam</td><td>tcd12@tdmu.edu.vn</td></tr>
-              <tr><td>13</td><td><strong>Tổ Công đoàn 13 - Trung Tâm Học Liệu &amp; CNTT</strong></td><td>Đ/c Lý Thị Thu</td><td>tcd13@tdmu.edu.vn</td></tr>
-              <tr><td>14</td><td><strong>Tổ Công đoàn 14 - Phòng Công Tác Sinh Viên</strong></td><td>Đ/c Trịnh Văn Phát</td><td>tcd14@tdmu.edu.vn</td></tr>
-              <tr><td>15</td><td><strong>Tổ Công đoàn 15 - Phòng Quản Trị &amp; Cơ Sở Vật Chất</strong></td><td>Đ/c Mai Thị Ngọc</td><td>tcd15@tdmu.edu.vn</td></tr>
-              <tr><td>16</td><td><strong>Tổ Công đoàn 16 - Trung Tâm Ngoại Ngữ - Tin Học</strong></td><td>Đ/c Đoàn Văn Khải</td><td>tcd16@tdmu.edu.vn</td></tr>
-            </tbody>
-          </table>
-        
-          <!-- HỘP THƯ GÓP Ý & PHẢN ÁNH ĐOÀN VIÊN (LƯU TRỰC TIẾP VÀO CSDL) -->
-          <div class="content-box mt-4">
-            <div class="tieudelon">
-              <span><i class="fa-solid fa-envelope-open-text text-primary me-2"></i>HỘP THƯ GÓP Ý &amp; PHẢN ÁNH NGUYỆN VỌNG ĐOÀN VIÊN</span>
-            </div>
-            <p class="text-muted small mb-3">Mọi ý kiến đóng góp, đề xuất và phản ánh về chế độ chính sách sẽ được chuyển trực tiếp vào Cơ sở dữ liệu để Ban Chấp Hành &amp; UBKT tiếp nhận xử lý.</p>
+  const [form, setForm] = useState(emptyForm);
+  const [sending, setSending] = useState(false);
 
-            <form id="feedbackForm" onsubmit="submitFeedback(event)">
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <label class="form-label fw-bold small text-secondary">Họ và Tên (*):</label>
-                  <input type="text" class="form-control" id="fbName" value="TS. Lê Thị Kim Út" required>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label fw-bold small text-secondary">Đơn vị / Tổ Công đoàn (*):</label>
-                  <input type="text" class="form-control" id="fbUnit" value="Phòng Quản lý Khoa học" required>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label fw-bold small text-secondary">Email nhận phản hồi (*):</label>
-                  <input type="email" class="form-control" id="fbEmail" value="utltk@tdmu.edu.vn" required>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label fw-bold small text-secondary">Số điện thoại liên hệ:</label>
-                  <input type="tel" class="form-control" id="fbPhone" value="0918.370.363">
-                </div>
-                <div class="col-12">
-                  <label class="form-label fw-bold small text-secondary">Tiêu đề phản ánh / Góp ý (*):</label>
-                  <input type="text" class="form-control" id="fbTitle" placeholder="Ví dụ: Đề xuất cải thiện cơ sở vật chất khu sinh hoạt công đoàn..." required>
-                </div>
-                <div class="col-12">
-                  <label class="form-label fw-bold small text-secondary">Nội dung chi tiết (*):</label>
-                  <textarea class="form-control" id="fbContent" rows="4" placeholder="Nhập chi tiết nội dung ý kiến hoặc nguyện vọng..." required></textarea>
-                </div>
-                <div class="col-12 text-end">
-                  <button type="submit" class="btn btn-primary fw-bold" id="btnSubmitFeedback">
-                    <i class="fa-solid fa-paper-plane me-1"></i> Gửi Ý Kiến Tới Ban Chấp Hành
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
+  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
 
-        </div>
-      </div>
-      <!-- RIGHT COLUMN (3 PHẦN): LIÊN KẾT WEBSITE -->
-        <div class="col-lg-3">
-          <div class="panel-tdmu">
-            <div class="panel-heading-tdmu"><i class="fa-solid fa-link me-2 text-primary"></i>Liên kết website</div>
-            <div class="list-group-tdmu">
-              <a href="http://tdmu.edu.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Đại học Thủ Dầu Một</a>
-              <a href="http://danguy.tdmu.edu.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Đảng Bộ Đại học Thủ Dầu Một</a>
-              <a href="http://www.congdoan.vn" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Tổng LĐLĐ Việt Nam</a>
-              <a href="http://congdoanbinhduong.org.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> LĐLĐ Tỉnh Bình Dương</a>
-              <a href="http://lib.tdmu.edu.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> TT Học Liệu ĐH Thủ Dầu Một</a>
-              <a href="http://doanvien.congdoan.vn/VTBWebProject" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Phần mềm quản lý đoàn viên</a>
-            </div>
-          </div>
-
-          <!-- Thống Kê Truy Cập Widget -->
-          <div class="panel-tdmu">
-            <div class="panel-heading-tdmu"><i class="fa-solid fa-chart-simple me-2 text-warning"></i>Thống kê truy cập</div>
-            <div class="p-3" style="font-size: 13px;">
-              <p class="mb-2"><i class="fa-solid fa-users text-primary me-2"></i> Đang trực tuyến: <strong>12</strong></p>
-              <p class="mb-0"><i class="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong>811,221</strong></p>
-            </div>
-          </div>
-        </div>
-    </div>
-  </div>
-
-  </div>
-
-  <!-- Footer -->
-    <!-- Footer (Chuẩn 2 Cột Thực Tế: Cơ Quan & Nhóm Đồ Án) -->
-  
-  
-  
-
-  <!-- OFFCANVAS TỦ SÁCH ĐỌC SAU (SAVED ARTICLES DRAWER) -->
-  <div class="offcanvas offcanvas-end" tabindex="-1" id="bookmarksOffcanvas" style="width: 380px;">
-    <div class="offcanvas-header" style="background: #002855; color: white;">
-      <h5 class="offcanvas-title fw-bold" style="font-size: 16px;">
-        <i class="fa-solid fa-bookmark text-warning me-2"></i> Tủ Sách Đọc Sau (<span class="bookmark-badge-count">2</span>)
-      </h5>
-      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
-    </div>
-    <div class="offcanvas-body p-3 bg-light" id="bookmarksListContainerDrawer">
-      <!-- Rendered dynamically from bookmarks.js -->
-    </div>
-    <div class="p-3 bg-white border-top text-center">
-      <small class="text-muted"><i class="fa-solid fa-shield-halved text-success me-1"></i> Danh sách lưu trữ an toàn trên thiết bị của bạn</small>
-    </div>
-  </div>`;
-  const pageScript = `async function submitFeedback(e) {
-      e.preventDefault();
-      const btn = document.getElementById('btnSubmitFeedback');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Đang gửi dữ liệu...';
-
-      const payload = {
-        sender_name: document.getElementById('fbName').value,
-        unit: document.getElementById('fbUnit').value,
-        email: document.getElementById('fbEmail').value,
-        phone: document.getElementById('fbPhone').value,
-        title: document.getElementById('fbTitle').value,
-        content: document.getElementById('fbContent').value
-      };
-
-      try {
-        const res = await fetch('/api/feedback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        if (json.success) {
-          alert('✅ ' + json.message);
-          document.getElementById('fbTitle').value = '';
-          document.getElementById('fbContent').value = '';
-        } else {
-          alert('❌ ' + json.error);
-        }
-      } catch (err) {
-        alert('❌ Lỗi kết nối tới máy chủ!');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-paper-plane me-1"></i> Gửi Ý Kiến Tới Ban Chấp Hành';
+  const submit = async (e) => {
+    e.preventDefault();
+    setSending(true);
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      const json = await res.json();
+      if (json.success) {
+        alert('✅ ' + json.message);
+        setForm(emptyForm);
+      } else {
+        alert('❌ ' + json.error);
       }
-    }`;
-
-  useEffect(() => {
-    if (pageScript) {
-      try {
-        // Run in global scope so functions attach to window for onclick handlers
-        (0, eval)(pageScript);
-        // Also trigger DOMContentLoaded logic manually if any
-        window.dispatchEvent(new Event('DOMContentLoaded'));
-      } catch (err) {
-        console.warn('Inline page script notice for LienHe:', err);
-      }
+    } catch (err) {
+      alert('❌ Lỗi kết nối tới máy chủ!');
+    } finally {
+      setSending(false);
     }
-  }, []);
+  };
 
   return (
-    <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+    <div className="container my-3">
+      <div className="breadcrumb-box"><a href="/">Trang chủ</a> / <span className="text-muted">Liên hệ &amp; 16 Tổ công đoàn</span></div>
+      <div className="row g-4">
+        <div className="col-lg-9">
+          <div className="content-box">
+            <div className="tieudelon"><i className="fa-solid fa-address-book me-2"></i>DANH BẠ 16 TỔ CÔNG ĐOÀN CƠ SỞ TDMU</div>
+
+            <table className="table table-bordered table-hover align-middle" style={{ fontSize: '13px' }}>
+              <thead className="table-primary">
+                <tr>
+                  <th style={{ width: '60px' }}>STT</th>
+                  <th>Tên Tổ Công Đoàn</th>
+                  <th>Tổ Trưởng</th>
+                  <th>Email Liên Hệ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {units.map(([stt, name, leader, email]) => (
+                  <tr key={stt}>
+                    <td>{stt}</td>
+                    <td><strong>{name}</strong></td>
+                    <td>{leader}</td>
+                    <td>{email}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="content-box mt-4">
+              <div className="tieudelon">
+                <span><i className="fa-solid fa-envelope-open-text text-primary me-2"></i>HỘP THƯ GÓP Ý &amp; PHẢN ÁNH NGUYỆN VỌNG ĐOÀN VIÊN</span>
+              </div>
+              <p className="text-muted small mb-3">
+                Mọi ý kiến đóng góp, đề xuất và phản ánh về chế độ chính sách sẽ được chuyển trực tiếp vào Cơ sở dữ liệu để Ban Chấp Hành &amp; UBKT tiếp nhận xử lý.
+              </p>
+
+              <form onSubmit={submit}>
+                <div className="row g-3">
+                  <div className="col-md-6">
+                    <label className="form-label fw-bold small text-secondary">Họ và Tên (*):</label>
+                    <input type="text" className="form-control" value={form.sender_name} onChange={set('sender_name')} required />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-bold small text-secondary">Đơn vị / Tổ Công đoàn (*):</label>
+                    <input type="text" className="form-control" value={form.unit} onChange={set('unit')} required />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-bold small text-secondary">Email nhận phản hồi (*):</label>
+                    <input type="email" className="form-control" value={form.email} onChange={set('email')} required />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-bold small text-secondary">Số điện thoại liên hệ:</label>
+                    <input type="tel" className="form-control" value={form.phone} onChange={set('phone')} />
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label fw-bold small text-secondary">Tiêu đề phản ánh / Góp ý (*):</label>
+                    <input type="text" className="form-control" value={form.title} onChange={set('title')} placeholder="Ví dụ: Đề xuất cải thiện cơ sở vật chất khu sinh hoạt công đoàn..." required />
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label fw-bold small text-secondary">Nội dung chi tiết (*):</label>
+                    <textarea className="form-control" rows="4" value={form.content} onChange={set('content')} placeholder="Nhập chi tiết nội dung ý kiến hoặc nguyện vọng..." required></textarea>
+                  </div>
+                  <div className="col-12 text-end">
+                    <button type="submit" className="btn btn-primary fw-bold" disabled={sending}>
+                      {sending ? <i className="fa-solid fa-spinner fa-spin me-1"></i> : <i className="fa-solid fa-paper-plane me-1"></i>}
+                      {sending ? ' Đang gửi dữ liệu...' : ' Gửi Ý Kiến Tới Ban Chấp Hành'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <Sidebar />
+      </div>
+    </div>
   );
 };
 
