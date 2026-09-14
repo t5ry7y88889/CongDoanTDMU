@@ -188,3 +188,17 @@ BEGIN
     (9, 1, N'ThS. Hồ Ngọc Trung Kiên', 'kienhnt@tdmu.edu.vn', '0977.797.378', N'Viện Công nghệ số', N'Đề xuất chuyển đổi số', N'Đề xuất tích hợp biểu mẫu điện tử cho 16 Tổ công đoàn', N'Kính gửi Ban Thường vụ, Viện CNS đề xuất tích hợp chữ ký số và biểu mẫu trực tuyến để giảm thiểu in ấn giấy tờ báo cáo tháng.', 'processed', N'Ban Thường vụ đã ghi nhận và giao Ban Tuyên giáo triển khai trên Cổng thông tin mới.');
 END
 GO
+
+-- 16. Nạp TEMPLATES (Kho biểu mẫu nghiệp vụ & văn bản mẫu)
+IF NOT EXISTS (SELECT 1 FROM dbo.TEMPLATES)
+BEGIN
+    INSERT INTO dbo.TEMPLATES (Code, Title, Category, CategoryName, Description, FileType, FileSize, FilePath, DownloadCount) VALUES
+    ('BM-01/CĐ', N'Phiếu Lý Lịch & Đơn Xin Gia Nhập Công Đoàn TDMU', 'doan_vien', N'Đoàn Viên & Gia Nhập', N'Dành cho Cán bộ, Giảng viên mới tuyển dụng gia nhập tổ chức công đoàn', 'docx', '4.1 KB', 'uploads/templates/BM_01_Don_Gia_Nhap_Cong_Doan.docx', 146),
+    ('BM-02/CĐ', N'Mẫu Báo Cáo Hoạt Động Tháng & Chấm Điểm Thi Đua 16 Tổ', 'to_cong_doan', N'Tổ Công Đoàn Bộ Phận', N'Mẫu báo cáo định kỳ hàng tháng của Tổ trưởng gửi BTV Công đoàn trường', 'docx', '4.3 KB', 'uploads/templates/BM_02_Bao_Cao_Thang_16_To.docx', 285),
+    ('BM-03/CĐ', N'Đơn Đề Nghị Trợ Cấp Khó Khăn & Thăm Hỏi Ốm Đau', 'tro_cap', N'Chăm Lo & Trợ Cấp', N'Mẫu đơn đề nghị xét duyệt kinh phí chăm lo đột xuất cho đoàn viên', 'docx', '3.9 KB', 'uploads/templates/BM_03_De_Nghi_Tro_Cap_Kho_Khan.docx', 312),
+    ('BM-04/CĐ', N'Tờ Trình Khen Thưởng Đoàn Viên Tiêu Biểu & Phong Trào', 'thi_dua', N'Thi Đua Khen Thưởng', N'Mẫu đề xuất khen thưởng chuyên đề và thi đua hàng năm', 'docx', '4.0 KB', 'uploads/templates/BM_04_To_Trinh_Khen_Thuong.docx', 94),
+    ('BM-05/CĐ', N'Giấy Đề Nghị Hỗ Trợ Vay Vốn Quỹ Trợ Vốn CEP Đoàn Viên', 'tro_von', N'Quỹ Trợ Vốn', N'Hỗ trợ đoàn viên, người lao động tiếp cận nguồn vốn ưu đãi không lãi suất', 'docx', '4.5 KB', 'uploads/templates/BM_05_Vay_Von_Tro_Cap.docx', 78);
+END
+GO
+-- 17. PUBLISH_LOGS (không seed dữ liệu mặc định - chỉ ghi khi phát hành)
+GO

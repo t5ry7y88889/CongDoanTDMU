@@ -1296,6 +1296,112 @@ async function deleteUserFromDb(id) {
   return true;
 }
 
+async function getTemplatesFromDb(category = 'all', search = '') {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      let query = `
+        SELECT
+          TemplateId AS id,
+          Code AS code,
+          Title AS title,
+          Category AS category,
+          COALESCE(CategoryName, N'Biểu Mẫu Nghiệp Vụ') AS categoryName,
+          Description AS description,
+          FileType AS file_type,
+          FileSize AS file_size,
+          FilePath AS file_url,
+          DownloadCount AS downloads_count,
+          CONVERT(VARCHAR(19), CreatedAt, 120) AS created_at
+        FROM dbo.TEMPLATES
+        WHERE IsActive = 1
+      `;
+      const req = mssqlPool.request();
+      if (category && category !== 'all') {
+        query += ' AND Category = @category';
+        req.input('category', sql.VarChar, category);
+      }
+      if (search) {
+        query += ' AND (Code LIKE @search OR Title LIKE @search OR Description LIKE @search)';
+        req.input('search', sql.NVarChar, `%${search}%`);
+      }
+      query += ' ORDER BY TemplateId ASC';
+      const res = await req.query(query);
+      return res.recordset;
+    } catch (err) {
+      console.error("MSSQL Templates Error:", err.message);
+    }
+  }
+  const db = loadDB();
+  let list = db.templates || [];
+  if (category && category !== 'all') list = list.filter(t => t.category === category);
+  if (search) {
+    const q = search.toLowerCase();
+    list = list.filter(t => (t.title || '').toLowerCase().includes(q) || (t.code || '').toLowerCase().includes(q));
+  }
+  return list;
+}
+
+async function insertTemplateToDb(data) {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      req.input('code', sql.VarChar, data.code);
+      req.input('title', sql.NVarChar, data.title);
+      req.input('category', sql.VarChar, data.category || 'doan_vien');
+      req.input('categoryName', sql.NVarChar, data.categoryName || 'Đoàn Viên & Gia Nhập');
+      req.input('description', sql.NVarChar, data.description || '');
+      req.input('fileType', sql.VarChar, data.file_type || 'docx');
+      req.input('fileSize', sql.VarChar, data.file_size || '4.0 KB');
+      req.input('fileUrl', sql.VarChar, data.file_url);
+
+      const query = `
+        INSERT INTO dbo.TEMPLATES (Code, Title, Category, CategoryName, Description, FileType, FileSize, FilePath, DownloadCount, IsActive, CreatedAt)
+        OUTPUT INSERTED.TemplateId AS id
+        VALUES (@code, @title, @category, @categoryName, @description, @fileType, @fileSize, @fileUrl, 0, 1, SYSDATETIME())
+      `;
+      const res = await req.query(query);
+      data.id = res.recordset[0].id;
+      return data;
+    } catch (err) {
+      console.error("MSSQL Insert Template Error:", err.message);
+    }
+  }
+  return null;
+}
+
+async function deleteTemplateFromDb(id) {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      req.input('id', sql.Int, id);
+      const res = await req.query('DELETE FROM dbo.TEMPLATES WHERE TemplateId = @id');
+      if (res.rowsAffected[0] > 0) return true;
+      return { error: 'Không tìm thấy biểu mẫu để xóa!' };
+    } catch (err) {
+      console.error("MSSQL Delete Template Error:", err.message);
+    }
+  }
+  return false;
+}
+
+async function incrementTemplateDownloadInDb(id) {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      req.input('id', sql.Int, id);
+      await req.query('UPDATE dbo.TEMPLATES SET DownloadCount = DownloadCount + 1 WHERE TemplateId = @id');
+      return true;
+    } catch (err) {
+      console.error("MSSQL Increment Template Download Error:", err.message);
+    }
+  }
+  return false;
+}
+
 module.exports = {
   sqlConfig,
   isMssqlConnected: () => isMssqlConnected,
@@ -1328,5 +1434,9 @@ module.exports = {
   deleteFeedbackFromDb,
   insertWelfareApplicationToDb,
   getBookmarksFromDb,
-  toggleBookmarkInDb
+  toggleBookmarkInDb,
+  getTemplatesFromDb,
+  insertTemplateToDb,
+  deleteTemplateFromDb,
+  incrementTemplateDownloadInDb
 };

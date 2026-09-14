@@ -16,6 +16,8 @@ GO
 
 -- Xóa các bảng cũ theo thứ tự ràng buộc khóa ngoại
 IF OBJECT_ID('dbo.FEEDBACK', 'U') IS NOT NULL DROP TABLE dbo.FEEDBACK;
+IF OBJECT_ID('dbo.PUBLISH_LOGS', 'U') IS NOT NULL DROP TABLE dbo.PUBLISH_LOGS;
+IF OBJECT_ID('dbo.TEMPLATES', 'U') IS NOT NULL DROP TABLE dbo.TEMPLATES;
 IF OBJECT_ID('dbo.WELFARE_APPLICATIONS', 'U') IS NOT NULL DROP TABLE dbo.WELFARE_APPLICATIONS;
 IF OBJECT_ID('dbo.BENEFITS', 'U') IS NOT NULL DROP TABLE dbo.BENEFITS;
 IF OBJECT_ID('dbo.BOOKMARKS', 'U') IS NOT NULL DROP TABLE dbo.BOOKMARKS;
@@ -287,5 +289,39 @@ CREATE TABLE dbo.FEEDBACK (
     SubmittedDate DATETIME2 DEFAULT SYSDATETIME(),
     CONSTRAINT FK_FEEDBACK_STAFF FOREIGN KEY (StaffId) REFERENCES dbo.STAFF(StaffId) ON DELETE SET NULL,
     CONSTRAINT FK_FEEDBACK_HANDLER FOREIGN KEY (HandlerId) REFERENCES dbo.USERS(UserId) ON DELETE NO ACTION
+);
+GO
+
+-- =========================================================================
+-- NHÓM 4: KHO BIỂU MẪU & NHẬT KÝ PHÁT HÀNH ĐA KÊNH
+-- =========================================================================
+
+-- 16. BẢNG TEMPLATES (Kho biểu mẫu nghiệp vụ & văn bản mẫu .docx/.xlsx)
+CREATE TABLE dbo.TEMPLATES (
+    TemplateId INT IDENTITY(1,1) PRIMARY KEY,
+    Code VARCHAR(50) NOT NULL,
+    Title NVARCHAR(255) NOT NULL,
+    Category VARCHAR(50) NOT NULL DEFAULT 'doan_vien',
+    CategoryName NVARCHAR(100) NULL,
+    Description NVARCHAR(MAX) NULL,
+    FileType VARCHAR(20) DEFAULT 'docx',
+    FileSize VARCHAR(50) DEFAULT '4.0 KB',
+    FilePath VARCHAR(500) NOT NULL,
+    DownloadCount INT DEFAULT 0,
+    IsActive BIT DEFAULT 1,
+    CreatedAt DATETIME2 DEFAULT SYSDATETIME()
+);
+GO
+
+-- 17. BẢNG PUBLISH_LOGS (Nhật ký phát hành đa kênh sang Website, Fanpage, Zalo OA)
+CREATE TABLE dbo.PUBLISH_LOGS (
+    LogId INT IDENTITY(1,1) PRIMARY KEY,
+    ScheduleId INT NULL,
+    ArticleId INT NOT NULL,
+    Channel VARCHAR(50) NOT NULL,
+    Action VARCHAR(50) NOT NULL,
+    Result NVARCHAR(MAX) NULL,
+    PublishedAt DATETIME2 DEFAULT SYSDATETIME(),
+    CONSTRAINT FK_PUBLISH_LOGS_ARTICLES FOREIGN KEY (ArticleId) REFERENCES dbo.ARTICLES(ArticleId) ON DELETE CASCADE
 );
 GO

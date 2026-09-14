@@ -3,28 +3,36 @@ const router = express.Router();
 const path = require('path');
 const fs = require('fs');
 const { loadDB, saveDB } = require('../db');
+const {
+  getTemplatesFromDb,
+  insertTemplateToDb,
+  deleteTemplateFromDb,
+  incrementTemplateDownloadInDb
+} = require('../mssql_db');
 
 function nextId(arr) {
   return arr.length ? Math.max(...arr.map(t => parseInt(t.id) || 0)) + 1 : 1;
 }
 
+function stripVietnamese(str) {
+  return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+}
+
 // 1. GET /api/templates
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const { category, search } = req.query;
-  const db = loadDB();
-  let list = db.templates || [];
+  let list = await getTemplatesFromDb('all', '');
 
   if (category && category !== 'all') {
     list = list.filter(t => t.category === category);
   }
 
   if (search) {
-    const strip = str => (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
-    const s = strip(search);
-    list = list.filter(t => 
-      strip(t.title).includes(s) ||
-      strip(t.code).includes(s) ||
-      strip(t.description).includes(s)
+    const s = stripVietnamese(search);
+    list = list.filter(t =>
+      stripVietnamese(t.title).includes(s) ||
+      stripVietnamese(t.code).includes(s) ||
+      stripVietnamese(t.description).includes(s)
     );
   }
 
@@ -32,10 +40,10 @@ router.get('/', (req, res) => {
 });
 
 // 2. GET /api/templates/:id
-router.get('/:id', (req, res) => {
-  const db = loadDB();
+router.get('/:id', async (req, res) => {
   const id = parseInt(req.params.id);
-  const template = (db.templates || []).find(t => t.id === id);
+  const list = await getTemplatesFromDb('all', '');
+  const template = list.find(t => t.id === id);
   if (!template) {
     return res.status(404).json({ success: false, error: 'Không tìm thấy biểu mẫu' });
   }
@@ -43,7 +51,7 @@ router.get('/:id', (req, res) => {
 });
 
 // 3. POST /api/templates (Add template or upload .docx)
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const { code, title, description, category, categoryName, fileBase64, fileName, file_size } = req.body;
 
   if (!code || !title) {
@@ -100,6 +108,16 @@ router.post('/', (req, res) => {
     created_at: new Date().toISOString()
   };
 
+  // Sync to MSSQL (assigns real DB id on success)
+  try {
+    const inserted = await insertTemplateToDb(newTemplate);
+    if (inserted && inserted.id) {
+      newTemplate.id = inserted.id;
+    }
+  } catch (e) {
+    console.error('Error inserting template into MSSQL:', e.message);
+  }
+
   db.templates.push(newTemplate);
   saveDB(db);
 
@@ -107,42 +125,65 @@ router.post('/', (req, res) => {
 });
 
 // 4. DELETE /api/templates/:id
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+
+  const result = await deleteTemplateFromDb(id);
+  if (result && result.error) {
+    return res.status(404).json({ success: false, error: result.error });
+  }
+  if (result === true) {
+    const db = loadDB();
+    db.templates = db.templates || [];
+    const idx = db.templates.findIndex(t => t.id === id);
+    if (idx !== -1) {
+      db.templates.splice(idx, 1);
+      saveDB(db);
+    }
+    return res.json({ success: true, message: 'Đã xóa biểu mẫu thành công!' });
+  }
+
+  // MSSQL unavailable -> JSON fallback
   const db = loadDB();
   db.templates = db.templates || [];
-  const id = parseInt(req.params.id);
   const idx = db.templates.findIndex(t => t.id === id);
-
   if (idx === -1) {
     return res.status(404).json({ success: false, error: 'Không tìm thấy biểu mẫu' });
   }
-
   const deleted = db.templates.splice(idx, 1)[0];
   saveDB(db);
-
   res.json({ success: true, message: 'Đã xóa biểu mẫu thành công!', data: deleted });
 });
 
 // 5. GET /api/templates/download/:id (Increments count and sends file)
-router.get('/download/:id', (req, res) => {
+router.get('/download/:id', async (req, res) => {
   const db = loadDB();
   db.templates = db.templates || [];
   const id = parseInt(req.params.id);
-  const template = db.templates.find(t => t.id === id);
+  let template = (await getTemplatesFromDb('all', '')).find(t => t.id === id);
+  if (!template) {
+    template = db.templates.find(t => t.id === id);
+  }
 
   if (!template) {
     return res.status(404).json({ success: false, error: 'Không tìm thấy biểu mẫu để tải về' });
   }
 
-  // Increment download counter
-  template.downloads_count = (template.downloads_count || 0) + 1;
-  saveDB(db);
+  // Increment download counter (DB + JSON fallback)
+  try {
+    await incrementTemplateDownloadInDb(id);
+  } catch (e) {}
+  const jsonItem = db.templates.find(t => t.id === id);
+  if (jsonItem) {
+    jsonItem.downloads_count = (jsonItem.downloads_count || 0) + 1;
+    saveDB(db);
+  }
 
   const localPath = path.join(__dirname, '../../public', template.file_url);
   if (fs.existsSync(localPath)) {
     return res.download(localPath, path.basename(template.file_url));
   } else {
-    return res.json({ success: true, message: 'Đã ghi nhận lượt tải', downloads_count: template.downloads_count });
+    return res.json({ success: true, message: 'Đã ghi nhận lượt tải', downloads_count: (template.downloads_count || 0) + 1 });
   }
 });
 
