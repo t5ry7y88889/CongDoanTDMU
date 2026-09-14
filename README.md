@@ -113,6 +113,11 @@ graph TB
 * **Studio Thiết kế Banner & Sinh ảnh báo chí:**
   - Tích hợp công cụ sinh ảnh báo chí tỷ lệ 16:9 với chú thích báo chí chuẩn mực.
   - Bộ biên tập đồ họa HTML5 Canvas Studio hỗ trợ tự động vẽ banner sự kiện chuẩn kích thước 600x340px theo nhận diện TDMU.
+* **Shell quản trị (React SPA) theo nhận diện friend — `frontend-admin`:**
+  - Thanh bên 3 nhóm **TỔNG QUAN / TRUYỀN THÔNG ĐA KÊNH / NGHIỆP VỤ CÔNG ĐOÀN**, logo Công đoàn, nhãn cảnh báo AI (`CMS`), thu gọn/mở rộng kèm tooltip nổi.
+  - Header breadcrumb "Trang Quản Trị", trạng thái Cổng Tác Nghiệp Đa Kênh, hồ sơ người dùng với trình chọn vai trò (Quản Trị Viên / Biên Tập Viên / Cộng Tác Viên), nút "Xem Website".
+  - View **Lịch Xuất Bản (`Schedule.jsx`)**: hẹn giờ phân phối bài viết lên Website/Facebook/Zalo qua `/api/publish/schedules`, hủy lịch, thống kê trạng thái.
+  - View **Nhật Ký Tác Nghiệp (`Audits.jsx`)**: truy vết thao tác, duyệt, xuất bản và xóa nội dung từ `/api/audits`.
 
 ### 📊 C. Phân Hệ Quản Lý Báo Cáo Tháng & Thi Đua 16 Tổ Công Đoàn
 * **Bảng tổng hợp KPI 16 Tổ CĐ:** Thống kê tổng số cán bộ, đoàn viên, đoàn viên nữ, mức xếp loại tự đánh giá và BTV đánh giá.
