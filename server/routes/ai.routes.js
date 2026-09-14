@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { loadDB } = require('../db');
+const { parseDocumentBuffer, fixVietnameseFont } = require('../services/documentParser');
 const {
   GoogleGenAI,
   callGroqAPI,
@@ -11,10 +12,89 @@ const {
 } = require('../services/aiService');
 
 // =========================================================================
+// 0. UNIVERSAL MULTI-FORMAT DOCUMENT INGESTION & FACT EXTRACTION
+// Supports: PDF, Word (.docx), Excel (.xlsx, .csv), PowerPoint (.pptx), TXT
+// =========================================================================
+router.post('/upload-and-parse', async (req, res) => {
+  const { fileBase64, fileName, extractFactSheet, apiKey } = req.body;
+  if (!fileBase64) {
+    return res.status(400).json({ success: false, error: 'Dữ liệu fileBase64 là bắt buộc!' });
+  }
+
+  try {
+    const cleanBase64 = fileBase64.replace(/^data:.*?;base64,/, '');
+    const buffer = Buffer.from(cleanBase64, 'base64');
+    const safeName = fileName || 'tailieu.txt';
+
+    const parsed = await parseDocumentBuffer(buffer, safeName);
+    let factSheet = null;
+
+    const activeKey = apiKey || process.env.GEMINI_API_KEY;
+    if (extractFactSheet && activeKey && (parsed.markdown || parsed.rawText)) {
+      try {
+        const ai = new GoogleGenAI({ apiKey: activeKey });
+        const factPrompt = `BẠN LÀ CHUYÊN VIÊN TRÍCH XUẤT DỮ LIỆU CỦA CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT.
+Dựa vào tài liệu được trích xuất sau đây:
+"""
+${(parsed.markdown || parsed.rawText).slice(0, 5000)}
+"""
+
+Hãy bóc tách các sự thật cốt lõi thành đối tượng JSON chuẩn:
+{
+  "eventName": "Tên hoạt động hoặc tiêu đề tài liệu chính xác",
+  "eventDate": "Ngày diễn ra hoặc ngày ban hành (dd/mm/yyyy)",
+  "eventTime": "Khung giờ (nếu có)",
+  "location": "Địa điểm tổ chức cụ thể",
+  "organizer": "Đơn vị chủ trì hoặc ban hành",
+  "attendees": "Thành phần tham gia",
+  "budget": "Kinh phí hoặc phần thưởng (nếu có)",
+  "keyHighlights": [
+    "Điểm nhấn 1...",
+    "Điểm nhấn 2..."
+  ],
+  "significance": "Ý nghĩa hoặc mục tiêu chính của hoạt động"
+}`;
+
+        const factRes = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: factPrompt,
+          config: { responseMimeType: 'application/json' }
+        });
+        factSheet = extractJsonFromText(factRes.text);
+      } catch (fe) {
+        console.warn('Fact sheet extraction warning:', fe.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      fileName: parsed.fileName,
+      fileExt: parsed.fileExt,
+      fileType: parsed.fileType,
+      fileSizeKB: parsed.fileSizeKB,
+      charCount: parsed.charCount,
+      pagesCount: parsed.pagesCount,
+      sheetsCount: parsed.sheetsCount,
+      slidesCount: parsed.slidesCount,
+      isScannedDoc: !!parsed.isScannedDoc,
+      markdown: parsed.markdown,
+      text: parsed.rawText || parsed.markdown,
+      metadata: parsed.metadata,
+      images: parsed.images || [],
+      scannedPages: parsed.scannedPages || [],
+      factSheet
+    });
+  } catch (err) {
+    console.error('Error in /upload-and-parse:', err);
+    res.status(500).json({ success: false, error: 'Lỗi bóc tách tài liệu: ' + err.message });
+  }
+});
+
+// =========================================================================
 // 1. ARTICLE GENERATOR (GEMINI & GROQ HYBRID STREAM / DIRECT)
 // =========================================================================
 router.post('/generate', async (req, res) => {
-  const { prompt, eventForm, category, tone, lengthOption, targetAudience, apiKey, groqApiKey, aiEngine } = req.body;
+  const { prompt, eventForm, category, tone, lengthOption, targetAudience, documentText, apiKey, groqApiKey, aiEngine } = req.body;
   const activeGeminiKey = apiKey || process.env.GEMINI_API_KEY;
   const activeGroqKey = groqApiKey || process.env.GROQ_API_KEY;
 
@@ -25,48 +105,44 @@ router.post('/generate', async (req, res) => {
     });
   }
 
-  const fullSystemPrompt = `BẠN LÀ CHUYÊN VIÊN TRƯỞNG BAN TUYÊN GIÁO - TRUYỀN THÔNG CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT (TDMU).
-Nhiệm vụ của bạn là soạn thảo bài viết truyền thông chính thống, chuẩn mực văn phong hành chính đoàn thể, kết hợp hài hòa giữa tính trang trọng của môi trường giáo dục đại học và tinh thần nhiệt huyết, tương thân tương ái của tổ chức Công đoàn.
+  const eventNameInput = prompt || (eventForm ? eventForm.name : 'Hoạt động Công đoàn TDMU');
+  const detailsContext = [
+    `Chuyên mục: ${category || 'Tin Tức - Hoạt Động'}`,
+    `Đơn vị tổ chức: ${req.body.issuingUnit || 'Ban Thường Vụ Công Đoàn Trường ĐH Thủ Dầu Một'}`,
+    `Tác giả / Ban biên tập: ${req.body.author || 'Ban Truyền Thông Công Đoàn TDMU'}`,
+    `Phong cách: ${tone || 'Báo chí hiện đại, mạch lạc, trang trọng nhưng gần gũi'}`,
+    `Độ dài mong muốn: ${lengthOption || 'Khoảng 400 - 600 từ'}`,
+    `Đối tượng độc giả: ${targetAudience || 'Toàn thể cán bộ, giảng viên, nhân viên và người lao động TDMU'}`,
+    eventForm ? `Chi tiết: Ngày="${eventForm.date || ''}", Giờ="${eventForm.time || ''}", Địa điểm="${eventForm.location || ''}", Kinh phí="${eventForm.budget || ''}", Người tham dự="${eventForm.attendees || ''}"` : '',
+    documentText ? `\n--- DỮ LIỆU TƯ LIỆU NGUỒN (ĐÍNH KÈM TỪ FILE TÀI LIỆU): ---\n${documentText.slice(0, 4000)}\n--- HẾT TƯ LIỆU NGUỒN ---` : ''
+  ].filter(Boolean).join('\n');
 
-=========================================
-1. BỘ NGUYÊN TẮC VĂN PHONG BẮT BUỘC (GUARDRAILS):
-=========================================
-- THỂ THỨC & VĂN PHONG: Tuân thủ quy chuẩn hành chính nhà nước (Nghị định 30/2020/NĐ-CP) và Điều lệ Công đoàn Việt Nam. Ngôn từ trang nhã, chính xác, súc tích, giàu tính thuyết phục, tôn vinh vai trò cán bộ giảng viên và người lao động TDMU.
-- BỘ TỪ KHÓA CHUẨN ĐOÀN THỂ: Luôn vận dụng linh hoạt các thuật ngữ: "đoàn viên công đoàn", "người lao động", "Ban Thường vụ Công đoàn", "Tổ Công đoàn bộ phận", "chăm lo đời sống vật chất và tinh thần", "bảo vệ quyền và lợi ích hợp pháp, chính đáng", "thi đua Dạy tốt - Học tốt", "xây dựng môi trường đại học văn minh, hạnh phúc".
-- TUYỆT ĐỐI TRÁNH: Không dùng từ ngữ giật gân, câu like mạng xã hội, tiếng lóng, lối hành văn thương mại hoặc cảm tính tiêu cực.
+  const fullSystemPrompt = `BẠN LÀ BIÊN TẬP VIÊN TRUYỀN THÔNG CAO CẤP CỦA CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT (TDMU).
+Nhiệm vụ của bạn là soạn thảo một bài báo chất lượng cao cho Website Công đoàn TDMU dựa trên chủ đề và dữ liệu được cung cấp dưới đây.
 
-=========================================
-2. NGUYÊN TẮC BỐ CỤC TỰ NHIÊN, LINH HOẠT & BÁM SÁT THỰC TẾ:
-=========================================
-- TUYỆT ĐỐI KHÔNG sử dụng bố cục rập khuôn "Phần I, Phần II, Phần III, Phần IV" cứng nhắc.
-- Bố cục phải linh hoạt, tự nhiên như một bài báo hiện đại hoặc thông báo súc tích. Dùng các thẻ <h2> với tiêu đề cụ thể theo nội dung (VD: <h2>Ý nghĩa hoạt động</h2>, <h2>Nội dung trọng tâm</h2>) hoặc chia đoạn văn mạch lạc.
-- TUYỆT ĐỐI KHÔNG tự ý bịa đặt lịch trình chi li hoặc tự chế lời phát biểu nếu người dùng không yêu cầu.
-- Chỉ tập trung vào chủ đề chính mà người dùng yêu cầu, diễn đạt trang trọng, súc tích.
+YÊU CẦU QUAN TRỌNG VỀ VĂN PHONG VÀ NỘI DUNG:
+1. Văn phong báo chí hiện đại: Rõ ràng, lôi cuốn, văn minh, kết hợp hài hòa giữa tính trang trọng của môi trường sư phạm đại học và tinh thần gắn kết, nhân văn của tổ chức Công đoàn.
+2. TUYỆT ĐỐI KHÔNG lạm dụng các khẩu hiệu giáo điều, sáo rỗng hoặc lặp đi lặp lại các cụm từ hành chính một cách máy móc.
+3. Bám sát 100% dữ liệu sự thật trong tài liệu (nếu có tư liệu nguồn): Thời gian, địa điểm, các mốc hoạt động, các con số thực tế. Không tự bịa đặt số liệu sai lệch.
+4. Bố cục bài báo HTML tự nhiên:
+   - Đoạn mở đầu (Sapo): Tóm lược ấn tượng sự kiện theo nguyên tắc 5W1H (Ai, Làm gì, Ở đâu, Khi nào, Vì sao).
+   - Thân bài: Sử dụng các thẻ <h2> với tiêu đề cụ thể theo diễn biến sự kiện, kết hợp các đoạn văn <p>, danh sách <ul>, <li> khi cần nêu bật các hoạt động hoặc giải thưởng.
+   - Trích dẫn: Có thể lồng ghép 1 câu phát biểu ngắn gọn, cảm xúc hoặc ý kiến người tham gia.
 
-=========================================
-3. THÔNG TIN ĐẦU VÀO CỦA YÊU CẦU:
-=========================================
-- Yêu cầu / Sự kiện: ${prompt || (eventForm ? eventForm.name : 'Hoạt động phong trào Công đoàn TDMU 2026')}
-- Chuyên mục: ${category || 'Thông Báo Chỉ Đạo'}
-- Đơn vị ban hành: ${req.body.issuingUnit || 'Ban Thường Vụ Công Đoàn Trường'}
-- Tác giả soạn thảo: ${req.body.author || 'Cán Bộ Công Đoàn TDMU'}
-- Văn phong lựa chọn: ${tone || 'Trang trọng, chuẩn hành chính đại học'}
-- Độ dài quy định: ${lengthOption || 'Vừa (300 - 500 từ)'}
-- Đối tượng thụ hưởng: ${targetAudience || 'Toàn thể công đoàn viên, cán bộ, giảng viên TDMU'}
-${eventForm ? `Chi tiết sự kiện: Tên="${eventForm.name}", Ngày="${eventForm.date || ''}", Thời gian="${eventForm.time || ''}", Địa điểm="${eventForm.location || ''}", Kinh phí="${eventForm.budget || ''}", Người tham gia="${eventForm.attendees || ''}"` : ''}
+THÔNG TIN ĐẦU VÀO:
+Sự kiện / Chủ đề: "${eventNameInput}"
+${detailsContext}
 
-=========================================
-4. QUY ĐỊNH ĐẦU RA (JSON FORMAT DUY NHẤT, KHÔNG THÊM TEXT NGOÀI JSON):
-=========================================
+QUY ĐỊNH ĐẦU RA (TRẢ VỀ DUY NHẤT 1 ĐỐI TƯỢNG JSON HỢP LỆ, KHÔNG THÊM BẤT KỲ VĂN BẢN NÀO NGOÀI JSON):
 {
   "titles": [
-    "TỰ ĐẶT TIÊU ĐỀ 1 CHÍNH THỨC DỰA TRÊN SỰ KIỆN (Không ghi chữ 'Tiêu đề 1:')",
-    "TỰ ĐẶT TIÊU ĐỀ 2 THEO PHONG CÁCH KHẨU HIỆU THI ĐUA",
-    "TỰ ĐẶT TIÊU ĐỀ 3 THEO PHONG CÁCH BÁO CHÍ THỜI SỰ"
+    "Tiêu đề 1 phong cách báo chí thời sự trang trọng",
+    "Tiêu đề 2 phong cách lan tỏa thông điệp nhiệt huyết",
+    "Tiêu đề 3 phong cách cô đọng, giàu hình ảnh"
   ],
-  "subTitle": "Viết 1 câu tiêu đề phụ súc tích tóm lược ý nghĩa sự kiện cụ thể này",
-  "summary": "Tóm tắt bài viết chính xác 50 từ nêu bật thời gian, địa điểm, ý nghĩa và thông điệp chính",
-  "content": "Nội dung bài viết HTML tự nhiên, bố cục linh hoạt (sử dụng <h2>, <p>, <ul>, <li>...) bám sát đúng chủ đề yêu cầu, không rập khuôn."
+  "subTitle": "Một câu phụ đề ngắn gọn (dưới 25 từ) làm nổi bật điểm nhấn của bài viết",
+  "summary": "Đoạn tóm tắt chính xác khoảng 40-60 từ nêu bật thời gian, địa điểm, ý nghĩa hoạt động",
+  "content": "Nội dung bài viết đầy đủ định dạng HTML chuẩn (sử dụng các thẻ <h2>, <p>, <ul>, <li>...)"
 }`;
 
   const runGemini = async () => {
@@ -131,94 +207,184 @@ ${eventForm ? `Chi tiết sự kiện: Tên="${eventForm.name}", Ngày="${eventF
 });
 
 // =========================================================================
-// 2. EVENT PLAN & TIMELINE GENERATOR
+// =========================================================================
+// 2. REAL EVENT PLAN & TIMELINE GENERATOR (GEMINI 2.5 FLASH)
 // =========================================================================
 router.post('/event-plan-generator', async (req, res) => {
-  const { eventName, eventDate, targetAudience, budget } = req.body;
-  const eventTitle = eventName || 'Hội Thao Truyền Thống Công Đoàn TDMU 2026';
-  
-  res.json({
-    success: true,
-    source: 'Multi-Modal AI Event Architect',
-    eventTitle,
-    timeline: [
-      { time: '07:30 - 08:00', title: 'Đón tiếp đại biểu & Điểm danh đoàn viên các Tổ CĐ', leader: 'Ban Tổ Chức' },
-      { time: '08:00 - 08:30', title: 'Khai mạc, phát biểu chỉ đạo của Đảng Ủy & BTV Công đoàn', leader: 'Chủ Tịch Công Đoàn' },
-      { time: '08:30 - 11:00', title: 'Tiến hành các nội dung thi đấu & Tọa đàm chuyên đề', leader: 'Tổ Trọng Tài / Báo Cáo Viên' },
-      { time: '11:00 - 11:30', title: 'Bế mạc, trao cờ thi đua & Bế mạc chương trình', leader: 'Ban Thường Vụ' }
-    ],
-    budgetBreakdown: [
-      { item: 'Khen thưởng giải Nhất, Nhì, Ba', amount: '15,000,000 VNĐ' },
-      { item: 'Nước uống, teabreak đoàn viên', amount: '5,000,000 VNĐ' },
-      { item: 'In ấn Banner backdrop sân khấu', amount: '2,500,000 VNĐ' }
-    ],
-    pressReleaseDraft: `Công đoàn Trường Đại học Thủ Dầu Một vừa chính thức ban hành kế hoạch tổ chức ${eventTitle} nhằm thúc đẩy phong trào thi đua dạy tốt học tốt.`
-  });
+  const { eventName, eventDate, targetAudience, budget, documentText, apiKey, groqApiKey } = req.body;
+  const activeKey = apiKey || process.env.GEMINI_API_KEY;
+  const activeGroq = groqApiKey || process.env.GROQ_API_KEY;
+  const eventTitle = eventName || 'Hoạt động phong trào Công đoàn TDMU';
+
+  const prompt = `BẠN LÀ CHUYÊN GIA HOẠCH ĐỊNH SỰ KIỆN CỦA CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT.
+Dựa vào các dữ liệu sau:
+- Tên sự kiện: "${eventTitle}"
+- Ngày diễn ra: "${eventDate || 'Theo kế hoạch năm học'}"
+- Đối tượng tham gia: "${targetAudience || 'Toàn thể đoàn viên, cán bộ giảng viên'}"
+- Ngân sách / Kinh phí dự kiến: "${budget || 'Theo phê duyệt của Ban Thường vụ'}"
+${documentText ? `TƯ LIỆU NGUỒN ĐÍNH KÈM:\n${documentText}\n` : ''}
+
+Hãy xây dựng Kế hoạch chi tiết, khả thi, chuyên nghiệp.
+TRẢ VỀ DUY NHẤT MỘT ĐỐI TƯỢNG JSON HỢP LỆ VỚI CẤU TRÚC:
+{
+  "eventTitle": "${eventTitle}",
+  "timeline": [
+    { "time": "hh:mm - hh:mm", "title": "Tên nội dung hoạt động chi tiết", "leader": "Đơn vị hoặc cá nhân chủ trì" }
+  ],
+  "budgetBreakdown": [
+    { "item": "Khoản chi chi tiết", "amount": "Số tiền dự toán VNĐ" }
+  ],
+  "pressReleaseDraft": "Đoạn thông cáo báo chí ngắn gọn súc tích 2-3 câu về sự kiện."
+}`;
+
+  if (activeKey) {
+    try {
+      const ai = new GoogleGenAI({ apiKey: activeKey });
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: { responseMimeType: 'application/json' }
+      });
+      const parsed = extractJsonFromText(response.text);
+      return res.json({
+        success: true,
+        source: 'Google Gemini 2.5 Flash Event Architect',
+        ...parsed
+      });
+    } catch (err) {
+      console.warn('Gemini event planner error:', err.message);
+    }
+  }
+
+  if (activeGroq) {
+    try {
+      const raw = await callGroqAPI(prompt, "Bạn là chuyên gia tổ chức sự kiện.", activeGroq);
+      const parsed = extractJsonFromText(raw);
+      return res.json({
+        success: true,
+        source: 'Groq Event Architect',
+        ...parsed
+      });
+    } catch (e) {
+      console.warn('Groq event planner error:', e.message);
+    }
+  }
+
+  res.status(500).json({ success: false, error: 'Không thể kết nối đến AI để sinh kế hoạch sự kiện.' });
 });
 
 // =========================================================================
-// 3. IMAGE PROMPT GENERATOR
+// 3. REAL IMAGE PROMPT GENERATOR (GEMINI 2.5 FLASH)
 // =========================================================================
 router.post('/image-prompt-generator', async (req, res) => {
-  const { topic } = req.body;
-  const t = topic || 'Hoạt động công đoàn TDMU';
-  res.json({
-    success: true,
-    source: 'Visual Art AI Prompter',
-    slogan: `Công Đoàn TDMU: Đoàn Kết - Đổi Mới - Sáng Tạo Vươn Tầm 2026`,
-    prompts: [
-      `Professional banner of Thu Dau Mot University trade union members participating in ${t}, modern university campus background, high quality, 4k`,
-      `Warm and inspiring photograph of Vietnamese university lecturers receiving trade union merit awards, cinematic lighting, corporate style`
-    ]
-  });
+  const { topic, apiKey } = req.body;
+  const activeKey = apiKey || process.env.GEMINI_API_KEY;
+  const t = topic || 'Hoạt động công đoàn trường Đại học Thủ Dầu Một';
+
+  const prompt = `Bạn là chuyên gia thiết kế mỹ thuật và đạo diễn hình ảnh cho truyền thông trường Đại học Thủ Dầu Một (TDMU).
+Chủ đề sự kiện: "${t}".
+
+Hãy tạo 2 prompt tiếng Anh chuyên nghiệp, giàu chi tiết thị giác để tạo ảnh AI chất lượng cao (Midjourney, Flux, SDXL) và 1 câu slogan tiếng Việt.
+Trả về DUY NHẤT một JSON:
+{
+  "slogan": "Câu slogan truyền thông ngắn gọn, ấn tượng bằng tiếng Việt",
+  "prompts": [
+    "Prompt 1 bằng tiếng Anh chi tiết, tả ánh sáng, bối cảnh giảng đường/sân trường TDMU, phong cách phóng sự chân thực, 8k, canon eos, award-winning editorial photo",
+    "Prompt 2 bằng tiếng Anh cho bối cảnh hội trường trang trọng hoặc hoạt động thể thao/thi đua sôi nổi"
+  ]
+}`;
+
+  if (activeKey) {
+    try {
+      const ai = new GoogleGenAI({ apiKey: activeKey });
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: { responseMimeType: 'application/json' }
+      });
+      const parsed = extractJsonFromText(response.text);
+      return res.json({
+        success: true,
+        source: 'Google Gemini 2.5 Flash Visual Prompter',
+        slogan: parsed.slogan || `Công Đoàn TDMU: Đoàn Kết - Đổi Mới - Sáng Tạo`,
+        prompts: parsed.prompts || []
+      });
+    } catch (e) {
+      console.warn('Image prompt generator error:', e.message);
+    }
+  }
+
+  res.status(500).json({ success: false, error: 'Chưa cấu hình API Key để sinh prompt ảnh.' });
 });
 
 // =========================================================================
-// 4. QUALITY CHECK SCORECARD
+// 4. QUALITY CHECK SCORECARD (REAL HEURISTIC + LLM VALIDATION)
 // =========================================================================
 router.post('/quality-check', async (req, res) => {
-  const { title, content } = req.body;
-  const cleanContent = (content || "").replace(/<[^>]*>/g, '');
-  const wordCount = cleanContent.trim() ? cleanContent.trim().split(/\s+/).length : 0;
+  const { title, content, apiKey } = req.body;
+  const cleanContent = (content || "").replace(/<[^>]*>/g, '').trim();
+  const wordCount = cleanContent ? cleanContent.split(/\s+/).length : 0;
+  const activeKey = apiKey || process.env.GEMINI_API_KEY;
 
-  let lengthScore = 0;
-  if (wordCount >= 200 && wordCount <= 800) lengthScore = 25;
-  else if (wordCount >= 100) lengthScore = 20;
-  else if (wordCount > 0) lengthScore = 12;
+  if (activeKey && cleanContent.length > 50) {
+    try {
+      const ai = new GoogleGenAI({ apiKey: activeKey });
+      const prompt = `Bạn là biên tập viên cao cấp. Hãy đánh giá chất lượng bài báo truyền thông công đoàn sau:
+TIÊU ĐỀ: "${title || ''}"
+NỘI DUNG:
+"${cleanContent.slice(0, 2000)}"
 
-  let headlineScore = title && title.length >= 10 ? 25 : 10;
+Trả về DUY NHẤT một đối tượng JSON:
+{
+  "overallScore": 85,
+  "checks": [
+    { "name": "Tiêu đề hấp dẫn & Đúng trọng tâm", "score": "22/25 điểm", "status": "pass" },
+    { "name": "Độ dài & Tính mạch lạc thông tin", "score": "20/25 điểm", "status": "pass" },
+    { "name": "Văn phong báo chí & Tinh thần đoàn thể", "score": "23/25 điểm", "status": "pass" },
+    { "name": "Tính đầy đủ & Rõ ràng thời gian/địa điểm", "score": "20/25 điểm", "status": "pass" }
+  ],
+  "warnings": [
+    "Nhận xét góp ý cụ thể để bài viết hay hơn"
+  ]
+}`;
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: { responseMimeType: 'application/json' }
+      });
+      const parsed = extractJsonFromText(response.text);
+      return res.json({
+        success: true,
+        source: 'Google Gemini 2.5 Flash Quality Auditor',
+        overallScore: parsed.overallScore || 80,
+        checks: parsed.checks || [],
+        warnings: parsed.warnings || []
+      });
+    } catch (e) {
+      console.warn('AI quality check error, using rule heuristics:', e.message);
+    }
+  }
 
-  let toneScore = 0;
-  if (cleanContent.includes('Công đoàn') || cleanContent.includes('TDMU')) toneScore += 15;
-  if (cleanContent.includes('thông báo') || cleanContent.includes('kế hoạch') || cleanContent.includes('triển khai')) toneScore += 10;
+  // Heuristic rule-based check
+  let lengthScore = (wordCount >= 200 && wordCount <= 1200) ? 25 : (wordCount >= 100 ? 18 : 10);
+  let headlineScore = (title && title.trim().length >= 15) ? 25 : 12;
+  let toneScore = (cleanContent.includes('Công đoàn') || cleanContent.includes('TDMU')) ? 25 : 15;
+  let detailsScore = (cleanContent.match(/\d{1,2}[\/\-]\d{1,2}/) || cleanContent.includes('tại') || cleanContent.includes('ngày')) ? 25 : 15;
 
-  let detailsScore = 0;
   const warnings = [];
-  if (cleanContent.includes('0274') || cleanContent.includes('hotline') || cleanContent.includes('liên hệ') || cleanContent.includes('email')) {
-    detailsScore += 25;
-  } else {
-    detailsScore += 10;
-    warnings.push("⚠ Khuyến nghị: Thiếu thông tin liên hệ hoặc hotline Công đoàn TDMU.");
-  }
-
-  if (wordCount < 150) {
-    warnings.push("⚠ Khuyến nghị: Nội dung còn hơi ngắn, nên bổ sung chi tiết để bài viết đạt 300 từ.");
-  }
-
-  const overallScore = lengthScore + headlineScore + toneScore + detailsScore;
-
-  const checks = [
-    { name: "Tiêu Đề Bài Viết Phù Hợp", score: `${headlineScore}/25 điểm`, status: headlineScore >= 20 ? "pass" : "warn" },
-    { name: "Độ Dài & Số Từ Bài Viết", score: `${wordCount} từ (${lengthScore}/25 điểm)`, status: lengthScore >= 20 ? "pass" : "warn" },
-    { name: "Văn Phong Hành Chính Công Đoàn", score: `${toneScore}/25 điểm`, status: toneScore >= 20 ? "pass" : "warn" },
-    { name: "Đầy Đủ Thông Tin Liên Hệ", score: `${detailsScore}/25 điểm`, status: detailsScore >= 20 ? "pass" : "warn" }
-  ];
+  if (wordCount < 150) warnings.push("Khuyến nghị: Bài viết hơi ngắn, nên bổ sung chi tiết hoạt động.");
+  if (!title || title.length < 15) warnings.push("Khuyến nghị: Tiêu đề nên cụ thể và nêu bật thông điệp chính.");
 
   res.json({
     success: true,
-    overallScore,
-    checks,
-    warnings: warnings.length > 0 ? warnings : ["✓ Bài viết đạt đầy đủ 100% tiêu chuẩn truyền thông TDMU!"]
+    overallScore: lengthScore + headlineScore + toneScore + detailsScore,
+    checks: [
+      { name: "Tiêu Đề Bài Viết", score: `${headlineScore}/25 điểm`, status: headlineScore >= 20 ? "pass" : "warn" },
+      { name: "Độ Dài & Dung Lượng", score: `${wordCount} từ (${lengthScore}/25 điểm)`, status: lengthScore >= 20 ? "pass" : "warn" },
+      { name: "Văn Phong Báo Chí Đoàn Thể", score: `${toneScore}/25 điểm`, status: toneScore >= 20 ? "pass" : "warn" },
+      { name: "Thời Gian, Địa Điểm & Số Liệu", score: `${detailsScore}/25 điểm`, status: detailsScore >= 20 ? "pass" : "warn" }
+    ],
+    warnings: warnings.length > 0 ? warnings : ["✓ Bài viết cơ bản đạt chuẩn yêu cầu truyền thông!"]
   });
 });
 
@@ -233,22 +399,12 @@ router.post('/chat', async (req, res) => {
   const activeGroqKey = groqApiKey || process.env.GROQ_API_KEY;
 
   if (!activeGeminiKey && !activeGroqKey) {
-    let reply = `Em đã tiếp nhận yêu cầu: "${message}".`;
-    let editAction = "NONE";
-    let editContent = "";
-
-    if (selectedText) {
-      reply = "Dạ, em đã gọt giũa và nâng cấp đoạn văn Thầy/Cô vừa chọn theo chuẩn văn phong báo chí Công đoàn TDMU!";
-      editAction = "REPLACE_SELECTION";
-      editContent = `<p style="font-weight: 600; color: #003865;">${selectedText.replace(/<[^>]*>/g, '')} (Đã được Copilot AI trau chuốt theo chuẩn văn phong hành chính đoàn thể ĐH Thủ Dầu Một)</p>`;
-    }
-
     return res.json({
-      success: true,
-      source: "Local Intelligent NLP Engine (Offline Fallback)",
-      reply,
-      editAction,
-      editContent
+      success: false,
+      error: "Chưa cấu hình API Key cho Copilot AI. Vui lòng kiểm tra lại thiết lập khóa Gemini hoặc Groq.",
+      reply: "Dạ, hiện hệ thống chưa nhận được API Key hợp lệ để kết nối máy chủ AI. Thầy/Cô vui lòng kiểm tra thiết lập tại biểu tượng Bánh răng (⚙️).",
+      editAction: "NONE",
+      editContent: ""
     });
   }
 
@@ -383,61 +539,73 @@ router.post('/floating-command', async (req, res) => {
   if (!text) return res.json({ success: false, error: 'Text là bắt buộc' });
 
   const apiKey = req.body.apiKey || process.env.GEMINI_API_KEY;
-  if (apiKey) {
-    try {
-      const ai = new GoogleGenAI({ apiKey });
-      let systemPrompt = "";
-      if (action === 'rewrite') systemPrompt = "Viết lại đoạn văn sau theo cách diễn đạt mượt mà và thu hút hơn:";
-      else if (action === 'shorten') systemPrompt = "Rút gọn đoạn văn sau thành một câu súc tích nhất:";
-      else if (action === 'expand') systemPrompt = "Mở rộng đoạn văn sau với chi tiết bổ sung cho phong trào Công đoàn:";
-      else if (action === 'formal') systemPrompt = "Viết lại đoạn văn sau theo văn phong báo chí chuẩn mực, trang nhã, giàu sức thuyết phục:";
-      else if (action === 'to_quote') systemPrompt = "Biến đoạn thông tin sau thành một câu trích dẫn phát biểu trực tiếp đầy cảm xúc và trang trọng từ lãnh đạo hoặc đoàn viên Công đoàn TDMU (đặt trong dấu ngoặc kép):";
-      else systemPrompt = "Sửa lỗi chính tả và ngữ pháp cho đoạn văn sau:";
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: `${systemPrompt} "${text}"`
-      });
-
-      return res.json({ success: true, source: "Gemini AI Live Transformer", result: response.text.trim() });
-    } catch (e) {
-      console.error("Gemini Floating AI Error, switching to NLP Transformer:", e.message);
-    }
+  if (!apiKey) {
+    return res.status(400).json({ success: false, error: 'Chưa cấu hình API Key cho Floating AI' });
   }
 
-  let result = text;
-  if (action === 'rewrite') {
-    result = `Thực hiện chỉ đạo, ${text.charAt(0).toLowerCase() + text.slice(1)}`;
-  } else if (action === 'shorten') {
-    result = text.split('.')[0] + '.';
-  } else if (action === 'expand') {
-    result = `${text} Đồng thời, Ban Thường vụ Công đoàn TDMU đề nghị các Công đoàn bộ phận rà soát và nghiêm túc thực hiện.`;
-  } else if (action === 'to_quote') {
-    result = `<blockquote>“${text}”<cite style="display:block;font-size:13px;color:#0284C7;font-weight:700;margin-top:6px;">– Đại diện Ban Thường vụ Công đoàn TDMU</cite></blockquote>`;
-  } else if (action === 'formal') {
-    result = `Ban Thường vụ Công đoàn TDMU trân trọng thông báo: ${text}`;
-  } else if (action === 'fix_spelling') {
-    result = text.replace(/truong/gi, 'Trường').replace(/cong doan/gi, 'Công đoàn').replace(/tdmu/gi, 'TDMU');
-  }
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    let instruction = "";
+    if (action === 'rewrite') instruction = "Viết lại đoạn văn sau sao cho tự nhiên, mượt mà và thu hút hơn nhưng giữ nguyên ý nghĩa:";
+    else if (action === 'shorten') instruction = "Tóm lược đoạn văn sau thành 1-2 câu ngắn gọn, súc tích nhất:";
+    else if (action === 'expand') instruction = "Mở rộng đoạn văn sau với các chi tiết bối cảnh, ý nghĩa phong trào Công đoàn:";
+    else if (action === 'formal') instruction = "Viết lại theo văn phong báo chí hành chính trang nhã, chuẩn mực:";
+    else if (action === 'to_quote') instruction = "Chuyển ý của đoạn văn thành một câu phát biểu trích dẫn trực tiếp đặt trong thẻ <blockquote>“...”<cite>– Đại diện Ban Thường vụ Công đoàn TDMU</cite></blockquote>:";
+    else instruction = "Sửa triệt để các lỗi chính tả, dấu câu và ngữ pháp trong đoạn văn:";
 
-  res.json({ success: true, source: "Real NLP Local Transformer", result });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: `${instruction}\n\n"${text}"\n\nChỉ trả về đoạn văn đã sửa, không thêm lời chào giải thích.`
+    });
+
+    let cleanedResult = response.text.trim().replace(/^```(?:html)?\s*/i, '').replace(/\s*```$/i, '');
+    return res.json({ success: true, source: "Google Gemini 2.5 Flash Transformer", result: cleanedResult });
+  } catch (e) {
+    console.error("Gemini Floating AI Error:", e.message);
+    res.status(500).json({ success: false, error: 'Lỗi xử lý AI: ' + e.message });
+  }
 });
 
 // =========================================================================
-// 8. CONTENT REPURPOSE
+// 8. REAL CONTENT REPURPOSE (GEMINI 2.5 FLASH MULTI-CHANNEL ADAPTER)
 // =========================================================================
-router.post('/repurpose', (req, res) => {
-  const { platform, title, content } = req.body;
-  const clean = (content || "").replace(/<[^>]*>/g, '');
-  let repurposed = "";
-  if (platform === 'Facebook') {
-    repurposed = `📢 [TDMU NEWS] ${title || 'Thông Báo TDMU'}\n\n${clean}\n\n👉 Xem chi tiết tại Web Công đoàn TDMU!\n#CongDoanTDMU #TDMU2026`;
-  } else if (platform === 'Zalo') {
-    repurposed = `[CÔNG ĐOÀN TDMU THÔNG BÁO]\n${title || ''}\n\n${clean}`;
-  } else {
-    repurposed = `Kính gửi Qúy Thầy/Cô Đoàn viên,\n\nBan Thường vụ Công đoàn TDMU trân trọng thông báo: "${title || ''}".\n\n${clean}\n\nTrân trọng!`;
+router.post('/repurpose', async (req, res) => {
+  const { platform, title, content, apiKey } = req.body;
+  const activeKey = apiKey || process.env.GEMINI_API_KEY;
+  const clean = (content || "").replace(/<[^>]*>/g, '').trim();
+
+  if (!activeKey) {
+    return res.status(400).json({ success: false, error: 'Chưa cấu hình Gemini API Key!' });
   }
-  res.json({ success: true, platform, result: repurposed });
+
+  try {
+    const ai = new GoogleGenAI({ apiKey: activeKey });
+    const prompt = `BẠN LÀ CHUYÊN VIÊN TRUYỀN THÔNG ĐA NỀN TẢNG CÔNG ĐOÀN ĐH THỦ DẦU MỘT.
+Nhiệm vụ: Chuyển thể bài báo sau sang nền tảng: "${platform || 'Facebook'}" (Facebook Fanpage, Zalo OA, Email Thông báo, hoặc Kịch bản Video 60s).
+
+YÊU CẦU THEO KÊNH:
+- Nếu là "Facebook": Viết 1 bài đăng Fanpage có 2-3 câu hook đầu bài lôi cuốn, chia đoạn ngắn thoáng mắt, có emoji lịch sự phù hợp, hashtag #CongDoanTDMU #TDMU, kêu gọi chia sẻ.
+- Nếu là "Zalo": Viết tin nhắn thông báo Zalo OA ngắn gọn dưới 90 từ, nêu bật Thời gian, Địa điểm, Đối tượng và kêu gọi tham gia.
+- Nếu là "Video" hoặc "Kịch bản Video": Viết kịch bản ngắn 60 giây gồm 3-4 phân cảnh (Cảnh 1, Cảnh 2...) với mô tả Hình ảnh và Lời bình (Voiceover).
+- Kênh khác / Email: Viết thư thông báo trang trọng gửi đến Cán bộ Giảng viên đoàn viên.
+
+BÀI BÁO GỐC:
+Tiêu đề: "${title || 'Thông báo hoạt động'}"
+Nội dung:
+"${clean.slice(0, 2500)}"
+
+CHỈ TRẢ VỀ NỘI DUNG VĂN BẢN KẾT QUẢ ĐÃ CHUYỂN THỂ (không thêm lời giới thiệu ngoài lề).`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt
+    });
+
+    res.json({ success: true, platform, source: 'Google Gemini 2.5 Flash Multi-Channel Adapter', result: response.text.trim() });
+  } catch (err) {
+    console.error('Repurpose error:', err);
+    res.status(500).json({ success: false, error: 'Lỗi chuyển thể đa kênh: ' + err.message });
+  }
 });
 
 // =========================================================================
@@ -1783,8 +1951,8 @@ function sleep(ms) {
 }
 
 function synthesizeLocalJournalism({ userPrompt, filesInfo, photos, genre, sourceText }) {
-  const prompt = (userPrompt || '').trim();
-  const fileTexts = (filesInfo || []).map(f => `--- ${f.name} ---\n${f.text || ''}`).join('\n');
+  const prompt = fixVietnameseFont((userPrompt || '').trim());
+  const fileTexts = (filesInfo || []).map(f => `--- ${f.name} ---\n${fixVietnameseFont(f.text || '')}`).join('\n');
   const allText = [prompt, fileTexts, sourceText].filter(Boolean).join('\n');
 
   let title = "Hoạt Động Trọng Tâm Công Đoàn Trường Đại Học Thủ Dầu Một Năm 2026";
@@ -1806,9 +1974,9 @@ function synthesizeLocalJournalism({ userPrompt, filesInfo, photos, genre, sourc
 </figure>`).join('\n');
   }
 
-  const snippet = (fileTexts || sourceText || prompt).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').slice(0, 450);
+  const snippet = fixVietnameseFont((fileTexts || sourceText || prompt).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').slice(0, 450));
 
-  const bodyHtml = `
+  const bodyHtml = fixVietnameseFont(`
 <h1 class="article-title">${title}</h1>
 <p class="sapo"><strong>${sapo}</strong></p>
 
@@ -1827,13 +1995,13 @@ ${figuresHtml}
 
 <h2>3. Định hướng Công tác và Quyết tâm Hành động</h2>
 <p>Phát huy những kết quả đã đạt được, Ban Chấp hành Công đoàn kêu gọi toàn thể cán bộ, đoàn viên tiếp tục nỗ lực thi đua Dạy tốt - Học tốt, chủ động sáng tạo trong nghiên cứu khoa học và công tác quản lý, quyết tâm thực hiện thắng lợi mục tiêu năm học 2025 - 2026.</p>
-`.trim();
+`.trim());
 
-  const fbCaption = `🔔 [TIN TỨC CÔNG ĐOÀN TDMU 2026]\n✨ ${title.toUpperCase()}\n\n📌 Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một tiếp tục đẩy mạnh các phong trào thi đua, chăm lo toàn diện đời sống vật chất và tinh thần cho người lao động.\n\n👉 Xem chi tiết bài viết tại Cổng thông tin Công đoàn TDMU!\n#CongDoanTDMU #TDMU2026 #DaiHocThuDauMot #BinhDuong`;
+  const fbCaption = fixVietnameseFont(`🔔 [TIN TỨC CÔNG ĐOÀN TDMU 2026]\n✨ ${title.toUpperCase()}\n\n📌 Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một tiếp tục đẩy mạnh các phong trào thi đua, chăm lo toàn diện đời sống vật chất và tinh thần cho người lao động.\n\n👉 Xem chi tiết bài viết tại Cổng thông tin Công đoàn TDMU!\n#CongDoanTDMU #TDMU2026 #DaiHocThuDauMot #BinhDuong`);
 
-  const zaloMessage = `[CÔNG ĐOÀN TDMU] Thông báo: ${title}. Kính mời quý Thầy/Cô đoàn viên theo dõi chi tiết tại Cổng thông tin Công đoàn trường. Trân trọng!`;
+  const zaloMessage = fixVietnameseFont(`[CÔNG ĐOÀN TDMU] Thông báo: ${title}. Kính mời quý Thầy/Cô đoàn viên theo dõi chi tiết tại Cổng thông tin Công đoàn trường. Trân trọng!`);
 
-  return { title, sapo, bodyHtml, fbCaption, zaloMessage };
+  return { title: fixVietnameseFont(title), sapo: fixVietnameseFont(sapo), bodyHtml, fbCaption, zaloMessage };
 }
 
 async function streamSynthesisToClient(res, synthesis, photos, userPrompt, genre, genreName) {
@@ -1942,42 +2110,55 @@ router.post('/autopilot-generate', async (req, res) => {
 
   const ai = new GoogleGenAI({ apiKey: activeKey });
 
+  const hasPhotos = Array.isArray(photos) && photos.length > 0;
+
   // Build source material block
   const fileTexts = (filesInfo || []).map((f, i) =>
-    `--- TAI LIEU ${i + 1}: ${f.name} ---\n${f.text || ''}`
+    `--- TÀI LIỆU ${i + 1}: ${f.name} ---\n${fixVietnameseFont(f.text || '')}`
   ).join('\n\n');
 
-  const photoList = (photos || []).map((p, i) =>
-    `Anh ${i + 1}: ${p.caption || p.fileName || 'Hinh anh su kien'} (URL: ${p.url})`
-  ).join('\n');
+  const photoList = hasPhotos
+    ? photos.map((p, i) => `Ảnh ${i + 1}: ${p.caption || p.fileName || 'Hình ảnh sự kiện'} (URL: ${p.url})`).join('\n')
+    : '';
 
   const sourceBlock = [
-    userPrompt ? `YEU CAU CUA NGUOI DUNG:\n${userPrompt}` : '',
-    fileTexts ? `TAI LIEU DINH KEM:\n${fileTexts}` : '',
-    photoList ? `ANH DINH KEM:\n${photoList}` : '',
-    sourceText ? `NOI DUNG BO SUNG:\n${sourceText}` : ''
+    userPrompt ? `YÊU CẦU CỦA NGƯỜI DÙNG:\n${fixVietnameseFont(userPrompt)}` : '',
+    fileTexts ? `TÀI LIỆU ĐÍNH KÈM:\n${fileTexts}` : '',
+    hasPhotos ? `DANH SÁCH ẢNH TƯ LIỆU THẬT ĐÃ DUYỆT (CHỈ ĐƯỢC DÙNG CÁC URL NÀY):\n${photoList}` : '',
+    sourceText ? `NỘI DUNG BỔ SUNG:\n${fixVietnameseFont(sourceText)}` : ''
   ].filter(Boolean).join('\n\n---\n\n');
 
   try {
     // ── STEP 1: Stream Web Article ──────────────────────────────────────────
     res.write('data: ' + JSON.stringify({ step: 'status', message: 'Bước 1/3: Đang phân tích tài liệu và viết bài báo Website...' }) + '\n\n');
 
-    const webSystemPrompt = `BAN LA TONG THU KY TOA SOAN CUA CONG DOAN DAI HOC THU DAU MOT (TDMU).
-The loai bai viet: ${genreName}
+    const imageInstruction = hasPhotos
+      ? `- CHÈN ẢNH HIỆN TRƯỜNG: Chèn ảnh vào bài bằng thẻ:
+  <figure class="journalism-figure" style="text-align: center; margin: 24px 0;">
+    <img src="URL_CHÍNH_XÁC_TỪ_DANH_SÁCH" alt="Mô tả ảnh" style="max-width: 100%; border-radius: 8px;">
+    <figcaption style="font-size: 13px; color: #64748B; font-style: italic; margin-top: 8px;">Chú thích ảnh</figcaption>
+  </figure>
+- BẮT BUỘC: CHỈ ĐƯỢC PHÉP DÙNG các URL có trong danh sách ảnh được cung cấp ở trên. TUYỆT ĐỐI KHÔNG TỰ BỊA ĐẶT URL ẢNH KHÁC.`
+      : `- QUY ĐỊNH BẮT BUỘC VỀ HÌNH ẢNH: Hiện tại KHÔNG CÓ tệp ảnh hiện trường nào đính kèm. TUYỆT ĐỐI KHÔNG ĐƯỢC TỰ BỊA ĐẶT THẺ <img> HOẶC <figure> HOẶC ĐƯỜNG DẪN ẢNH ẢO DƯỚI MỌI HÌNH THỨC. Bài báo phải là thuần văn bản chuẩn mực, không có bất kỳ thẻ ảnh nào.`;
 
-NHIEM VU: Phan tich toan bo tai lieu dinh kem duoi day va viet mot bai bao hoan chinh cho Website Cong Doan TDMU.
+    const webSystemPrompt = `BẠN LÀ TỔNG THƯ KÝ TÒA SOẠN CỦA CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT (TDMU).
+Thể loại bài viết: ${genreName}
 
-YEU CAU BAT BUOC:
-- Tra ve HTML RAW (khong boc trong markdown).
-- Bat dau bang <h1 class="article-title">Tieu de bai bao chinh xac</h1>
-- Tiep theo la Sapo in dam: <p class="sapo"><strong>Tom tat 5W1H...</strong></p>
-- Than bai chia <h2> mach lac (khong ghi Phan 1, Phan 2).
-- Co it nhat 1 trich dan <blockquote> tu tai lieu.
-- Chen <figure class="journalism-figure"> cho moi anh co trong danh sach anh.
-- Van phong trang trong, chuan hanh chinh Cong doan, giau tinh thuyet phuc.
-- Tuyet doi KHONG bịa dat so lieu, ngay gio, ten nguoi khong co trong tai lieu.
+NHIỆM VỤ: Phân tích kỹ lưỡng toàn bộ tài liệu tư liệu thực tế dưới đây (văn bản chỉ đạo, bảng biểu Excel, slide thuyết trình...) và viết một bài báo hoàn chỉnh, mạch lạc, xuất sắc cho Website Công Đoàn TDMU.
 
-TAI LIEU DAU VAO:
+YÊU CẦU BẮT BUỘC:
+- Trả về HTML RAW chuẩn (không bọc trong khối markdown \`\`\`html).
+- Bắt đầu bằng <h1 class="article-title">Tiêu đề bài báo thời sự lôi cuốn</h1>
+- Tiếp theo là Sapo in đậm: <p class="sapo"><strong>Đoạn mở đầu 5W1H tóm lược sự kiện...</strong></p>
+- Thân bài chia các thẻ <h2> mạch lạc, sinh động (không viết rập khuôn Phần 1, Phần 2).
+- Có ít nhất 1 trích dẫn phát biểu ý nghĩa đặt trong thẻ <blockquote>.
+- Nếu có bảng biểu hay số liệu từ tài liệu, hãy trình bày rõ ràng, minh bạch.
+${imageInstruction}
+- Văn phong báo chí đại học hiện đại, đĩnh đạc, ấm áp, lan tỏa tinh thần tương thân tương ái.
+- Tuyệt đối BÁM SÁT SỰ THẬT trong tài liệu: số liệu, thời gian, địa điểm, thành phần đại biểu. Không bịa đặt thông tin sai lệch.
+- ĐẢM BẢO CHÍNH TẢ VÀ BẢNG MÃ TIẾNG VIỆT: Sử dụng 100% tiếng Việt chuẩn Unicode dựng sẵn (NFC), không để dấu rời rạc hay ký tự lạ.
+
+TƯ LIỆU THỰC TẾ:
 ${sourceBlock}`;
 
     let webContent = '';
@@ -1988,45 +2169,72 @@ ${sourceBlock}`;
 
     for await (const chunk of webStream) {
       if (chunk.text) {
-        const textChunk = chunk.text.replace(/```html|```/g, '');
+        let textChunk = chunk.text.replace(/```html|```/g, '');
+        textChunk = fixVietnameseFont(textChunk);
         webContent += textChunk;
         res.write('data: ' + JSON.stringify({ step: 'web_chunk', chunk: textChunk }) + '\n\n');
       }
     }
+
+    // Clean and normalize final webContent
+    webContent = fixVietnameseFont(webContent);
+
+    // Scrub hallucinated images if no photos were supplied
+    if (!hasPhotos) {
+      webContent = webContent.replace(/<figure[\s\S]*?<\/figure>/gi, '').replace(/<img[^>]*>/gi, '');
+    } else {
+      const allowedUrls = new Set(photos.map(p => p.url));
+      webContent = webContent.replace(/<figure[\s\S]*?<\/figure>/gi, (fig) => {
+        const srcMatch = fig.match(/<img[^>]+src=["']([^"']+)["']/i);
+        if (srcMatch && !allowedUrls.has(srcMatch[1]) && !srcMatch[1].startsWith('/uploads/')) {
+          return '';
+        }
+        return fig;
+      });
+    }
+
     res.write('data: ' + JSON.stringify({ step: 'web_done' }) + '\n\n');
 
-    // ── STEP 2: Facebook + Zalo in parallel ─────────────────────────────────
-    res.write('data: ' + JSON.stringify({ step: 'status', message: 'Bước 2/3: Đang chuyển thể Facebook & Zalo...' }) + '\n\n');
+    // ── STEP 2: Facebook + Zalo + Video Script in parallel ───────────────────
+    res.write('data: ' + JSON.stringify({ step: 'status', message: 'Bước 2/3: Đang chuyển thể sang Fanpage Facebook, Zalo OA & Kịch bản Video...' }) + '\n\n');
 
-    const fbPrompt = `Viet 1 bai dang Facebook Fanpage hap dan tu bai bao Cong Doan TDMU sau day.
-Yeu cau:
-- 3 dong mo dau (hook) thu hut nguoi doc dung ngay
-- Co icon/emoji phu hop (khong spam)
-- Hashtag: #CongDoanTDMU #TDMU2026 #${genreName.replace(/\s+/g, '')}
-- Ket thuc bang loi keu goi chia se (CTA)
-- Do dai: 150-250 tu
-- Tra ve PLAINTEXT, khong HTML
+    const cleanPlainText = webContent.replace(/<[^>]*>/g, ' ').slice(0, 2500);
 
-BAI BAO WEBSITE:
-${webContent.replace(/<[^>]*>/g, '').slice(0, 2000)}`;
+    const fbPrompt = `Viết 1 bài đăng Facebook Fanpage hấp dẫn từ bài báo Công Đoàn TDMU sau đây.
+Yêu cầu:
+- 3 dòng mở đầu (hook) thu hút người đọc dừng chân
+- Chia các đoạn ngắn, thoáng mắt, sử dụng icon lịch sự, chuyên nghiệp
+- Bộ Hashtag: #CongDoanTDMU #TDMU2026 #${genreName.replace(/\s+/g, '')}
+- Kết thúc bằng lời kêu gọi hành động (CTA) chia sẻ
+- Độ dài: 150-250 từ. Trả về văn bản thuần (PLAINTEXT).
 
-    const zaloPrompt = `Viet tin thong bao Zalo OA ngan gon tu bai bao sau.
-Yeu cau:
-- Toi da 80 tu, van phong trang trong truc tiep
-- Co the them link chia se neu phu hop: [Xem toan bai tren Web Cong Doan TDMU]
-- Khong co emoji thua, khong hashtag
-- Tra ve PLAINTEXT
+BÀI BÁO GỐC:
+${cleanPlainText}`;
 
-BAI BAO WEBSITE:
-${webContent.replace(/<[^>]*>/g, '').slice(0, 1500)}`;
+    const zaloPrompt = `Viết tin thông báo Zalo OA ngắn gọn, chính xác từ bài báo sau.
+Yêu cầu:
+- Tối đa 90 từ, văn phong trang trọng, thông tin cô đọng (Thời gian, Địa điểm, Ý nghĩa)
+- Kêu gọi đoàn viên theo dõi chi tiết trên Website Công đoàn TDMU
+- Trả về văn bản thuần (PLAINTEXT).
 
-    const [fbRes, zaloRes] = await Promise.all([
+BÀI BÁO GỐC:
+${cleanPlainText}`;
+
+    const videoPrompt = `Viết kịch bản video phóng sự ngắn 60 giây (Reels / TikTok / Shorts) về sự kiện sau.
+Yêu cầu: Gồm 3-4 phân cảnh ngắn gọn, mỗi cảnh có [Hình ảnh] và [Lời bình / Lời dẫn]. Trả về văn bản thuần.
+
+BÀI BÁO GỐC:
+${cleanPlainText}`;
+
+    const [fbRes, zaloRes, videoRes] = await Promise.all([
       ai.models.generateContent({ model: 'gemini-2.5-flash', contents: fbPrompt }),
-      ai.models.generateContent({ model: 'gemini-2.5-flash', contents: zaloPrompt })
+      ai.models.generateContent({ model: 'gemini-2.5-flash', contents: zaloPrompt }),
+      ai.models.generateContent({ model: 'gemini-2.5-flash', contents: videoPrompt })
     ]);
 
-    const facebookContent = fbRes.text || '';
-    const zaloContent = zaloRes.text || '';
+    const facebookContent = fixVietnameseFont(fbRes.text || '');
+    const zaloContent = fixVietnameseFont(zaloRes.text || '');
+    const videoContent = fixVietnameseFont(videoRes.text || '');
 
     res.write('data: ' + JSON.stringify({
       step: 'social_done',
@@ -2037,6 +2245,9 @@ ${webContent.replace(/<[^>]*>/g, '').slice(0, 1500)}`;
       zalo: {
         message: zaloContent,
         shareLink: ''
+      },
+      video: {
+        script: videoContent
       }
     }) + '\n\n');
 
@@ -2045,8 +2256,8 @@ ${webContent.replace(/<[^>]*>/g, '').slice(0, 1500)}`;
 
     const titleMatch = webContent.match(/<h1[^>]*>(.*?)<\/h1>/i);
     const sapoMatch = webContent.match(/<p class="sapo"[^>]*>.*?<strong>(.*?)<\/strong>/i);
-    const extractedTitle = titleMatch ? titleMatch[1].replace(/<[^>]*>/g, '').trim() : (userPrompt ? userPrompt.slice(0, 100) : 'Bài Báo Mới');
-    const extractedSummary = sapoMatch ? sapoMatch[1].replace(/<[^>]*>/g, '').trim() : webContent.replace(/<[^>]*>/g, '').slice(0, 200);
+    const extractedTitle = fixVietnameseFont(titleMatch ? titleMatch[1].replace(/<[^>]*>/g, '').trim() : (userPrompt ? userPrompt.slice(0, 100) : 'Bài Báo Mới'));
+    const extractedSummary = fixVietnameseFont(sapoMatch ? sapoMatch[1].replace(/<[^>]*>/g, '').trim() : webContent.replace(/<[^>]*>/g, '').slice(0, 200));
 
     // Save article to DB
     const { loadDB, saveDB } = require('../db');

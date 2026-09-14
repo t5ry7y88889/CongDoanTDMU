@@ -1,4 +1,51 @@
-﻿const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenAI: RawGoogleGenAI } = require('@google/genai');
+const { fixVietnameseFont } = require('./documentParser');
+
+const GEMINI_MODELS = [
+  'gemini-3.6-flash',
+  'gemini-3.7-flash',
+  'gemini-2.5-flash',
+  'gemini-flash-latest'
+];
+
+class GoogleGenAI extends RawGoogleGenAI {
+  constructor(opts) {
+    super(opts);
+    const origModels = this.models;
+    this.models = {
+      ...origModels,
+      async generateContent(options) {
+        let lastErr = null;
+        for (const m of GEMINI_MODELS) {
+          try {
+            return await origModels.generateContent({ ...options, model: m });
+          } catch(e) {
+            console.warn(`[Gemini model ${m} failed]:`, e.message?.slice(0, 100));
+            lastErr = e;
+            const isRetryable = e.message?.includes('429') || e.message?.includes('503') || e.message?.includes('404') || e.message?.includes('RESOURCE_EXHAUSTED') || e.message?.includes('high demand');
+            if (!isRetryable) throw e;
+          }
+        }
+        throw lastErr || new Error("Tất cả các mô hình Gemini trong nhóm dự phòng đều không phản hồi.");
+      },
+      async generateContentStream(options) {
+        let lastErr = null;
+        for (const m of GEMINI_MODELS) {
+          try {
+            return await origModels.generateContentStream({ ...options, model: m });
+          } catch(e) {
+            console.warn(`[Gemini stream model ${m} failed]:`, e.message?.slice(0, 100));
+            lastErr = e;
+            const isRetryable = e.message?.includes('429') || e.message?.includes('503') || e.message?.includes('404') || e.message?.includes('RESOURCE_EXHAUSTED') || e.message?.includes('high demand');
+            if (!isRetryable) throw e;
+          }
+        }
+        throw lastErr || new Error("Tất cả các mô hình Gemini trong nhóm dự phòng đều không phản hồi.");
+      }
+    };
+  }
+}
+
 
 // =========================================================================
 // 1. NLP ALGORITHMS (TF-IDF & SENTENCE RANKING SUMMARIZER)
@@ -210,11 +257,11 @@ function normalizeAiGenerateOutput(parsed, defaultPrompt) {
     titles = [defaultPrompt || "Thông Báo Hoạt Động Công Đoàn TDMU"];
   }
 
-  titles = titles.map(t => typeof t === 'string' ? t.replace(/^Tiêu đề \d+:\s*/i, '').replace(/^Tiêu đề chính:\s*/i, '').replace(/^Title:\s*/i, '').replace(/^"|"$/g, '').trim() : String(t));
+  titles = titles.map(t => typeof t === 'string' ? fixVietnameseFont(t.replace(/^Tiêu đề \d+:\s*/i, '').replace(/^Tiêu đề chính:\s*/i, '').replace(/^Title:\s*/i, '').replace(/^"|"$/g, '').trim()) : String(t));
 
-  const subTitle = target.subTitle || target.subtitle || target.sub_title || "";
-  const summary = target.summary || target.tom_tat || target.description || "";
-  let content = target.content || target.body || target.html || target.text || target.noi_dung || target.article || "";
+  const subTitle = fixVietnameseFont(target.subTitle || target.subtitle || target.sub_title || "");
+  const summary = fixVietnameseFont(target.summary || target.tom_tat || target.description || "");
+  let content = fixVietnameseFont(target.content || target.body || target.html || target.text || target.noi_dung || target.article || "");
 
   if (typeof content === 'string' && content.length > 0 && !content.includes('<p>') && !content.includes('<h2>')) {
     content = content.split(/\n\n+/).map(p => `<p>${p.trim()}</p>`).join('\n');
@@ -232,9 +279,9 @@ function normalizeAiChatOutput(parsed) {
     target = {};
   }
 
-  const reply = target.reply || target.message || target.answer || target.text || "Dạ, em đã xử lý xong yêu cầu của thầy/cô rồi ạ!";
+  const reply = fixVietnameseFont(target.reply || target.message || target.answer || target.text || "Dạ, em đã xử lý xong yêu cầu của thầy/cô rồi ạ!");
   let editAction = target.editAction || target.action || target.edit_action || "NONE";
-  let editContent = target.editContent || target.content || target.edit_content || target.html || "";
+  let editContent = fixVietnameseFont(target.editContent || target.content || target.edit_content || target.html || "");
 
   if (typeof editContent === 'string' && editContent.length > 0 && !editContent.includes('<p>') && !editContent.includes('<h2>') && !editContent.includes('<ul>')) {
     editContent = editContent.split(/\n\n+/).map(p => `<p>${p.trim()}</p>`).join('\n');
@@ -251,5 +298,7 @@ module.exports = {
   callGroqAPI,
   handleAiError,
   normalizeAiGenerateOutput,
-  normalizeAiChatOutput
+  normalizeAiChatOutput,
+  GEMINI_MODELS
 };
+

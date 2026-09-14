@@ -846,7 +846,7 @@
             <span style="font-size: 13px; font-weight: 800; color: #002855; display: flex; align-items: center; gap: 6px;">
               <i class="fa-solid fa-paperclip text-primary"></i> Khay Tiếp Nhận Tư Liệu (Ingest)
             </span>
-            <span style="font-size: 11px; color: #64748B;">Word, PDF, TXT, Ảnh</span>
+            <span style="font-size: 11px; color: #64748B;">Word, PDF, PowerPoint, Excel, TXT, Ảnh</span>
           </div>
           <div id="composer_dropzone" onclick="document.getElementById('composer_file_input').click()"
             ondragover="event.preventDefault(); this.style.borderColor='#0284C7'; this.style.background='#F0F9FF';"
@@ -855,10 +855,11 @@
             style="border: 2px dashed #CBD5E1; background: #F8FAFC; border-radius: 10px; padding: 22px 16px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 12px;">
             <i class="fa-solid fa-cloud-arrow-up" style="font-size: 26px; color: #0284C7; margin-bottom: 6px;"></i>
             <div style="font-size: 13.5px; font-weight: 800; color: #002855;">Kéo thả tệp hoặc click chọn</div>
-            <div style="font-size: 11.5px; color: #64748B; margin-top: 3px;">Kế hoạch Word (.docx), Công văn PDF, Báo cáo TXT và Ảnh sự kiện</div>
-            <input type="file" id="composer_file_input" multiple accept=".docx,.doc,.pdf,.txt,image/*" style="display: none;" onchange="handleComposerFiles(this.files)">
+            <div style="font-size: 11.5px; color: #64748B; margin-top: 3px;">Word (.docx), PDF, PowerPoint (.pptx), Excel (.xlsx), Báo cáo TXT và Ảnh sự kiện</div>
+            <input type="file" id="composer_file_input" multiple accept=".docx,.doc,.pdf,.pptx,.ppt,.xlsx,.xls,.csv,.txt,image/*" style="display: none;" onchange="handleComposerFiles(this.files)">
           </div>
           <div id="composer_files_list" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px;"></div>
+          <div id="composer_photos_list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;"></div>
           <div style="margin-bottom: 14px;">
             <label style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">
               Chỉ đạo bổ sung của Thư ký Tòa soạn (Tùy chọn):

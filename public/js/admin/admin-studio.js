@@ -16,9 +16,84 @@ const composerState = window.composerState = {
   syndication: {
     facebook: '',
     zalo: ''
-  },
-  currentTab: 'web'
+  }
 };
+
+// ── 0. VIETNAMESE FONT NORMALIZER & MEDIA DEFENSE ────────────────────────────
+function fixVietnameseFont(str) {
+  if (!str || typeof str !== 'string') return '';
+  let s = str.normalize('NFC');
+
+  const acuteMap = {
+    'a': 'á', 'A': 'Á', 'ă': 'ắ', 'Ă': 'Ắ', 'â': 'ấ', 'Â': 'Ấ',
+    'e': 'é', 'E': 'É', 'ê': 'ế', 'Ê': 'Ế',
+    'i': 'í', 'I': 'Í',
+    'o': 'ó', 'O': 'Ó', 'ô': 'ố', 'Ô': 'Ố', 'ơ': 'ớ', 'Ơ': 'Ớ',
+    'u': 'ú', 'U': 'Ú', 'ư': 'ứ', 'Ư': 'Ứ',
+    'y': 'ý', 'Y': 'Ý'
+  };
+  const graveMap = {
+    'a': 'à', 'A': 'À', 'ă': 'ằ', 'Ă': 'Ằ', 'â': 'ầ', 'Â': 'Ầ',
+    'e': 'è', 'E': 'È', 'ê': 'ề', 'Ê': 'Ề',
+    'i': 'ì', 'I': 'Ì',
+    'o': 'ò', 'O': 'Ò', 'ô': 'ồ', 'Ô': 'Ồ', 'ơ': 'ờ', 'Ơ': 'Ờ',
+    'u': 'ù', 'U': 'Ù', 'ư': 'ừ', 'Ư': 'Ừ',
+    'y': 'ỳ', 'Y': 'Ỳ'
+  };
+  const tildeMap = {
+    'a': 'ã', 'A': 'Ã', 'ă': 'ẵ', 'Ă': 'Ẵ', 'â': 'ẫ', 'Â': 'Ẫ',
+    'e': 'ẽ', 'E': 'Ẽ', 'ê': 'ễ', 'Ê': 'Ễ',
+    'i': 'ĩ', 'I': 'Ĩ',
+    'o': 'õ', 'O': 'Õ', 'ô': 'ỗ', 'Ô': 'Ỗ', 'ơ': 'ỡ', 'Ơ': 'Ỡ',
+    'u': 'ũ', 'U': 'Ũ', 'ư': 'ữ', 'Ư': 'Ữ',
+    'y': 'ỹ', 'Y': 'Ỹ'
+  };
+  const hookMap = {
+    'a': 'ả', 'A': 'Ả', 'ă': 'ẳ', 'Ă': 'Ẳ', 'â': 'ẩ', 'Â': 'Ẩ',
+    'e': 'ẻ', 'E': 'Ẻ', 'ê': 'ể', 'Ê': 'Ể',
+    'i': 'ỉ', 'I': 'Ỉ',
+    'o': 'ỏ', 'O': 'Ỏ', 'ô': 'ổ', 'Ô': 'Ổ', 'ơ': 'ở', 'Ơ': 'Ở',
+    'u': 'ủ', 'U': 'Ủ', 'ư': 'ử', 'Ư': 'Ử',
+    'y': 'ỷ', 'Y': 'Ỷ'
+  };
+  const dotMap = {
+    'a': 'ạ', 'A': 'Ạ', 'ă': 'ặ', 'Ă': 'Ặ', 'â': 'ậ', 'Â': 'Ậ',
+    'e': 'ẹ', 'E': 'Ẹ', 'ê': 'ệ', 'Ê': 'Ệ',
+    'i': 'ị', 'I': 'Ị',
+    'o': 'ọ', 'O': 'Ọ', 'ô': 'ộ', 'Ô': 'Ộ', 'ơ': 'ợ', 'Ơ': 'Ợ',
+    'u': 'ụ', 'U': 'Ụ', 'ư': 'ự', 'Ư': 'Ự',
+    'y': 'ỵ', 'Y': 'Ỵ'
+  };
+  const circumflexMap = {
+    'a': 'â', 'A': 'Â', 'e': 'ê', 'E': 'Ê', 'o': 'ô', 'O': 'Ô'
+  };
+
+  s = s.replace(/([aAăĂâÂeEêÊiIoOôÔơƠuUưƯyY])[´\u02CA]/g, (m, c) => acuteMap[c] || m);
+  s = s.replace(/([aAăĂâÂeEêÊiIoOôÔơƠuUưƯyY])[`\u02CB]/g, (m, c) => graveMap[c] || m);
+  s = s.replace(/([aAăĂâÂeEêÊiIoOôÔơƠuUưƯyY])[~\u02DC]/g, (m, c) => tildeMap[c] || m);
+  s = s.replace(/([aAăĂâÂeEêÊiIoOôÔơƠuUưƯyY])[\u02C0\u0309]/g, (m, c) => hookMap[c] || m);
+  s = s.replace(/([aAăĂâÂeEêÊiIoOôÔơƠuUưƯyY])\u0323/g, (m, c) => dotMap[c] || m);
+  s = s.replace(/([aeoAEO])[\^ˆ]/g, (m, c) => circumflexMap[c] || m);
+  s = s.replace(/([a-zA-ZÀ-ỹ])[´`\u02CA\u02CB]/g, '$1');
+
+  return s.normalize('NFC');
+}
+
+function attachCanvasImageDefense(container) {
+  if (!container) return;
+  container.querySelectorAll('img').forEach(img => {
+    if (!img.dataset.hasDefense) {
+      img.dataset.hasDefense = 'true';
+      img.onerror = function() {
+        console.warn('[Newsroom Studio] Removing broken or inaccessible image:', this.src);
+        const fig = this.closest('figure');
+        if (fig) fig.remove();
+        else this.remove();
+        if (typeof updateComposerMetrics === 'function') updateComposerMetrics();
+      };
+    }
+  });
+}
 
 // ── 1. DOCUMENT & NATIVE XML PARSER ──────────────────────────────────────────
 
@@ -63,33 +138,75 @@ async function parseDocxOnServer(file) {
 }
 
 async function readDocumentText(file) {
-  if (file.name.endsWith('.docx')) {
-    const parsed = await parseDocxOnServer(file);
-    if (parsed && parsed.text) {
-      return parsed.text;
+  try {
+    const base64 = await readFileAsDataUrl(file);
+    const res = await fetch('/api/documents/parse-document', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName: file.name,
+        fileBase64: base64
+      })
+    }).then(r => r.json());
+
+    if (res.success) {
+      if (res.isScannedDoc) {
+        if (typeof logComposerActivity === 'function') {
+          logComposerActivity('doc_ocr', `📄 Đã nhận diện tài liệu Scan (${res.pagesCount || 1} trang) - AI đã tự động OCR đọc toàn bộ ${res.charCount || 0} ký tự văn bản!`, 'done');
+        }
+      } else if (res.images && res.images.length > 0) {
+        res.images.forEach(img => {
+          composerState.photos.push({
+            url: img.url,
+            caption: img.caption || ('Ảnh trích xuất từ: ' + file.name),
+            isFeatured: composerState.photos.length === 0
+          });
+        });
+        if (typeof logComposerActivity === 'function') {
+          logComposerActivity('doc_imgs', `Đã tự động trích xuất ${res.images.length} ảnh tư liệu từ tệp ${file.name}!`, 'done');
+        }
+        if (typeof renderComposerPhotosList === 'function') {
+          renderComposerPhotosList();
+        }
+      }
+      
+      const stats = [
+        res.isScannedDoc ? 'Đã OCR tài liệu Scan' : '',
+        res.pagesCount ? `${res.pagesCount} trang` : '',
+        res.sheetsCount ? `${res.sheetsCount} sheet Excel` : '',
+        res.slidesCount ? `${res.slidesCount} slide PPT` : ''
+      ].filter(Boolean).join(', ');
+
+      if (typeof logComposerActivity === 'function') {
+        logComposerActivity('doc_parsed', `Đã bóc tách tệp ${file.name} (${res.fileType.toUpperCase()}${stats ? ' - ' + stats : ''}, ${res.charCount || 0} ký tự)`, 'done');
+      }
+      return {
+        text: res.text || res.markdown || '',
+        isScannedDoc: !!res.isScannedDoc,
+        charCount: res.charCount || 0,
+        pagesCount: res.pagesCount || 1
+      };
     }
+  } catch (e) {
+    console.warn('[Document Universal Parse Error]:', e.message);
   }
 
+  // Fallback for plain text files
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = function(e) {
       try {
-        const buffer = e.target.result;
-        const decoder = new TextDecoder('utf-8', { fatal: false });
-        const text = decoder.decode(buffer);
-        const cleaned = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, ' ').replace(/\s+/g, ' ').trim();
-        if (cleaned.length > 30) {
-          return resolve(cleaned.slice(0, 15000));
-        }
-        resolve('[Tài liệu: ' + file.name + ' - ' + (file.size/1024).toFixed(1) + ' KB]');
+        const text = e.target.result;
+        resolve({ text: (text || '').slice(0, 15000), isScannedDoc: false });
       } catch(err) {
-        resolve('[Tài liệu: ' + file.name + ']');
+        resolve({ text: '[Tài liệu: ' + file.name + ']', isScannedDoc: false });
       }
     };
-    reader.onerror = () => resolve('[Tài liệu: ' + file.name + ']');
-    reader.readAsArrayBuffer(file);
+    reader.onerror = () => resolve({ text: '[Tài liệu: ' + file.name + ']', isScannedDoc: false });
+    reader.readAsText(file);
   });
 }
+
 
 // ── 2. INGESTION TRAY (TIẾP NHẬN TƯ LIỆU) ─────────────────────────────────────
 
@@ -102,7 +219,8 @@ async function handleComposerFiles(files) {
       size: (f.size / 1024).toFixed(1) + ' KB',
       type: f.type || 'document',
       text: '',
-      dataUrl: ''
+      dataUrl: '',
+      isScannedDoc: false
     };
 
     if (f.type.startsWith('image/')) {
@@ -119,11 +237,20 @@ async function handleComposerFiles(files) {
         reader.readAsText(f);
       });
     } else {
-      fileObj.text = await readDocumentText(f);
+      const parsedRes = await readDocumentText(f);
+      if (typeof parsedRes === 'object' && parsedRes !== null) {
+        fileObj.text = parsedRes.text || '';
+        fileObj.isScannedDoc = !!parsedRes.isScannedDoc;
+        fileObj.charCount = parsedRes.charCount;
+        fileObj.pagesCount = parsedRes.pagesCount;
+      } else {
+        fileObj.text = parsedRes || '';
+      }
     }
     composerState.files.push(fileObj);
   }
   renderComposerFilesList();
+  renderComposerPhotosList();
   logComposerActivity('files', 'Đã tiếp nhận ' + files.length + ' tệp tài liệu mới vào khay biên tập.', 'done');
 }
 
@@ -138,12 +265,33 @@ function renderComposerFilesList() {
 
   container.innerHTML = composerState.files.map((f, idx) => {
     const isImg = f.type.startsWith('image/') || f.dataUrl;
+    const ext = (f.name || '').split('.').pop().toLowerCase();
+    let iconHtml = '<i class="fa-solid fa-file-lines" style="color: #0284C7;"></i>';
+    if (isImg && f.dataUrl) {
+      iconHtml = '<img src="' + f.dataUrl + '" style="width: 28px; height: 28px; object-fit: cover; border-radius: 4px; flex-shrink: 0;">';
+    } else if (isImg) {
+      iconHtml = '<i class="fa-solid fa-image" style="color: #16A34A;"></i>';
+    } else if (ext === 'docx' || ext === 'doc') {
+      iconHtml = '<i class="fa-solid fa-file-word" style="color: #2563EB;"></i>';
+    } else if (ext === 'pdf') {
+      iconHtml = '<i class="fa-solid fa-file-pdf" style="color: #DC2626;"></i>';
+    } else if (ext === 'xlsx' || ext === 'xls' || ext === 'csv') {
+      iconHtml = '<i class="fa-solid fa-file-excel" style="color: #16A34A;"></i>';
+    } else if (ext === 'pptx' || ext === 'ppt') {
+      iconHtml = '<i class="fa-solid fa-file-powerpoint" style="color: #EA580C;"></i>';
+    }
+
+    const scanBadge = f.isScannedDoc
+      ? '<span style="background: #EFF6FF; color: #1D4ED8; font-size: 9.5px; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px solid #BFDBFE; white-space: nowrap;"><i class="fa-solid fa-file-invoice me-1"></i>Đã OCR (' + (f.charCount || 0) + ' ký tự)</span>'
+      : '';
+
     return (
       '<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 12px; font-size: 12.5px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">' +
-        '<div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">' +
-          (isImg && f.dataUrl ? '<img src="' + f.dataUrl + '" style="width: 28px; height: 28px; object-fit: cover; border-radius: 4px; flex-shrink: 0;">' : '<i class="fa-solid ' + (isImg ? 'fa-image text-success' : 'fa-file-lines text-primary') + '"></i>') +
-          '<span style="font-weight: 700; color: #002855; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px;" title="' + escapeHtml(f.name) + '">' + escapeHtml(f.name) + '</span>' +
+        '<div style="display: flex; align-items: center; gap: 8px; overflow: hidden; flex: 1;">' +
+          iconHtml +
+          '<span style="font-weight: 700; color: #002855; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;" title="' + escapeHtml(f.name) + '">' + escapeHtml(f.name) + '</span>' +
           '<span style="color: #64748B; font-size: 11px; flex-shrink: 0;">(' + f.size + ')</span>' +
+          scanBadge +
         '</div>' +
         '<button type="button" onclick="removeComposerFile(' + idx + ')" style="background: none; border: none; color: #94A3B8; cursor: pointer; font-size: 14px; padding: 0 4px; line-height: 1;" title="Xóa tệp">✕</button>' +
       '</div>'
@@ -154,6 +302,77 @@ function renderComposerFilesList() {
 function removeComposerFile(idx) {
   composerState.files.splice(idx, 1);
   renderComposerFilesList();
+  renderComposerPhotosList();
+}
+
+function renderComposerPhotosList() {
+  const container = document.getElementById('composer_photos_list');
+  if (!container) return;
+
+  const hasScannedDoc = (composerState.files || []).some(f => f.isScannedDoc);
+
+  if (!composerState.photos || !composerState.photos.length) {
+    if (hasScannedDoc) {
+      container.innerHTML = (
+        '<div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 10px 12px; margin-top: 4px; font-size: 12px; color: #166534; display: flex; align-items: flex-start; gap: 8px;">' +
+          '<i class="fa-solid fa-circle-check text-success" style="font-size: 14px; margin-top: 2px;"></i>' +
+          '<div>' +
+            '<div style="font-weight: 800; margin-bottom: 2px;">Đã tự động bóc tách toàn bộ văn bản từ tài liệu scan qua AI OCR!</div>' +
+            '<div style="font-size: 11px; color: #15803D;">Các trang scan văn bản được tự động chuyển thành chữ viết cho bài báo, không bị chèn nhầm làm ảnh sự kiện.</div>' +
+          '</div>' +
+        '</div>'
+      );
+    } else {
+      container.innerHTML = '';
+    }
+    return;
+  }
+
+  container.innerHTML = (
+    '<div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 10px 12px; margin-top: 4px;">' +
+      '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
+        '<span style="font-size: 12px; font-weight: 800; color: #166534; display: flex; align-items: center; gap: 6px;">' +
+          '<i class="fa-solid fa-images text-success"></i> Ảnh Trích Xuất & Tư Liệu (' + composerState.photos.length + ')' +
+        '</span>' +
+        '<span style="font-size: 10.5px; color: #15803D;">Tự động chèn vào bài</span>' +
+      '</div>' +
+      '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 8px;">' +
+        composerState.photos.map((p, idx) => (
+          '<div style="position: relative; border-radius: 6px; overflow: hidden; border: 1.5px solid ' + (p.isFeatured ? '#0284C7' : '#CBD5E1') + '; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">' +
+            '<img src="' + p.url + '" alt="' + escapeHtml(p.caption) + '" style="width: 100%; height: 58px; object-fit: cover; display: block;" onerror="this.src=\'images/banner.jpg\'">' +
+            '<div style="padding: 2px 4px; font-size: 9.5px; color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: white;" title="' + escapeHtml(p.caption) + '">' +
+              escapeHtml(p.caption || ('Ảnh ' + (idx + 1))) +
+            '</div>' +
+            '<button type="button" onclick="removeComposerPhoto(' + idx + ')" style="position: absolute; top: 2px; right: 2px; background: rgba(15,23,42,0.75); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;" title="Xóa ảnh">✕</button>' +
+            (p.isFeatured ? '<span style="position: absolute; top: 2px; left: 2px; background: #0284C7; color: white; font-size: 8px; font-weight: 800; padding: 1px 4px; border-radius: 3px;">Ảnh chính</span>' : '') +
+          '</div>'
+        )).join('') +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function removeComposerPhoto(idx) {
+  composerState.photos.splice(idx, 1);
+  renderComposerPhotosList();
+}
+
+function closeUploadAssetModal() {
+  const modal = document.getElementById('upload_asset_modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function openUploadAssetModal() {
+  const modal = document.getElementById('upload_asset_modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function handleStudioFileUpload(input) {
+  if (input && input.files && input.files.length) {
+    handleComposerFiles(input.files);
+    closeUploadAssetModal();
+    input.value = '';
+  }
 }
 
 // ── 3. ACTIVITY LOG (TIẾN TRÌNH BIÊN TẬP THỜI GIAN THỰC) ──────────────────────
@@ -273,18 +492,18 @@ async function runComposerGeneration() {
         try {
           const evt = JSON.parse(line.slice(6));
           if (evt.step === 'web_chunk') {
-            webHtml += evt.chunk;
+            webHtml += fixVietnameseFont(evt.chunk);
             if (canvas) {
               // Dynamic block routing
               const titleMatch = webHtml.match(/<h1[^>]*>(.*?)<\/h1>/i);
               if (titleMatch) {
-                const curTitle = titleMatch[1].replace(/<[^>]*>/g, '').trim();
+                const curTitle = fixVietnameseFont(titleMatch[1].replace(/<[^>]*>/g, '').trim());
                 safeSetVal('composer_title_input', curTitle);
                 composerState.masterArticle.title = curTitle;
               }
               const sapoMatch = webHtml.match(/<p class="sapo"[^>]*>.*?<strong>(.*?)<\/strong>/i);
               if (sapoMatch) {
-                const curSapo = sapoMatch[1].replace(/<[^>]*>/g, '').trim();
+                const curSapo = fixVietnameseFont(sapoMatch[1].replace(/<[^>]*>/g, '').trim());
                 safeSetVal('composer_sapo_input', curSapo);
                 composerState.masterArticle.sapo = curSapo;
               }
@@ -293,13 +512,20 @@ async function runComposerGeneration() {
               let bodyClean = webHtml;
               if (titleMatch) bodyClean = bodyClean.replace(/<h1[^>]*>.*?<\/h1>/i, '');
               if (sapoMatch) bodyClean = bodyClean.replace(/<p class="sapo"[^>]*>.*?<\/p>/i, '');
-              canvas.innerHTML = bodyClean.trim();
+
+              // If no photos uploaded, strip any hallucinated <figure> or <img> tags
+              if (!composerState.photos || composerState.photos.length === 0) {
+                bodyClean = bodyClean.replace(/<figure[\s\S]*?<\/figure>/gi, '').replace(/<img[^>]*>/gi, '');
+              }
+
+              canvas.innerHTML = fixVietnameseFont(bodyClean).trim();
+              attachCanvasImageDefense(canvas);
               canvas.scrollTop = canvas.scrollHeight;
               updateComposerMetrics();
             }
           } else if (evt.step === 'social_done') {
-            fbCaption = evt.facebook?.caption || '';
-            zaloMessage = evt.zalo?.message || '';
+            fbCaption = fixVietnameseFont(evt.facebook?.caption || '');
+            zaloMessage = fixVietnameseFont(evt.zalo?.message || '');
 
             composerState.syndication.facebook = fbCaption;
             composerState.syndication.zalo = zaloMessage;
@@ -319,8 +545,8 @@ async function runComposerGeneration() {
             logComposerActivity('syndication', 'Đã chuyển thể thành công bản Fanpage Facebook & tin Zalo OA.', 'done');
           } else if (evt.step === 'all_done') {
             articleId = evt.articleId;
-            extractedTitle = evt.title || '';
-            extractedSummary = evt.summary || '';
+            extractedTitle = fixVietnameseFont(evt.title || '');
+            extractedSummary = fixVietnameseFont(evt.summary || '');
             composerState.activeArticleId = articleId;
           }
         } catch (e) {}
@@ -336,10 +562,13 @@ async function runComposerGeneration() {
       const titleMatch = webHtml.match(/<h1[^>]*>(.*?)<\/h1>/i);
       extractedTitle = titleMatch ? titleMatch[1].replace(/<[^>]*>/g, '').trim() : "Hoạt động Công Đoàn TDMU 2026";
     }
+    extractedTitle = fixVietnameseFont(extractedTitle);
+
     if (!extractedSummary) {
       const sapoMatch = webHtml.match(/<p class="sapo"[^>]*>.*?<strong>(.*?)<\/strong>/i);
       extractedSummary = sapoMatch ? sapoMatch[1].replace(/<[^>]*>/g, '').trim() : webHtml.replace(/<[^>]*>/g, '').slice(0, 180);
     }
+    extractedSummary = fixVietnameseFont(extractedSummary);
 
     composerState.masterArticle.title = extractedTitle;
     composerState.masterArticle.sapo = extractedSummary;
@@ -347,9 +576,21 @@ async function runComposerGeneration() {
     safeSetVal('composer_title_input', extractedTitle);
     safeSetVal('composer_sapo_input', extractedSummary);
 
-    // Clean out h1 from body to keep title in Title block
-    const cleanBody = webHtml.replace(/<h1[^>]*>.*?<\/h1>/i, '').trim();
-    if (canvas) canvas.innerHTML = cleanBody;
+    // Clean out h1 AND sapo from body to keep them strictly in their dedicated blocks
+    let cleanBody = webHtml
+      .replace(/<h1[^>]*>.*?<\/h1>/i, '')
+      .replace(/<p class="sapo"[^>]*>.*?<\/p>/i, '')
+      .trim();
+
+    if (!composerState.photos || composerState.photos.length === 0) {
+      cleanBody = cleanBody.replace(/<figure[\s\S]*?<\/figure>/gi, '').replace(/<img[^>]*>/gi, '');
+    }
+    cleanBody = fixVietnameseFont(cleanBody);
+
+    if (canvas) {
+      canvas.innerHTML = cleanBody;
+      attachCanvasImageDefense(canvas);
+    }
     composerState.masterArticle.bodyHtml = cleanBody;
 
     updateComposerMetrics();
@@ -435,6 +676,7 @@ async function insertDirectPhotoToCanvas(files) {
   }
 
   updateComposerMetrics();
+  renderComposerPhotosList();
   logComposerActivity('img', 'Đã chèn ' + files.length + ' ảnh hiện trường vào thân bài.', 'done');
 }
 
@@ -1014,6 +1256,7 @@ function restoreComposerAutosave() {
     }
 
     dismissComposerAutosave();
+    renderComposerPhotosList();
     updateComposerMetrics();
     logComposerActivity('restore', 'Đã khôi phục thành công bản thảo tự động lưu gần nhất.', 'done');
   } catch (e) {

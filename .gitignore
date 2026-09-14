@@ -12,3 +12,11 @@ storage/framework/views/*
 bootstrap/cache/*.php
 *.log
 ~$*
+
+# Dynamic user uploads & extracted media caches
+public/uploads/pdf_*
+public/uploads/pptx_*
+public/uploads/docx_*
+frontend/public/uploads/pdf_*
+frontend/public/uploads/pptx_*
+frontend/public/uploads/docx_*

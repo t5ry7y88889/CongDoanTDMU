@@ -256,8 +256,19 @@ router.get('/download/:id', (req, res) => {
 
   if (fs.existsSync(filePath)) {
     const downloadName = path.basename(filePath);
+    const ext = path.extname(filePath).toLowerCase();
+    const mimeMap = {
+      '.pdf': 'application/pdf',
+      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.doc': 'application/msword',
+      '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      '.xls': 'application/vnd.ms-excel',
+      '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      '.ppt': 'application/vnd.ms-powerpoint',
+      '.txt': 'text/plain; charset=utf-8'
+    };
     res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(downloadName)}"`);
-    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Type', mimeMap[ext] || 'application/octet-stream');
     const stream = fs.createReadStream(filePath);
     stream.pipe(res);
   } else {
@@ -267,8 +278,47 @@ router.get('/download/:id', (req, res) => {
 
 
 // =========================================================================
-// INDUSTRIAL WORD PARSER (MAMMOTH.JS NATIVE ENGINE)
 // =========================================================================
+// UNIVERSAL MULTI-FORMAT DOCUMENT PARSER ENGINE (PDF, DOCX, XLSX, PPTX, CSV, TXT)
+// =========================================================================
+const { parseDocumentBuffer } = require('../services/documentParser');
+
+router.post('/parse-document', async (req, res) => {
+  const { fileBase64, fileName } = req.body;
+  if (!fileBase64) {
+    return res.status(400).json({ success: false, error: 'Dữ liệu fileBase64 là bắt buộc!' });
+  }
+
+  try {
+    const cleanBase64 = fileBase64.replace(/^data:.*?;base64,/, '');
+    const buffer = Buffer.from(cleanBase64, 'base64');
+    const safeName = fileName || 'document.txt';
+
+    const parsed = await parseDocumentBuffer(buffer, safeName);
+
+    res.json({
+      success: true,
+      fileName: parsed.fileName,
+      fileType: parsed.fileType,
+      fileSizeKB: parsed.fileSizeKB,
+      charCount: parsed.charCount,
+      pagesCount: parsed.pagesCount,
+      sheetsCount: parsed.sheetsCount,
+      slidesCount: parsed.slidesCount,
+      isScannedDoc: !!parsed.isScannedDoc,
+      text: parsed.markdown || parsed.rawText || '',
+      markdown: parsed.markdown || '',
+      metadata: parsed.metadata || {},
+      images: parsed.images || [],
+      scannedPages: parsed.scannedPages || []
+    });
+  } catch (err) {
+    console.error('Error parsing document:', err);
+    res.status(500).json({ success: false, error: 'Lỗi bóc tách tài liệu: ' + err.message });
+  }
+});
+
+// Backward compatible docx endpoint
 router.post('/parse-docx', async (req, res) => {
   const { fileBase64, fileName } = req.body;
   if (!fileBase64) {
@@ -278,57 +328,21 @@ router.post('/parse-docx', async (req, res) => {
   try {
     const cleanBase64 = fileBase64.replace(/^data:.*?;base64,/, '');
     const buffer = Buffer.from(cleanBase64, 'base64');
-    const mammoth = require('mammoth');
-    const fs = require('fs');
-    const path = require('path');
+    const safeName = fileName || 'document.docx';
 
-    const uploadsDir = path.join(__dirname, '../../public/uploads');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-
-    const extractedImages = [];
-    const options = {
-      convertImage: mammoth.images.imgElement(async (image) => {
-        const imageBuffer = await image.read('base64');
-        const ext = (image.contentType || 'image/png').split('/')[1] || 'png';
-        const imgName = `docx_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
-        const targetPath = path.join(uploadsDir, imgName);
-        fs.writeFileSync(targetPath, Buffer.from(imageBuffer, 'base64'));
-
-        const feUploadsDir = path.join(__dirname, '../../frontend/public/uploads');
-        if (fs.existsSync(feUploadsDir)) {
-          fs.writeFileSync(path.join(feUploadsDir, imgName), Buffer.from(imageBuffer, 'base64'));
-        }
-
-        const imgUrl = `/uploads/${imgName}`;
-        extractedImages.push({
-          url: imgUrl,
-          caption: `Ảnh trích xuất từ tài liệu Word: ${fileName || 'Tài liệu'}`,
-          fileName: imgName
-        });
-
-        return { src: imgUrl };
-      })
-    };
-
-    const [htmlResult, textResult] = await Promise.all([
-      mammoth.convertToHtml({ buffer }, options),
-      mammoth.extractRawText({ buffer })
-    ]);
-
+    const parsed = await parseDocumentBuffer(buffer, safeName);
     res.json({
       success: true,
-      fileName: fileName || 'document.docx',
-      html: htmlResult.value,
-      text: textResult.value,
-      images: extractedImages,
-      warnings: htmlResult.messages
+      fileName: parsed.fileName,
+      html: parsed.markdown,
+      text: parsed.markdown,
+      images: []
     });
   } catch (err) {
-    console.error('Error parsing docx with mammoth:', err);
+    console.error('Error parsing docx:', err);
     res.status(500).json({ success: false, error: 'Lỗi bóc tách tài liệu Word: ' + err.message });
   }
 });
 
 module.exports = router;
+

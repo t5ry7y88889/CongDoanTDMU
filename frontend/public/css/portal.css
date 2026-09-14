@@ -598,6 +598,10 @@ footer a:hover {
   border-radius: 12px;
   border: 1px solid #E2E8F0;
 }
+.journalism-figure:empty,
+.journalism-figure:not(:has(img)) {
+  display: none !important;
+}
 .journalism-figure img {
   max-width: 100%;
   height: auto;

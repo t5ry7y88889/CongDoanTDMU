@@ -479,6 +479,13 @@
               bodyHtml = '<div class="text-center mb-4"><img src="' + a.image + '" class="img-fluid rounded shadow-sm" style="max-height: 480px; width: 100%; object-fit: cover;" alt="' + (a.title || '') + '"><p class="text-muted small mt-2 fst-italic">' + (a.title || '') + '</p></div>' + bodyHtml;
             }
             contentEl.innerHTML = bodyHtml;
+            contentEl.querySelectorAll('img').forEach(img => {
+              img.onerror = function() {
+                const fig = this.closest('figure') || this.closest('.text-center');
+                if (fig) fig.remove();
+                else this.remove();
+              };
+            });
           }
 
           const takeawaysEl = document.getElementById('artTakeaways');
