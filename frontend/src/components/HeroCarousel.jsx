@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 const slides = [
   {
@@ -24,13 +24,6 @@ const slides = [
 const HeroCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % slides.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
-
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
   };
@@ -42,13 +35,14 @@ const HeroCarousel = () => {
   return (
     <section id="sectionslide" className="my-3">
       <div className="container">
-        <div className="carousel slide shadow-sm position-relative overflow-hidden rounded" style={{ height: '380px' }}>
-          {/* Indicators */}
+        <div id="heroCarousel" className="carousel slide shadow-sm" data-bs-ride="carousel">
           <div className="carousel-indicators">
             {slides.map((s, idx) => (
               <button
                 key={s.id}
                 type="button"
+                data-bs-target="#heroCarousel"
+                data-bs-slide-to={idx}
                 className={idx === currentIndex ? 'active' : ''}
                 onClick={() => setCurrentIndex(idx)}
                 aria-label={`Slide ${idx + 1}`}
@@ -56,12 +50,11 @@ const HeroCarousel = () => {
             ))}
           </div>
 
-          {/* Slides */}
-          <div className="carousel-inner h-100">
+          <div className="carousel-inner rounded">
             {slides.map((s, idx) => (
               <div
                 key={s.id}
-                className={`carousel-item h-100 ${idx === currentIndex ? 'active' : ''}`}
+                className={`carousel-item ${idx === currentIndex ? 'active' : ''}`}
                 style={{
                   display: idx === currentIndex ? 'block' : 'none',
                   transition: 'opacity 0.6s ease-in-out'
@@ -69,46 +62,42 @@ const HeroCarousel = () => {
               >
                 <img
                   src={s.image}
-                  className="d-block w-100 h-100"
+                  className="d-block w-100"
                   alt={s.title}
-                  style={{ objectFit: 'cover' }}
+                  style={{ height: '380px', objectFit: 'cover' }}
                 />
                 <div
                   className="carousel-caption d-none d-md-block"
                   style={{
-                    background: 'rgba(0, 34, 64, 0.78)',
-                    borderRadius: '6px',
-                    padding: '14px 24px',
-                    bottom: '24px'
+                    background: 'rgba(0,34,64,0.75)',
+                    borderRadius: '4px',
+                    padding: '12px 20px'
                   }}
                 >
-                  <h5 className="fw-bold text-warning mb-1" style={{ letterSpacing: '0.5px' }}>
-                    {s.title}
-                  </h5>
-                  <p className="mb-0 text-light" style={{ fontSize: '14px' }}>
-                    {s.subtitle}
-                  </p>
+                  <h5 className="fw-bold text-warning">{s.title}</h5>
+                  <p className="mb-0">{s.subtitle}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Controls */}
           <button
             className="carousel-control-prev"
             type="button"
+            data-bs-target="#heroCarousel"
+            data-bs-slide="prev"
             onClick={handlePrev}
             aria-label="Previous Slide"
-            style={{ width: '5%', background: 'none', border: 'none' }}
           >
             <span className="carousel-control-prev-icon"></span>
           </button>
           <button
             className="carousel-control-next"
             type="button"
+            data-bs-target="#heroCarousel"
+            data-bs-slide="next"
             onClick={handleNext}
             aria-label="Next Slide"
-            style={{ width: '5%', background: 'none', border: 'none' }}
           >
             <span className="carousel-control-next-icon"></span>
           </button>

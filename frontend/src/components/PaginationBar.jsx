@@ -1,5 +1,3 @@
-import React from 'react';
-
 const PaginationBar = ({
   currentPage = 1,
   totalItems = 0,
@@ -13,77 +11,88 @@ const PaginationBar = ({
   const startRecord = totalItems > 0 ? (currentPage - 1) * pageSize + 1 : 0;
   const endRecord = Math.min(currentPage * pageSize, totalItems);
 
-  // Generate page numbers range (e.g. 1, 2, 3...)
   const pages = [];
   for (let i = 1; i <= totalPages; i++) {
     pages.push(i);
   }
 
   return (
-    <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 py-3 border-top mt-3" style={{ fontSize: '13.5px' }}>
-      {/* Record Summary */}
-      <div className="text-muted">
-        Hiển thị <strong>{startRecord}</strong> - <strong>{endRecord}</strong> / <strong>{totalItems}</strong> {itemLabel}
+    <div className="tdmu-pagination-wrapper">
+      <div className="tdmu-pagination-left">
+        <span className="tdmu-pagination-info">
+          Hiển thị <strong>{startRecord}</strong> - <strong>{endRecord}</strong> / <strong>{totalItems}</strong> {itemLabel}
+        </span>
+        {pageSizeOptions && pageSizeOptions.length > 1 && (
+          <span className="tdmu-pagination-size-wrap">
+            <label className="tdmu-size-label" htmlFor={`pgsz-${currentPage}`}>
+              Hiển thị mỗi trang
+            </label>
+            <select
+              id={`pgsz-${currentPage}`}
+              className="tdmu-page-size-select"
+              value={pageSize}
+              onChange={(e) => onPageSizeChange(Number(e.target.value))}
+            >
+              {pageSizeOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          </span>
+        )}
       </div>
 
-      {/* Pagination Controls */}
-      <div className="d-flex align-items-center gap-2">
-        <ul className="pagination pagination-sm mb-0">
-          {/* First page */}
-          <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-            <button className="page-link" onClick={() => onPageChange(1)} disabled={currentPage === 1}>
-              <i className="fa-solid fa-angles-left"></i>
-            </button>
-          </li>
-          {/* Prev page */}
-          <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-            <button className="page-link" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}>
-              <i className="fa-solid fa-angle-left"></i>
-            </button>
-          </li>
+      <div className="tdmu-pagination-controls">
+        <button
+          type="button"
+          className={`tdmu-page-btn ${currentPage === 1 ? 'disabled' : ''}`}
+          onClick={currentPage === 1 ? undefined : () => onPageChange(1)}
+          disabled={currentPage === 1}
+          aria-label="Trang đầu"
+        >
+          <i className="fa-solid fa-angles-left"></i>
+        </button>
+        <button
+          type="button"
+          className={`tdmu-page-btn ${currentPage === 1 ? 'disabled' : ''}`}
+          onClick={currentPage === 1 ? undefined : () => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          aria-label="Trang trước"
+        >
+          <i className="fa-solid fa-angle-left"></i>
+        </button>
 
-          {/* Number pages */}
-          {pages.map((p) => (
-            <li key={p} className={`page-item ${p === currentPage ? 'active' : ''}`}>
-              <button
-                className="page-link fw-semibold"
-                onClick={() => onPageChange(p)}
-                style={p === currentPage ? { backgroundColor: '#002855', borderColor: '#002855' } : {}}
-              >
-                {p}
-              </button>
-            </li>
-          ))}
-
-          {/* Next page */}
-          <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-            <button className="page-link" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}>
-              <i className="fa-solid fa-angle-right"></i>
-            </button>
-          </li>
-          {/* Last page */}
-          <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-            <button className="page-link" onClick={() => onPageChange(totalPages)} disabled={currentPage === totalPages}>
-              <i className="fa-solid fa-angles-right"></i>
-            </button>
-          </li>
-        </ul>
-
-        {/* Page size selector */}
-        {pageSizeOptions && pageSizeOptions.length > 1 && (
-          <select
-            className="form-select form-select-sm"
-            style={{ width: 'auto', fontSize: '12.5px' }}
-            value={pageSize}
-            onChange={(e) => onPageSizeChange(Number(e.target.value))}
+        {pages.map((p) => (
+          <button
+            key={p}
+            type="button"
+            className={`tdmu-page-btn ${p === currentPage ? 'active' : ''}`}
+            onClick={p === currentPage ? undefined : () => onPageChange(p)}
+            aria-label={`Trang ${p}`}
           >
-            {pageSizeOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt} / trang
-              </option>
-            ))}
-          </select>
-        )}
+            {p}
+          </button>
+        ))}
+
+        <button
+          type="button"
+          className={`tdmu-page-btn ${currentPage === totalPages ? 'disabled' : ''}`}
+          onClick={currentPage === totalPages ? undefined : () => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          aria-label="Trang sau"
+        >
+          <i className="fa-solid fa-angle-right"></i>
+        </button>
+        <button
+          type="button"
+          className={`tdmu-page-btn ${currentPage === totalPages ? 'disabled' : ''}`}
+          onClick={currentPage === totalPages ? undefined : () => onPageChange(totalPages)}
+          disabled={currentPage === totalPages}
+          aria-label="Trang cuối"
+        >
+          <i className="fa-solid fa-angles-right"></i>
+        </button>
       </div>
     </div>
   );

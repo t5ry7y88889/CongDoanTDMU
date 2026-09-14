@@ -6,52 +6,48 @@ import Documents from './views/Documents.jsx'
 import Welfare from './views/Welfare.jsx'
 import Feedback from './views/Feedback.jsx'
 import Reports from './views/Reports.jsx'
-import Organization from './views/Organization.jsx'
-import Comments from './views/Comments.jsx'
 import Templates from './views/Templates.jsx'
 import UsersView from './views/Users.jsx'
+import Schedule from './views/Schedule.jsx'
+import Audits from './views/Audits.jsx'
+import { api } from './api.js'
 
 const NAV = [
-  { group: 'Tổng quan', items: [{ id: 'dashboard', label: 'Bảng điều khiển', icon: 'fa-gauge-high' }] },
+  { group: 'TỔNG QUAN', items: [{ id: 'dashboard', label: 'Bảng Điều Hành', icon: 'fa-gauge-high', color: '#38BDF8', tooltip: 'Bảng Điều Hành' }] },
   {
-    group: 'Nội dung & Truyền thông',
+    group: 'TRUYỀN THÔNG ĐA KÊNH',
     items: [
-      { id: 'articles', label: 'Quản lý bài viết', icon: 'fa-newspaper' },
-      { id: 'studio', label: 'Studio sáng tạo', icon: 'fa-wand-magic-sparkles' },
-      { id: 'documents', label: 'Văn bản', icon: 'fa-folder-open' },
-      { id: 'templates', label: 'Mẫu/Nội dung mẫu', icon: 'fa-copy' }
+      { id: 'articles', label: 'Quản Lý Tin Tức', icon: 'fa-newspaper', color: '#60A5FA', tooltip: 'Quản Lý Tin Tức' },
+      { id: 'ai-creator', label: 'Phòng Biên Tập Đa Kênh', icon: 'fa-wand-magic-sparkles', color: '#F59E0B', tooltip: 'Phòng Biên Tập Đa Kênh', badge: 'CMS' },
+      { id: 'schedule', label: 'Lịch Xuất Bản', icon: 'fa-calendar-check', color: '#C084FC', tooltip: 'Lịch Xuất Bản' },
+      { id: 'documents', label: 'Kho Văn Bản', icon: 'fa-folder-open', color: '#34D399', tooltip: 'Kho Văn Bản' },
+      { id: 'templates', label: 'Kho Biểu Mẫu', icon: 'fa-file-word', color: '#0284C7', tooltip: 'Kho Biểu Mẫu', countKey: 'templates' }
     ]
   },
   {
-    group: 'Công đoàn viên',
+    group: 'NGHIỆP VỤ CÔNG ĐOÀN',
     items: [
-      { id: 'welfare', label: 'Chăm lo & trợ cấp', icon: 'fa-heart' },
-      { id: 'organization', label: 'Tổ chức & Nhân sự', icon: 'fa-users' },
-      { id: 'users', label: 'Tài khoản', icon: 'fa-user-gear' }
-    ]
-  },
-  {
-    group: 'Phản hồi & Đánh giá',
-    items: [
-      { id: 'feedback', label: 'Góp ý & thư ngỏ', icon: 'fa-envelope-open-text' },
-      { id: 'comments', label: 'Bình luận', icon: 'fa-comment-dots' },
-      { id: 'reports', label: 'Báo cáo hoạt động', icon: 'fa-chart-simple' }
+      { id: 'feedback', label: 'Hòm Thư Góp Ý', icon: 'fa-envelope-open-text', color: '#EC4899', tooltip: 'Hòm Thư Góp Ý', countKey: 'feedback' },
+      { id: 'welfare', label: 'Quản Lý Trợ Cấp', icon: 'fa-hand-holding-heart', color: '#F59E0B', tooltip: 'Quản Lý Trợ Cấp', countKey: 'welfare' },
+      { id: 'reports', label: 'Báo Cáo 16 Tổ CĐ', icon: 'fa-file-invoice', color: '#FBBF24', tooltip: 'Báo Cáo 16 Tổ CĐ' },
+      { id: 'users', label: 'Cán Bộ & Phân Quyền', icon: 'fa-users-gear', color: '#F87171', tooltip: 'Cán Bộ & Phân Quyền' },
+      { id: 'audits', label: 'Nhật Ký Tác Nghiệp', icon: 'fa-clock-rotate-left', color: '#A78BFA', tooltip: 'Nhật Ký Tác Nghiệp' }
     ]
   }
 ]
 
 const TITLES = {
-  dashboard: ['Bảng điều khiển', 'Tổng quan hoạt động công đoàn TDMU'],
-  articles: ['Quản lý bài viết', 'Duyệt, sửa & xuất bản tin tức, thông báo'],
-  studio: ['Studio Sáng Tạo', 'Biên tập nội dung đa kênh với trợ lý AI'],
-  documents: ['Quản lý văn bản', 'Đăng tải văn bản chỉ đạo, quy chế'],
-  templates: ['Nội dung mẫu', 'Mẫu thông báo, QĐ, CV để tái sử dụng'],
-  welfare: ['Chăm lo & trợ cấp', 'Chính sách chăm lo và hồ sơ trợ cấp'],
-  organization: ['Tổ chức & Nhân sự', 'Cơ cấu Công đoàn & lực lượng đoàn viên'],
-  users: ['Quản lý tài khoản', 'Tài khoản đăng nhập & phân quyền'],
-  feedback: ['Góp ý & thư ngỏ', 'Hòm thư góp ý từ đoàn viên'],
-  comments: ['Bình luận', 'Kiểm duyệt bình luận bài viết'],
-  reports: ['Báo cáo hoạt động', 'Thu thập & xếp loại báo cáo các CĐCS']
+  dashboard: ['Bảng Điều Hành', 'Quản trị vòng đời nội dung truyền thông công đoàn TDMU'],
+  articles: ['Quản Lý Tin Tức', 'Duyệt, sửa & xuất bản bài viết đa kênh'],
+  'ai-creator': ['Phòng Biên Tập Đa Kênh', 'Tòa soạn AI — tiếp nhận tư liệu, lập bài báo gốc, phân phối đa kênh'],
+  schedule: ['Lịch Xuất Bản', 'Hẹn giờ tự động xuất bản bài viết đa kênh'],
+  documents: ['Kho Văn Bản', 'Đăng tải văn bản chỉ đạo, quy chế hoạt động'],
+  templates: ['Kho Biểu Mẫu', 'Mẫu thông báo, QĐ, CV để tái sử dụng'],
+  welfare: ['Quản Lý Trợ Cấp', 'Chính sách chăm lo & hồ sơ trợ cấp đoàn viên'],
+  feedback: ['Hòm Thư Góp Ý', 'Ý kiến, phản ánh nguyện vọng từ đoàn viên'],
+  reports: ['Báo Cáo 16 Tổ CĐ', 'Thu thập & xếp loại báo cáo các CĐCS'],
+  users: ['Cán Bộ & Phân Quyền', 'Tài khoản đăng nhập & phân quyền'],
+  audits: ['Nhật Ký Tác Nghiệp', 'Vết tác nghiệp toàn hệ thống tòa soạn']
 }
 
 function ToastStack({ toasts, dismiss }) {
@@ -63,8 +59,8 @@ function ToastStack({ toasts, dismiss }) {
           style={{
             background: '#fff', borderRadius: 11, boxShadow: '0 10px 30px rgba(0,0,0,0.18)',
             padding: '12px 16px', minWidth: 260, maxWidth: 360,
-            borderLeft: `4px solid ${t.type === 'error' ? '#DC2626' : t.type === 'success' ? '#16A34A' : t.type === 'warn' ? '#F59E0B' : '#2563EB'}`,
-            fontSize: 13.5, color: '#1E293B', cursor: 'pointer'
+            borderLeft: `4px solid ${t.type === 'error' ? '#EF4444' : t.type === 'success' ? '#10B981' : t.type === 'warn' ? '#D97706' : '#3B82F6'}`,
+            fontSize: 13.5, color: '#0F172A', cursor: 'pointer'
           }}
           onClick={() => dismiss(t.id)}
         >
@@ -194,9 +190,11 @@ function loadSettings() {
 
 export default function App() {
   const [active, setActive] = useState('dashboard')
+  const [collapsed, setCollapsed] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settings, setSettings] = useState(loadSettings)
   const [connOk, setConnOk] = useState(false)
+  const [counts, setCounts] = useState({ templates: null, feedback: null, welfare: null })
   const [toasts, setToasts] = useState([])
   const toastId = useRef(0)
 
@@ -216,11 +214,24 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    Promise.all([
+      api.templates().then((r) => (Array.isArray(r) ? r.length : null)).catch(() => null),
+      api.feedback().then((r) => (Array.isArray(r) ? r.length : null)).catch(() => null),
+      api.welfareApplications().then((r) => (Array.isArray(r) ? r.length : null)).catch(() => null)
+    ]).then(([t, f, w]) => setCounts({ templates: t, feedback: f, welfare: w }))
+  }, [])
+
+  useEffect(() => {
     try { localStorage.setItem(LS_CONFIG_KEY, JSON.stringify(settings)) } catch { /* noop */ }
   }, [settings])
 
   const openSection = (id) => {
     setActive(id)
+    if (window.location.pathname.endsWith('.html')) {
+      document.querySelectorAll('.sidebar-nav-link').forEach((el) => el.classList.remove('active'))
+      const el = document.getElementById(`menu_${id}`)
+      if (el) el.classList.add('active')
+    }
     window.history.replaceState(null, '', `/admin#${id}`)
   }
 
@@ -246,63 +257,109 @@ export default function App() {
   const title = TITLES[active] || TITLES.dashboard
 
   return (
-    <div className="admin-flex">
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <div className="logo-box">TĐ</div>
-          <div>
-            <div className="brand-name">Công Đoàn TDMU</div>
-            <div className="brand-sub">Hệ thống quản trị</div>
+    <div className="admin-app-layout">
+      <aside className={`admin-sidebar${collapsed ? ' collapsed' : ''}`} id="adminSidebar">
+        <div className="sidebar-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
+            <div className="logo-box" style={{ width: 38, height: 38, background: 'var(--tdmu-gold)', color: 'var(--tdmu-navy)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 16, flexShrink: 0 }}>
+              TĐ
+            </div>
+            <div className="sidebar-brand-text">
+              <span className="brand-title">CÔNG ĐOÀN TDMU</span>
+              <span className="brand-sub">HỆ THỐNG TRUYỀN THÔNG ĐA KÊNH</span>
+            </div>
           </div>
         </div>
-        {NAV.map((group) => (
-          <React.Fragment key={group.group}>
-            <div className="nav-section">{group.group}</div>
-            {group.items.map((item) => (
-              <button key={item.id} className={`nav-link ${active === item.id ? 'active' : ''}`} onClick={() => openSection(item.id)}>
-                <i className={`fa-solid ${item.icon}`}></i><span>{item.label}</span>
-              </button>
-            ))}
-          </React.Fragment>
-        ))}
-        <div style={{ flex: 1 }} />
-        <div className="nav-section" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12 }}>
-          Hệ thống
+
+        <nav className="sidebar-nav">
+          {NAV.map((group) => (
+            <React.Fragment key={group.group}>
+              <div className="nav-section-label">{group.group}</div>
+              {group.items.map((item) => (
+                <button
+                  key={item.id}
+                  id={`menu_${item.id}`}
+                  className={`sidebar-nav-link ${active === item.id ? 'active' : ''}`}
+                  data-tooltip={item.tooltip}
+                  onClick={() => openSection(item.id)}
+                >
+                  <i className={`fa-solid ${item.icon} nav-icon`} style={{ color: item.color }}></i>
+                  <span className="nav-text">{item.label}</span>
+                  {item.badge && <span className="nav-badge-ai">{item.badge}</span>}
+                  {item.countKey && Number.isFinite(counts[item.countKey]) && counts[item.countKey] > 0 && (
+                    <span className="nav-count-badge">{counts[item.countKey]}</span>
+                  )}
+                </button>
+              ))}
+            </React.Fragment>
+          ))}
+        </nav>
+
+        <div className="sidebar-footer">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 10.5, color: '#94A3B8' }}>Phiên bản v2.5 Enterprise</span>
+            <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34D399', fontSize: 9.5, fontWeight: 700, padding: '2px 6px', borderRadius: 4 }}>ONLINE</span>
+          </div>
         </div>
-        <button className="nav-link" onClick={() => setSettingsOpen(true)}>
-          <i className="fa-solid fa-gear"></i><span>Cấu hình hệ thống</span>
-        </button>
       </aside>
 
-      <div className="admin-main">
-        <header className="topbar">
-          <div>
-            <h1>{title[0]}</h1>
-            <div className="sub">{title[1]}</div>
+      <div className="admin-main-wrapper">
+        <header className="admin-top-header">
+          <div className="header-left">
+            <button type="button" className="btn-sidebar-toggle" onClick={() => setCollapsed((v) => !v)} title="Thu gọn / Mở rộng Menu">
+              <i className="fa-solid fa-bars"></i>
+            </button>
+            <div className="header-breadcrumb">
+              <span><i className="fa-solid fa-house-chimney me-1 text-muted"></i> Trang Quản Trị</span>
+              <span className="text-muted">/</span>
+              <strong>{title[0]}</strong>
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span className="badge" style={{ background: connOk ? '#DCFCE7' : '#FEE2E2', color: connOk ? '#166534' : '#991B1B' }}>
-              <span className={`stat-dot ${connOk ? 'dot-green' : 'dot-red'}`}></span>
-              {connOk ? 'SQL Server' : 'Chưa kết nối'} · {settings.dbDisplayName || 'TDMU_TradeUnion_DB'}
+
+          <div className="header-right">
+            <span className="header-status-badge" style={{ background: '#EFF6FF', color: '#1E40AF', border: '1px solid #BFDBFE' }}>
+              <i className="fa-solid fa-bolt text-primary"></i> Cổng Tác Nghiệp Đa Kênh
             </span>
-            <span className="badge badge-info" style={{ fontSize: 12, padding: '6px 12px' }}>
-              <i className="fa-solid fa-user-shield me-1"></i>Admin
-            </span>
+
+            <div className="user-profile-badge">
+              <div className="user-avatar-circle">KU</div>
+              <div className="user-meta">
+                <div className="user-name" id="current_user_name">TS. Lê Thị Kim Út</div>
+                <select className="role-switcher" defaultValue="admin" id="role_switcher" title="Vai trò">
+                  <option value="admin">Quản Trị Viên (Admin)</option>
+                  <option value="editor">Biên Tập Viên (Editor)</option>
+                  <option value="contributor">Cộng Tác Viên (Contributor)</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="button" className="btn-header-action" onClick={() => setSettingsOpen(true)} title="Cài đặt hệ thống tòa soạn">
+              <i className="fa-solid fa-gear"></i>
+            </button>
+
+            <button
+              type="button"
+              className="btn-header-website"
+              title="Xem Cổng thông tin trang chủ"
+              onClick={() => window.open(`${window.location.origin}/`, '_blank')}
+            >
+              <i className="fa-solid fa-arrow-up-right-from-square"></i> Xem Website
+            </button>
           </div>
         </header>
 
-        <main className="content">
+        <main className="admin-main">
           {active === 'dashboard' && <Dashboard notify={notify} />}
           {active === 'articles' && <Articles notify={notify} />}
-          {active === 'studio' && <Studio notify={notify} />}
+          {active === 'ai-creator' && <Studio notify={notify} />}
+          {active === 'schedule' && <Schedule notify={notify} />}
           {active === 'documents' && <Documents notify={notify} />}
           {active === 'templates' && <Templates notify={notify} />}
           {active === 'welfare' && <Welfare notify={notify} />}
-          {active === 'organization' && <Organization notify={notify} />}
-          {active === 'users' && <UsersView notify={notify} />}
           {active === 'feedback' && <Feedback notify={notify} />}
-          {active === 'comments' && <Comments notify={notify} />}
           {active === 'reports' && <Reports notify={notify} />}
+          {active === 'users' && <UsersView notify={notify} />}
+          {active === 'audits' && <Audits notify={notify} />}
         </main>
       </div>
 

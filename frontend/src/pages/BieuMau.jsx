@@ -49,6 +49,7 @@ const BieuMau = () => {
                     </span>
                     <input
                       type="text"
+                      id="portal_tpl_search"
                       className="form-control"
                       placeholder="Tìm kiếm tên biểu mẫu, mã hiệu..."
                       value={search}
@@ -58,6 +59,7 @@ const BieuMau = () => {
                 </div>
                 <div className="col-md-5">
                   <select
+                    id="portal_tpl_cat"
                     className="form-select"
                     value={category}
                     onChange={e => setCategory(e.target.value)}
@@ -74,43 +76,45 @@ const BieuMau = () => {
             </div>
 
             {/* Templates List */}
-            {loading ? (
-              <div className="text-center py-5 text-muted">
-                <i className="fa-solid fa-circle-notch fa-spin fa-2x mb-2"></i>
-                <div>Đang tải kho biểu mẫu trực tuyến...</div>
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className="text-center py-5 text-muted fst-italic">
-                Không tìm thấy biểu mẫu nào phù hợp với yêu cầu tìm kiếm.
-              </div>
-            ) : (
-              filtered.map(t => (
-                <div key={t.id} className="p-3 border rounded mb-3 d-flex justify-content-between align-items-center bg-white shadow-sm flex-wrap gap-3">
-                  <div className="d-flex align-items-center gap-3">
-                    <i className="fa-regular fa-file-word text-primary fa-2x flex-shrink-0"></i>
-                    <div>
-                      <div className="d-flex align-items-center gap-2 mb-1 flex-wrap">
-                        <span className="badge bg-primary">{t.code}</span>
-                        <h6 className="fw-bold mb-0 text-dark">{t.title}</h6>
-                      </div>
-                      <small className="text-muted d-block">{t.description}</small>
-                      <div className="mt-1 small text-muted">
-                        <span className="badge bg-light text-secondary me-2">
-                          <i className="fa-solid fa-download me-1"></i>{t.downloads_count || 0} lượt tải
-                        </span>
-                        <span>Dung lượng: {t.file_size || '4 KB'}</span>
+            <div id="portal_templates_list">
+              {loading ? (
+                <div className="text-center py-5 text-muted">
+                  <i className="fa-solid fa-circle-notch fa-spin fa-2x mb-2"></i>
+                  <div>Đang tải kho biểu mẫu trực tuyến...</div>
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="text-center py-5 text-muted fst-italic">
+                  Không tìm thấy biểu mẫu nào phù hợp với yêu cầu tìm kiếm.
+                </div>
+              ) : (
+                filtered.map(t => (
+                  <div key={t.id} className="p-3 border rounded mb-3 d-flex justify-content-between align-items-center bg-white shadow-sm flex-wrap gap-3">
+                    <div className="d-flex align-items-center gap-3">
+                      <i className="fa-regular fa-file-word text-primary fa-2x flex-shrink-0"></i>
+                      <div>
+                        <div className="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                          <span className="badge bg-primary">{t.code}</span>
+                          <h6 className="fw-bold mb-0 text-dark">{t.title}</h6>
+                        </div>
+                        <small className="text-muted d-block">{t.description}</small>
+                        <div className="mt-1 small text-muted">
+                          <span className="badge bg-light text-secondary me-2">
+                            <i className="fa-solid fa-download me-1"></i>{t.downloads_count || 0} lượt tải
+                          </span>
+                          <span>Dung lượng: {t.file_size || '4 KB'}</span>
+                        </div>
                       </div>
                     </div>
+                    <a
+                      href={`/api/templates/download/${t.id}`}
+                      className="btn-portal-access flex-shrink-0 text-nowrap"
+                    >
+                      <i className="fa-solid fa-download me-1"></i> Tải về (.docx)
+                    </a>
                   </div>
-                  <a
-                    href={`/api/templates/download/${t.id}`}
-                    className="btn-portal-access flex-shrink-0 text-nowrap"
-                  >
-                    <i className="fa-solid fa-download me-1"></i> Tải về (.docx)
-                  </a>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
         </div>
 
@@ -136,6 +140,23 @@ const BieuMau = () => {
               <a href="http://lib.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
                 <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> TT Học Liệu ĐH Thủ Dầu Một
               </a>
+              <a href="http://doanvien.congdoan.vn/VTBWebProject" target="_blank" rel="noreferrer" className="list-group-item">
+                <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Phần mềm quản lý đoàn viên
+              </a>
+            </div>
+          </div>
+
+          <div className="panel-tdmu">
+            <div className="panel-heading-tdmu">
+              <i className="fa-solid fa-chart-simple me-2 text-warning"></i>Thống kê truy cập
+            </div>
+            <div className="p-3" style={{ fontSize: '13px' }}>
+              <p className="mb-2">
+                <i className="fa-solid fa-users text-primary me-2"></i> Đang trực tuyến: <strong>12</strong>
+              </p>
+              <p className="mb-0">
+                <i className="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong>811,221</strong>
+              </p>
             </div>
           </div>
         </div>

@@ -48,8 +48,8 @@ const LienHe = () => {
   };
 
   return (
-    <div className="container my-4">
-      <div className="breadcrumb-box mb-3">
+    <div className="container my-3">
+      <div className="breadcrumb-box">
         <a href="/">Trang chủ</a> / <span className="text-muted">Liên hệ &amp; 16 Tổ công đoàn</span>
       </div>
 
@@ -59,7 +59,7 @@ const LienHe = () => {
           <div className="content-box mb-4">
             <div className="tieudelon">
               <i className="fa-solid fa-address-book me-2 text-primary"></i>
-              DANH BẠ 16 TỔ CÔNG ĐOÀN BỘ PHẬN TDMU
+              DANH BẠ 16 TỔ CÔNG ĐOÀN CƠ SỞ TDMU
             </div>
             
             <div className="table-responsive mt-3">
@@ -246,17 +246,19 @@ const LienHe = () => {
               <a href="http://lib.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
                 <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> TT Học Liệu ĐH TDMU
               </a>
+              <a href="http://doanvien.congdoan.vn/VTBWebProject" target="_blank" rel="noreferrer" className="list-group-item">
+                <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Phần mềm quản lý đoàn viên
+              </a>
             </div>
           </div>
 
           <div className="panel-tdmu">
             <div className="panel-heading-tdmu">
-              <i className="fa-solid fa-headset me-2 text-warning"></i>Đường dây nóng
+              <i className="fa-solid fa-chart-simple me-2 text-warning"></i>Thống kê truy cập
             </div>
             <div className="p-3" style={{ fontSize: '13px' }}>
-              <p className="mb-2"><i className="fa-solid fa-phone text-danger me-2"></i> Hotline: <strong>0274.3822.058</strong></p>
-              <p className="mb-2"><i className="fa-solid fa-envelope text-primary me-2"></i> Email: <strong>congdoan@tdmu.edu.vn</strong></p>
-              <p className="mb-0"><i className="fa-solid fa-location-dot text-success me-2"></i> VP: <strong>Phòng 102 - Nhà A</strong></p>
+              <p className="mb-2"><i className="fa-solid fa-users text-primary me-2"></i> Đang trực tuyến: <strong>12</strong></p>
+              <p className="mb-0"><i className="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong>811,221</strong></p>
             </div>
           </div>
         </div>

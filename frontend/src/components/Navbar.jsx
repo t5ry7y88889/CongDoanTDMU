@@ -53,14 +53,12 @@ const Navbar = ({ onOpenBookmarks, bookmarkCount = 0 }) => {
             </div>
           </div>
           <div className="d-flex align-items-center gap-2">
-            <span className="badge-hotline d-none d-md-inline-flex">
+            <span className="badge-hotline">
               <i className="fa-solid fa-phone me-1 text-warning"></i> Hotline: (0274) 3.815.184
             </span>
-            {window.location.port !== '5173' && (
-              <a href="/admin.html" className="btn-portal-access">
-                <i className="fa-solid fa-sliders me-1 text-warning"></i> Quản lý website truyền thông công đoàn TDMU
-              </a>
-            )}
+            <a href="/admin" className="btn-portal-access">
+              <i className="fa-solid fa-sliders me-1 text-warning"></i> Quản lý website truyền thông công đoàn TDMU
+            </a>
           </div>
         </div>
       </header>
@@ -68,7 +66,7 @@ const Navbar = ({ onOpenBookmarks, bookmarkCount = 0 }) => {
       <nav className="navbar navbar-expand-lg navbar-tdmu sticky-top">
         <div className="container">
           <button
-            className="navbar-toggler text-white border-light"
+            className="navbar-toggler text-white"
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle navigation"
@@ -79,19 +77,19 @@ const Navbar = ({ onOpenBookmarks, bookmarkCount = 0 }) => {
           <div className={`collapse navbar-collapse ${mobileMenuOpen ? 'show' : ''}`} id="tdmuNavbar">
             <ul className="navbar-nav mx-auto">
               <li className="nav-item">
-                <Link className={`nav-link ${isActive('/') ? 'active fw-bold' : ''}`} to="/">
+                <Link className={`nav-link ${isActive('/') ? 'active' : ''}`} to="/">
                   Trang Chủ
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className={`nav-link ${isActive('/gioi-thieu') ? 'active fw-bold' : ''}`} to="/gioi-thieu">
+                <Link className={`nav-link ${isActive('/gioi-thieu') ? 'active' : ''}`} to="/gioi-thieu">
                   Giới Thiệu
                 </Link>
               </li>
 
               <li className="nav-item dropdown position-relative" ref={orgDropdownRef}>
                 <a
-                  className={`nav-link dropdown-toggle ${isActive('/co-cau-to-chuc') ? 'active fw-bold' : ''}`}
+                  className={`nav-link dropdown-toggle ${isActive('/co-cau-to-chuc') ? 'active' : ''}`}
                   href="#org"
                   onClick={(e) => {
                     e.preventDefault();
@@ -102,85 +100,84 @@ const Navbar = ({ onOpenBookmarks, bookmarkCount = 0 }) => {
                 >
                   Cơ Cấu Tổ Chức
                 </a>
-                <ul className={`dropdown-menu shadow ${orgDropdownOpen ? 'show' : ''}`} style={{ borderTop: '3px solid #002855' }}>
+                <ul className={`dropdown-menu ${orgDropdownOpen ? 'show' : ''}`}>
                   <li>
-                    <Link className="dropdown-item py-2" to="/co-cau-to-chuc?tab=ban-thuong-vu" onClick={() => setOrgDropdownOpen(false)}>
-                      <i className="fa-solid fa-crown me-2 text-warning"></i> Ban thường vụ
+                    <Link className="dropdown-item" to="/co-cau-to-chuc?tab=ban-thuong-vu" onClick={() => setOrgDropdownOpen(false)}>
+                      <i className="fa-solid fa-caret-right me-1 text-primary"></i> Ban thường vụ
                     </Link>
                   </li>
                   <li>
-                    <Link className="dropdown-item py-2" to="/co-cau-to-chuc?tab=ban-chap-hanh" onClick={() => setOrgDropdownOpen(false)}>
-                      <i className="fa-solid fa-users me-2 text-primary"></i> Ban chấp hành
+                    <Link className="dropdown-item" to="/co-cau-to-chuc?tab=ban-chap-hanh" onClick={() => setOrgDropdownOpen(false)}>
+                      <i className="fa-solid fa-caret-right me-1 text-primary"></i> Ban chấp hành
                     </Link>
                   </li>
                   <li>
-                    <Link className="dropdown-item py-2" to="/co-cau-to-chuc?tab=uy-ban-kiem-tra" onClick={() => setOrgDropdownOpen(false)}>
-                      <i className="fa-solid fa-scale-balanced me-2 text-success"></i> Ủy ban kiểm tra
+                    <Link className="dropdown-item" to="/co-cau-to-chuc?tab=uy-ban-kiem-tra" onClick={() => setOrgDropdownOpen(false)}>
+                      <i className="fa-solid fa-caret-right me-1 text-primary"></i> Ủy ban kiểm tra
                     </Link>
                   </li>
                   <li>
-                    <Link className="dropdown-item py-2" to="/co-cau-to-chuc?tab=16-to-cong-doan" onClick={() => setOrgDropdownOpen(false)}>
-                      <i className="fa-solid fa-sitemap me-2 text-danger"></i> 16 Tổ công đoàn cơ sở
+                    <Link className="dropdown-item" to="/co-cau-to-chuc?tab=16-to-cong-doan" onClick={() => setOrgDropdownOpen(false)}>
+                      <i className="fa-solid fa-caret-right me-1 text-primary"></i> 16 Tổ công đoàn cơ sở
                     </Link>
                   </li>
                 </ul>
               </li>
 
               <li className="nav-item">
-                <Link className={`nav-link ${isActive('/tin-tuc') ? 'active fw-bold' : ''}`} to="/tin-tuc">
+                <Link className={`nav-link ${isActive('/tin-tuc') ? 'active' : ''}`} to="/tin-tuc">
                   Tin Tức
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className={`nav-link ${isActive('/phuc-loi-doan-vien') ? 'active fw-bold' : ''}`} to="/phuc-loi-doan-vien">
+                <Link className={`nav-link ${isActive('/phuc-loi-doan-vien') ? 'active' : ''}`} to="/phuc-loi-doan-vien">
                   Phúc Lợi Đoàn Viên
                 </Link>
               </li>
 
               <li className="nav-item dropdown position-relative" ref={docDropdownRef}>
-                <a
-                  className={`nav-link dropdown-toggle ${isActive('/van-ban') ? 'active fw-bold' : ''}`}
-                  href="#doc"
-                  onClick={(e) => {
-                    e.preventDefault();
+                <Link
+                  className={`nav-link dropdown-toggle ${isActive('/van-ban') ? 'active' : ''}`}
+                  to="/van-ban"
+                  onClick={() => {
                     setDocDropdownOpen(!docDropdownOpen);
                     setOrgDropdownOpen(false);
                   }}
                   role="button"
                 >
                   Văn Bản
-                </a>
-                <ul className={`dropdown-menu shadow ${docDropdownOpen ? 'show' : ''}`} style={{ borderTop: '3px solid #002855' }}>
+                </Link>
+                <ul className={`dropdown-menu ${docDropdownOpen ? 'show' : ''}`}>
                   <li>
-                    <Link className="dropdown-item py-2" to="/van-ban#tuyen-truyen" onClick={() => setDocDropdownOpen(false)}>
-                      <i className="fa-solid fa-bullhorn me-2 text-primary"></i> Công văn tuyên truyền
+                    <Link className="dropdown-item" to="/van-ban#tuyen-truyen" onClick={() => setDocDropdownOpen(false)}>
+                      <i className="fa-solid fa-caret-right me-1 text-primary"></i> Công văn tuyên truyền
                     </Link>
                   </li>
                   <li>
-                    <Link className="dropdown-item py-2" to="/van-ban#ke-hoach" onClick={() => setDocDropdownOpen(false)}>
-                      <i className="fa-solid fa-calendar-check me-2 text-primary"></i> Kế hoạch hoạt động
+                    <Link className="dropdown-item" to="/van-ban#ke-hoach" onClick={() => setDocDropdownOpen(false)}>
+                      <i className="fa-solid fa-caret-right me-1 text-primary"></i> Kế hoạch hoạt động
                     </Link>
                   </li>
                   <li>
-                    <Link className="dropdown-item py-2" to="/van-ban#luat" onClick={() => setDocDropdownOpen(false)}>
-                      <i className="fa-solid fa-book-journal-whills me-2 text-primary"></i> Văn bản luật
+                    <Link className="dropdown-item" to="/van-ban#luat" onClick={() => setDocDropdownOpen(false)}>
+                      <i className="fa-solid fa-caret-right me-1 text-primary"></i> Văn bản luật
                     </Link>
                   </li>
                   <li>
-                    <Link className="dropdown-item py-2" to="/van-ban#quyet-dinh" onClick={() => setDocDropdownOpen(false)}>
-                      <i className="fa-solid fa-stamp me-2 text-primary"></i> Quyết định
+                    <Link className="dropdown-item" to="/van-ban#quyet-dinh" onClick={() => setDocDropdownOpen(false)}>
+                      <i className="fa-solid fa-caret-right me-1 text-primary"></i> Quyết định
                     </Link>
                   </li>
                 </ul>
               </li>
 
               <li className="nav-item">
-                <Link className={`nav-link ${isActive('/bieu-mau') ? 'active fw-bold' : ''}`} to="/bieu-mau">
+                <Link className={`nav-link ${isActive('/bieu-mau') ? 'active' : ''}`} to="/bieu-mau">
                   Biểu Mẫu
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className={`nav-link ${isActive('/lien-he') ? 'active fw-bold' : ''}`} to="/lien-he">
+                <Link className={`nav-link ${isActive('/lien-he') ? 'active' : ''}`} to="/lien-he">
                   Liên Hệ
                 </Link>
               </li>
@@ -189,15 +186,13 @@ const Navbar = ({ onOpenBookmarks, bookmarkCount = 0 }) => {
             {onOpenBookmarks && (
               <button
                 type="button"
-                className="btn btn-outline-warning btn-sm d-flex align-items-center gap-1 text-white border-warning ms-lg-2 my-2 my-lg-0"
+                className="btn-bookmark-header ms-lg-2 my-2 my-lg-0"
                 onClick={onOpenBookmarks}
                 title="Mở Tủ Sách Đọc Sau"
               >
-                <i className="fa-solid fa-bookmark text-warning"></i>
+                <i className="fa-solid fa-bookmark"></i>
                 <span className="d-lg-none d-xl-inline">Đọc sau</span>
-                <span className="badge bg-warning text-dark rounded-pill px-2" style={{ fontSize: '11px' }}>
-                  {bookmarkCount}
-                </span>
+                <span className="badge-count-pill">{bookmarkCount}</span>
               </button>
             )}
           </div>

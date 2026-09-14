@@ -13,3 +13,4 @@ storage/framework/views/*
 bootstrap/cache/*.php
 *.log
 frontend-admin/dist/
+.DS_Store

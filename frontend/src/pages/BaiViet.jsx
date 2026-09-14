@@ -63,7 +63,8 @@ const BaiViet = () => {
     try {
       const res = await fetch('/api/articles?status=published').then(r => r.json());
       if (res.success && Array.isArray(res.data)) {
-        setRelatedArticles(res.data.filter(a => String(a.id) !== String(articleId)).slice(0, 4));
+        const sorted = [...res.data].sort((a, b) => ((b.viewsCount || b.views || 0) - (a.viewsCount || a.views || 0)));
+        setRelatedArticles(sorted.filter(a => String(a.id) !== String(articleId)).slice(0, 5));
       }
     } catch (err) {
       console.warn('Related fetch error:', err);
@@ -206,10 +207,16 @@ const BaiViet = () => {
             {/* AI 30s KEY TAKEAWAYS */}
             <div className="ai-takeaways-card">
               <h6><i className="fa-solid fa-wand-magic-sparkles me-2 text-success"></i> Điểm Nhấn Bản Tin (Tóm tắt cốt lõi)</h6>
-              <ul className="mb-0 ps-3 text-secondary small" style={{ lineHeight: '1.6' }}>
-                <li>{article.summary || 'Thông tin chỉ đạo, hoạt động phong trào và chính sách mới nhất.'}</li>
-                <li>Phát huy tinh thần đổi mới, sáng tạo và bảo vệ quyền lợi đoàn viên Công đoàn TDMU.</li>
-              </ul>
+              {article.ai_takeaways && Array.isArray(article.ai_takeaways) && article.ai_takeaways.length > 0 ? (
+                <ul className="mb-0 ps-3 text-secondary small" style={{ lineHeight: '1.6' }}>
+                  {article.ai_takeaways.map((t, i) => <li key={i}>{t}</li>)}
+                </ul>
+              ) : (
+                <ul className="mb-0 ps-3 text-secondary small" style={{ lineHeight: '1.6' }}>
+                  <li>{article.summary || 'Thông tin chỉ đạo, hoạt động phong trào và chính sách mới nhất.'}</li>
+                  <li>Phát huy tinh thần đổi mới, sáng tạo và bảo vệ quyền lợi đoàn viên Công đoàn TDMU.</li>
+                </ul>
+              )}
             </div>
 
             {/* Sapo / Lead Paragraph */}
@@ -275,93 +282,126 @@ const BaiViet = () => {
               </div>
             </div>
 
-            {/* Comments Section */}
-            <div className="pt-2">
-              <h5 className="fw-bold mb-3" style={{ color: '#002855' }}>
-                <i className="fa-solid fa-comments text-primary me-2"></i>
-                Ý Kiến &amp; Thảo Luận ({comments.length})
-              </h5>
+            {/* PHÂN HỆ BÌNH LUẬN & Ý KIẾN ĐOÀN VIÊN */}
+            <section className="mt-4 pt-3" id="commentsSection">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h4 className="fw-bold m-0" style={{ color: '#002855', fontSize: '18px' }}>
+                  <i className="fa-solid fa-comments text-primary me-2"></i> Ý Kiến &amp; Bình Luận Đoàn Viên (<span id="totalCommentsHeader">{comments.length}</span>)
+                </h4>
+                <span className="text-muted small">Quy chế trao đổi văn minh &amp; xây dựng</span>
+              </div>
 
-              <form onSubmit={handleSubmitComment} className="mb-4">
-                <div className="row g-2">
-                  <div className="col-md-4">
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Họ và tên..."
-                      value={newComment.author_name}
-                      onChange={(e) => setNewComment({ ...newComment, author_name: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="col-md-8">
-                    <div className="input-group">
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Viết ý kiến thảo luận về bài viết..."
-                        value={newComment.content}
-                        onChange={(e) => setNewComment({ ...newComment, content: e.target.value })}
-                        required
-                      />
-                      <button
-                        type="submit"
-                        className="btn btn-primary"
-                        disabled={submittingComment}
-                        style={{ background: '#002855' }}
-                      >
-                        {submittingComment ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-paper-plane"></i>}
-                      </button>
+              <form onSubmit={handleSubmitComment} className="p-3 bg-light rounded border mb-4 shadow-sm">
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <div className="d-flex align-items-center gap-2">
+                    <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style={{ width: '32px', height: '32px', fontSize: '12px' }} id="userCommentAvatar">
+                      U
+                    </div>
+                    <div style={{ fontSize: '13px' }}>
+                      Đang bình luận với tư cách: <strong className="text-primary" id="userCommentName">{newComment.author_name}</strong>
+                      <span className="badge bg-white text-secondary border ms-1" id="userCommentUnit">Tổ CĐ Viện Công nghệ số</span>
                     </div>
                   </div>
+                  <span className="text-muted" style={{ fontSize: '11px' }}>
+                    <i className="fa-solid fa-shield-halved text-success me-1"></i> Xác thực tài khoản TDMU
+                  </span>
+                </div>
+                <div className="mb-2">
+                  <textarea
+                    id="inputCommentText"
+                    className="form-control"
+                    rows="3"
+                    placeholder="Nhập ý kiến thảo luận hoặc cảm nhận của bạn về bài viết này..."
+                    style={{ fontSize: '13.5px' }}
+                    value={newComment.content}
+                    onChange={(e) => setNewComment({ ...newComment, content: e.target.value })}
+                    required
+                  ></textarea>
+                </div>
+                <div className="d-flex justify-content-end">
+                  <button
+                    type="submit"
+                    className="btn btn-sm btn-primary fw-bold px-4 py-2"
+                    disabled={submittingComment}
+                    style={{ background: '#002855', borderColor: '#002855', borderRadius: '6px' }}
+                  >
+                    {submittingComment ? <i className="fa-solid fa-spinner fa-spin me-1"></i> : <i className="fa-solid fa-paper-plane me-1 text-warning"></i>} Gửi Bình Luận
+                  </button>
                 </div>
               </form>
 
-              {/* Comments List */}
-              {comments.length === 0 ? (
-                <div className="text-muted small fst-italic">Chưa có bình luận nào. Hãy là người đầu tiên chia sẻ ý kiến!</div>
-              ) : (
-                <div className="d-flex flex-column gap-3">
-                  {comments.map((c, i) => (
-                    <div key={c.id || i} className="p-3 bg-light rounded border">
-                      <div className="d-flex justify-content-between align-items-center mb-1">
-                        <strong className="text-primary" style={{ fontSize: '13.5px' }}>
-                          <i className="fa-solid fa-circle-user me-1"></i>
-                          {c.author_name || c.author || 'Đoàn viên'}
-                        </strong>
-                        <small className="text-muted" style={{ fontSize: '11px' }}>
-                          {c.createdAt ? String(c.createdAt).slice(0, 10) : 'Vừa xong'}
-                        </small>
+              {/* List of Comments */}
+              <div id="commentsListContainer">
+                {comments.length === 0 ? (
+                  <div className="text-muted small fst-italic text-center py-3">
+                    Chưa có bình luận nào. Hãy là người đầu tiên chia sẻ ý kiến!
+                  </div>
+                ) : (
+                  comments.map((c, i) => {
+                    const name = c.author_name || c.author || 'Đoàn viên';
+                    const initials = name
+                      .split(/\s+/)
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .map((w) => w[0].toUpperCase())
+                      .join('') || 'DV';
+                    return (
+                      <div key={c.id || i} className="d-flex gap-3 mb-3 p-3 bg-white border rounded shadow-sm">
+                        <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style={{ width: '42px', height: '42px', flexShrink: 0 }}>
+                          {initials.slice(0, 2)}
+                        </div>
+                        <div className="flex-grow-1">
+                          <div className="d-flex justify-content-between align-items-center mb-1">
+                            <div>
+                              <strong className="text-dark">{name}</strong>
+                              {c.unit && <span className="badge bg-light text-primary border ms-2 small">{c.unit}</span>}
+                            </div>
+                            <small className="text-muted">
+                              <i className="fa-regular fa-clock me-1"></i> {c.createdAt ? String(c.createdAt).slice(0, 16) : 'Vừa xong'}
+                            </small>
+                          </div>
+                          <p className="mb-0 text-secondary" style={{ fontSize: '13.5px', lineHeight: '1.5' }}>{c.content}</p>
+                        </div>
                       </div>
-                      <div style={{ fontSize: '13px', color: '#334155' }}>{c.content}</div>
-                    </div>
-                  ))}
+                    );
+                  })
+                )}
+              </div>
+            </section>
+
+            {/* Related Next Article */}
+            {(() => {
+              const next = relatedArticles.find((r) => String(r.id) !== String(articleId));
+              if (!next) return null;
+              return (
+                <div className="p-3 bg-light rounded border mt-4">
+                  <div className="text-muted small fw-bold text-uppercase mb-2">
+                    <i className="fa-solid fa-arrow-right text-primary me-1"></i> Bài viết tiếp theo cùng chuyên mục:
+                  </div>
+                  <h5 className="fw-bold mb-1" id="nextArtTitle">
+                    <Link to={`/bai-viet?id=${next.id}`} className="text-decoration-none text-primary">{next.title}</Link>
+                  </h5>
+                  <div className="text-muted small">{next.categoryName || next.category || 'Hoạt động công đoàn'} | 3 phút đọc</div>
                 </div>
-              )}
-            </div>
+              );
+            })()}
           </article>
         </div>
 
-        {/* RIGHT COLUMN (3 PHẦN): WIDGET LIÊN QUAN */}
+        {/* RIGHT COLUMN (3 PHẦN): SIDEBAR BÀI ĐỌC NHIỀU NHẤT */}
         <div className="col-lg-3">
-          <div className="panel-tdmu mb-4">
+          <div className="panel-tdmu">
             <div className="panel-heading-tdmu">
-              <i className="fa-solid fa-newspaper me-2 text-primary"></i>Tin tức cùng chuyên mục
+              <i className="fa-solid fa-fire me-2 text-danger"></i>Đọc nhiều nhất
             </div>
-            <div className="list-group list-group-flush">
-              {relatedArticles.map(r => (
+            <div className="list-group-tdmu" id="popular_articles_sidebar">
+              {relatedArticles.map((r) => (
                 <Link
                   key={r.id}
                   to={`/bai-viet?id=${r.id}`}
-                  className="list-group-item list-group-item-action py-3"
-                  style={{ textDecoration: 'none' }}
+                  className={`list-group-item ${String(r.id) === String(articleId) ? 'fw-bold text-primary bg-light' : ''}`}
                 >
-                  <div className="fw-bold small text-dark mb-1" style={{ lineClamp: 2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {r.title}
-                  </div>
-                  <small className="text-muted">
-                    <i className="fa-regular fa-clock me-1"></i> {r.createdAt ? String(r.createdAt).slice(0, 10) : '26/06/2026'}
-                  </small>
+                  <i className="fa-solid fa-angle-right me-1 text-muted small"></i> {r.title}
                 </Link>
               ))}
             </div>
@@ -369,21 +409,24 @@ const BaiViet = () => {
 
           <div className="panel-tdmu">
             <div className="panel-heading-tdmu">
-              <i className="fa-solid fa-link me-2 text-warning"></i>Đường dẫn nhanh
+              <i className="fa-solid fa-link me-2 text-primary"></i>Liên kết website
             </div>
             <div className="list-group-tdmu">
-              <Link to="/van-ban" className="list-group-item">
-                <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Kho văn bản chỉ đạo
-              </Link>
-              <Link to="/bieu-mau" className="list-group-item">
-                <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Kho biểu mẫu Word
-              </Link>
-              <Link to="/phuc-loi-doan-vien" className="list-group-item">
-                <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Chính sách &amp; Trợ cấp
-              </Link>
-              <Link to="/lien-he" className="list-group-item">
-                <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Hòm thư góp ý
-              </Link>
+              <a href="http://tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+                <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đại học Thủ Dầu Một
+              </a>
+              <a href="http://danguy.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+                <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đảng Bộ Đại học TDMU
+              </a>
+              <a href="http://www.congdoan.vn" target="_blank" rel="noreferrer" className="list-group-item">
+                <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Tổng LĐLĐ Việt Nam
+              </a>
+              <a href="http://congdoanbinhduong.org.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+                <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> LĐLĐ Tỉnh Bình Dương
+              </a>
+              <a href="http://lib.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+                <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> TT Học Liệu ĐH TDMU
+              </a>
             </div>
           </div>
         </div>

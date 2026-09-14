@@ -45,6 +45,12 @@ const TinTuc = () => {
   const strip = (str) =>
     (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
 
+  const formatTinDate = (a) => {
+    const raw = a.createdAt || a.published_at;
+    if (!raw) return '26/06/2026';
+    return String(raw).split(' ')[0] || String(raw).split('T')[0];
+  };
+
   const filteredArticles = articles.filter(a => {
     if (currentCategory === 'saved') {
       return isBookmarked(a.id);
@@ -83,37 +89,37 @@ const TinTuc = () => {
                 className={`doc-tab-btn ${currentCategory === 'all' ? 'active' : ''}`}
                 onClick={() => setCurrentCategory('all')}
               >
-                <i className="fa-solid fa-newspaper text-primary me-1"></i> Tất cả tin tức
+                <i className="fa-solid fa-newspaper text-primary"></i> Tất cả tin tức
               </button>
               <button
                 className={`doc-tab-btn ${currentCategory === 'Hoạt động công đoàn' ? 'active' : ''}`}
                 onClick={() => setCurrentCategory('Hoạt động công đoàn')}
               >
-                <i className="fa-solid fa-users text-primary me-1"></i> Hoạt động CĐ
+                <i className="fa-solid fa-users text-primary"></i> Hoạt động CĐ
               </button>
               <button
                 className={`doc-tab-btn ${currentCategory === 'Phong trào thi đua' ? 'active' : ''}`}
                 onClick={() => setCurrentCategory('Phong trào thi đua')}
               >
-                <i className="fa-solid fa-trophy text-warning me-1"></i> Phong trào thi đua
+                <i className="fa-solid fa-trophy text-warning"></i> Phong trào thi đua
               </button>
               <button
                 className={`doc-tab-btn ${currentCategory === 'Chăm lo đời sống' ? 'active' : ''}`}
                 onClick={() => setCurrentCategory('Chăm lo đời sống')}
               >
-                <i className="fa-solid fa-heart-pulse text-danger me-1"></i> Chăm lo đời sống
+                <i className="fa-solid fa-heart-pulse text-danger"></i> Chăm lo đời sống
               </button>
               <button
                 className={`doc-tab-btn ${currentCategory === 'Văn hóa - Thể thao' ? 'active' : ''}`}
                 onClick={() => setCurrentCategory('Văn hóa - Thể thao')}
               >
-                <i className="fa-solid fa-futbol text-success me-1"></i> Văn hóa - Thể thao
+                <i className="fa-solid fa-futbol text-success"></i> Văn hóa - Thể thao
               </button>
               <button
                 className={`doc-tab-btn ${currentCategory === 'saved' ? 'active' : ''}`}
                 onClick={() => setCurrentCategory('saved')}
               >
-                <i className="fa-solid fa-bookmark text-danger me-1"></i> Đã lưu ({bookmarks ? bookmarks.length : 0})
+                <i className="fa-solid fa-bookmark text-danger"></i> Đã lưu (<span className="bookmark-badge-count">{bookmarks ? bookmarks.length : 0}</span>)
               </button>
             </div>
           </div>
@@ -153,6 +159,7 @@ const TinTuc = () => {
               {heroArticle && currentPage === 1 && currentCategory === 'all' && !searchQuery && (
                 <div
                   className="news-hero-headline"
+                  id="featured_hero_article"
                   onClick={() => navigate(`/bai-viet?id=${heroArticle.id}`)}
                   title="Bấm vào để đọc toàn văn bài viết"
                 >
@@ -162,10 +169,11 @@ const TinTuc = () => {
                         <img
                           src={heroArticle.image || 'https://tdmu.edu.vn/hinh/thuvien/hinhanh/DSC02559(1).JPG'}
                           className="hero-img"
+                          id="hero_img"
                           alt={heroArticle.title}
                         />
                         <div className="live-reader-badge">
-                          <span className="live-dot"></span> <span>24 cán bộ đang đọc</span>
+                          <span className="live-dot"></span> <span id="hero_live_readers">24 cán bộ đang đọc</span>
                         </div>
                       </div>
                     </div>
@@ -176,10 +184,10 @@ const TinTuc = () => {
                             TIÊU ĐIỂM HÔM NAY
                           </span>
                           <span className="text-muted small">
-                            <i className="fa-regular fa-clock me-1"></i> 3 phút đọc
+                            <i className="fa-regular fa-clock me-1"></i> <span id="hero_time">3 phút đọc</span>
                           </span>
                         </div>
-                        <h3 className="fw-bold mt-1" style={{ fontSize: '18px', lineHeight: 1.45, color: '#002855' }}>
+                        <h3 className="fw-bold mt-1" style={{ fontSize: '18px', lineHeight: 1.45, color: '#002855' }} id="hero_title">
                           {heroArticle.title}
                         </h3>
 
@@ -188,9 +196,15 @@ const TinTuc = () => {
                           <div className="ai-takeaway-title">
                             <i className="fa-solid fa-bolt text-warning"></i> Điểm Nhấn Bản Tin (30 Giây)
                           </div>
-                          <ul className="ai-takeaway-list">
-                            <li>{heroArticle.summary ? heroArticle.summary.slice(0, 100) + '...' : 'Thông tin cập nhật mới nhất từ Công đoàn TDMU.'}</li>
-                            <li>Đồng hành chăm lo và bảo vệ quyền lợi chính đáng cho toàn thể đoàn viên.</li>
+                          <ul className="ai-takeaway-list" id="hero_takeaways">
+                            {heroArticle.ai_takeaways && Array.isArray(heroArticle.ai_takeaways) && heroArticle.ai_takeaways.length > 0
+                              ? heroArticle.ai_takeaways.map((t, i) => <li key={i}>{t}</li>)
+                              : (
+                                <>
+                                  <li>{heroArticle.summary ? heroArticle.summary.slice(0, 100) + '...' : 'Thông tin cập nhật mới nhất từ Công đoàn TDMU.'}</li>
+                                  <li>Đồng hành chăm lo và bảo vệ quyền lợi chính đáng cho toàn thể đoàn viên.</li>
+                                </>
+                              )}
                           </ul>
                         </div>
                       </div>
@@ -198,18 +212,11 @@ const TinTuc = () => {
                       <div>
                         <div className="d-flex justify-content-between align-items-center text-muted small mb-3 border-top pt-2">
                           <div className="d-flex align-items-center gap-3">
-                            <span><i className="fa-regular fa-calendar me-1 text-primary"></i> {heroArticle.createdAt ? String(heroArticle.createdAt).split('T')[0] : '26/06/2026'}</span>
-                            <span><i className="fa-regular fa-eye text-success me-1"></i> <strong>{heroArticle.viewsCount || heroArticle.views || 450}</strong></span>
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-link p-0 text-secondary"
-                              onClick={(e) => handleBookmarkToggle(e, heroArticle)}
-                              title="Lưu đọc sau"
-                            >
-                              <i className={`fa-${isBookmarked && isBookmarked(heroArticle.id) ? 'solid text-danger' : 'regular'} fa-bookmark fs-6`}></i>
-                            </button>
+                            <span><i className="fa-regular fa-calendar me-1 text-primary"></i> <span id="hero_date">{formatTinDate(heroArticle)}</span></span>
+                            <span><i className="fa-regular fa-eye text-success me-1"></i> <strong id="hero_views">{heroArticle.viewsCount || heroArticle.views || 450}</strong></span>
+                            <span><i className="fa-regular fa-comment-dots text-primary me-1"></i> <strong id="hero_comments">{heroArticle.commentsCount || 8}</strong> bình luận</span>
                           </div>
-                          <span className="text-primary fw-bold">{heroArticle.author || 'Ban Thường Vụ'}</span>
+                          <span className="text-primary fw-bold" id="hero_author">{heroArticle.author || 'Ban Thường Vụ'}</span>
                         </div>
                         <button
                           className="btn btn-sm btn-primary w-100 fw-bold py-2"
@@ -267,7 +274,7 @@ const TinTuc = () => {
 
                         <div className="d-flex justify-content-between align-items-center text-muted small pt-2 border-top">
                           <div>
-                            <span className="me-2"><i className="fa-regular fa-calendar me-1 text-primary"></i> {a.createdAt ? String(a.createdAt).split('T')[0] : '26/06/2026'}</span>
+                            <span className="me-2"><i className="fa-regular fa-calendar me-1 text-primary"></i> {formatTinDate(a)}</span>
                             <span><i className="fa-regular fa-eye text-success me-1"></i> {a.viewsCount || a.views || 140}</span>
                           </div>
                           <button
@@ -352,9 +359,8 @@ const TinTuc = () => {
               <i className="fa-solid fa-chart-simple me-2 text-warning"></i>Thống kê tương tác
             </div>
             <div className="p-3" style={{ fontSize: '13px' }}>
-              <p className="mb-2"><i className="fa-solid fa-newspaper text-primary me-2"></i> Tổng bài viết: <strong>{articles.length}</strong></p>
-              <p className="mb-2"><i className="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong>{articles.reduce((sum, a) => sum + (a.viewsCount || a.views || 0), 0).toLocaleString('vi-VN')}</strong></p>
-              <p className="mb-0"><i className="fa-solid fa-bookmark text-danger me-2"></i> Bài viết đã lưu: <strong>{bookmarks ? bookmarks.length : 0}</strong></p>
+              <p className="mb-2"><i className="fa-solid fa-heart text-danger me-2"></i> Lượt thả tim: <strong>3,890</strong></p>
+              <p className="mb-0"><i className="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong>811,221</strong></p>
             </div>
           </div>
         </div>
