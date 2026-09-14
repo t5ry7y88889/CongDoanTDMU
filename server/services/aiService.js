@@ -71,6 +71,87 @@ function extractJsonFromText(text) {
 }
 
 // =========================================================================
+// 2.5 GENERIC OPENAI-COMPATIBLE CALLER (OpenAI / Custom OpenAI-compatible)
+// =========================================================================
+async function callOpenAICompatible(promptContent, systemPrompt, apiKey, model, endpoint) {
+  const fetch = (await import('node-fetch')).default || globalThis.fetch;
+  const cleanKey = (apiKey || "").trim();
+  const baseModel = (model || "").trim() || (endpoint && endpoint.includes('azure') ? 'gpt-4o-mini' : 'gpt-4o-mini');
+  const url = (endpoint || "").trim() || "https://api.openai.com/v1/chat/completions";
+
+  const payload = {
+    model: baseModel,
+    messages: [
+      {
+        role: 'system',
+        content: systemPrompt + "\n\nBẠN PHẢI TRẢ VỀ DUY NHẤT MỘT ĐỐI TƯỢNG JSON HỢP LỆ THEO ĐÚNG CẤU TRÚC ĐÃ CHO."
+      },
+      { role: 'user', content: promptContent }
+    ],
+    temperature: 0.7,
+    response_format: { type: 'json_object' }
+  };
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${cleanKey}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error(`[OpenAI-compatible ${res.status}] ${errText.slice(0, 300) || res.statusText}`);
+  }
+
+  const data = await res.json();
+  const content = data?.choices?.[0]?.message?.content;
+  if (!content) throw new Error("OpenAI-compatible API trả về phản hồi rỗng");
+  return content;
+}
+
+// =========================================================================
+// 2.6 ANTHROPIC (CLAUDE) NATIVE API CALLER
+// =========================================================================
+async function callAnthropicAPI(promptContent, systemPrompt, apiKey, model) {
+  const fetch = (await import('node-fetch')).default || globalThis.fetch;
+  const cleanKey = (apiKey || "").trim();
+  const baseModel = (model || "").trim() || "claude-sonnet-4-20250514";
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': cleanKey,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: baseModel,
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [
+        {
+          role: 'user',
+          content: promptContent + "\n\nBẠN PHẢI TRẢ VỀ DUY NHẤT MỘT ĐỐI TƯỢNG JSON HỢP LỆ THEO ĐÚNG CẤU TRÚC ĐÃ CHO, KHÔNG THÊM CHỮ NGOÀI JSON."
+        }
+      ]
+    })
+  });
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error(`[Anthropic ${res.status}] ${errText.slice(0, 300) || res.statusText}`);
+  }
+
+  const data = await res.json();
+  const content = (data?.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n');
+  if (!content) throw new Error("Anthropic API trả về phản hồi rỗng");
+  return content;
+}
+
+// =========================================================================
 // 3. GROQ NATIVE API CALLER
 // =========================================================================
 async function callGroqAPI(promptContent, systemPrompt, groqApiKey) {
@@ -249,6 +330,8 @@ module.exports = {
   summarizeTextNlp,
   extractJsonFromText,
   callGroqAPI,
+  callOpenAICompatible,
+  callAnthropicAPI,
   handleAiError,
   normalizeAiGenerateOutput,
   normalizeAiChatOutput

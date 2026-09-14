@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { api, formatDate } from '../api.js'
 
-export default function Dashboard({ notify }) {
+export default function Dashboard({ notify, goto }) {
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -27,7 +27,7 @@ export default function Dashboard({ notify }) {
 
   const paths = [
     { icon: 'fa-newspaper', label: 'Quản lý bài viết', desc: 'Duyệt & xuất bản tin tức', hash: 'articles' },
-    { icon: 'fa-wand-magic-sparkles', label: 'Studio sáng tạo', desc: 'Biên tập đa kênh với AI', hash: 'studio' },
+    { icon: 'fa-wand-magic-sparkles', label: 'Studio sáng tạo', desc: 'Biên tập đa kênh với AI', hash: 'ai-creator' },
     { icon: 'fa-folder-open', label: 'Văn bản', desc: 'Đăng tải văn bản chỉ đạo', hash: 'documents' },
     { icon: 'fa-heart', label: 'Chăm lo & trợ cấp', desc: 'Xét duyệt hồ sơ trợ cấp', hash: 'welfare' },
     { icon: 'fa-envelope-open-text', label: 'Góp ý & thư ngỏ', desc: 'Trả lời hòm thư góp ý', hash: 'feedback' },
@@ -55,7 +55,15 @@ export default function Dashboard({ notify }) {
         <div className="card-body">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
             {paths.map((p) => (
-              <a key={p.hash} href={`#${p.hash}`} className="card" style={{ padding: '16px', border: '1px solid var(--line)', borderRadius: 12, display: 'block', transition: 'box-shadow .15s' }} onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,40,85,0.12)'} onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}>
+              <a
+                key={p.hash}
+                href={`#${p.hash}`}
+                onClick={(e) => { e.preventDefault(); if (goto) goto(p.hash) }}
+                className="card"
+                style={{ padding: '16px', border: '1px solid var(--line)', borderRadius: 12, display: 'block', cursor: 'pointer', transition: 'box-shadow .15s' }}
+                onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,40,85,0.12)'}
+                onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
+              >
                 <div style={{ fontSize: 20, color: '#002855', marginBottom: 8 }}><i className={`fa-solid ${p.icon}`}></i></div>
                 <div style={{ fontWeight: 700 }}>{p.label}</div>
                 <div style={{ fontSize: 12, color: '#64748B' }}>{p.desc}</div>

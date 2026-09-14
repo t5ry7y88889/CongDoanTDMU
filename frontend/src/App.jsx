@@ -61,7 +61,7 @@ const LinkInterceptor = ({ children }) => {
       if (a && a.href) {
         const url = new URL(a.href);
         if (url.origin === window.location.origin) {
-          if (url.pathname === '/admin.html' || url.pathname === '/admin' || url.pathname === '/bao-cao-thang.html') {
+          if (url.pathname === '/admin') {
             return;
           }
           if (url.pathname.endsWith('.html')) {

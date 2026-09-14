@@ -25,15 +25,15 @@ Hệ thống **Truyền Thông & Quản Trị Công Đoàn TDMU Tích Hợp Trí
 
 Dự án giải quyết 4 bài toán cấp thiết trong quản trị và tuyên truyền đoàn thể giáo dục đại học:
 1. **Kiến Trúc Kép Dual-Mode & Hiện Đại Hóa React 19 (Zero-Downtime)**:
-   - Bảo toàn 100% cổng thông tin đang hoạt động ổn định trên cổng 3000 (`public/`), đồng thời phát triển cổng Single Page Application (SPA) trên nền tảng **React 19 + Vite 8 + React Router v7** tại cổng 5173 và `/spa/`.
-   - Sao chép 1:1 toàn bộ thiết kế, bố cục, hiệu ứng tương tác từ HTML sang React với 5 component lõi thuần React Hooks, loại bỏ hoàn toàn các đoạn mã jQuery/Bootstrap DOM scanning gây xung đột.
+   - Toàn bộ giao diện được dựng trên **React 19 + Vite 8 + React Router v7** với 2 ứng dụng: **Cổng thông tin Đoàn viên** (dev `:5173`, prod `:3000`) và **Tòa soạn / Quản trị CMS** (dev `:5184`, prod `/admin`). Không còn template tĩnh `admin.html` — toàn bộ admin là React SPA `frontend-admin`.
+   - Cổng thông tin giữ 100% thiết kế báo chí truyền thống (HTML parity) với 5 component lõi thuần React Hooks, loại bỏ hoàn toàn các đoạn mã jQuery/Bootstrap DOM scanning gây xung đột.
    - Bổ sung chốt chặn lỗi cấp cao **`<ErrorBoundary>`** ngăn chặn triệt để hiện tượng trắng trang (white-screen crash).
 2. **Số Hóa Quy Trình Tác Nghiệp & Báo Cáo Thi Đua**:
    - Tự động hóa công tác thu thập, tổng hợp số liệu báo cáo định kỳ tháng từ **16 Tổ Công đoàn trực thuộc** (khớp chuẩn Biểu mẫu `BM-02/CĐ`).
    - Quản lý hồ sơ nhân sự, lưu trữ công văn chỉ đạo DMS, tiếp nhận trực tuyến đơn đề nghị trợ cấp khó khăn và hòm thư góp ý phản ánh tâm tư đoàn viên.
-3. **Tòa Soạn Số AI Content Studio 2.0 & Trợ Lý Manus Copilot**:
-   - Ứng dụng mô hình ngôn ngữ lớn tiên tiến (**Google Gemini 2.5 Flash** & **Groq LLaMA 3.3 70B Versatile**) với kiến trúc **Multi-Pass SSE Streaming** tạo nội dung đồng bộ cho **5 kênh truyền thông**: *Website báo chí (5W1H), Facebook Fanpage, Zalo Official Account, Kịch bản Video 60s TikTok/Reels, Tóm tắt Infographic*.
-   - **Manus AI Copilot 2.0** tích hợp công nghệ so sánh an toàn (*Safe-Zone Diff*), biên tập tuân thủ thể thức văn bản hành chính theo **Nghị định 30/2020/NĐ-CP**, trang bị cơ chế ngắt tức thời `AbortController`.
+3. **Tòa Soạn Số AI Content Studio & Quản Trị CMS (React `/admin`)**:
+   - Ứng dụng mô hình ngôn ngữ lớn tiên tiến (**Google Gemini 2.5 Flash** & **Groq LLaMA 3.3 70B Versatile**) với luồng sinh nội dung **streaming (SSE)**, tạo bài báo chuẩn 5W1H (Sapo, thân bài phân mục H2) sẵn sàng xuất bản đồng bộ **Website / Facebook / Zalo**.
+   - Shell quản trị React: Trợ lý AI biên tập đa nhà cung cấp (chọn provider + gợi ý khóa API), chế độ **Biên tập | Xem trước**, nút **🚀 Xuất bản ngay** (Website + tùy chọn Facebook/Zalo), cơ chế **⏰ Hẹn giờ** tự xuất bản và view **Lịch Xuất Bản** kèm **Nhật Ký Tác Nghiệp**.
 4. **Kiến Trúc CSDL Quan Hệ Chuẩn 3NF (Microsoft SQL Server Enterprise)**:
    - Hệ thống gồm **15 bảng dữ liệu được liên kết chặt chẽ qua 19 khóa ngoại**, loại bỏ hoàn toàn bảng cô lập (orphan tables).
    - Vận hành với Transaction ACID, Prepared Statements chống SQL Injection và cơ chế bộ đệm dự phòng nhúng an toàn.
@@ -46,17 +46,16 @@ Hệ thống vận hành song song theo mô hình **Dual-Mode Enterprise Archite
 
 ```mermaid
 graph TB
-    subgraph ClientLayer ["1. TẦNG GIAO DIỆN & TRÌNH DIỄN (Dual-Mode Presentation Layer)"]
-        ReactApp["⚛️ React 19 SPA (Vite Dev Port 5173)<br>React Router v7, Hooks, BookmarkContext<br>ErrorBoundary, 100% HTML Parity"]
-        SPABuild["📦 React 19 Prod Bundle (/spa/)<br>Compiled Static Assets (dist/assets)"]
-        PortalApp["🌐 Official Public Portal (Port 3000)<br>HTML5, Bootstrap 5, TOAST UI Pagination"]
-        AdminCMS["⚙️ Tòa soạn AI Content Studio & CMS (/admin)<br>Ribbon Toolbar, Manus Copilot, Diff View"]
+    subgraph ClientLayer ["1. TẦNG GIAO DIỆN & TRÌNH DIỄN (Presentation Layer)"]
+        ReactApp["⚛️ React 19 Portal (Vite Dev :5173)<br>React Router v7, Hooks, BookmarkContext<br>ErrorBoundary, 100% HTML Parity"]
+        SPABuild["📦 React 19 Prod Bundle (root /)<br>Build Tĩnh frontend/dist (assets)"]
+        AdminCMS["⚙️ Tòa soạn AI & Quản trị CMS React (/admin)<br>Studio AI, Xuất bản ngay, Hẹn giờ, Nhật ký"]
     end
 
     subgraph ServiceLayer ["2. TẦNG DỊCH VỤ TRUNG GIAN (Business & API Engine)"]
         Express["🚀 Node.js Express Server (Port 3000)<br>Clean Routing, Static Asset Dispatcher, JWT Auth"]
-        APIRouter["📡 10 Module API RESTful<br>/api/articles, /api/documents, /api/welfare..."]
-        SSEHub["⚡ Server-Sent Events (SSE) Streamer<br>Multi-Pass Real-time Content Pipeline"]
+        APIRouter["📡 9 Module API RESTful<br>/api/articles, /api/documents, /api/welfare..."]
+        SSEHub["⚡ Server-Sent Events (SSE) Streamer<br>Streaming AI Content Pipeline"]
         AIGateway["🤖 Unified AI Hub<br>Gemini 2.5 Flash & Groq LLaMA-3.3 70B<br>Auto-Fallback & Heuristic Local NLP"]
     end
 
@@ -67,9 +66,8 @@ graph TB
     end
 
     ReactApp <-->|Vite Proxy /api| Express
-    SPABuild <-->|Mounted under /spa| Express
-    PortalApp <-->|Direct Local Dispatch| Express
-    AdminCMS <-->|AJAX / Fetch API| Express
+    SPABuild <-->|Served at root /| Express
+    AdminCMS <-->|Vite Proxy /api| Express
     Express --> APIRouter
     APIRouter --> SSEHub
     APIRouter --> AIGateway
@@ -97,27 +95,20 @@ graph TB
   - **Kho Văn bản & Biểu mẫu (`VanBan.jsx`, `BieuMau.jsx`)**: Lọc và tìm kiếm tức thì theo số hiệu, trích yếu, người ký; đếm lượt tải file văn bản PDF và biểu mẫu Word.
   - **Hòm thư liên hệ (`LienHe.jsx`)**: Hòm thư điện tử tiếp nhận đóng góp ý kiến của đoàn viên gửi trực tiếp tới Ban Thường Vụ, cấp mã tiếp nhận `#FB-xxx`.
 
-### 🤖 B. Tòa Soạn AI Content Studio 2.0 (`/admin`)
-* **Xuất bản đa kênh tức thì (Multi-Pass SSE Streaming):**
-  - Cán bộ nhập chủ đề/tóm tắt sự kiện, AI tiến hành sinh đồng thời 5 định dạng truyền thông đặc thù:
-    1. **Website Báo chí**: Chuẩn 5W1H (Sapo, Thân bài phân mục H2, Trích dẫn, Kết luận).
-    2. **Facebook Fanpage**: Định dạng ngắn gọn, câu từ lôi cuốn, emoji sinh động, hệ thống hashtag nhận diện thương hiệu TDMU.
-    3. **Zalo Official Account**: Tin nhắn cô đọng dưới 400 ký tự truyền tải trọn vẹn thông điệp.
-    4. **Kịch bản Video ngắn 60s**: Phân chia chi tiết 2 cột (Hình ảnh/Góc quay & Lời thoại Voiceover).
-    5. **Tóm tắt Infographic**: 3–5 chỉ số và mốc sự kiện tiêu biểu.
-* **Trợ lý biên tập chuyên nghiệp Manus AI Copilot 2.0:**
-  - **Nút đũa thần nổi (✨ Magic Button):** Tự động xuất hiện khi bôi đen văn bản mà không che khuất vùng nhìn của người soạn thảo.
-  - **Vùng so sánh an toàn (Safe-Zone Diff):** Đối chiếu trực quan đoạn văn bản gốc và đoạn AI đề xuất (Đỏ/Xanh) trong Sidebar, bảo đảm không phá vỡ DOM cây `contenteditable`. Cán bộ duyệt bấm **[Thay thế]** để chèn sạch bằng Range DOM API.
-  - **Ngắt tiến trình an toàn (AbortController):** Cho phép dừng khẩn cấp luồng AI đang gõ bất kỳ lúc nào qua nút `[🛑 Dừng AI]`.
-  - **Phím tắt chuẩn Microsoft Word:** Hỗ trợ đầy đủ `Ctrl+Z` (Undo) và `Ctrl+Y` (Redo) đa cấp.
-* **Studio Thiết kế Banner & Sinh ảnh báo chí:**
-  - Tích hợp công cụ sinh ảnh báo chí tỷ lệ 16:9 với chú thích báo chí chuẩn mực.
-  - Bộ biên tập đồ họa HTML5 Canvas Studio hỗ trợ tự động vẽ banner sự kiện chuẩn kích thước 600x340px theo nhận diện TDMU.
-* **Shell quản trị (React SPA) theo nhận diện friend — `frontend-admin`:**
-  - Thanh bên 3 nhóm **TỔNG QUAN / TRUYỀN THÔNG ĐA KÊNH / NGHIỆP VỤ CÔNG ĐOÀN**, logo Công đoàn, nhãn cảnh báo AI (`CMS`), thu gọn/mở rộng kèm tooltip nổi.
-  - Header breadcrumb "Trang Quản Trị", trạng thái Cổng Tác Nghiệp Đa Kênh, hồ sơ người dùng với trình chọn vai trò (Quản Trị Viên / Biên Tập Viên / Cộng Tác Viên), nút "Xem Website".
-  - View **Lịch Xuất Bản (`Schedule.jsx`)**: hẹn giờ phân phối bài viết lên Website/Facebook/Zalo qua `/api/publish/schedules`, hủy lịch, thống kê trạng thái.
-  - View **Nhật Ký Tác Nghiệp (`Audits.jsx`)**: truy vết thao tác, duyệt, xuất bản và xóa nội dung từ `/api/audits`.
+### 🤖 B. Tòa Soạn AI Content Studio & Quản Trị CMS (`/admin`) — React SPA `frontend-admin`
+* **Shell quản trị React theo nhận diện Công đoàn:**
+  - Thanh bên 3 nhóm **TỔNG QUAN / TRUYỀN THÔNG ĐA KÊNH / NGHIỆP VỤ CÔNG ĐOÀN**, logo Công đoàn, trình chọn vai trò (Quản Trị Viên / Biên Tập Viên / Cộng Tác Viên) và nút "Xem Website".
+  - Header breadcrumb "Trang Quản Trị" + trạng thái Cổng Tác Nghiệp Đa Kênh.
+* **Studio Sinh Bài AI (`Studio.jsx`):**
+  - **Chọn nhà cung cấp AI** (Gemini / Groq / OpenRouter...) làm nguồn sinh; nhập chủ đề/sự kiện → AI sinh đồng bộ tiêu đề, sapo (lead) và thân bài chuẩn 5W1H.
+  - **Gợi ý khóa API** ngay dưới ô chọn nhà cung cấp: khóa nhập tại ⚙️ (lưu trong trình duyệt) được ưu tiên hơn key trong `.env` (xem Bước 8).
+  - Chế độ **Biên tập | Xem trước**: chuyển đổi chế độ soạn thảo sang khung xem trước bài viết trước khi xuất bản.
+  - **🚀 Xuất bản ngay**: phát hành tức thì lên **Website** (mặc định) kèm tùy chọn **Facebook / Zalo**, ghi nhật ký qua `/api/publish/now`.
+  - **⏰ Hẹn giờ**: lên lịch tự động xuất bản qua `/api/publish/schedule`; worker cron (30s) đăng bài đúng giờ.
+  - Nút **Lưu nháp**: lưu bài về danh sách để tiếp tục biên tập sau.
+* **View Lịch Xuất Bản (`Schedule.jsx`)**: theo dõi, hủy lịch hẹn giờ Website/Facebook/Zalo qua `/api/publish/schedules`.
+* **View Nhật Ký Tác Nghiệp (`Audits.jsx`)**: truy vết thao tác biên tập, duyệt, xuất bản và xóa nội dung qua `/api/audits`.
+* **Các phân hệ nghiệp vụ còn lại**: Bài viết (`Articles`), Văn bản (`Documents`), Biểu mẫu (`Templates`), Phúc lợi (`Welfare`), Góp ý (`Feedback`), Báo cáo tháng BM-02/CĐ (`Reports`), Người dùng (`Users`), Bảng điều khiển thống kê (`Dashboard`).
 
 ### 📊 C. Phân Hệ Quản Lý Báo Cáo Tháng & Thi Đua 16 Tổ Công Đoàn
 * **Bảng tổng hợp KPI 16 Tổ CĐ:** Thống kê tổng số cán bộ, đoàn viên, đoàn viên nữ, mức xếp loại tự đánh giá và BTV đánh giá.
@@ -206,17 +197,32 @@ Cơ sở dữ liệu được thiết kế đạt chuẩn **Chuẩn hóa dạng 
 | | `POST` | `/api/articles` | Thêm bài viết mới vào CSDL |
 | | `PUT` | `/api/articles/:id` | Chỉnh sửa nội dung / duyệt xuất bản bài viết |
 | | `DELETE`| `/api/articles/:id` | Xóa bài viết (Kèm xóa Audit & Bookmark liên quan) |
-| **AI Content Studio** | `POST` | `/api/generate-article` | Sinh bài báo đa kênh tự động bằng SSE Streaming |
-| | `POST` | `/api/ai/copilot` | Trợ lý Manus Copilot trau chuốt thể thức văn bản hành chính |
+| | `POST` | `/api/articles/:id/{approve,submit-review,reject}` | Quy trình duyệt bài biên tập |
+| **AI Content Studio** | `POST` | `/api/ai/generate` | Sinh nội dung AI từ chủ đề |
+| | `POST` | `/api/ai/package-stream` | Luồng SSE sinh gói tin tức đa kênh (streaming) |
+| | `POST` | `/api/ai/generate-image` | Sinh ảnh minh họa báo chí |
+| | `POST` | `/api/ai/repurpose` | Chuyển nội dung sang định dạng kênh (Facebook/Zalo/video) |
+| | `POST` | `/api/ai/inline-edit` | Trợ lý chỉnh sửa inline văn bản |
+| | `POST` | `/api/ai/chat`, `/api/ai/chat-stream` | Trợ lý AI hội thoại (streaming SSE) |
+| | `POST` | `/api/ai/extract-facts`, `/quality-check`, `/floating-command` | Trích xuất sự kiện / rà soát chất lượng / lệnh nhanh |
+| | `POST` | `/api/generate-article` | Bí danh (alias) của `/api/ai/package-generator` |
+| **Xuất Bản Đa Kênh** | `POST` | `/api/publish/now` | Xuất bản ngay lên Website/Facebook/Zalo, ghi nhật ký |
+| | `POST` | `/api/publish/schedule` | Hẹn giờ tự động xuất bản (cron 30s) |
+| | `GET` | `/api/publish/schedules` | Danh sách lịch hẹn giờ xuất bản |
+| | `DELETE` | `/api/publish/schedule/:id` | Hủy lịch hẹn giờ |
+| | `GET` | `/api/publish/logs/:articleId` | Nhật ký xuất bản từng bài viết |
 | **Kho Văn Bản** | `GET` | `/api/documents` | Lấy danh sách văn bản pháp quy (Phân loại, tìm kiếm) |
+| | `POST` | `/api/documents/parse-docx` | Phân tích file DOCX thành văn bản |
 | **Kho Biểu Mẫu** | `GET` | `/api/templates` | Danh mục biểu mẫu Word/Excel tải về |
 | **Cơ Cấu Tổ Chức** | `GET` | `/api/org-full-tree` | Cây tổ chức đầy đủ (Ban, 16 Tổ CĐ, nhân sự & chức danh) |
+| | `GET`/`POST`/`DELETE` | `/api/users` | Quản lý tài khoản xác thực & phân quyền |
 | **Chăm Lo Phúc Lợi** | `GET` | `/api/welfare` | Danh mục 4 gói phúc lợi chính thức (`dbo.PHUC_LOI`) |
 | | `POST` | `/api/welfare/apply` | Tiếp nhận đơn đề nghị trợ cấp vào `dbo.DON_TRO_CAP` |
-| | `GET` | `/api/welfare/applications`| Danh sách đơn đề nghị trợ cấp chờ xét duyệt |
+| | `GET` | `/api/welfare/applications` | Danh sách đơn đề nghị trợ cấp chờ xét duyệt |
 | **Hòm Thư Góp Ý** | `POST` | `/api/feedback` | Gửi thư góp ý, phản ánh trực tiếp tới Ban Thường Vụ |
-| **Báo Cáo Tháng** | `GET` | `/api/monthly-reports`| Bảng tổng hợp thi đua và chi tiết báo cáo 16 Tổ |
-| **Thống Kê Truy Cập**| `GET` | `/api/stats` | Thống kê số lượng truy cập online & tổng lượt xem |
+| **Báo Cáo Tháng** | `GET` | `/api/monthly-reports` | Bảng tổng hợp thi đua và chi tiết báo cáo 16 Tổ |
+| **Thống Kê / Giám Sát** | `GET` | `/api/audits` | Nhật ký tác nghiệp biên tập & duyệt bài |
+| | `GET` | `/api/stats`, `/api/dashboard`, `/api/analytics` | Thống kê truy cập, tổng lượt xem, dashboard tổng quan |
 
 ---
 
@@ -253,73 +259,112 @@ cd CongDoanTDMU
    ```
 
 ### Bước 3: Thiết lập biến môi trường (`.env`)
-Tạo file `.env` tại thư mục `server/` (hoặc thư mục gốc):
+Copy chuẩn từ mẫu có sẵn (nằm tại thư mục gốc):
+```bash
+cp .env.example .env
+```
 ```env
+APP_NAME=Website_CongDoan_TDMU
 PORT=3000
 
-# Cấu hình Microsoft SQL Server
+# Cấu hình Microsoft SQL Server (nếu không có SQL Server, giữ mặc định =>
+# app tự động chạy chế độ JSON fallback tại server/database.json)
 DB_SERVER=localhost
+DB_HOST=127.0.0.1
+DB_PORT=1433
 DB_DATABASE=TDMU_TradeUnion_DB
 DB_USER=sa
 DB_PASSWORD=YourStrongPassword@2026
-DB_PORT=1433
 
-# Khóa API AI Studio (Tùy chọn)
+# Khóa API AI Studio (Tùy chọn — nếu bỏ trống, hệ thống Fallback local NLP)
 GEMINI_API_KEY=AIzaSy...
 GROQ_API_KEY=gsk_...
 ```
 
-### Bước 4: Khởi động Backend Server (Port 3000)
-Mở một cửa sổ Terminal:
+> **Ghi chú:** Tham khảo chi tiết cấu hình khóa AI tại **Bước 8** bên dưới (khóa ⚙️ trong trình duyệt được ưu tiên hơn khóa trong `.env`).
+
+### Bước 4: Khởi động Production Server (Port 3000)
 ```bash
-cd server
 npm install
-node server.js
+npm start
 ```
 Khi kết nối thành công, màn hình console sẽ hiển thị:
 ```text
 ====================================================
 🚀 Website Truyền Thông Công Đoàn TDMU Real SaaS Engine
-🌐 Public Portal: http://localhost:3000
-⚙️  Admin CMS Portal: http://localhost:3000/admin.html
+🛰️  REST API:             http://localhost:3000
+⚙️  React Admin (CMS):    http://localhost:3000/admin
+🌐 Portal Đoàn viên:      http://localhost:3000
+💻 Vite Dev Mode:         Portal :5173 | Admin :5184
 ====================================================
 🟢 MICROSOFT SQL SERVER V2 LIVE CONNECTED!
 🗄️ Database: TDMU_TradeUnion_DB @ localhost (15 Tables Connected)
 ====================================================
 ```
 
-### Bước 5: Khởi động Frontend + Backend (Tự động phát hiện)
-Chạy trực tiếp từ thư mục gốc dự án — launcher tự phát hiện cổng 3000 đã chạy hay chưa:
-- Nếu backend **chưa chạy**: khởi động đồng thời Express (Port 3000) và Vite (Port 5173).
-- Nếu backend **đã chạy**: chỉ khởi động Vite (Port 5173) và proxy `/api` sang Port 3000.
+### Bước 5: DEV MODE — MỘT LỆNH DUY NHẤT
+Chạy **một lệnh duy nhất từ thư mục gốc** để mở toàn bộ hệ thống (tự phát hiện cổng, không tạo tiến trình trùng):
 ```bash
 npm run dev
 ```
+Lệnh này tự khởi động (hoặc nhận diện & bỏ qua nếu đã chạy sẵn) 3 tiến trình dev:
+| Tiến trình | Cổng | Vai trò |
+| :--- | :--- | :--- |
+| Express `server/server.js` | 3000 | REST API (`/api`, `/uploads`) + phục vụ bản build khi chạy production |
+| Vite **portal** (`frontend/`) | 5173 | Cổng thông tin Đoàn viên (React, HMR) |
+| Vite **admin** (`frontend-admin/`) | 5184 | Tòa soạn AI / Quản trị CMS (React, HMR) |
 
-### Bước 6: Biên dịch Bản Build Production (Tùy chọn)
-Để đóng gói ứng dụng React 19 ra bản tĩnh chạy tại root trên Port 3000:
+- Các frontend dùng `strictPort: true` → nếu cổng đã bị chiếm, lỗi hiện rõ thay vì tự nhảy sang port khác.
+- Launcher không bắt buộc: bạn cũng có thể dùng `Chay_Website_CongDoan_TDMU.sh` (macOS/Linux) hoặc `.bat` (Windows) — nó chỉ chạy `npm run dev` và mở sẵn trình duyệt.
+- Chạy **riêng backend** (khi cần tách process): `npm run dev:server` (cổng 3000).
+
+### Bước 6: PROD MODE — MỘT URL DUY NHẤT (CHẠY BẢN BUILD)
+Đóng gói cả hai React app rồi chạy gọn trên **một cổng 3000** (không cần Vite):
 ```bash
-npm run build
+npm run build && npm run build:admin && npm run start
 ```
-*(Bản build được đóng gói vào `frontend/dist/` và được Express tự động phục vụ tại `http://localhost:3000/`, SPA history fallback đảm bảo mọi đường dẫn đều tới React Router)*.
+- `http://localhost:3000/` → Portal Đoàn viên (bản build React 19, SPA history fallback).
+- `http://localhost:3000/admin` → React Admin Tòa soạn CMS (bản build, base `/admin/`).
+- `npm run start` tương đương `npm run dev:server` — chỉ backend phục vụ mọi thứ.
 
 ### Bước 7: Kiểm thử & Chất lượng mã nguồn
 ```bash
 npm test        # vitest + supertest (đơn vị & API integration, 15 test cases)
-npm run lint    # oxlint 0 errors
+npm run lint    # oxlint 0 errors (portal frontend)
 npm run db:reset  # (tùy chọn) Hạ & khởi tạo lại SQL Server schema 15 bảng + seed
 ```
+
+### Bước 8: Cấu hình khóa API AI cho Tòa Soạn
+Hệ thống AI dùng **Google Gemini** hoặc **Groq LLaMA**, hỗ trợ 2 cách cấp khóa:
+
+| Cách cấp khóa | Nơi lưu | Ưu tiên | Khi nào có hiệu lực |
+| :--- | :--- | :--- | :--- |
+| **⚙️ Nút bánh răng (khuyến nghị)** | `localStorage` trình duyệt (cửa sổ `congdoan_admin_settings_v3`) | **Ưu tiên cao nhất**, gửi theo từng yêu cầu | **Tức thì (không cần khởi động lại)** |
+| **`.env` (server)** | File `.env` ở thư mục gốc (`GEMINI_API_KEY` / `GROQ_API_KEY`) | Dùng khi không có khóa trong ⚙️ | **Chỉ sau khi khởi động lại server** |
+
+Hướng dẫn:
+1. Mở Tòa soạn → bấm biểu tượng **⚙️** → chọn nhà cung cấp AI → dán khóa API → lưu. Có hiệu lực ngay.
+2. Hoặc đặt khóa trong `.env` rồi **khởi động lại server** (`Ctrl+C` rồi `npm start` / `npm run dev`).
+3. Nếu AI báo *"Khóa API không hợp lệ hoặc đã bị thu hồi"*, kiểm tra: khóa đã nhập đúng chưa, hạn mức, hoặc ưu tiên của ⚙️ đang chặn key `.env` — chỉnh lại trong ⚙️ hoặc xóa nó để dùng key `.env`.
+4. Khi chưa nhập khóa nào, hệ thống tự động dùng chế độ **Fallback NLP cục bộ** (sinh nội dung mẫu ngoại tuyến).
 
 ---
 
 ## 🧭 8. ĐỊA CHỈ TRUY CẬP CÁC PHÂN HỆ
 
+> **Cheat-sheet nhanh:**
+> - DEV  → `npm run dev` → mở `:5184` (Admin) + `:5173` (Portal), API ở `:3000`.
+> - PROD → `npm run build && npm run build:admin && npm run start` → mọi thứ ở `:3000`.
+
 | Phân Hệ | Cổng / URL | Mô Tả Kỹ Thuật |
 | :--- | :--- | :--- |
-| ⚛️ **Cổng Thông Tin Đoàn Viên (React 19)** | [http://localhost:5173](http://localhost:5173) | Single Page Application mượt mà, 100% thiết kế HTML parity, Virtual DOM, Client Routing (Vite dev + proxy /api sang Port 3000). |
+| ⚛️ **Cổng Thông Tin Đoàn Viên (React 19)** | [http://localhost:5173](http://localhost:5173) | DEV mode: Single Page Application, 100% HTML parity, Virtual DOM, Client Routing (Vite + proxy `/api` sang Port 3000). |
+| 🗄️ **Tòa Soạn / Quản Trị CMS (React)** | [http://localhost:5184](http://localhost:5184) | DEV mode: AI Content Studio + toàn bộ phân hệ nghiệp vụ (base `/admin/`, proxy `/api` sang Port 3000). |
 | 🌐 **Cổng React SPA Production** | [http://localhost:3000](http://localhost:3000) | Bản build tĩnh (React 19) phục vụ tại root, SPA history fallback cho mọi đường dẫn. |
-| ⚙️ **Tòa Soạn AI Studio & Quản Trị CMS** | [http://localhost:3000/admin.html](http://localhost:3000/admin.html) | Soạn thảo báo chí AI đa kênh, trợ lý Manus Copilot 2.0, duyệt bài, quản lý đơn trợ cấp. |
-| 📊 **Module Báo Cáo Tháng 16 Tổ CĐ** | [http://localhost:3000/admin.html#reports](http://localhost:3000/admin.html#reports) | Đánh giá KPI & số hóa nộp mẫu BM-02/CĐ trực tiếp về SQL Server. |
+| ⚙️ **Quản Trị CMS Production** | [http://localhost:3000/admin](http://localhost:3000/admin) | Bản build React Admin (base `/admin/`) — thay thế hoàn toàn `admin.html` tĩnh đã gỡ bỏ. |
+| 📊 **Báo Cáo Tháng 16 Tổ CĐ** | Trong React Admin → view **Reports** | Số hóa nộp mẫu BM-02/CĐ, đánh giá KPI & xếp loại thi đua trực tiếp về SQL Server. |
+
+> **Lưu ý:** `:5173` cho Portal và `:5184` cho Admin chỉ tồn tại ở DEV mode (Vite HMR). Khi chạy bản build (`npm run start`), toàn bộ phân hệ nằm chung trên `:3000`.
 
 ---
 
@@ -330,36 +375,43 @@ tdmu-congdoan-web/
 ├── database/                                  # Cơ sở dữ liệu & Kịch bản SQL Server
 │   ├── schema_15_tables_mssql.sql             # DDL Schema 15 bảng & 19 khóa ngoại chuẩn 3NF
 │   ├── seed_15_tables_mssql.sql               # DML Seed nạp dữ liệu thực tế 16 Tổ CĐ & nghiệp vụ
-├── frontend/                                  # Ứng dụng Single Page Application (React 19 + Vite 8)
+│   └── migrations/                            # Bảng bổ sung (templates, publish_logs, welfare_contact...)
+├── frontend/                                  # Cổng thông tin Đoàn viên (React 19 + Vite 8)
 │   ├── src/
-│   │   ├── pages/                             # 9 Trang chức năng React (Home, TinTuc, BaiViet, CoCauToChuc...)
-│   │   ├── components/                        # Navbar, HeroCarousel, PaginationBar, ArticleQuickModal, BookmarksDrawer
-│   │   ├── App.jsx                            # React Router Root Component & ErrorBoundary
+│   │   ├── pages/                             # 9 trang: Home, TinTuc, BaiViet, CoCauToChuc, VanBan, BieuMau, PhucLoiDoanVien, LienHe, GioiThieu
+│   │   ├── components/                        # Navbar, HeroCarousel, PaginationBar, ArticleQuickModal, BookmarksDrawer, Footer
+│   │   ├── App.jsx                            # React Router, ErrorBoundary & LinkInterceptor
 │   │   └── main.jsx                           # Entry Point (ReactDOM.createRoot)
-│   ├── public/                                # Static assets (CSS, Images, Logos)
-│   ├── dist/                                  # Production Bundle sau khi build
 │   ├── vite.config.js                         # Cấu hình Vite & Proxy /api sang Port 3000
-│   └── package.json                           # Dependencies: React 19.2.8, React-Router-DOM 7.18.3
-├── public/                                    # Cổng Thông Tin Chính Thống & Tòa Soạn CMS
-│   ├── index.html                             # Trang chủ Cổng thông tin
-│   ├── admin.html                             # Tòa soạn AI Content Studio 2.0 & Admin CMS
-│   ├── tin-tuc.html                           # Tạp chí Tin tức & hoạt động phong trào
-│   ├── bai-viet.html                          # Toàn văn bài viết báo chí
-│   ├── co-cau-to-chuc.html                    # Sơ đồ Cơ cấu Tổ chức BCH & 16 Tổ CĐ
-│   ├── van-ban.html                           # Kho Văn bản pháp quy 4 chuyên mục
-│   ├── bieu-mau.html                          # Kho Biểu mẫu nghiệp vụ Word/Excel
-│   ├── phuc-loi-doan-vien.html                # Chính sách Chăm lo & Phúc lợi đoàn viên
-│   ├── lien-he.html                           # Danh bạ 16 Tổ Công đoàn & Hòm thư góp ý
-│   ├── css/                                   # Định kiểu portal.css chuẩn hóa toàn hệ thống
-│   └── js/                                    # Logic Manus Copilot, Undo/Redo, SSE Streaming
+│   └── package.json
+├── frontend-admin/                            # Tòa soạn AI & Quản trị CMS (React 19 + Vite 8)
+│   ├── src/
+│   │   ├── views/                             # Dashboard, Articles, Studio, Documents, Templates, Welfare, Feedback, Reports, Users, Schedule, Audits
+│   │   ├── App.jsx                            # Shell: Sidebar, Settings (⚙️ API key), chế độ Xem trước
+│   │   └── api.js                             # Client API helpers (AI, publish, upload)
+│   ├── vite.config.js                         # base '/admin/', port 5184, proxy /api + /uploads + /images
+│   └── package.json
+├── public/                                    # Tài sản tĩnh phục vụ bởi Express
+│   ├── images/                                # Logo, banner, ảnh báo chí (logo_cong_doan.png...)
+│   └── uploads/                               # File do người dùng tải lên (PDF văn bản, ảnh...)
 ├── server/                                    # Tầng Dịch Vụ Backend (Node.js Express)
-│   ├── server.js                              # REST API Server, Clean Routes & Dual Static Dispatcher
+│   ├── server.js                              # Bootstrap + Cron Auto-Publish (chu kỳ 30s) phát hành lịch hẹn giờ
+│   ├── app.js                                 # Express app: routes, phục vụ build React (/admin), uploads
 │   ├── mssql_db.js                            # Module kết nối Microsoft SQL Server Enterprise
-│   ├── routes/                                # 10 Module API (articles, documents, welfare, org...)
-│   └── database.json                          # Bộ dữ liệu đệm dự phòng (Fallback Engine)
+│   ├── db.js                                  # JSON Embedded Fallback Engine (loadDB/saveDB)
+│   ├── routes/                                # 9 Module API (ai, articles, documents, welfare, feedback, publish, templates, reports, org)
+│   ├── services/aiService.js                  # AI provider switching (Gemini/Groq) & fallback NLP
+│   ├── middleware/validate.js                 # JoI validation schema
+│   ├── database.json                          # Bộ dữ liệu đệm dự phòng (Fallback Engine)
+│   ├── app.test.js                            # Vitest + Supertest (15 test cases)
+│   └── scripts/init-db.js                     # Khởi tạo/reset SQL Server (npm run db:*)
+├── scripts/                                   # serve-dev.js (orchestrator npm run dev), compose.mjs (Docker)
+├── docs/                                      # Tài liệu đề tài (báo cáo docx, biểu đồ use-case)
+├── compose.yaml                               # Docker Compose SQL Server 2022 cho môi trường phát triển
+├── Chay_Website_CongDoan_TDMU.{sh,bat}        # Launcher một cú nhấp (DEV mode, tự mở trình duyệt)
 ├── .env.example                               # Mẫu cấu hình biến môi trường
 ├── .gitignore                                 # Khai báo loại trừ Git
-├── package.json                               # Dependencies phía Server
+├── package.json                               # Scripts: dev, build, start, test, lint, db:*
 └── README.md                                  # Tài liệu kỹ thuật toàn diện của dự án
 ```
 
@@ -369,8 +421,8 @@ tdmu-congdoan-web/
 
 | Họ và Tên | Mã Số SV | Lớp Sinh Hoạt | Vai Trò & Phân Công Nhiệm Vụ |
 |:---|:---:|:---:|:---|
-| **Nguyễn Bình Dương** | `2424802010319` | D24CNTT05 | **Nhóm trưởng** - Phụ trách kiến trúc CSDL quan hệ 3NF (MSSQL), thiết kế Backend RESTful API, xây dựng AI Content Studio 2.0, Multi-Pass SSE Streaming Pipeline & Trợ lý Manus Copilot. |
-| **Trần Hồng Thanh** | `2424802010439` | D24CNTT03 | **Thành viên** - Thiết kế giao diện Cổng thông tin đoàn viên (React 19 SPA & Portal), tối ưu hóa kiến trúc Dual-Mode, 100% HTML design parity, ErrorBoundary & PWA. |
+| **Nguyễn Bình Dương** | `2424802010319` | D24CNTT05 | **Nhóm trưởng** - Phụ trách kiến trúc CSDL quan hệ 3NF (MSSQL), thiết kế Backend RESTful API, xây dựng AI Content Studio, luồng sinh nội dung streaming & trợ lý biên tập AI. |
+| **Trần Hồng Thanh** | `2424802010439` | D24CNTT03 | **Thành viên** - Thiết kế giao diện Cổng thông tin đoàn viên (React 19 SPA & Portal), tối ưu hóa kiến trúc Dual-Mode, 100% HTML design parity, ErrorBoundary & hiệu năng. |
 | **Phạm Anh Tuấn** | `2324802010393` | D23CNTT03 | **Thành viên** - Xây dựng phân hệ Quản lý Kho Văn bản pháp quy, Kho Biểu mẫu nghiệp vụ, Module số hóa Báo cáo Tháng BM-02/CĐ và tài liệu kiểm thử hệ thống. |
 
 ---

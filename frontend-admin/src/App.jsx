@@ -52,7 +52,7 @@ const TITLES = {
 
 function ToastStack({ toasts, dismiss }) {
   return (
-    <div style={{ position: 'fixed', top: 18, right: 18, zIndex: 500, display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ position: 'fixed', top: 18, right: 18, zIndex: 1600, display: 'flex', flexDirection: 'column', gap: 10 }}>
       {toasts.map((t) => (
         <div
           key={t.id}
@@ -85,6 +85,16 @@ function SettingsModal({ open, onClose, settings, onSave, onTest }) {
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
+  const AI_PROVIDERS = [
+    { value: 'openai', label: 'ChatGPT (OpenAI)' },
+    { value: 'gemini', label: 'Google Gemini' },
+    { value: 'anthropic', label: 'Claude (Anthropic)' },
+    { value: 'custom', label: 'Custom AI Model' }
+  ]
+
+  const MODEL_PLACEHOLDER = { openai: 'gpt-4o-mini', gemini: 'gemini-1.5-flash', anthropic: 'claude-3-5-sonnet', custom: 'my-model-name' }
+  const DEFAULT_KEY_HINT = 'Bỏ trống để dùng API key từ .env trên server'
+
   const handleSave = async () => {
     setSaving(true)
     try { await onSave(form); onClose() } finally { setSaving(false) }
@@ -102,12 +112,13 @@ function SettingsModal({ open, onClose, settings, onSave, onTest }) {
 
   return (
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
+      <div className="modal wide">
         <div className="modal-head">
           <h3><i className="fa-solid fa-gear me-2" style={{ color: '#002855' }}></i>Cấu hình hệ thống</h3>
           <button className="modal-close" onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
         </div>
         <div className="modal-body">
+          <h4 style={{ fontSize: 13, fontWeight: 800, color: '#002855', margin: '4px 0 10px' }}>CƠ SỞ DỮ LIỆU</h4>
           <div className="form-grid">
             <div className="form-field">
               <label>Cơ sở dữ liệu</label>
@@ -129,25 +140,61 @@ function SettingsModal({ open, onClose, settings, onSave, onTest }) {
               </select>
             </div>
             <div className="form-field">
-              <label>AI: nhà cung cấp</label>
-              <select value={form.aiProvider || 'openai'} onChange={(e) => set('aiProvider', e.target.value)}>
-                <option value="openai">OpenAI</option>
-                <option value="anthropic">Anthropic</option>
-                <option value="ollama">Ollama</option>
-              </select>
-            </div>
-            <div className="form-field">
-              <label>AI: model</label>
-              <input value={form.aiModel || ''} placeholder="gpt-4o-mini" onChange={(e) => set('aiModel', e.target.value)} />
-            </div>
-            <div className="form-field">
-              <label>AI: API key</label>
-              <input type="password" value={form.aiApiKey || ''} placeholder="sk-…" onChange={(e) => set('aiApiKey', e.target.value)} />
-            </div>
-            <div className="form-field">
               <label>Tên CSDL hiển thị</label>
               <input value={form.dbDisplayName || ''} placeholder="MSSQL TDMU" onChange={(e) => set('dbDisplayName', e.target.value)} />
             </div>
+          </div>
+
+          <h4 style={{ fontSize: 13, fontWeight: 800, color: '#002855', margin: '20px 0 10px' }}>TRÍ TUỆ NHÂN TẠO (AI)</h4>
+          <div className="form-grid">
+            <div className="form-field">
+              <label>Nhà cung cấp AI</label>
+              <select value={form.aiProvider || 'openai'} onChange={(e) => set('aiProvider', e.target.value)}>
+                {AI_PROVIDERS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+              </select>
+            </div>
+            <div className="form-field">
+              <label>Model</label>
+              <input value={form.aiModel || ''} placeholder={MODEL_PLACEHOLDER[form.aiProvider] || 'model-name'} onChange={(e) => set('aiModel', e.target.value)} />
+            </div>
+            <div className="form-field full">
+              <label>API key</label>
+              <input type="password" value={form.aiApiKey || ''} placeholder={DEFAULT_KEY_HINT} onChange={(e) => set('aiApiKey', e.target.value)} />
+              <div style={{ fontSize: 11, color: '#64748B', lineHeight: 1.5 }}>
+                <i className="fa-solid fa-circle-info me-1"></i>
+                Key lưu trên từng trình duyệt và gửi kèm mỗi lần gọi AI. Bỏ trống để server dùng key từ <code>.env</code> — nhớ khởi động lại server sau khi sửa <code>.env</code>.
+              </div>
+            </div>
+            {form.aiProvider === 'custom' && (
+              <div className="form-field full">
+                <label>Endpoint (URL /v1/chat/completions)</label>
+                <input value={form.aiEndpoint || ''} placeholder="https://api.example.com/v1/chat/completions" onChange={(e) => set('aiEndpoint', e.target.value)} />
+              </div>
+            )}
+          </div>
+
+          <h4 style={{ fontSize: 13, fontWeight: 800, color: '#002855', margin: '20px 0 10px' }}>KÊNH XUẤT BẢN ĐA KÊNH</h4>
+          <div className="form-grid">
+            <div className="form-field">
+              <label>Facebook: Page ID</label>
+              <input value={form.facebookPageId || ''} placeholder="Mã ID Fanpage (VD: 1234567890)" onChange={(e) => set('facebookPageId', e.target.value)} />
+            </div>
+            <div className="form-field">
+              <label>Facebook: Access Token</label>
+              <input type="password" value={form.facebookAccessToken || ''} placeholder="EAAG…" onChange={(e) => set('facebookAccessToken', e.target.value)} />
+            </div>
+            <div className="form-field">
+              <label>Zalo OA: ID</label>
+              <input value={form.zaloOaId || ''} placeholder="Mã OA (VD: 1234567890123456789)" onChange={(e) => set('zaloOaId', e.target.value)} />
+            </div>
+            <div className="form-field">
+              <label>Zalo OA: Access Token</label>
+              <input type="password" value={form.zaloAccessToken || ''} placeholder="Mã truy cập OA" onChange={(e) => set('zaloAccessToken', e.target.value)} />
+            </div>
+          </div>
+          <div style={{ marginTop: 10, fontSize: 12, color: '#64748B' }}>
+            <i className="fa-solid fa-circle-info me-1"></i>
+            Khi đã cấu hình token Facebook/Zalo, bấm "Xuất bản" trong Studio sẽ đăng thật lên kênh. Bỏ trống để mô phỏng kết quả.
           </div>
           {testResult && (
             <div className="mt-3" style={{ marginTop: 12, fontSize: 13, padding: '10px 12px', borderRadius: 9, background: testResult.ok ? '#DCFCE7' : '#FEE2E2', color: testResult.ok ? '#166534' : '#991B1B' }}>
@@ -179,8 +226,9 @@ async function req(url) {
 function loadSettings() {
   const defaults = {
     mssqlHost: '127.0.0.1', mssqlPort: '1433', mssqlDatabase: 'TDMU_TradeUnion_DB',
-    mssqlEnabled: true, aiProvider: 'openai', aiModel: 'gpt-4o-mini',
-    aiApiKey: '', dbDisplayName: 'MSSQL TDMU'
+    mssqlEnabled: true, aiProvider: 'gemini', aiModel: 'gemini-1.5-flash',
+    aiApiKey: '', aiEndpoint: '', dbDisplayName: 'MSSQL TDMU',
+    facebookPageId: '', facebookAccessToken: '', zaloOaId: '', zaloAccessToken: ''
   }
   try {
     const raw = localStorage.getItem(LS_CONFIG_KEY)
@@ -261,8 +309,8 @@ export default function App() {
       <aside className={`admin-sidebar${collapsed ? ' collapsed' : ''}`} id="adminSidebar">
         <div className="sidebar-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
-            <div className="logo-box" style={{ width: 38, height: 38, background: 'var(--tdmu-gold)', color: 'var(--tdmu-navy)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 16, flexShrink: 0 }}>
-              TĐ
+            <div className="logo-box" style={{ width: 40, height: 40, background: '#fff', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, boxShadow: '0 0 0 1px rgba(255,255,255,0.18)' }}>
+              <img src="/images/logo_cong_doan.png" alt="Công Đoàn TDMU" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
             <div className="sidebar-brand-text">
               <span className="brand-title">CÔNG ĐOÀN TDMU</span>
@@ -349,7 +397,7 @@ export default function App() {
         </header>
 
         <main className="admin-main">
-          {active === 'dashboard' && <Dashboard notify={notify} />}
+          {active === 'dashboard' && <Dashboard notify={notify} goto={openSection} />}
           {active === 'articles' && <Articles notify={notify} />}
           {active === 'ai-creator' && <Studio notify={notify} />}
           {active === 'schedule' && <Schedule notify={notify} />}

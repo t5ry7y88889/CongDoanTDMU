@@ -4,6 +4,8 @@ const { loadDB } = require('../db');
 const {
   GoogleGenAI,
   callGroqAPI,
+  callOpenAICompatible,
+  callAnthropicAPI,
   handleAiError,
   extractJsonFromText,
   normalizeAiGenerateOutput,
@@ -14,16 +16,22 @@ const {
 // 1. ARTICLE GENERATOR (GEMINI & GROQ HYBRID STREAM / DIRECT)
 // =========================================================================
 router.post('/generate', async (req, res) => {
-  const { prompt, eventForm, category, tone, lengthOption, targetAudience, apiKey, groqApiKey, aiEngine } = req.body;
+  const { prompt, eventForm, category, tone, lengthOption, targetAudience, apiKey, groqApiKey, aiEngine, provider, model, endpoint, material } = req.body;
   const activeGeminiKey = apiKey || process.env.GEMINI_API_KEY;
   const activeGroqKey = groqApiKey || process.env.GROQ_API_KEY;
+  const activeProvider = provider || 'gemini';
 
   if (!activeGeminiKey && !activeGroqKey) {
-    return res.json({ 
-      success: false, 
-      error: "Bạn chưa nhập API Key nào! Vui lòng vào Cài Đặt (⚙️) và nhập ít nhất một khóa (Google Gemini hoặc Groq)." 
-    });
+    if (activeProvider !== 'openai' && activeProvider !== 'anthropic' && activeProvider !== 'custom') {
+      return res.json({
+        success: false,
+        error: "Bạn chưa nhập API Key nào! Vui lòng vào Cài Đặt (⚙️) và nhập ít nhất một khóa (Google Gemini, ChatGPT hoặc Claude)."
+      });
+    }
   }
+
+  const hasMaterial = material && String(material).trim().length > 0;
+  const materialSnippet = hasMaterial ? `\n\nTƯ LIỆU NGUồn ĐÃ CUNG CẤP:\n"""\n${String(material).slice(0, 12000)}\n"""` : '';
 
   const fullSystemPrompt = `BẠN LÀ CHUYÊN VIÊN TRƯỞNG BAN TUYÊN GIÁO - TRUYỀN THÔNG CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT (TDMU).
 Nhiệm vụ của bạn là soạn thảo bài viết truyền thông chính thống, chuẩn mực văn phong hành chính đoàn thể, kết hợp hài hòa giữa tính trang trọng của môi trường giáo dục đại học và tinh thần nhiệt huyết, tương thân tương ái của tổ chức Công đoàn.
@@ -54,6 +62,7 @@ Nhiệm vụ của bạn là soạn thảo bài viết truyền thông chính th
 - Độ dài quy định: ${lengthOption || 'Vừa (300 - 500 từ)'}
 - Đối tượng thụ hưởng: ${targetAudience || 'Toàn thể công đoàn viên, cán bộ, giảng viên TDMU'}
 ${eventForm ? `Chi tiết sự kiện: Tên="${eventForm.name}", Ngày="${eventForm.date || ''}", Thời gian="${eventForm.time || ''}", Địa điểm="${eventForm.location || ''}", Kinh phí="${eventForm.budget || ''}", Người tham gia="${eventForm.attendees || ''}"` : ''}
+${materialSnippet}
 
 =========================================
 4. QUY ĐỊNH ĐẦU RA (JSON FORMAT DUY NHẤT, KHÔNG THÊM TEXT NGOÀI JSON):
@@ -89,27 +98,69 @@ ${eventForm ? `Chi tiết sự kiện: Tên="${eventForm.name}", Ngày="${eventF
   let sourceEngine = "";
   let lastError = null;
 
-  const order = (aiEngine === 'groq') ? ['groq', 'gemini'] : ['gemini', 'groq'];
+  const runProviderDirect = async () => {
+    if (activeProvider === 'openai' && apiKey) {
+      const txt = await callOpenAICompatible(prompt || "Viết bài truyền thông Công đoàn TDMU.", fullSystemPrompt, apiKey, model, "https://api.openai.com/v1/chat/completions");
+      return { text: txt, engine: `ChatGPT / ${model || 'gpt-4o-mini'}` };
+    }
+    if (activeProvider === 'anthropic' && apiKey) {
+      const txt = await callAnthropicAPI(prompt || "Viết bài truyền thông Công đoàn TDMU.", fullSystemPrompt, apiKey, model);
+      return { text: txt, engine: `Claude / ${model || 'claude-sonnet-4-20250514'}` };
+    }
+    if (activeProvider === 'custom' && apiKey && endpoint) {
+      const txt = await callOpenAICompatible(prompt || "Viết bài truyền thông Công đoàn TDMU.", fullSystemPrompt, apiKey, model, endpoint);
+      return { text: txt, engine: `Custom AI / ${model || 'custom-model'}` };
+    }
+    if (activeProvider === 'groq' && activeGroqKey) {
+      const txt = await callGroqAPI(prompt || "Bắt đầu sinh bài viết theo yêu cầu.", fullSystemPrompt, activeGroqKey);
+      return { text: txt, engine: "Groq Llama 3.1" };
+    }
+    return null;
+  };
 
-  for (const engine of order) {
-    try {
-      if (engine === 'gemini' && activeGeminiKey) {
-        rawText = await runGemini();
-        sourceEngine = (sourceEngine ? "Google Gemini 2.5 (Fallback)" : "Google Gemini 2.5 Flash");
-        break;
-      } else if (engine === 'groq' && activeGroqKey) {
-        rawText = await runGroq();
-        sourceEngine = (order[0] === 'gemini' ? "⚡ Groq Llama 3.1 (Tự động chuyển từ Gemini)" : "⚡ Groq Llama 3.1 70B Siêu Tốc");
-        break;
+  try {
+    const providerResult = await runProviderDirect();
+    if (providerResult && providerResult.text) {
+      rawText = providerResult.text;
+      sourceEngine = providerResult.engine;
+    }
+  } catch (e) {
+    console.warn(`[Provider ${activeProvider} direct call failed]:`, e.message);
+    lastError = e;
+  }
+
+  if (!rawText) {
+    const fallbackOrder = (aiEngine === 'groq') ? ['groq', 'gemini'] : ['gemini', 'groq'];
+    for (const engine of fallbackOrder) {
+      try {
+        if (engine === 'gemini' && activeGeminiKey && activeProvider !== 'gemini') {
+          rawText = await runGemini();
+          sourceEngine = sourceEngine ? "Google Gemini 2.5 (Dự phòng)" : "Google Gemini 2.5 Flash";
+          break;
+        } else if (engine === 'gemini' && activeGeminiKey) {
+          rawText = await runGemini();
+          sourceEngine = sourceEngine || "Google Gemini 2.5 Flash";
+          break;
+        } else if (engine === 'groq' && activeGroqKey) {
+          rawText = await runGroq();
+          sourceEngine = sourceEngine || "⚡ Groq Llama 3.1";
+          break;
+        }
+      } catch (err) {
+        console.warn(`[Fallback Engine ${engine} failed]:`, err.message || err);
+        lastError = err;
       }
-    } catch (err) {
-      console.warn(`[Engine ${engine} failed]:`, err.message || err);
-      lastError = err;
     }
   }
 
   if (!rawText) {
-    return handleAiError(lastError || new Error("Không thể kết nối đến cả Gemini và Groq"), res, "AI Engine");
+    if (!apiKey && !process.env.GEMINI_API_KEY) {
+      return res.json({
+        success: false,
+        error: "Không kết nối được AI bằng key trên server (.env). Vui lòng mở ⚙️ trên tòa soạn, nhập API key cho Nhà cung cấp AI đang chọn rồi bấm Lưu cấu hình. Nếu vừa sửa key trong .env thì phải khởi động lại server mới có hiệu lực."
+      });
+    }
+    return handleAiError(lastError || new Error("Không thể kết nối đến bất kỳ AI engine nào. Vui lòng kiểm tra API key trong Cài đặt."), res, "AI Engine");
   }
 
   try {

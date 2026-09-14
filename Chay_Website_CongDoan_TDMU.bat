@@ -12,13 +12,16 @@ echo =================================================================
 echo ⏳ Vui long doi 2 giay de Server khoi dong, trinh duyet se tu dong mo...
 
 :: Mo trinh duyet ngam sau 2 giay de dam bao Node.js da khoi dong xong
-start cmd /c "timeout /t 2 /nobreak >nul & start http://localhost:3000/admin.html & start http://localhost:5173"
+start cmd /c "timeout /t 2 /nobreak >nul & start http://localhost:5184 & start http://localhost:5173"
 
 echo.
 echo =================================================================
-echo Express API  -^> http://localhost:3000  (Admin CMS + API)
-echo React SPA    -^> http://localhost:5173  (Cong thong tin doan vien)
-echo De cua so nay de duy tri ca hai web, tat cua so de dung server
+echo DEV MODE (lenh duy nhat: npm run dev)
+echo   Admin React WP      -^> http://localhost:5184
+echo   Portal Doan vien    -^> http://localhost:5173
+echo   REST API            -^> http://localhost:3000
+echo PROD MODE (1 URL)     -^> npm run start  (chay tai :3000)
+echo De cua so nay de duy tri ca ba web, tat cua so de dung server
 echo =================================================================
 
 :: Kiem tra Node.js da duoc cai dat chua

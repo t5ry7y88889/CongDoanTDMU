@@ -29,7 +29,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Admin CMS (static vanilla JS portal): admin.html + bao-cao-thang.html + assets
+// Static assets: brand images (/images) + user-uploaded files live here.
+// NOTE: the legacy vanilla-JS admin (admin.html) was removed in favor of the
+// React admin SPA served at /admin (see below).
 app.use(express.static(path.join(__dirname, '../public'), {
   etag: false,
   maxAge: 0

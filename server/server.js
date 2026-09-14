@@ -85,9 +85,10 @@ setInterval(() => {
 app.listen(PORT, () => {
   console.log(`====================================================`);
   console.log(`🚀 Website Truyền Thông Công Đoàn TDMU Real SaaS Engine`);
-  console.log(`🛰️  Express API + Admin CMS: http://localhost:${PORT}`);
-  console.log(`⚙️  Admin CMS Portal:        http://localhost:${PORT}/admin.html`);
-  console.log(`🌐 React SPA (npm run dev):  http://localhost:5173`);
+  console.log(`🛰️  REST API:             http://localhost:${PORT}`);
+  console.log(`⚙️  React Admin (CMS):    http://localhost:${PORT}/admin`);
+  console.log(`🌐 Portal Đoàn viên:      http://localhost:${PORT}`);
+  console.log(`💻 Vite Dev Mode:         Portal :5173 | Admin :5184`);
   console.log(`====================================================`);
 });
 

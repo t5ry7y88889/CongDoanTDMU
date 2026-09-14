@@ -71,6 +71,8 @@ export const api = {
   deleteComment: (id) => req(`/api/comments/${id}`, { method: 'DELETE' }),
   audits: () => req('/api/audits'),
   schedules: () => req('/api/publish/schedules').then(unwrap),
+  publishNow: (body) => req('/api/publish/now', { method: 'POST', body: JSON.stringify(body) }),
+  createSchedule: (body) => req('/api/publish/schedule', { method: 'POST', body: JSON.stringify(body) }),
 
   aiGenerate: (body) => req('/api/ai/generate', { method: 'POST', body: JSON.stringify(body) }),
   aiRepurpose: (body) => req('/api/ai/repurpose', { method: 'POST', body: JSON.stringify(body) }),

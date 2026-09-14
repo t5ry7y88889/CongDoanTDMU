@@ -11,7 +11,6 @@
     "setup": "npm install && npm --prefix frontend install && npm --prefix frontend-admin install",
     "dev": "node scripts/serve-dev.js",
     "dev:server": "node server/server.js",
-    "dev:frontend": "npm --prefix frontend run dev",
     "start": "node server/server.js",
     "build": "npm --prefix frontend run build",
     "build:admin": "npm --prefix frontend-admin run build",
