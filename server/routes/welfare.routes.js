@@ -3,7 +3,12 @@ const router = express.Router();
 const path = require('path');
 const fs = require('fs');
 const { loadDB, saveDB } = require('../db');
-const { getWelfareFromDb } = require('../mssql_db');
+const { 
+  getWelfareFromDb,
+  getWelfareApplicationsFromDb,
+  insertWelfareApplicationToDb,
+  updateWelfareApplicationInDb
+} = require('../mssql_db');
 
 function stripVietnamese(str) {
   if (!str) return '';
@@ -23,15 +28,22 @@ router.get('/phuc-loi', async (req, res) => {
   res.json({ success: true, count: list.length, data: list });
 });
 
-router.get('/applications', (req, res) => {
+router.get('/applications', async (req, res) => {
+  const { status, search } = req.query;
+  try {
+    const list = await getWelfareApplicationsFromDb(status, search);
+    if (list && list.length > 0) {
+      return res.json({ success: true, count: list.length, data: list });
+    }
+  } catch (err) {
+    console.error("MSSQL Applications Get Error:", err.message);
+  }
+
   const db = loadDB();
   let list = db.don_tro_cap || [];
-  const { status, search } = req.query;
-
   if (status && status !== 'all') {
     list = list.filter(d => d.status === status);
   }
-
   if (search) {
     const q = stripVietnamese(search.trim());
     list = list.filter(d =>
@@ -41,19 +53,25 @@ router.get('/applications', (req, res) => {
       stripVietnamese(d.reason).includes(q)
     );
   }
-
   res.json({ success: true, count: list.length, data: list });
 });
 
-router.get('/don-tro-cap', (req, res) => {
+router.get('/don-tro-cap', async (req, res) => {
+  const { status, search } = req.query;
+  try {
+    const list = await getWelfareApplicationsFromDb(status, search);
+    if (list && list.length > 0) {
+      return res.json({ success: true, count: list.length, data: list });
+    }
+  } catch (err) {
+    console.error("MSSQL Don Tro Cap Error:", err.message);
+  }
+
   const db = loadDB();
   let list = db.don_tro_cap || [];
-  const { status, search } = req.query;
-
   if (status && status !== 'all') {
     list = list.filter(d => d.status === status);
   }
-
   if (search) {
     const q = stripVietnamese(search.trim());
     list = list.filter(d =>
@@ -63,13 +81,18 @@ router.get('/don-tro-cap', (req, res) => {
       stripVietnamese(d.reason).includes(q)
     );
   }
-
   res.json({ success: true, count: list.length, data: list });
 });
 
-router.get('/applications/:id', (req, res) => {
-  const db = loadDB();
+router.get('/applications/:id', async (req, res) => {
   const id = parseInt(req.params.id);
+  try {
+    const list = await getWelfareApplicationsFromDb('all', '');
+    const found = (list || []).find(d => d.id === id);
+    if (found) return res.json({ success: true, data: found });
+  } catch (e) {}
+
+  const db = loadDB();
   const item = (db.don_tro_cap || []).find(d => d.id === id);
   if (!item) return res.status(404).json({ success: false, error: 'Không tìm thấy hồ sơ đề nghị trợ cấp!' });
   res.json({ success: true, data: item });
@@ -126,22 +149,39 @@ router.post('/apply', (req, res) => {
     disbursed_at: null
   };
 
+  // Sync to MSSQL
+  try {
+    const inserted = await insertWelfareApplicationToDb(newApp);
+    if (inserted && inserted.id) {
+      newApp.id = inserted.id;
+    }
+  } catch (e) {
+    console.error('Error inserting welfare app to MSSQL:', e.message);
+  }
+
   db.don_tro_cap.unshift(newApp);
   saveDB(db);
   res.json({ success: true, data: newApp, message: 'Đã gửi hồ sơ đề nghị trợ cấp thành công tới Ban Thường Vụ!' });
 });
 
-router.put('/applications/:id', (req, res) => {
+router.put('/applications/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const { status, amount_approved, decision_note, approved_by } = req.body;
+
+  // Sync to MSSQL
+  try {
+    await updateWelfareApplicationInDb(id, { status, amount_approved, decision_note, approved_by });
+  } catch (e) {
+    console.error('Error updating welfare app in MSSQL:', e.message);
+  }
+
   const db = loadDB();
   db.don_tro_cap = db.don_tro_cap || [];
-  const id = parseInt(req.params.id);
   const idx = db.don_tro_cap.findIndex(d => d.id === id);
 
   if (idx === -1) {
     return res.status(404).json({ success: false, error: 'Không tìm thấy hồ sơ trợ cấp!' });
   }
-
-  const { status, amount_approved, decision_note, approved_by } = req.body;
 
   if (status) db.don_tro_cap[idx].status = status;
   if (amount_approved !== undefined) db.don_tro_cap[idx].amount_approved = parseFloat(amount_approved);

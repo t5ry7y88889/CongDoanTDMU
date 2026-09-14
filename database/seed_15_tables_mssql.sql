@@ -41,19 +41,27 @@ BEGIN
 END
 GO
 
--- 3. Nạp NHAN_SU
+-- 3. Nạp NHAN_SU (17 Cán bộ BCH, UBKT và Đoàn viên tiêu biểu)
 IF NOT EXISTS (SELECT 1 FROM dbo.NHAN_SU)
 BEGIN
-    INSERT INTO dbo.NHAN_SU (MaToCongDoan, MaToChuc, MaCanBo, HoVaTen, Email, ChucVuCongDoan) VALUES
-    (1, 1, 'CB_001', N'TS. Lê Thị Kim Út', 'admin@tdmu.edu.vn', N'Chủ tịch Công đoàn'),
-    (2, 5, 'CB_002', N'ThS. Trần Thị B', 'editor@tdmu.edu.vn', N'Trưởng Ban Tuyên giáo'),
-    (3, NULL, 'CB_003', N'ThS. Lê Văn C', 'contributor@tdmu.edu.vn', N'Tổ trưởng Tổ 3'),
-    (4, 3, 'CB_004', N'ThS. Nguyễn Thị Hương', 'huongnt@tdmu.edu.vn', N'Ủy viên UBKT - Tổ trưởng Tổ 4'),
-    (9, NULL, 'CB_009', N'KTS. Bùi Thị Lan', 'lanbt@tdmu.edu.vn', N'Tổ trưởng Tổ 9'),
-    (11, NULL, 'CB_011', N'ThS. Ngô Thị Bích', 'bichnt@tdmu.edu.vn', N'Tổ trưởng Tổ 11'),
-    (15, NULL, 'CB_015', N'ThS. Mai Thị Ngọc', 'ngocmt@tdmu.edu.vn', N'Tổ trưởng Tổ 15'),
-    (11, NULL, 'CB_018', N'ThS. Huỳnh Thị Lệ Kha', 'khatl@tdmu.edu.vn', N'Đoàn viên - Giảng viên Khoa Luật'),
-    (3, NULL, 'CB_019', N'ThS. Hồ Ngọc Trung Kiên', 'kienhnt@tdmu.edu.vn', N'Đoàn viên - Viện CNS');
+    INSERT INTO dbo.NHAN_SU (MaToCongDoan, MaToChuc, MaCanBo, HoVaTen, Email, ChucVuCongDoan, HocHamHocVi) VALUES
+    (1, 1, 'CB_001', N'TS. Lê Thị Kim Út', 'utltk@tdmu.edu.vn', N'Chủ tịch Công đoàn', N'Tiến sĩ Quản lý'),
+    (1, 1, 'CB_002', N'ThS. Nguyễn Minh Danh', 'danhnm@tdmu.edu.vn', N'Phó Chủ tịch Công đoàn, Chủ nhiệm UBKT', N'Thạc sĩ'),
+    (1, 1, 'CB_003', N'ThS. Phan Nguyễn Quỳnh Anh', 'anhpnq@tdmu.edu.vn', N'Phó Chủ tịch Công đoàn', N'Thạc sĩ'),
+    (10, 2, 'CB_004', N'ThS. Lê Nguyễn Xuân Lan', 'lanlnx@tdmu.edu.vn', N'Ủy viên Ban Chấp hành', N'Thạc sĩ'),
+    (1, 2, 'CB_009', N'ThS. Phan Nguyễn Hồng Diễm', 'diempnh@tdmu.edu.vn', N'Ủy viên Ban Chấp hành', N'Thạc sĩ'),
+    (11, 2, 'CB_011', N'ThS. Võ Nguyễn Đoan Trinh', 'trinhvnd@tdmu.edu.vn', N'Ủy viên Ban Chấp hành', N'Thạc sĩ'),
+    (8, 2, 'CB_015', N'ThS. Nguyễn Võ Thành Long', 'longnvt@tdmu.edu.vn', N'Ủy viên Ban Chấp hành', N'Thạc sĩ'),
+    (6, 2, 'CB_016', N'ThS. Trần Đức Hoàn', 'hoantd@tdmu.edu.vn', N'Ủy viên Ban Chấp hành', N'Thạc sĩ'),
+    (3, 2, 'CB_017', N'ThS. Võ Quốc Lương', 'luongvq@tdmu.edu.vn', N'Ủy viên Ban Chấp hành', N'Thạc sĩ'),
+    (7, 2, 'CB_020', N'ThS. Huỳnh Thanh Thúy', 'thuyht@tdmu.edu.vn', N'Ủy viên Ban Chấp hành', N'Thạc sĩ'),
+    (2, 2, 'CB_021', N'ThS. Phú Thị Tuyết Nga', 'ngaptt@tdmu.edu.vn', N'Ủy viên Ban Chấp hành', N'Thạc sĩ'),
+    (15, 2, 'CB_022', N'ThS. Âu Minh Triết', 'trietam@tdmu.edu.vn', N'Ủy viên Ban Chấp hành', N'Thạc sĩ'),
+    (1, 2, 'CB_023', N'CN. Nguyễn Thị Thanh Thảo', 'thaontt@tdmu.edu.vn', N'Ủy viên Ban Chấp hành - Kế toán trưởng', N'Cử nhân'),
+    (11, 3, 'CB_024', N'ThS. Nguyễn Ngọc Hiền', 'hiennn@tdmu.edu.vn', N'Ủy viên Ủy ban Kiểm tra', N'Thạc sĩ'),
+    (2, 3, 'CB_025', N'ThS. Nguyễn Văn Trường', 'truongnv@tdmu.edu.vn', N'Ủy viên Ủy ban Kiểm tra', N'Thạc sĩ'),
+    (11, NULL, 'CB_018', N'ThS. Huỳnh Thị Lệ Kha', 'khatl@tdmu.edu.vn', N'Đoàn viên - Giảng viên Khoa Luật', N'Thạc sĩ'),
+    (3, NULL, 'CB_019', N'ThS. Hồ Ngọc Trung Kiên', 'kienhnt@tdmu.edu.vn', N'Đoàn viên - Viện CNS', N'Thạc sĩ');
 END
 GO
 
@@ -173,18 +181,38 @@ BEGIN
 END
 GO
 
--- 14. Nạp DON_TRO_CAP
+-- 14. Nạp DON_TRO_CAP (4 Đơn đề nghị trợ cấp thực tế)
 IF NOT EXISTS (SELECT 1 FROM dbo.DON_TRO_CAP)
 BEGIN
-    INSERT INTO dbo.DON_TRO_CAP (MaNhanSu, PhucLoiId, HoTen, DonVi, LoaiTroCap, SoTienDeXuat, LyDo, TrangThai, NguoiDuyet, GhiChu) VALUES
-    (8, 2, N'ThS. Huỳnh Thị Lệ Kha', N'Khoa Luật', N'Chế độ nghỉ dưỡng thai sản', 2000000, N'Thực hiện chế độ chăm lo nữ công thai sản quý 3', 'approved', N'TS. Lê Thị Kim Út', N'Đã duyệt chi chuyển khoản qua KHTC');
+    INSERT INTO dbo.DON_TRO_CAP (HoTen, DonVi, LoaiTroCap, SoTienDeXuat, SoTienDuocDuyet, LyDo, TrangThai, NguoiDuyet, GhiChu, SoDienThoai, Email)
+    VALUES 
+    (N'ThS. Huỳnh Thị Lệ Kha', N'Khoa Luật', N'Chế độ nghỉ dưỡng thai sản', 2000000, 2000000, N'Thực hiện chế độ chăm lo nữ công thai sản quý 3', 'approved', N'TS. Lê Thị Kim Út', N'Đã duyệt chi chuyển khoản qua KHTC', '0912.345.678', 'khatl@tdmu.edu.vn'),
+    (N'TS. Lê Thị Kim Út', N'Phòng Quản lý Khoa học', N'Trợ cấp ốm đau nằm viện dài ngày', 2000000, 2000000, N'Hỗ trợ viện phí sau phẫu thuật', 'approved', N'Ban Thường Vụ', N'Đã duyệt chi hỗ trợ', '0918.370.363', 'utltk@tdmu.edu.vn'),
+    (N'ThS. Nguyễn Văn A', N'Khối Hiệu Bộ', N'Trợ cấp khó khăn đột xuất', 1500000, 1500000, N'Gia đình bị ảnh hưởng bão lũ', 'approved', N'Ban Thường Vụ', N'Đã duyệt', '0903.111.222', 'anv@tdmu.edu.vn'),
+    (N'ThS. Trần Văn Hùng', N'Khoa Sư Phạm', N'Hỗ trợ con đoàn viên vượt khó học giỏi', 1000000, NULL, N'Đơn đề nghị học bổng Nguyễn Đức Cảnh', 'pending', NULL, N'Chờ BTV xét đợt 2', '0988.222.333', 'hungtv@tdmu.edu.vn');
 END
 GO
 
--- 15. Nạp INBOX_FEEDBACK
+-- 15. Nạp INBOX_FEEDBACK (4 Thư góp ý đoàn viên)
 IF NOT EXISTS (SELECT 1 FROM dbo.INBOX_FEEDBACK)
 BEGIN
-    INSERT INTO dbo.INBOX_FEEDBACK (MaNhanSu, NguoiXuLy, HoTen, Email, SoDienThoai, DonVi, ChuDe, TieuDe, NoiDung, TrangThai, TraLoi) VALUES
-    (9, 1, N'ThS. Hồ Ngọc Trung Kiên', 'kienhnt@tdmu.edu.vn', '0977.797.378', N'Viện Công nghệ số', N'Đề xuất chuyển đổi số', N'Đề xuất tích hợp biểu mẫu điện tử cho 16 Tổ công đoàn', N'Kính gửi Ban Thường vụ, Viện CNS đề xuất tích hợp chữ ký số và biểu mẫu trực tuyến để giảm thiểu in ấn giấy tờ báo cáo tháng.', 'processed', N'Ban Thường vụ đã ghi nhận và giao Ban Tuyên giáo triển khai trên Cổng thông tin mới.');
+    INSERT INTO dbo.INBOX_FEEDBACK (HoTen, Email, SoDienThoai, DonVi, ChuDe, TieuDe, NoiDung, TrangThai, TraLoi)
+    VALUES 
+    (N'ThS. Hồ Ngọc Trung Kiên', 'kienhnt@tdmu.edu.vn', '0977.797.378', N'Viện Công nghệ số', N'Đề xuất chuyển đổi số', N'Đề xuất tích hợp biểu mẫu điện tử cho 16 Tổ công đoàn', N'Kính gửi Ban Thường vụ, Viện CNS đề xuất tích hợp chữ ký số và biểu mẫu trực tuyến để giảm thiểu in ấn giấy tờ báo cáo tháng.', 'resolved', N'Ban Thường vụ đã ghi nhận và giao Ban Tuyên giáo triển khai trên Cổng thông tin mới.'),
+    (N'ThS. Huỳnh Thị Lệ Kha', 'khatl@tdmu.edu.vn', '0912.345.678', N'Khoa Luật', N'Góp ý chế độ chính sách', N'Ý kiến về tăng cường khám sức khỏe định kỳ cho nữ giảng viên', N'Kính gửi BCH Công đoàn trường, đề xuất đưa thêm gói tầm soát chuyên sâu vào đợt khám sức khỏe định kỳ năm 2026.', 'resolved', N'BTV đã làm việc với Trung tâm Y tế và bổ sung gói khám theo đề xuất.'),
+    (N'ThS. Trần Đức Hoàn', 'hoantd@tdmu.edu.vn', '0908.456.789', N'Khoa Kinh tế', N'Đề xuất phong trào thể thao', N'Đề xuất tổ chức giải Pickleball CBGV TDMU 2026', N'Môn Pickleball đang phát triển mạnh, đề xuất bổ sung vào chuỗi sự kiện thể thao 20/11.', 'resolved', N'BTV đã đưa vào Kế hoạch thi đấu Hội thao 20/11.'),
+    (N'ThS. Lê Nguyễn Xuân Lan', 'lanlnx@tdmu.edu.vn', '0919.888.999', N'Khoa Sư phạm', N'Hoạt động Nữ công', N'Tổ chức hội thi cắm hoa ngày 20/10', N'Đề xuất tổ chức hội thi cắm hoa chủ đề Tôn vinh vẻ đẹp người phụ nữ Việt Nam.', 'pending', NULL);
+END
+GO
+
+-- 16. Nạp TEMPLATES (5 Biểu mẫu nghiệp vụ chuẩn)
+IF NOT EXISTS (SELECT 1 FROM dbo.TEMPLATES)
+BEGIN
+    INSERT INTO dbo.TEMPLATES (MaHieu, TenBieuMau, ChuyenMuc, TenChuyenMuc, MoTa, DinhDang, DungLuong, DuongDanFile, LuotTai) VALUES
+    ('BM-01/CĐ', N'Phiếu Lý Lịch & Đơn Xin Gia Nhập Công Đoàn TDMU', 'doan_vien', N'Đoàn Viên & Gia Nhập', N'Dành cho Cán bộ, Giảng viên mới tuyển dụng gia nhập tổ chức công đoàn', 'docx', '4.1 KB', 'uploads/templates/BM_01_Don_Gia_Nhap_Cong_Doan.docx', 146),
+    ('BM-02/CĐ', N'Mẫu Báo Cáo Hoạt Động Tháng & Chấm Điểm Thi Đua 16 Tổ', 'to_cong_doan', N'Tổ Công Đoàn Bộ Phận', N'Mẫu báo cáo định kỳ hàng tháng của Tổ trưởng gửi BTV Công đoàn trường', 'docx', '4.3 KB', 'uploads/templates/BM_02_Bao_Cao_Thang_16_To.docx', 285),
+    ('BM-03/CĐ', N'Đơn Đề Nghị Trợ Cấp Khó Khăn & Thăm Hỏi Ốm Đau', 'tro_cap', N'Chăm Lo & Trợ Cấp', N'Mẫu đơn đề nghị xét duyệt kinh phí chăm lo đột xuất cho đoàn viên', 'docx', '3.9 KB', 'uploads/templates/BM_03_De_Nghi_Tro_Cap_Kho_Khan.docx', 312),
+    ('BM-04/CĐ', N'Tờ Trình Khen Thưởng Đoàn Viên Tiêu Biểu & Phong Trào', 'thi_dua', N'Thi Đua Khen Thưởng', N'Mẫu đề xuất khen thưởng chuyên đề và thi đua hàng năm', 'docx', '4.0 KB', 'uploads/templates/BM_04_To_Trinh_Khen_Thuong.docx', 94),
+    ('BM-05/CĐ', N'Giấy Đề Nghị Hỗ Trợ Vay Vốn Quỹ Trợ Vốn CEP Đoàn Viên', 'tro_von', N'Quỹ Trợ Vốn', N'Hỗ trợ đoàn viên, người lao động tiếp cận nguồn vốn ưu đãi không lãi suất', 'docx', '4.5 KB', 'uploads/templates/BM_05_Vay_Von_Tro_Cap.docx', 78);
 END
 GO

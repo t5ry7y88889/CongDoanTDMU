@@ -1,11 +1,12 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const { loadDB, saveDB } = require('../db');
 const {
   getArticlesFromDb,
   insertArticleToDb,
   updateArticleInDb,
-  deleteArticleFromDb
+  deleteArticleFromDb,
+  incrementArticleReactionInDb
 } = require('../mssql_db');
 
 // =========================================================================
@@ -148,6 +149,13 @@ router.post('/:id/reactions', (req, res) => {
       saveDB(db);
       return res.json({ success: true, action: 'changed', reaction_type });
     }
+  }
+
+  // Sync reaction count to MSSQL
+  try {
+    await incrementArticleReactionInDb(articleId, reaction_type);
+  } catch (e) {
+    console.error('Error incrementing reaction in MSSQL:', e.message);
   }
 
   const newReaction = {

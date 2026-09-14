@@ -1,27 +1,37 @@
 const express = require('express');
 const router = express.Router();
 const { loadDB, saveDB } = require('../db');
+const {
+  getFeedbackFromDb,
+  insertFeedbackToDb,
+  updateFeedbackInDb,
+  deleteFeedbackFromDb
+} = require('../mssql_db');
 
 // =========================================================================
-// 1. INBOX FEEDBACK (Ý KIẾN ĐOÀN VIÊN)
+// 1. INBOX FEEDBACK (Ý KIẾN & HÒM THƯ GÓP Ý ĐOÀN VIÊN)
 // =========================================================================
 function stripVietnamese(str) {
   if (!str) return '';
   return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
 }
 
-// =========================================================================
-// 1. INBOX FEEDBACK (Ý KIẾN & HÒM THƯ GÓP Ý ĐOÀN VIÊN)
-// =========================================================================
-router.get('/feedback', (req, res) => {
+router.get('/feedback', async (req, res) => {
+  const { status, search } = req.query;
+  try {
+    const list = await getFeedbackFromDb(status, search);
+    if (list && list.length > 0) {
+      return res.json({ success: true, count: list.length, data: list });
+    }
+  } catch (err) {
+    console.error("MSSQL Feedback Get Error:", err.message);
+  }
+
   const db = loadDB();
   let list = db.inbox_feedback || [];
-  const { status, search } = req.query;
-
   if (status && status !== 'all') {
     list = list.filter(f => f.status === status);
   }
-
   if (search) {
     const q = stripVietnamese(search.trim());
     list = list.filter(f =>
@@ -32,30 +42,31 @@ router.get('/feedback', (req, res) => {
       stripVietnamese(f.category).includes(q)
     );
   }
-
   res.json({ success: true, count: list.length, data: list });
 });
 
-router.get('/feedback/:id', (req, res) => {
-  const db = loadDB();
+router.get('/feedback/:id', async (req, res) => {
   const id = parseInt(req.params.id);
+  try {
+    const list = await getFeedbackFromDb('all', '');
+    const found = (list || []).find(f => f.id === id);
+    if (found) return res.json({ success: true, data: found });
+  } catch (e) {}
+
+  const db = loadDB();
   const item = (db.inbox_feedback || []).find(f => f.id === id);
   if (!item) return res.status(404).json({ success: false, error: 'Không tìm thấy ý kiến góp ý!' });
   res.json({ success: true, data: item });
 });
 
-router.post('/feedback', (req, res) => {
-  const db = loadDB();
-  db.inbox_feedback = db.inbox_feedback || [];
+router.post('/feedback', async (req, res) => {
   const { sender_name, email, phone, unit, category, title, content } = req.body;
 
   if (!sender_name || !title || !content) {
     return res.status(400).json({ success: false, error: 'Họ tên, tiêu đề và nội dung là bắt buộc' });
   }
 
-  const nextId = db.inbox_feedback.length ? Math.max(...db.inbox_feedback.map(f => f.id || 0)) + 1 : 1;
   const newFeedback = {
-    id: nextId,
     sender_name: sender_name.trim(),
     email: (email || '').trim(),
     phone: (phone || '').trim(),
@@ -64,28 +75,51 @@ router.post('/feedback', (req, res) => {
     title: title.trim(),
     content: content.trim(),
     submitted_at: new Date().toISOString(),
-    status: 'pending', // pending | processing | resolved
+    status: 'pending',
     response: null,
     resolved_by: null,
     resolved_at: null
   };
 
+  // Sync to MSSQL
+  try {
+    const inserted = await insertFeedbackToDb(newFeedback);
+    if (inserted && inserted.id) {
+      newFeedback.id = inserted.id;
+    }
+  } catch (e) {
+    console.error('Error inserting feedback into MSSQL:', e.message);
+  }
+
+  const db = loadDB();
+  db.inbox_feedback = db.inbox_feedback || [];
+  if (!newFeedback.id) {
+    newFeedback.id = db.inbox_feedback.length ? Math.max(...db.inbox_feedback.map(f => f.id || 0)) + 1 : 1;
+  }
   db.inbox_feedback.unshift(newFeedback);
   saveDB(db);
+
   res.json({ success: true, data: newFeedback, message: 'Cảm ơn bạn! Ý kiến đã được chuyển trực tiếp đến Ban Chấp Hành Công đoàn.' });
 });
 
-router.put('/feedback/:id', (req, res) => {
+router.put('/feedback/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const { status, response, resolved_by } = req.body;
+
+  try {
+    await updateFeedbackInDb(id, { status, response, resolved_by });
+  } catch (e) {
+    console.error('Error updating feedback in MSSQL:', e.message);
+  }
+
   const db = loadDB();
   db.inbox_feedback = db.inbox_feedback || [];
-  const id = parseInt(req.params.id);
   const idx = db.inbox_feedback.findIndex(f => f.id === id);
 
   if (idx === -1) {
     return res.status(404).json({ success: false, error: 'Không tìm thấy ý kiến góp ý cần cập nhật!' });
   }
 
-  const { status, response, resolved_by } = req.body;
   if (status) db.inbox_feedback[idx].status = status;
   if (response !== undefined) db.inbox_feedback[idx].response = response;
   if (resolved_by) db.inbox_feedback[idx].resolved_by = resolved_by;
@@ -97,10 +131,16 @@ router.put('/feedback/:id', (req, res) => {
   res.json({ success: true, data: db.inbox_feedback[idx], message: 'Đã cập nhật xử lý ý kiến thành công!' });
 });
 
-router.delete('/feedback/:id', (req, res) => {
+router.delete('/feedback/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    await deleteFeedbackFromDb(id);
+  } catch (e) {
+    console.error('Error deleting feedback from MSSQL:', e.message);
+  }
+
   const db = loadDB();
   db.inbox_feedback = db.inbox_feedback || [];
-  const id = parseInt(req.params.id);
   const idx = db.inbox_feedback.findIndex(f => f.id === id);
 
   if (idx === -1) {
@@ -112,7 +152,13 @@ router.delete('/feedback/:id', (req, res) => {
   res.json({ success: true, message: 'Đã xóa ý kiến góp ý thành công!', data: removed });
 });
 
-router.get('/inbox-feedback', (req, res) => {
+router.get('/inbox-feedback', async (req, res) => {
+  try {
+    const list = await getFeedbackFromDb('all', '');
+    if (list && list.length > 0) {
+      return res.json({ success: true, count: list.length, data: list });
+    }
+  } catch (e) {}
   const db = loadDB();
   res.json({ success: true, count: (db.inbox_feedback || []).length, data: db.inbox_feedback || [] });
 });

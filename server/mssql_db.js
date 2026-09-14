@@ -65,6 +65,7 @@ async function getArticlesFromDb(category = 'all', status = 'all', search = '') 
           a.IsAiGenerated AS isAiGenerated,
           a.LuotXem AS viewsCount,
           a.LuotThich AS likesCount,
+          COALESCE(a.LuotVoTay, 0) AS clapsCount,
           CONVERT(VARCHAR(19), a.NgayTao, 120) AS createdAt
         FROM dbo.ARTICLES a
         LEFT JOIN dbo.CATEGORIES c ON a.CategoryId = c.CategoryId
@@ -263,7 +264,7 @@ async function deleteArticleFromDb(id) {
 // =========================================================================
 // 2. DOCUMENTS (dbo.DOCUMENTS)
 // =========================================================================
-async function getDocumentsFromDb(category = 'all', search = '') {
+async function getDocumentsFromDb(category = 'all', search = '', hieu_luc = 'all') {
   if (isMssqlConnected && mssqlPool) {
     try {
       const sql = require('mssql');
@@ -285,7 +286,8 @@ async function getDocumentsFromDb(category = 'all', search = '') {
           NguoiKy AS nguoi_ky,
           TepDinhKem AS file_url,
           DungLuong AS dung_luong,
-          LuotTai AS luot_tai
+          LuotTai AS luot_tai,
+          COALESCE(HieuLuc, 'con_hieu_luc') AS hieu_luc
         FROM dbo.DOCUMENTS
         WHERE 1=1
       `;
@@ -297,6 +299,10 @@ async function getDocumentsFromDb(category = 'all', search = '') {
       if (search) {
         query += " AND (SoHieuVanBan LIKE @search OR TenVanBan LIKE @search OR CoQuanBanHanh LIKE @search)";
         req.input('search', sql.NVarChar, `%${search}%`);
+      }
+      if (hieu_luc && hieu_luc !== 'all') {
+        query += " AND HieuLuc = @hieu_luc";
+        req.input('hieu_luc', sql.VarChar, hieu_luc);
       }
       query += " ORDER BY DocumentId DESC";
       const result = await req.query(query);
@@ -369,6 +375,10 @@ async function getMonthlyReportsFromDb() {
           r.TongSoCBNV AS total_staff,
           r.TongSoDoanVien AS total_members,
           r.TongSoNuDoanVien AS female_members,
+          COALESCE(r.SoDoanVienOmDau, 0) AS severe_illness_count,
+          COALESCE(r.SoVuTaiNanLaoDong, 0) AS work_accidents_count,
+          COALESCE(r.SoCuocKiemTra, 0) AS inspection_sessions_count,
+          COALESCE(r.SoBuoiTuyenTruyen, 0) AS propaganda_sessions_count,
           r.TuDanhGia AS self_rank,
           r.BtvXepLoai AS btv_rank,
           r.TrangThai AS status,
@@ -443,6 +453,349 @@ async function getUsersFromDb() {
   return loadDB().users || [];
 }
 
+// =========================================================================
+// 8. TEMPLATES (dbo.TEMPLATES)
+// =========================================================================
+async function getTemplatesFromDb(category = 'all', search = '') {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      let query = `
+        SELECT 
+          TemplateId AS id,
+          MaHieu AS code,
+          TenBieuMau AS title,
+          ChuyenMuc AS category,
+          COALESCE(TenChuyenMuc, N'Biểu Mẫu Nghiệp Vụ') AS categoryName,
+          MoTa AS description,
+          DinhDang AS file_type,
+          DungLuong AS file_size,
+          DuongDanFile AS file_url,
+          LuotTai AS downloads_count,
+          CONVERT(VARCHAR(19), NgayTao, 120) AS created_at
+        FROM dbo.TEMPLATES
+        WHERE TrangThai = 1
+      `;
+      const req = mssqlPool.request();
+      if (category && category !== 'all') {
+        query += " AND ChuyenMuc = @category";
+        req.input('category', sql.VarChar, category);
+      }
+      if (search) {
+        query += " AND (MaHieu LIKE @search OR TenBieuMau LIKE @search OR MoTa LIKE @search)";
+        req.input('search', sql.NVarChar, `%${search}%`);
+      }
+      query += " ORDER BY TemplateId ASC";
+      const res = await req.query(query);
+      return res.recordset;
+    } catch (err) {
+      console.error("MSSQL Templates Error:", err.message);
+    }
+  }
+  const db = loadDB();
+  let list = db.templates || [];
+  if (category && category !== 'all') list = list.filter(t => t.category === category);
+  if (search) {
+    const q = search.toLowerCase();
+    list = list.filter(t => (t.title || '').toLowerCase().includes(q) || (t.code || '').toLowerCase().includes(q));
+  }
+  return list;
+}
+
+async function insertTemplateToDb(data) {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      req.input('code', sql.VarChar, data.code);
+      req.input('title', sql.NVarChar, data.title);
+      req.input('category', sql.VarChar, data.category || 'doan_vien');
+      req.input('categoryName', sql.NVarChar, data.categoryName || 'Đoàn Viên & Gia Nhập');
+      req.input('description', sql.NVarChar, data.description || '');
+      req.input('file_type', sql.VarChar, data.file_type || 'docx');
+      req.input('file_size', sql.VarChar, data.file_size || '4.0 KB');
+      req.input('file_url', sql.VarChar, data.file_url);
+
+      const query = `
+        INSERT INTO dbo.TEMPLATES (MaHieu, TenBieuMau, ChuyenMuc, TenChuyenMuc, MoTa, DinhDang, DungLuong, DuongDanFile, LuotTai, TrangThai, NgayTao)
+        OUTPUT INSERTED.TemplateId AS id
+        VALUES (@code, @title, @category, @categoryName, @description, @file_type, @file_size, @file_url, 0, 1, SYSDATETIME())
+      `;
+      const res = await req.query(query);
+      data.id = res.recordset[0].id;
+      return data;
+    } catch (err) {
+      console.error("MSSQL Insert Template Error:", err.message);
+    }
+  }
+  return null;
+}
+
+async function deleteTemplateFromDb(id) {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      req.input('id', sql.Int, id);
+      await req.query("DELETE FROM dbo.TEMPLATES WHERE TemplateId = @id");
+      return true;
+    } catch (err) {
+      console.error("MSSQL Delete Template Error:", err.message);
+    }
+  }
+  return false;
+}
+
+async function incrementTemplateDownloadInDb(id) {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      req.input('id', sql.Int, id);
+      await req.query("UPDATE dbo.TEMPLATES SET LuotTai = LuotTai + 1 WHERE TemplateId = @id");
+      return true;
+    } catch (err) {
+      console.error("MSSQL Increment Download Error:", err.message);
+    }
+  }
+  return false;
+}
+
+// =========================================================================
+// 9. DON_TRO_CAP (dbo.DON_TRO_CAP)
+// =========================================================================
+async function getWelfareApplicationsFromDb(status = 'all', search = '') {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      let query = `
+        SELECT 
+          DonId AS id,
+          HoTen AS full_name,
+          DonVi AS unit,
+          COALESCE(SoDienThoai, '') AS phone,
+          COALESCE(Email, '') AS email,
+          LoaiTroCap AS type,
+          SoTienDeXuat AS amount_requested,
+          SoTienDuocDuyet AS amount_approved,
+          LyDo AS reason,
+          TepMinhChung AS proof_url,
+          TrangThai AS status,
+          NguoiDuyet AS approved_by,
+          GhiChu AS decision_note,
+          CONVERT(VARCHAR(19), NgayNop, 120) AS submitted_at
+        FROM dbo.DON_TRO_CAP
+        WHERE 1=1
+      `;
+      const req = mssqlPool.request();
+      if (status && status !== 'all') {
+        query += " AND TrangThai = @status";
+        req.input('status', sql.VarChar, status);
+      }
+      if (search) {
+        query += " AND (HoTen LIKE @search OR DonVi LIKE @search OR LoaiTroCap LIKE @search OR LyDo LIKE @search)";
+        req.input('search', sql.NVarChar, `%${search}%`);
+      }
+      query += " ORDER BY DonId DESC";
+      const res = await req.query(query);
+      return res.recordset;
+    } catch (err) {
+      console.error("MSSQL Welfare Applications Error:", err.message);
+    }
+  }
+  return null;
+}
+
+async function insertWelfareApplicationToDb(data) {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      req.input('fullName', sql.NVarChar, data.full_name);
+      req.input('unit', sql.NVarChar, data.unit || 'Đoàn viên TDMU');
+      req.input('phone', sql.VarChar, data.phone || '');
+      req.input('email', sql.VarChar, data.email || '');
+      req.input('type', sql.NVarChar, data.type);
+      req.input('amountRequested', sql.Decimal(15, 2), data.amount_requested || 1000000);
+      req.input('reason', sql.NVarChar, data.reason);
+      req.input('proofUrl', sql.VarChar, data.proof_url || null);
+      req.input('status', sql.VarChar, data.status || 'pending');
+      req.input('decisionNote', sql.NVarChar, data.decision_note || 'Chờ Ban Thường Vụ xét duyệt');
+
+      const query = `
+        INSERT INTO dbo.DON_TRO_CAP (HoTen, DonVi, SoDienThoai, Email, LoaiTroCap, SoTienDeXuat, LyDo, TepMinhChung, TrangThai, GhiChu, NgayNop)
+        OUTPUT INSERTED.DonId AS id
+        VALUES (@fullName, @unit, @phone, @email, @type, @amountRequested, @reason, @proofUrl, @status, @decisionNote, SYSDATETIME())
+      `;
+      const res = await req.query(query);
+      data.id = res.recordset[0].id;
+      return data;
+    } catch (err) {
+      console.error("MSSQL Insert Welfare App Error:", err.message);
+    }
+  }
+  return null;
+}
+
+async function updateWelfareApplicationInDb(id, data) {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      req.input('id', sql.Int, id);
+      req.input('status', sql.VarChar, data.status || null);
+      req.input('amountApproved', sql.Decimal(15, 2), data.amount_approved !== undefined ? data.amount_approved : null);
+      req.input('decisionNote', sql.NVarChar, data.decision_note || null);
+      req.input('approvedBy', sql.NVarChar, data.approved_by || null);
+
+      await req.query(`
+        UPDATE dbo.DON_TRO_CAP
+        SET TrangThai = COALESCE(@status, TrangThai),
+            SoTienDuocDuyet = COALESCE(@amountApproved, SoTienDuocDuyet),
+            GhiChu = COALESCE(@decisionNote, GhiChu),
+            NguoiDuyet = COALESCE(@approvedBy, NguoiDuyet)
+        WHERE DonId = @id
+      `);
+      return true;
+    } catch (err) {
+      console.error("MSSQL Update Welfare App Error:", err.message);
+    }
+  }
+  return false;
+}
+
+// =========================================================================
+// 10. INBOX_FEEDBACK (dbo.INBOX_FEEDBACK)
+// =========================================================================
+async function getFeedbackFromDb(status = 'all', search = '') {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      let query = `
+        SELECT 
+          FeedbackId AS id,
+          HoTen AS sender_name,
+          Email AS email,
+          COALESCE(SoDienThoai, '') AS phone,
+          DonVi AS unit,
+          ChuDe AS category,
+          TieuDe AS title,
+          NoiDung AS content,
+          TepDinhKem AS attachment,
+          TrangThai AS status,
+          TraLoi AS response,
+          CONVERT(VARCHAR(19), NgayGui, 120) AS submitted_at
+        FROM dbo.INBOX_FEEDBACK
+        WHERE 1=1
+      `;
+      const req = mssqlPool.request();
+      if (status && status !== 'all') {
+        query += " AND TrangThai = @status";
+        req.input('status', sql.VarChar, status);
+      }
+      if (search) {
+        query += " AND (HoTen LIKE @search OR DonVi LIKE @search OR TieuDe LIKE @search OR NoiDung LIKE @search)";
+        req.input('search', sql.NVarChar, `%${search}%`);
+      }
+      query += " ORDER BY FeedbackId DESC";
+      const res = await req.query(query);
+      return res.recordset;
+    } catch (err) {
+      console.error("MSSQL Feedback Error:", err.message);
+    }
+  }
+  return null;
+}
+
+async function insertFeedbackToDb(data) {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      req.input('senderName', sql.NVarChar, data.sender_name);
+      req.input('email', sql.VarChar, data.email || '');
+      req.input('phone', sql.VarChar, data.phone || '');
+      req.input('unit', sql.NVarChar, data.unit || 'Đoàn viên TDMU');
+      req.input('category', sql.NVarChar, data.category || 'Góp ý chung');
+      req.input('title', sql.NVarChar, data.title);
+      req.input('content', sql.NVarChar, data.content);
+      req.input('status', sql.VarChar, data.status || 'pending');
+
+      const query = `
+        INSERT INTO dbo.INBOX_FEEDBACK (HoTen, Email, SoDienThoai, DonVi, ChuDe, TieuDe, NoiDung, TrangThai, NgayGui)
+        OUTPUT INSERTED.FeedbackId AS id
+        VALUES (@senderName, @email, @phone, @unit, @category, @title, @content, @status, SYSDATETIME())
+      `;
+      const res = await req.query(query);
+      data.id = res.recordset[0].id;
+      return data;
+    } catch (err) {
+      console.error("MSSQL Insert Feedback Error:", err.message);
+    }
+  }
+  return null;
+}
+
+async function updateFeedbackInDb(id, data) {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      req.input('id', sql.Int, id);
+      req.input('status', sql.VarChar, data.status || null);
+      req.input('response', sql.NVarChar, data.response !== undefined ? data.response : null);
+
+      await req.query(`
+        UPDATE dbo.INBOX_FEEDBACK
+        SET TrangThai = COALESCE(@status, TrangThai),
+            TraLoi = COALESCE(@response, TraLoi)
+        WHERE FeedbackId = @id
+      `);
+      return true;
+    } catch (err) {
+      console.error("MSSQL Update Feedback Error:", err.message);
+    }
+  }
+  return false;
+}
+
+async function deleteFeedbackFromDb(id) {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      req.input('id', sql.Int, id);
+      await req.query("DELETE FROM dbo.INBOX_FEEDBACK WHERE FeedbackId = @id");
+      return true;
+    } catch (err) {
+      console.error("MSSQL Delete Feedback Error:", err.message);
+    }
+  }
+  return false;
+}
+
+// =========================================================================
+// 11. ARTICLE REACTIONS (dbo.ARTICLES LuotThich, LuotVoTay)
+// =========================================================================
+async function incrementArticleReactionInDb(id, type) {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      req.input('id', sql.Int, id);
+      if (type === 'clap') {
+        await req.query("UPDATE dbo.ARTICLES SET LuotVoTay = COALESCE(LuotVoTay, 0) + 1 WHERE ArticleId = @id");
+      } else if (type === 'like') {
+        await req.query("UPDATE dbo.ARTICLES SET LuotThich = COALESCE(LuotThich, 0) + 1 WHERE ArticleId = @id");
+      }
+      return true;
+    } catch (err) {
+      console.error("MSSQL Increment Reaction Error:", err.message);
+    }
+  }
+  return false;
+}
+
 module.exports = {
   sqlConfig,
   isMssqlConnected: () => isMssqlConnected,
@@ -450,10 +803,22 @@ module.exports = {
   insertArticleToDb,
   updateArticleInDb,
   deleteArticleFromDb,
+  incrementArticleReactionInDb,
   getDocumentsFromDb,
   getCategoriesFromDb,
   getOrgDataFromDb,
   getMonthlyReportsFromDb,
   getWelfareFromDb,
-  getUsersFromDb
+  getUsersFromDb,
+  getTemplatesFromDb,
+  insertTemplateToDb,
+  deleteTemplateFromDb,
+  incrementTemplateDownloadInDb,
+  getWelfareApplicationsFromDb,
+  insertWelfareApplicationToDb,
+  updateWelfareApplicationInDb,
+  getFeedbackFromDb,
+  insertFeedbackToDb,
+  updateFeedbackInDb,
+  deleteFeedbackFromDb
 };

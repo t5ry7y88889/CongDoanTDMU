@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
     
     // First try MSSQL
     try {
-      list = await getDocumentsFromDb(category, search);
+      list = await getDocumentsFromDb(category, search, hieu_luc);
     } catch (e) {
       list = [];
     }
