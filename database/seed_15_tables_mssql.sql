@@ -7,9 +7,9 @@ USE TDMU_TradeUnion_DB;
 GO
 
 -- 1. Nạp TO_CHUC
-IF NOT EXISTS (SELECT 1 FROM dbo.TO_CHUC)
+IF NOT EXISTS (SELECT 1 FROM dbo.ORGANIZATIONS)
 BEGIN
-    INSERT INTO dbo.TO_CHUC (TenToChuc, NhiemKy, MoTaChucNang, ThuTuHienThi) VALUES
+    INSERT INTO dbo.ORGANIZATIONS (Name, Term, Description, DisplayOrder) VALUES
     (N'Ban Thường vụ', N'Nhiệm kỳ 2023 - 2028', N'Lãnh đạo, điều hành toàn diện hoạt động Công đoàn giữa hai kỳ họp BCH', 1),
     (N'Ban Chấp hành', N'Nhiệm kỳ 2023 - 2028', N'Cơ quan lãnh đạo cao nhất của Công đoàn cơ sở TDMU', 2),
     (N'Ủy ban Kiểm tra', N'Nhiệm kỳ 2023 - 2028', N'Kiểm tra việc chấp hành Điều lệ Công đoàn và quản lý tài chính', 3),
@@ -19,9 +19,9 @@ END
 GO
 
 -- 2. Nạp TO_CONG_DOAN (Đủ 16 Tổ công đoàn bộ phận)
-IF NOT EXISTS (SELECT 1 FROM dbo.TO_CONG_DOAN)
+IF NOT EXISTS (SELECT 1 FROM dbo.UNION_GROUPS)
 BEGIN
-    INSERT INTO dbo.TO_CONG_DOAN (MaDinhDanh, TenToCongDoan, ToTruong, EmailLienHe) VALUES
+    INSERT INTO dbo.UNION_GROUPS (Code, Name, LeaderName, Email) VALUES
     ('TCD_01', N'Tổ Công đoàn 1 - Khối Hiệu Bộ', N'Đ/c Nguyễn Văn A', 'tcd01@tdmu.edu.vn'),
     ('TCD_02', N'Tổ Công đoàn 2 - Phòng Đào Tạo & Khảo Thí', N'Đ/c Trần Thị B', 'tcd02@tdmu.edu.vn'),
     ('TCD_03', N'Tổ Công đoàn 3 - Viện Công Nghệ Số', N'Đ/c Lê Văn C', 'tcd03@tdmu.edu.vn'),
@@ -42,9 +42,9 @@ END
 GO
 
 -- 3. Nạp NHAN_SU
-IF NOT EXISTS (SELECT 1 FROM dbo.NHAN_SU)
+IF NOT EXISTS (SELECT 1 FROM dbo.STAFF)
 BEGIN
-    INSERT INTO dbo.NHAN_SU (MaToCongDoan, MaToChuc, MaCanBo, HoVaTen, Email, ChucVuCongDoan) VALUES
+    INSERT INTO dbo.STAFF (UnionGroupId, OrganizationId, StaffCode, FullName, Email, UnionRole) VALUES
     (1, 1, 'CB_001', N'TS. Lê Thị Kim Út', 'admin@tdmu.edu.vn', N'Chủ tịch Công đoàn'),
     (2, 5, 'CB_002', N'ThS. Trần Thị B', 'editor@tdmu.edu.vn', N'Trưởng Ban Tuyên giáo'),
     (3, NULL, 'CB_003', N'ThS. Lê Văn C', 'contributor@tdmu.edu.vn', N'Tổ trưởng Tổ 3'),
@@ -60,7 +60,7 @@ GO
 -- 4. Nạp CATEGORIES
 IF NOT EXISTS (SELECT 1 FROM dbo.CATEGORIES)
 BEGIN
-    INSERT INTO dbo.CATEGORIES (TenChuyenMuc, Slug, MoTa, ThuTu) VALUES
+    INSERT INTO dbo.CATEGORIES (Name, Slug, Description, DisplayOrder) VALUES
     (N'Hoạt Động Phong Trào', 'hoat-dong-phong-trao', N'Các phong trào thi đua, văn nghệ, thể thao', 1),
     (N'Thông Báo Chỉ Đạo', 'thong-bao-chi-dao', N'Thông báo, công văn chỉ đạo của Ban Thường vụ', 2),
     (N'Gương Sáng Đoàn Viên', 'guong-sang-doan-vien', N'Tuyên dương cán bộ, giảng viên điển hình tiên tiến', 3),
@@ -72,7 +72,7 @@ GO
 -- 5. Nạp ARTICLES (6 Bài Báo Thực Tế Chuẩn TDMU)
 IF NOT EXISTS (SELECT 1 FROM dbo.ARTICLES)
 BEGIN
-    INSERT INTO dbo.ARTICLES (MaTacGia, CategoryId, TieuDe, Slug, TomTat, NoiDung, HinhAnhDaiDien, TrangThai, LuotXem, NgayXuatBan) VALUES
+    INSERT INTO dbo.ARTICLES (AuthorId, CategoryId, Title, Slug, Summary, Content, FeaturedImage, Status, ViewCount, PublishedDate) VALUES
     (1, 1, N'Tọa đàm "Dinh dưỡng lành mạnh vì sức khỏe gia đình"', 'toa-dam-dinh-duong-lanh-manh-vi-suc-khoe-gia-dinh', N'Hướng tới Ngày Gia đình Việt Nam, Công đoàn TDMU tổ chức tọa đàm dinh dưỡng lành mạnh cho cán bộ nữ.', N'<p>Hướng tới kỷ niệm Ngày Gia đình Việt Nam, Công đoàn Trường Đại học Thủ Dầu Một đã tổ chức tọa đàm với chủ đề "Dinh dưỡng lành mạnh vì sức khỏe gia đình", thu hút đông đảo nữ cán bộ, giảng viên tham gia thảo luận về chế độ ăn uống khoa học và cân bằng cuộc sống.</p>', 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=800', 'published', 147, '2026-06-26'),
     (1, 2, N'Chào mừng Đại hội XIV Công đoàn Việt Nam nhiệm kỳ 2026 – 2031', 'chao-mung-dai-hoi-xiv-cong-doan-viet-nam', N'Toàn thể đoàn viên TDMU ra sức thi đua lập thành tích xuất sắc chào mừng Đại hội XIV Công đoàn Việt Nam.', N'<p>Đại hội XIV Công đoàn Việt Nam là sự kiện chính trị quan trọng của giai cấp công nhân và tổ chức Công đoàn Việt Nam. Ban Thường vụ Công đoàn trường kêu gọi toàn thể đoàn viên phát huy tinh thần trách nhiệm, sáng tạo, hoàn thành xuất sắc nhiệm vụ chính trị và chuyên môn.</p>', 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800', 'published', 140, '2026-06-01'),
     (2, 3, N'Đại học Thủ Dầu Một được tuyên dương điển hình tiên tiến trong học tập và làm theo Bác', 'tdmu-duoc-tuyen-duong-dien-hinh-tien-tien', N'Trường ĐH Thủ Dầu Một vinh dự nhận Bằng khen tập thể điển hình tiên tiến giai đoạn 2021–2026.', N'<p>Trường Đại học Thủ Dầu Một vinh dự được trao tặng Bằng khen dành cho tập thể điển hình tiên tiến có thành tích tiêu biểu giai đoạn 2021–2026 trong phong trào học tập và làm theo tư tưởng, đạo đức, phong cách Hồ Chí Minh.</p>', 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800', 'published', 306, '2026-05-08'),
@@ -85,7 +85,7 @@ GO
 -- 6. Nạp DOCUMENTS (4 Loại văn bản)
 IF NOT EXISTS (SELECT 1 FROM dbo.DOCUMENTS)
 BEGIN
-    INSERT INTO dbo.DOCUMENTS (MaNguoiDang, SoHieuVanBan, TenVanBan, LoaiVanBan, CoQuanBanHanh, NgayBanHanh, NguoiKy, TepDinhKem, DungLuong, LuotTai) VALUES
+    INSERT INTO dbo.DOCUMENTS (UploadedById, ReferenceNumber, Title, DocumentType, IssuingAgency, IssueDate, SignerName, Attachment, FileSize, DownloadCount) VALUES
     (1, '18/CV-CĐCS', N'Vận động ủng hộ đồng bào bị thiệt hại do bão số 3', 'tuyentruyen', N'Ban Thường Vụ Công Đoàn TDMU', '2026-08-15', N'TS. Lê Thị Kim Út', 'uploads/documents/18_CV_CDCS_UngHoBaoSo3.pdf', '1.2 MB', 2524),
     (1, '1630/CV-BTG', N'Công văn số 1630 của Ban Tuyên giáo Tỉnh ủy Bình Dương: Cuộc thi trực tuyến Tìm hiểu Nghị quyết TW 8', 'tuyentruyen', N'Ban Tuyên Giáo Tỉnh Ủy Bình Dương', '2026-08-01', N'Trưởng Ban Tuyên Giáo', 'uploads/documents/1630_CV_BTG.pdf', '2.4 MB', 3915),
     (2, '25/KH-CĐCS', N'Kế hoạch tổ chức giải Bóng đá truyền thống Công đoàn trường ĐH Thủ Dầu Một lần thứ X', 'kehoach', N'Ban Thường Vụ Công Đoàn TDMU', '2026-07-10', N'TS. Lê Thị Kim Út', 'uploads/documents/25_KH_GiaiBongDa.pdf', '3.1 MB', 1478),
@@ -97,7 +97,7 @@ GO
 -- 7. Nạp MONTHLY_REPORTS (16 Tổ CĐ - Khớp 4 tổ Loại A: 9, 11, 15, 4)
 IF NOT EXISTS (SELECT 1 FROM dbo.MONTHLY_REPORTS)
 BEGIN
-    INSERT INTO dbo.MONTHLY_REPORTS (MaToCongDoan, MaNguoiBaoCao, ThangBaoCao, NamBaoCao, TongSoCBNV, TongSoDoanVien, TongSoNuDoanVien, TuDanhGia, BtvXepLoai, TrangThai, LinkMinhChung) VALUES
+    INSERT INTO dbo.MONTHLY_REPORTS (UnionGroupId, ReporterId, Month, Year, TotalStaff, TotalMembers, TotalFemaleMembers, SelfAssessment, BoardRating, Status, EvidenceLink) VALUES
     (9, 5, 8, 2026, 26, 26, 14, N'Hoàn thành xuất sắc nhiệm vụ (Loại A)', N'Loại A - Xuất Sắc', 'Approved', 'https://drive.google.com/drive/folders/to9_minhchung_t8'),
     (11, 6, 8, 2026, 24, 24, 15, N'Hoàn thành xuất sắc nhiệm vụ (Loại A)', N'Loại A - Xuất Sắc', 'Approved', 'https://drive.google.com/drive/folders/to11_minhchung_t8'),
     (15, 7, 8, 2026, 38, 38, 16, N'Hoàn thành xuất sắc nhiệm vụ (Loại A)', N'Loại A - Xuất Sắc', 'Approved', 'https://drive.google.com/drive/folders/to15_minhchung_t8'),
@@ -120,7 +120,7 @@ GO
 -- 8. Nạp SCHEDULES
 IF NOT EXISTS (SELECT 1 FROM dbo.SCHEDULES)
 BEGIN
-    INSERT INTO dbo.SCHEDULES (ArticleId, KenhXuatBan, ThoiGianDang, TrangThai) VALUES
+    INSERT INTO dbo.SCHEDULES (ArticleId, Channel, PublishAt, Status) VALUES
     (6, 'Website', '2026-09-01 08:00:00', 'Done'),
     (6, 'Facebook', '2026-09-01 08:30:00', 'Done'),
     (5, 'Website', '2026-08-10 09:00:00', 'Done');
@@ -130,7 +130,7 @@ GO
 -- 9. Nạp USERS
 IF NOT EXISTS (SELECT 1 FROM dbo.USERS)
 BEGIN
-    INSERT INTO dbo.USERS (MaNhanSu, Email, PasswordHash, HoTen, VaiTro) VALUES
+    INSERT INTO dbo.USERS (StaffId, Email, PasswordHash, FullName, Role) VALUES
     (1, 'admin@tdmu.edu.vn', '$2y$10$abcdefghijklmnopqrstuv', N'TS. Lê Thị Kim Út', 'Admin'),
     (2, 'editor@tdmu.edu.vn', '$2y$10$abcdefghijklmnopqrstuv', N'ThS. Trần Thị B', 'Editor'),
     (3, 'contributor@tdmu.edu.vn', '$2y$10$abcdefghijklmnopqrstuv', N'ThS. Lê Văn C', 'Contributor');
@@ -140,7 +140,7 @@ GO
 -- 10. Nạp ARTICLE_AUDITS
 IF NOT EXISTS (SELECT 1 FROM dbo.ARTICLE_AUDITS)
 BEGIN
-    INSERT INTO dbo.ARTICLE_AUDITS (ArticleId, UserId, HanhDong, GhiChu) VALUES
+    INSERT INTO dbo.ARTICLE_AUDITS (ArticleId, UserId, Action, Note) VALUES
     (6, 1, 'published', N'Xuất bản bài thông báo xếp loại thi đua tháng 8/2026 lên Cổng thông tin');
 END
 GO
@@ -148,7 +148,7 @@ GO
 -- 11. Nạp COMMENTS
 IF NOT EXISTS (SELECT 1 FROM dbo.COMMENTS)
 BEGIN
-    INSERT INTO dbo.COMMENTS (ArticleId, HoTen, Email, ChucVu, NoiDung) VALUES
+    INSERT INTO dbo.COMMENTS (ArticleId, AuthorName, Email, Title, Content) VALUES
     (1, N'TS. Lê Thị Kim Út', 'admin@tdmu.edu.vn', N'Chủ tịch Công đoàn', N'Chương trình tọa đàm dinh dưỡng rất ý nghĩa và thiết thực cho sức khỏe đoàn viên toàn trường!'),
     (6, N'ThS. Huỳnh Thị Lệ Kha', 'khatl@tdmu.edu.vn', N'Khoa Luật', N'Chúc mừng các tổ xuất sắc! Tổ 11 Khoa Luật sẽ tiếp tục phấn đấu trong kỳ tới.');
 END
@@ -157,15 +157,15 @@ GO
 -- 12. Nạp BOOKMARKS
 IF NOT EXISTS (SELECT 1 FROM dbo.BOOKMARKS)
 BEGIN
-    INSERT INTO dbo.BOOKMARKS (UserId, MaCanBo, ArticleId, TieuDe, GhiChu) VALUES
+    INSERT INTO dbo.BOOKMARKS (UserId, StaffCode, ArticleId, Title, Note) VALUES
     (1, 'CB_001', 1, N'Tọa đàm "Dinh dưỡng lành mạnh vì sức khỏe gia đình"', N'Tài liệu tham khảo cho Ban Nữ công');
 END
 GO
 
 -- 13. Nạp PHUC_LOI (4 Gói phúc lợi chính thức)
-IF NOT EXISTS (SELECT 1 FROM dbo.PHUC_LOI)
+IF NOT EXISTS (SELECT 1 FROM dbo.BENEFITS)
 BEGIN
-    INSERT INTO dbo.PHUC_LOI (MaPhucLoi, TieuDe, ChuyenMuc, DoiTuongHuong, MucHoTro, MoTa, Icon) VALUES
+    INSERT INTO dbo.BENEFITS (Code, Title, Category, EligibleSubjects, SupportAmount, Description, Icon) VALUES
     ('PL-01', N'Chăm Lo Quà Tặng Dịp Lễ, Tết & Kỷ Niệm', 'le_tet', N'100% Cán bộ, Giảng viên, Đoàn viên Công đoàn', N'500.000đ - 1.500.000đ / suất', N'Tặng quà Tết Nguyên đán, Quốc tế Phụ nữ 8/3, Ngày Nhà giáo Việt Nam 20/11.', 'fa-gift'),
     ('PL-02', N'Chính Sách Chăm Lo Nữ Công & Trẻ Em', 'nu_cong', N'Nữ cán bộ sinh con & con cán bộ đạt học sinh giỏi', N'1.000.000đ - 2.000.000đ / suất', N'Hỗ trợ thai sản, khen thưởng con cán bộ đạt giải quốc gia, học bổng khuyến học.', 'fa-person-breastfeeding'),
     ('PL-03', N'Trợ Cấp Khó Khăn & Bệnh Hiểm Nghèo', 'tro_cap', N'Đoàn viên gặp tai nạn lao động hoặc bệnh hiểm nghèo', N'2.000.000đ - 10.000.000đ / đợt', N'Thăm hỏi ốm đau dài ngày, phẫu thuật, hỗ trợ kinh phí điều trị đặc biệt.', 'fa-hand-holding-medical'),
@@ -174,17 +174,17 @@ END
 GO
 
 -- 14. Nạp DON_TRO_CAP
-IF NOT EXISTS (SELECT 1 FROM dbo.DON_TRO_CAP)
+IF NOT EXISTS (SELECT 1 FROM dbo.WELFARE_APPLICATIONS)
 BEGIN
-    INSERT INTO dbo.DON_TRO_CAP (MaNhanSu, PhucLoiId, HoTen, DonVi, LoaiTroCap, SoTienDeXuat, LyDo, TrangThai, NguoiDuyet, GhiChu) VALUES
+    INSERT INTO dbo.WELFARE_APPLICATIONS (StaffId, BenefitId, ApplicantName, Department, SupportType, RequestedAmount, Reason, Status, ReviewerName, Note) VALUES
     (8, 2, N'ThS. Huỳnh Thị Lệ Kha', N'Khoa Luật', N'Chế độ nghỉ dưỡng thai sản', 2000000, N'Thực hiện chế độ chăm lo nữ công thai sản quý 3', 'approved', N'TS. Lê Thị Kim Út', N'Đã duyệt chi chuyển khoản qua KHTC');
 END
 GO
 
 -- 15. Nạp INBOX_FEEDBACK
-IF NOT EXISTS (SELECT 1 FROM dbo.INBOX_FEEDBACK)
+IF NOT EXISTS (SELECT 1 FROM dbo.FEEDBACK)
 BEGIN
-    INSERT INTO dbo.INBOX_FEEDBACK (MaNhanSu, NguoiXuLy, HoTen, Email, SoDienThoai, DonVi, ChuDe, TieuDe, NoiDung, TrangThai, TraLoi) VALUES
+    INSERT INTO dbo.FEEDBACK (StaffId, HandlerId, FullName, Email, Phone, Department, Topic, Subject, Content, Status, Reply) VALUES
     (9, 1, N'ThS. Hồ Ngọc Trung Kiên', 'kienhnt@tdmu.edu.vn', '0977.797.378', N'Viện Công nghệ số', N'Đề xuất chuyển đổi số', N'Đề xuất tích hợp biểu mẫu điện tử cho 16 Tổ công đoàn', N'Kính gửi Ban Thường vụ, Viện CNS đề xuất tích hợp chữ ký số và biểu mẫu trực tuyến để giảm thiểu in ấn giấy tờ báo cáo tháng.', 'processed', N'Ban Thường vụ đã ghi nhận và giao Ban Tuyên giáo triển khai trên Cổng thông tin mới.');
 END
 GO

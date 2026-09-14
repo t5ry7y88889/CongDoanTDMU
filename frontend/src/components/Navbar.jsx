@@ -56,9 +56,11 @@ const Navbar = ({ onOpenBookmarks, bookmarkCount = 0 }) => {
             <span className="badge-hotline d-none d-md-inline-flex">
               <i className="fa-solid fa-phone me-1 text-warning"></i> Hotline: (0274) 3.815.184
             </span>
-            <a href="/admin.html" className="btn-portal-access">
-              <i className="fa-solid fa-sliders me-1 text-warning"></i> Quản lý website truyền thông công đoàn TDMU
-            </a>
+            {window.location.port !== '5173' && (
+              <a href="/admin.html" className="btn-portal-access">
+                <i className="fa-solid fa-sliders me-1 text-warning"></i> Quản lý website truyền thông công đoàn TDMU
+              </a>
+            )}
           </div>
         </div>
       </header>

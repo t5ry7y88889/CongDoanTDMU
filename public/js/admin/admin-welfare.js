@@ -174,6 +174,13 @@ async function submitWelfareReview() {
   const amount_approved = parseFloat(document.getElementById('modal_welf_app_amount').value) || 0;
   const decision_note = document.getElementById('modal_welf_note').value.trim();
 
+  if (status === 'approved' && !decision_note) {
+    showToast("⚠️ Vui lòng nhập ghi chú/ý kiến phê duyệt trước khi duyệt!", 'warning');
+    markInvalid(document.getElementById('modal_welf_note'), "Ghi chú phê duyệt là bắt buộc");
+    return;
+  }
+  clearInvalid(document.getElementById('modal_welf_note'));
+
   try {
     const res = await fetch(`/api/welfare/applications/${reviewingAppId}`, {
       method: 'PUT',
@@ -199,7 +206,7 @@ async function submitWelfareReview() {
 }
 
 async function deleteAdminWelfare(id) {
-  if (!confirm(`Xác nhận xóa hồ sơ đề nghị trợ cấp #TC-${id}?`)) return;
+  if (!(await confirmModal(`Xác nhận xóa hồ sơ đề nghị trợ cấp #TC-${id}?`))) return;
   try {
     const res = await fetch(`/api/welfare/applications/${id}`, { method: 'DELETE' }).then(r => r.json());
     if (res.success) {

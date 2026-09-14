@@ -151,6 +151,13 @@ async function submitFeedbackResponse() {
   const status = document.getElementById('modal_fb_status_select').value;
   const response = document.getElementById('modal_fb_response_text').value.trim();
 
+  if (status !== 'pending' && !response) {
+    showToast("⚠️ Vui lòng nhập nội dung phản hồi trước khi cập nhật trạng thái!", 'warning');
+    markInvalid(document.getElementById('modal_fb_response_text'), "Nội dung phản hồi là bắt buộc khi xử lý ý kiến");
+    return;
+  }
+  clearInvalid(document.getElementById('modal_fb_response_text'));
+
   try {
     const res = await fetch(`/api/feedback/${currentRespondingId}`, {
       method: 'PUT',
@@ -175,7 +182,7 @@ async function submitFeedbackResponse() {
 }
 
 async function deleteAdminFeedback(id) {
-  if (!confirm(`Xác nhận xóa ý kiến góp ý #FB-${id}?`)) return;
+  if (!(await confirmModal(`Xác nhận xóa ý kiến góp ý #FB-${id}?`))) return;
   try {
     const res = await fetch(`/api/feedback/${id}`, { method: 'DELETE' }).then(r => r.json());
     if (res.success) {

@@ -104,7 +104,7 @@ function renderAdminTemplatesTable(searchQuery = '') {
 }
 
 async function deleteAdminTemplate(id) {
-  if (!confirm("Xác nhận xóa biểu mẫu này khỏi hệ thống?")) return;
+  if (!(await confirmModal("Xác nhận xóa biểu mẫu này khỏi hệ thống?"))) return;
   try {
     const res = await fetch('/api/templates/' + id, { method: 'DELETE' }).then(r => r.json());
     if (res.success) {

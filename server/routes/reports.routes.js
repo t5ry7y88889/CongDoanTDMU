@@ -1,7 +1,7 @@
 ﻿const express = require('express');
 const router = express.Router();
 const { loadDB, saveDB } = require('../db');
-const { getMonthlyReportsFromDb } = require('../mssql_db');
+const { getMonthlyReportsFromDb, insertMonthlyReportToDb } = require('../mssql_db');
 
 // =========================================================================
 // MONTHLY REPORTS & EMULATION RANKINGS
@@ -23,49 +23,9 @@ router.get('/', async (req, res) => {
   res.json({ success: true, count: reports.length, data: reports });
 });
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    const db = loadDB();
-    if (!db.monthly_reports) db.monthly_reports = [];
-
-    const newReport = {
-      id: db.monthly_reports.length > 0 ? Math.max(...db.monthly_reports.map(r => r.id)) + 1 : 1,
-      union_id: req.body.union_id || "TCD_01",
-      union_name: req.body.union_name || "Công đoàn cơ sở",
-      month: parseInt(req.body.month) || new Date().getMonth() + 1,
-      year: parseInt(req.body.year) || new Date().getFullYear(),
-      reporter_name: req.body.reporter_name || "",
-      reporter_email: req.body.reporter_email || "",
-      timestamp: new Date().toLocaleString('vi-VN'),
-      total_staff: parseInt(req.body.total_staff) || 0,
-      total_union_members: parseInt(req.body.total_union_members) || 0,
-      female_union_members: parseInt(req.body.female_union_members) || 0,
-      new_members_month: parseInt(req.body.new_members_month) || 0,
-      resigned_members_month: parseInt(req.body.resigned_members_month) || 0,
-      party_introduced_members: parseInt(req.body.party_introduced_members) || 0,
-      party_admitted_members: parseInt(req.body.party_admitted_members) || 0,
-      severe_illness_count: parseInt(req.body.severe_illness_count) || 0,
-      cared_members_count: parseInt(req.body.cared_members_count) || 0,
-      total_care_fund: parseFloat(req.body.total_care_fund) || 0,
-      work_accidents_count: parseInt(req.body.work_accidents_count) || 0,
-      fatal_accidents_count: parseInt(req.body.fatal_accidents_count) || 0,
-      inspection_sessions_count: parseInt(req.body.inspection_sessions_count) || 0,
-      inspection_content: req.body.inspection_content || "",
-      inspection_result: req.body.inspection_result || "",
-      propaganda_sessions_count: parseInt(req.body.propaganda_sessions_count) || 0,
-      propaganda_attendees_count: parseInt(req.body.propaganda_attendees_count) || 0,
-      propaganda_content: req.body.propaganda_content || "",
-      other_activities: req.body.other_activities || "",
-      proof_url: req.body.proof_url || "",
-      next_month_plan: req.body.next_month_plan || "",
-      recommendations: req.body.recommendations || "",
-      status: "approved",
-      evaluation_score: 95
-    };
-
-    db.monthly_reports.push(newReport);
-    saveDB(db);
-
+    const newReport = await insertMonthlyReportToDb(req.body);
     res.json({ success: true, message: "Nộp báo cáo tháng thành công!", data: newReport });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

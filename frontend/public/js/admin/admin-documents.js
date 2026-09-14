@@ -60,14 +60,14 @@ function renderAdminDocumentsTable(searchQuery = '') {
 
   let filtered = adminDocumentsList;
   if (currentDocCategory !== 'all') {
-    filtered = filtered.filter(d => (d.loai_van_ban === currentDocCategory || d.LoaiVanBan === currentDocCategory));
+    filtered = filtered.filter(d => d.category === currentDocCategory);
   }
   if (q) {
     filtered = filtered.filter(d =>
-      strip(d.so_hieu || d.SoHieuVanBan).includes(q) ||
-      strip(d.tieu_de || d.TenVanBan).includes(q) ||
-      strip(d.co_quan_ban_hanh || d.CoQuanBanHanh).includes(q) ||
-      strip(d.nguoi_ky || d.NguoiKy).includes(q)
+      strip(d.reference_number).includes(q) ||
+      strip(d.title).includes(q) ||
+      strip(d.issuer).includes(q) ||
+      strip(d.signer).includes(q)
     );
   }
 
@@ -86,7 +86,7 @@ function renderAdminDocumentsTable(searchQuery = '') {
   };
 
   tbody.innerHTML = filtered.map(d => {
-    const isConHieuLuc = (d.hieu_luc || 'con_hieu_luc') === 'con_hieu_luc';
+    const isConHieuLuc = (d.validity || 'con_hieu_luc') === 'con_hieu_luc';
     const statusBadge = isConHieuLuc
       ? '<span style="background: #ECFDF5; color: #059669; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 11px;"><i class="fa-solid fa-circle-check me-1"></i>Còn hiệu lực</span>'
       : '<span style="background: #F1F5F9; color: #64748B; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px;"><i class="fa-solid fa-ban me-1"></i>Hết hiệu lực</span>';
@@ -94,36 +94,36 @@ function renderAdminDocumentsTable(searchQuery = '') {
     return `
       <tr style="border-bottom: 1px solid #F1F5F9; transition: background 0.15s;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'">
         <td style="padding: 12px; font-weight: 800; color: #002855; white-space: nowrap;">
-          <i class="fa-solid fa-file-pdf text-danger me-2"></i>${escapeHtml(d.so_hieu || d.SoHieuVanBan || 'N/A')}
+          <i class="fa-solid fa-file-pdf text-danger me-2"></i>${escapeHtml(d.reference_number || 'N/A')}
         </td>
         <td style="padding: 12px;">
-          <div style="font-weight: 700; color: #1E293B; margin-bottom: 3px;">${escapeHtml(d.tieu_de || d.TenVanBan || '')}</div>
+          <div style="font-weight: 700; color: #1E293B; margin-bottom: 3px;">${escapeHtml(d.title || '')}</div>
           <div style="font-size: 11.5px; color: #64748B;">
-            Ban hành: <strong>${escapeHtml(d.co_quan_ban_hanh || d.CoQuanBanHanh || 'CĐ TDMU')}</strong> | Người ký: <strong>${escapeHtml(d.nguoi_ky || d.NguoiKy || 'Ban Thường Vụ')}</strong>
+            Ban hành: <strong>${escapeHtml(d.issuer || 'CĐ TDMU')}</strong> | Người ký: <strong>${escapeHtml(d.signer || 'Ban Thường Vụ')}</strong>
           </div>
         </td>
         <td style="padding: 12px; white-space: nowrap;">
-          ${catBadges[d.loai_van_ban || d.LoaiVanBan] || '<span class="badge bg-secondary">Văn bản</span>'}
+          ${catBadges[d.category] || '<span class="badge bg-secondary">Văn bản</span>'}
         </td>
         <td style="padding: 12px; font-size: 12.5px; color: #334155; white-space: nowrap;">
-          ${escapeHtml(d.ngay_ban_hanh || d.NgayBanHanh || '')}
+          ${escapeHtml(d.issued_date || '')}
         </td>
         <td style="padding: 12px; white-space: nowrap;">
           ${statusBadge}
         </td>
         <td style="padding: 12px; text-align: center; white-space: nowrap;">
           <span style="display: inline-flex; align-items: center; gap: 4px; font-weight: 800; color: #059669; background: #ECFDF5; padding: 4px 10px; border-radius: 12px; font-size: 12px;">
-            <i class="fa-solid fa-download"></i> ${d.luot_tai || d.LuotTai || 0}
+            <i class="fa-solid fa-download"></i> ${d.download_count || 0}
           </span>
         </td>
         <td style="padding: 12px; text-align: right; white-space: nowrap;">
-          <a href="/api/documents/download/${d.id || d.MaVanBan}" target="_blank" style="background: #059669; color: white; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11.5px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-right: 4px;" title="Tải về">
+          <a href="/api/documents/download/${d.id}" target="_blank" style="background: #059669; color: white; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11.5px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-right: 4px;" title="Tải về">
             <i class="fa-solid fa-download"></i> Tải về
           </a>
-          <button type="button" onclick="openEditDocumentModal(${d.id || d.MaVanBan})" style="background: white; border: 1px solid #CBD5E1; color: #0284C7; border-radius: 6px; padding: 4px 8px; font-size: 11.5px; cursor: pointer; margin-right: 4px;" title="Chỉnh sửa">
+          <button type="button" onclick="openEditDocumentModal(${d.id})" style="background: white; border: 1px solid #CBD5E1; color: #0284C7; border-radius: 6px; padding: 4px 8px; font-size: 11.5px; cursor: pointer; margin-right: 4px;" title="Chỉnh sửa">
             <i class="fa-solid fa-pen-to-square"></i>
           </button>
-          <button type="button" onclick="deleteAdminDocument(${d.id || d.MaVanBan})" style="background: transparent; border: 1px solid #CBD5E1; color: #EF4444; border-radius: 6px; padding: 4px 8px; font-size: 11.5px; cursor: pointer;" title="Xóa văn bản">
+          <button type="button" onclick="deleteAdminDocument(${d.id})" style="background: transparent; border: 1px solid #CBD5E1; color: #EF4444; border-radius: 6px; padding: 4px 8px; font-size: 11.5px; cursor: pointer;" title="Xóa văn bản">
             <i class="fa-solid fa-trash-can"></i>
           </button>
         </td>
@@ -147,18 +147,21 @@ function openAddDocumentModal() {
 }
 
 function openEditDocumentModal(id) {
-  const doc = adminDocumentsList.find(d => (d.id || d.MaVanBan) === id);
-  if (!doc) return;
+  const doc = adminDocumentsList.find(d => d.id === id);
+  if (!doc) {
+    showToast('Không tìm thấy văn bản để chỉnh sửa (dữ liệu đã hết hiệu lực, vui lòng tải lại kho văn bản).', 'error');
+    return;
+  }
 
   editingDocId = id;
-  document.getElementById('modal_doc_title_header').innerText = `Chỉnh Sửa Văn Bản: ${doc.so_hieu || doc.SoHieuVanBan || ''}`;
-  document.getElementById('doc_so_hieu_input').value = doc.so_hieu || doc.SoHieuVanBan || '';
-  document.getElementById('doc_tieu_de_input').value = doc.tieu_de || doc.TenVanBan || '';
-  document.getElementById('doc_loai_select').value = doc.loai_van_ban || doc.LoaiVanBan || 'tuyentruyen';
-  document.getElementById('doc_co_quan_input').value = doc.co_quan_ban_hanh || doc.CoQuanBanHanh || 'Ban Thường Vụ Công Đoàn TDMU';
-  document.getElementById('doc_nguoi_ky_input').value = doc.nguoi_ky || doc.NguoiKy || 'TS. Lê Thị Kim Út';
-  document.getElementById('doc_ngay_input').value = doc.ngay_ban_hanh || doc.NgayBanHanh || new Date().toISOString().split('T')[0];
-  document.getElementById('doc_hieu_luc_select').value = doc.hieu_luc || 'con_hieu_luc';
+  document.getElementById('modal_doc_title_header').innerText = `Chỉnh Sửa Văn Bản: ${doc.reference_number || ''}`;
+  document.getElementById('doc_so_hieu_input').value = doc.reference_number || '';
+  document.getElementById('doc_tieu_de_input').value = doc.title || '';
+  document.getElementById('doc_loai_select').value = doc.category || 'tuyentruyen';
+  document.getElementById('doc_co_quan_input').value = doc.issuer || 'Ban Thường Vụ Công Đoàn TDMU';
+  document.getElementById('doc_nguoi_ky_input').value = doc.signer || 'TS. Lê Thị Kim Út';
+  document.getElementById('doc_ngay_input').value = doc.issued_date || new Date().toISOString().split('T')[0];
+  document.getElementById('doc_hieu_luc_select').value = doc.validity || 'con_hieu_luc';
   document.getElementById('doc_file_input').value = '';
   document.getElementById('modal_document_form').style.display = 'flex';
 }
@@ -169,16 +172,16 @@ function closeDocumentModal() {
 }
 
 async function submitDocumentForm() {
-  const so_hieu = (document.getElementById('doc_so_hieu_input')?.value || '').trim();
-  const tieu_de = (document.getElementById('doc_tieu_de_input')?.value || '').trim();
-  const loai_van_ban = document.getElementById('doc_loai_select')?.value || 'tuyentruyen';
-  const co_quan_ban_hanh = (document.getElementById('doc_co_quan_input')?.value || '').trim();
-  const nguoi_ky = (document.getElementById('doc_nguoi_ky_input')?.value || '').trim();
-  const ngay_ban_hanh = document.getElementById('doc_ngay_input')?.value;
-  const hieu_luc = document.getElementById('doc_hieu_luc_select')?.value || 'con_hieu_luc';
+  const reference_number = (document.getElementById('doc_so_hieu_input')?.value || '').trim();
+  const title = (document.getElementById('doc_tieu_de_input')?.value || '').trim();
+  const category = document.getElementById('doc_loai_select')?.value || 'tuyentruyen';
+  const issuer = (document.getElementById('doc_co_quan_input')?.value || '').trim();
+  const signer = (document.getElementById('doc_nguoi_ky_input')?.value || '').trim();
+  const issued_date = document.getElementById('doc_ngay_input')?.value;
+  const validity = document.getElementById('doc_hieu_luc_select')?.value || 'con_hieu_luc';
   const fileInput = document.getElementById('doc_file_input');
 
-  if (!so_hieu || !tieu_de) {
+  if (!reference_number || !title) {
     alert('⚠️ Vui lòng nhập đầy đủ Số hiệu và Trích yếu văn bản!');
     return;
   }
@@ -197,13 +200,13 @@ async function submitDocumentForm() {
   }
 
   const payload = {
-    so_hieu,
-    tieu_de,
-    loai_van_ban,
-    co_quan_ban_hanh,
-    nguoi_ky,
-    ngay_ban_hanh,
-    hieu_luc,
+    reference_number,
+    title,
+    category,
+    issuer,
+    signer,
+    issued_date,
+    validity,
     fileName,
     fileBase64
   };
@@ -231,7 +234,7 @@ async function submitDocumentForm() {
 }
 
 async function deleteAdminDocument(id) {
-  if (!confirm('Xác nhận xóa văn bản này khỏi hệ thống lưu trữ?')) return;
+  if (!(await confirmModal('Xác nhận xóa văn bản này khỏi hệ thống lưu trữ?'))) return;
   try {
     const res = await fetch(`/api/documents/${id}`, { method: 'DELETE' }).then(r => r.json());
     if (res.success) {

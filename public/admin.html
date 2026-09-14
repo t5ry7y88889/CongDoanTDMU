@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=1788874000000">
+  <link rel="stylesheet" href="css/style.css?v=1789350000000">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
@@ -536,6 +536,42 @@
       margin-left: 72px !important;
     }
   
+    /* PHASE C: TOAST & CONFIRM MODAL POLISH */
+    @keyframes tdmu-spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes tdmu-shimmer {
+      0% { background-position: -400px 0; }
+      100% { background-position: 400px 0; }
+    }
+    main.admin-main section[id^="tab_"] table td,
+    main.admin-main section[id^="tab_"] table th,
+    #admin_main_content table td,
+    .admin-tab-content table td {
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      max-width: 100%;
+      vertical-align: middle;
+    }
+    .skeleton-loader {
+      background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 37%, #F1F5F9 63%);
+      background-size: 800px 100%;
+      animation: tdmu-shimmer 1.4s infinite linear;
+      border-radius: 6px;
+      height: 14px;
+      margin: 4px 0;
+      display: block;
+      width: 100%;
+    }
+    .tdmu-toast-container-fallback {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+    }
   
   </style>
   <link rel="stylesheet" href="libs/tui-pagination/tui-pagination.min.css">
@@ -638,16 +674,6 @@
         </div>
 
         <div class="header-right">
-          <!-- Database Live Badge -->
-          <span class="header-status-badge" style="background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0;">
-            <i class="fa-solid fa-database text-success"></i> MSSQL Server (15 Bảng 3NF)
-          </span>
-
-          <!-- AI Engine Live Badge -->
-          <span id="global_ai_status_badge" class="header-status-badge" style="background: #EFF6FF; color: #1E40AF; border: 1px solid #BFDBFE;">
-            <i class="fa-solid fa-bolt text-primary"></i> Cổng Tác Nghiệp Đa Kênh
-          </span>
-
           <!-- User Role Switcher -->
           <div class="user-profile-badge">
             <div class="user-avatar-circle">KU</div>
@@ -661,8 +687,9 @@
             </div>
           </div>
 
-          <!-- Settings Button -->
-          <button type="button" class="btn-header-action" onclick="openSystemSettingsModal()" title="Cài đặt hệ thống tòa soạn">
+          <!-- Settings Button with Live System Status Dot -->
+          <button type="button" class="btn-header-action" onclick="openSystemSettingsModal()" title="Cấu hình hệ thống tòa soạn & trạng thái dịch vụ">
+            <span id="global_status_dot" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #34D399; margin-right: 5px; box-shadow: 0 0 0 3px rgba(52,211,153,0.2);"></span>
             <i class="fa-solid fa-gear"></i>
           </button>
 
@@ -915,7 +942,14 @@
           <button type="button" id="tab_btn_schedule" onclick="switchComposerTab('schedule')" style="background: transparent; color: #64748B; border: none; border-bottom: 3px solid transparent; padding: 15px 18px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
             <i class="fa-regular fa-clock" style="color: #8B5CF6;"></i> ⏰ Hẹn Lịch Đăng
           </button>
-          <div style="margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 12px; color: #64748B; font-weight: 700; padding: 10px 0;">
+          <div style="margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 12px; color: #64748B; font-weight: 700; padding: 10px 0; flex-wrap: wrap;">
+            <button type="button" onclick="restoreComposerAutosave()" title="Tải bản thảo tự động lưu gần nhất vào khung soạn thảo" style="background: #F0F9FF; border: 1px solid #BAE6FD; color: #0369A1; border-radius: 6px; padding: 3px 10px; font-size: 11px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+              <i class="fa-solid fa-clock-rotate-left"></i> Tải Bản Thảo
+            </button>
+            <button type="button" onclick="resetComposerAutosave()" title="Xóa bản thảo tự động lưu và bắt đầu soạn mới" style="background: white; border: 1px solid #CBD5E1; color: #475569; border-radius: 6px; padding: 3px 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+              <i class="fa-solid fa-broom"></i> Xóa Bản Thảo
+            </button>
+            <span id="composer_last_saved" style="color: #94A3B8; font-size: 11px; font-weight: 600;"></span>
             <span id="composer_word_count">0 từ</span>
             <span>&bull;</span>
             <span id="composer_read_time">~0 phút đọc</span>
@@ -946,11 +980,14 @@
             <button type="button" onclick="runComposerQuickTool('expand')" style="background: rgba(148, 163, 184, 0.2); border: 1px solid #64748B; color: #E2E8F0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">✨ Mở Rộng</button>
           </div>
           <div style="margin-bottom: 16px;">
+            <div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px;"><i class="fa-solid fa-heading me-1" style="color: #0284C7;"></i> Tiêu Đề Báo Chí (Headline) — Nhấn vào để viết tiêu đề, nêu bật sự kiện + con số</div>
             <input type="text" id="composer_title_input" placeholder="Tiêu đề bài báo báo chí (Headline)..." style="width: 100%; border: none; outline: none; font-size: 26px; font-weight: 900; color: #002855; font-family: 'Plus Jakarta Sans', Georgia, serif; padding: 0; background: transparent; line-height: 1.3;" oninput="updateComposerMetrics()">
           </div>
           <div style="margin-bottom: 20px;">
+            <div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px;"><i class="fa-solid fa-align-left me-1" style="color: #0284C7;"></i> Sapo — Đoạn Mở Đầu / Deck (Tóm lược 5W1H: Ai, Việc gì, Khi nào, Ở đâu, Vì sao, Như thế nào)</div>
             <textarea id="composer_sapo_input" rows="2" placeholder="Đoạn mở đầu Sapo 5W1H (Deck): Tóm lược thời gian, địa điểm, sự kiện và thông điệp trọng tâm..." style="width: 100%; border: none; border-left: 3.5px solid #0284C7; background: #F8FAFC; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 14px; font-weight: 600; color: #334155; line-height: 1.6; outline: none; resize: vertical; box-sizing: border-box; font-family: inherit;" oninput="updateComposerMetrics()"></textarea>
           </div>
+          <div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px;"><i class="fa-solid fa-newspaper me-1" style="color: #0284C7;"></i> Thân Bài Báo Chí — Gõ nội dung hoặc bấm các nút định dạng bên dưới để bôi đậm, chèn đề mục H2, trích dẫn, ảnh</div>
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; margin-bottom: 20px; flex-wrap: wrap;">
             <button type="button" onclick="execComposerFormat('bold')" style="background: white; border: 1px solid #CBD5E1; padding: 5px 12px; border-radius: 4px; font-weight: 800; font-size: 12px; cursor: pointer;">B</button>
             <button type="button" onclick="execComposerFormat('italic')" style="background: white; border: 1px solid #CBD5E1; padding: 5px 12px; border-radius: 4px; font-style: italic; font-size: 12px; cursor: pointer;">I</button>
@@ -1551,12 +1588,45 @@
   </div>
 
   <!-- MODALS -->
-  <div class="modal-backdrop" id="system_settings_modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 9999;">
-    <div style="background: white; border-radius: 12px; padding: 24px; max-width: 500px; width: 100%;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 18px; font-weight: 800; color: #003865; margin: 0;"><i class="fa-solid fa-gear"></i> Cấu Hình Cài Đặt Hệ Thống AI</h3>
+  <div class="modal-backdrop" id="system_settings_modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 9998; backdrop-filter: blur(3px);">
+    <div style="background: white; border-radius: 12px; padding: 24px; max-width: 520px; width: 100%; max-height: 92vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+        <h3 style="font-size: 18px; font-weight: 800; color: #003865; margin: 0;"><i class="fa-solid fa-gear"></i> Cấu Hình Hệ Thống &amp; Trạng Thái Dịch Vụ</h3>
         <button onclick="closeSystemSettingsModal()" style="background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
       </div>
+
+      <!-- SYSTEM STATUS -->
+      <div style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; margin-bottom: 18px;">
+        <div style="font-size: 12px; font-weight: 800; color: #002855; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px;"><i class="fa-solid fa-heart-pulse text-primary me-1"></i> Trạng Thái Hệ Thống</div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+            <span style="font-size: 13px; font-weight: 700; color: #334155;"><i class="fa-solid fa-database me-2 text-success"></i> Cơ sở dữ liệu MSSQL Server</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px; background: #ECFDF5; color: #065F46; padding: 4px 10px; border-radius: 12px; font-size: 11.5px; font-weight: 800; border: 1px solid #A7F3D0; white-space: nowrap;">
+              <span style="width: 7px; height: 7px; border-radius: 50%; background: #10B981; display: inline-block;"></span> 15 Bảng 3NF Đang Kết Nối
+            </span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+            <span style="font-size: 13px; font-weight: 700; color: #334155;"><i class="fa-solid fa-bolt me-2 text-primary"></i> Cổng Tác Nghiệp Đa Kênh AI</span>
+            <span id="settings_ai_status_badge" style="display: inline-flex; align-items: center; gap: 6px; background: #EFF6FF; color: #1E40AF; padding: 4px 10px; border-radius: 12px; font-size: 11.5px; font-weight: 800; border: 1px solid #BFDBFE; white-space: nowrap;">
+              <span style="width: 7px; height: 7px; border-radius: 50%; background: #34D399; display: inline-block;"></span> Cổng Trực Tuyến
+            </span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+            <span style="font-size: 13px; font-weight: 700; color: #334155;"><i class="fa-brands fa-google me-2" style="color: #1E40AF;"></i> Gemini 2.5 Flash Live</span>
+            <span id="settings_gemini_status" style="display: inline-flex; align-items: center; gap: 6px; background: #FEF3C7; color: #92400E; padding: 4px 10px; border-radius: 12px; font-size: 11.5px; font-weight: 800; border: 1px solid #FDE68A; white-space: nowrap;">
+              <i class="fa-solid fa-triangle-exclamation me-1"></i> Chưa cấu hình
+            </span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+            <span style="font-size: 13px; font-weight: 700; color: #334155;"><i class="fa-solid fa-bolt me-2" style="color: #D97706;"></i> Groq (AI Inference)</span>
+            <span id="settings_groq_status" style="display: inline-flex; align-items: center; gap: 6px; background: #FEF3C7; color: #92400E; padding: 4px 10px; border-radius: 12px; font-size: 11.5px; font-weight: 800; border: 1px solid #FDE68A; white-space: nowrap;">
+              <i class="fa-solid fa-triangle-exclamation me-1"></i> Chưa cấu hình
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- API KEYS -->
       <div style="margin-bottom: 12px;">
         <label style="display: block; font-weight: 700; color: #003865; font-size: 13px; margin-bottom: 4px;"><i class="fa-solid fa-key"></i> Google Gemini API Key:</label>
         <input type="password" id="settings_api_key_input" placeholder="Dán Gemini API Key (AIzaSy...)" style="width: 100%; padding: 8px; border: 1px solid #CBD5E1; border-radius: 6px; box-sizing: border-box;">
@@ -1618,20 +1688,20 @@
     </div>
   </div>
 
-  <script src="js/api.js?v=1788874000000"></script>
+  <script src="js/api.js?v=1789350000000"></script>
   <script src="libs/tui-pagination/tui-pagination.min.js"></script>
-  <script src="js/pagination.js?v=1788874000000"></script>
-  <script src="js/admin/admin-ui.js?v=1788874000000"></script>
-  <script src="js/admin/admin-articles.js?v=1788874000000"></script>
-  <script src="js/admin/admin-reports.js?v=1788874000000"></script>
-  <script src="js/admin/admin-welfare.js?v=1788874000000"></script>
-  <script src="js/admin/admin-feedback.js?v=1788874000000"></script>
-  <script src="js/admin/admin-documents.js?v=1788874000000"></script>
-  <script src="js/admin/admin-templates.js?v=1788874000000"></script>
-  <script src="js/admin/admin-studio.js?v=1788874000000"></script>
-  <script src="js/admin/admin-editor.js?v=1788874000000"></script>
-  <script src="js/admin/admin-copilot.js?v=1788874000000"></script>
-<script src="js/admin.js?v=1788874000000"></script>
+  <script src="js/pagination.js?v=1789350000000"></script>
+  <script src="js/admin/admin-ui.js?v=1789350000000"></script>
+  <script src="js/admin/admin-articles.js?v=1789350000000"></script>
+  <script src="js/admin/admin-reports.js?v=1789350000000"></script>
+  <script src="js/admin/admin-welfare.js?v=1789350000000"></script>
+  <script src="js/admin/admin-feedback.js?v=1789350000000"></script>
+  <script src="js/admin/admin-documents.js?v=1789350000000"></script>
+  <script src="js/admin/admin-templates.js?v=1789350000000"></script>
+  <script src="js/admin/admin-studio.js?v=1789350000000"></script>
+  <script src="js/admin/admin-editor.js?v=1789350000000"></script>
+  <script src="js/admin/admin-copilot.js?v=1789350000000"></script>
+<script src="js/admin.js?v=1789350000000"></script>
 
   <!-- MODAL HEN LICH XUAT BAN AUTO-PILOT -->
   <div id="modal_ap_schedule" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.75);z-index:99999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
@@ -1810,6 +1880,54 @@
         <button type="button" onclick="closeDocumentModal()" style="padding: 9px 16px; background: #F1F5F9; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; color: #475569;">Hủy</button>
         <button type="button" onclick="submitDocumentForm()" style="padding: 9px 20px; background: #059669; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer;">
           <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Văn Bản
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL SỬA / THÊM BÀI VIẾT (Article Create/Edit) -->
+  <div id="article_edit_modal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.75); z-index: 99999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: white; border-radius: 14px; width: 640px; max-width: 95vw; padding: 28px; box-shadow: 0 25px 50px rgba(0,0,0,0.35); max-height: 90vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 id="modal_article_heading" style="margin: 0; font-size: 18px; font-weight: 800; color: #002855;">
+          <i class="fa-solid fa-file-pen text-primary me-2"></i>Soạn Thảo / Chỉnh Sửa Bài Viết
+        </h2>
+        <button type="button" onclick="closeArticleEditModal()" style="background: none; border: none; font-size: 20px; color: #64748B; cursor: pointer;">&times;</button>
+      </div>
+      <input type="hidden" id="edit_article_id">
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 12.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 5px;">Tiêu Đề Bài Viết (*):</label>
+        <input type="text" id="edit_title" placeholder="Nhập tiêu đề bài viết..." style="width: 100%; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+        <div>
+          <label style="font-size: 12.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 5px;">Chuyên Mục:</label>
+          <select id="edit_category" style="width: 100%; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+            <option value="Hoạt Động Phong Trào">Hoạt Động Phong Trào</option>
+            <option value="Thông Báo Chỉ Đạo">Thông Báo Chỉ Đạo</option>
+            <option value="Gương Sáng Đoàn Viên">Gương Sáng Đoàn Viên</option>
+            <option value="Chăm Lo Đời Sống">Chăm Lo Đời Sống</option>
+            <option value="Nữ Công & Gia Đình">Nữ Công &amp; Gia Đình</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size: 12.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 5px;">Tác Giả:</label>
+          <input type="text" id="edit_author" value="Cán Bộ Công Đoàn TDMU" style="width: 100%; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+        </div>
+      </div>
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 12.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 5px;">Tóm Tắt (Hiển thị trang chủ):</label>
+        <textarea id="edit_summary" rows="2" placeholder="Mô tả ngắn gọn nội dung..." style="width: 100%; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; box-sizing: border-box; resize: vertical;"></textarea>
+      </div>
+      <div style="margin-bottom: 18px;">
+        <label style="font-size: 12.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 5px;">Nội Dung Chi Tiết (HTML):</label>
+        <textarea id="edit_content_tinymce" rows="10" placeholder="Viết nội dung bài báo..." style="width: 100%; padding: 10px 12px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; box-sizing: border-box; resize: vertical; font-family: inherit;"></textarea>
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button type="button" onclick="closeArticleEditModal()" style="padding: 9px 16px; background: #F1F5F9; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; color: #475569;">Hủy</button>
+        <button type="button" onclick="saveManualArticle()" style="padding: 9px 20px; background: #002855; color: #FCD34D; border: none; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer;">
+          <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Bài Viết
         </button>
       </div>
     </div>

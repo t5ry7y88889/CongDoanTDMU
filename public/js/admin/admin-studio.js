@@ -581,7 +581,7 @@ async function publishComposerLive() {
     return;
   }
 
-  if (!confirm('Xác nhận xuất bản bài báo "' + title + '" lên Website Cổng Thông Tin Công Đoàn?')) return;
+  if (!(await confirmModal('Xác nhận xuất bản bài báo "' + title + '" lên Website Cổng Thông Tin Công Đoàn?'))) return;
 
   const sapo = (document.getElementById('composer_sapo_input')?.value || '').trim();
   const content = (document.getElementById('composer_canvas_editor')?.innerHTML || '').trim();
@@ -623,7 +623,10 @@ async function publishComposerChannel(channel) {
   if (!composerState.activeArticleId) {
     await saveComposerDraft();
   }
-  if (!composerState.activeArticleId) return;
+  if (!composerState.activeArticleId) {
+    showToast("Không thể xuất bản vì chưa có bản nháp hợp lệ. Vui lòng kiểm tra lại tiêu đề và nội dung, sau đó nhấn Lưu Nháp trước.", 'warning');
+    return;
+  }
 
   try {
     const res = await fetch('/api/publish/now', {
@@ -668,7 +671,10 @@ async function confirmComposerSchedule() {
   if (!composerState.activeArticleId) {
     await saveComposerDraft();
   }
-  if (!composerState.activeArticleId) return;
+  if (!composerState.activeArticleId) {
+    showToast("Không thể đặt lịch vì chưa có bản nháp hợp lệ. Vui lòng kiểm tra lại tiêu đề và nội dung, sau đó nhấn Lưu Nháp trước.", 'warning');
+    return;
+  }
 
   try {
     const res = await fetch('/api/publish/schedule', {
@@ -757,7 +763,7 @@ async function loadComposerSchedules() {
 
 
 async function publishComposerScheduledNow(schedId, articleId, channel) {
-  if (!confirm("Xuất bản ngay lập tức mà không cần đợi đến giờ hẹn?")) return;
+  if (!(await confirmModal("Xuất bản ngay lập tức mà không cần đợi đến giờ hẹn?"))) return;
   try {
     const res = await fetch('/api/publish/now', {
       method: 'POST',
@@ -778,7 +784,7 @@ async function publishComposerScheduledNow(schedId, articleId, channel) {
 }
 
 async function cancelComposerSchedule(id) {
-  if (!confirm("Hủy lịch hẹn này?")) return;
+  if (!(await confirmModal("Hủy lịch hẹn này?"))) return;
   try {
     await fetch('/api/publish/schedule/' + id, { method: 'DELETE' });
     loadComposerSchedules();
@@ -971,6 +977,11 @@ function saveComposerAutosave() {
       statusBadge.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Đã tự động lưu lúc ' + timeStr;
       statusBadge.style.color = '#059669';
     }
+
+    const lastSaved = document.getElementById('composer_last_saved');
+    if (lastSaved) {
+      lastSaved.innerText = 'Lưu lúc ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    }
   } catch (e) {
     console.warn('[AutoSave Warning]:', e.message);
   }
@@ -1016,9 +1027,43 @@ function restoreComposerAutosave() {
     dismissComposerAutosave();
     updateComposerMetrics();
     logComposerActivity('restore', 'Đã khôi phục thành công bản thảo tự động lưu gần nhất.', 'done');
+
+    const lastSaved = document.getElementById('composer_last_saved');
+    if (lastSaved) {
+      const ts = data.timestamp ? new Date(data.timestamp) : null;
+      lastSaved.innerText = ts ? ('Phục hồi bản lưu lúc ' + ts.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })) : 'Đã tải bản thảo đã lưu';
+    }
+    showToast('📥 Đã tải bản thảo tự động lưu gần nhất về khung soạn thảo!', 'success');
   } catch (e) {
     alert("Không thể khôi phục bản thảo: " + e.message);
   }
+}
+
+async function resetComposerAutosave() {
+  const hasDraft = !!localStorage.getItem(AUTOSAVE_STORAGE_KEY);
+  if (hasDraft) {
+    if (!(await confirmModal('Xác nhận xóa bản thảo tự động lưu và bắt đầu soạn thảo mới?'))) return;
+  }
+
+  localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
+  safeSetVal('composer_title_input', '');
+  safeSetVal('composer_sapo_input', '');
+  const canvas = document.getElementById('composer_canvas_editor');
+  if (canvas) {
+    canvas.innerHTML = '<p style="color: #94A3B8; font-style: italic;">Nội dung bài báo sẽ xuất hiện tại đây khi AI lập bài gốc, hoặc bạn có thể bắt đầu gõ trực tiếp như trên Google Docs...</p>';
+  }
+  dismissComposerAutosave();
+  updateComposerMetrics();
+
+  const statusBadge = document.getElementById('composer_autosave_status');
+  if (statusBadge) {
+    statusBadge.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Đã bắt đầu bản thảo mới';
+    statusBadge.style.color = '#10B981';
+  }
+  const lastSaved = document.getElementById('composer_last_saved');
+  if (lastSaved) lastSaved.innerText = '';
+  logComposerActivity('reset', 'Đã xóa bản thảo tự động lưu cục bộ, khung soạn thảo sạch.', 'done');
+  showToast('🧹 Đã xóa bản thảo và làm sạch khung soạn thảo!', 'success');
 }
 
 function dismissComposerAutosave() {

@@ -240,7 +240,7 @@
       "author": "Auto-Pilot AI",
       "authorId": 1,
       "status": "published",
-      "statusName": "Da Xuat Ban",
+      "statusName": "Đã Xuất Bản",
       "isAiGenerated": true,
       "aiPrompt": "Kỷ Niệm 50 Năm Ngày Thành Lập Công Đoàn và Đại Hội Thi Đua Yêu Nước TDMU",
       "genre": "tin_hoat_dong",
@@ -280,7 +280,133 @@
       "likesCount": 0,
       "sharesCount": 0,
       "createdAt": "2026-09-12T17:30:44.670Z",
-      "publishedAt": "2026-09-12T17:30:44.712Z"
+      "publishedAt": "2026-09-13T11:55:03.000Z"
+    },
+    {
+      "id": 10,
+      "title": "Lập bài báo website truyền thông Công Đoàn TDMU hoàn chỉnh, trang trọng từ hồ sơ tư liệu",
+      "slug": "lap-bai-bao-website-truyen-thong-cong-oan-tdmu-hoan-chinh-trang-trong-tu-ho-so-t-10",
+      "categoryId": 2,
+      "categoryName": "Tin Hoạt Động",
+      "summary": "Nhằm thực hiện thắng lợi các nhiệm vụ trọng tâm công tác năm 2026, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một (TDMU) đã tổ chức triển khai toàn diện các hoạt động chăm lo đời sống vật chất, tinh thần và bảo vệ quyền, lợi ích hợp pháp, chính đáng của đoàn viên, người lao động.",
+      "content": "<h1 class=\"article-title\">Lập bài báo website truyền thông Công Đoàn TDMU hoàn chỉnh, trang trọng từ hồ sơ tư liệu</h1>\n<p class=\"sapo\"><strong>Nhằm thực hiện thắng lợi các nhiệm vụ trọng tâm công tác năm 2026, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một (TDMU) đã tổ chức triển khai toàn diện các hoạt động chăm lo đời sống vật chất, tinh thần và bảo vệ quyền, lợi ích hợp pháp, chính đáng của đoàn viên, người lao động.</strong></p>\n\n<h2>1. Bối cảnh và Ý nghĩa Hoạt động</h2>\n<p>Trong không khí thi đua sôi nổi của toàn thể cán bộ, giảng viên và người lao động Trường Đại học Thủ Dầu Một, hoạt động đã diễn ra với sự tham gia đầy đủ, trách nhiệm của đại diện các Tổ Công đoàn bộ phận cùng đông đảo đoàn viên cơ sở. Đây là sự kiện có ý nghĩa thiết thực nhằm phát huy tinh thần đoàn kết, dân chủ và khát vọng đổi mới sáng tạo trong toàn trường.</p>\n<p>Phát biểu tại chương trình, đại diện Ban Thường vụ Công đoàn trường khẳng định tổ chức Công đoàn luôn giữ vai trò đồng hành tin cậy cùng tập thể sư phạm nhà trường, góp phần xây dựng môi trường giáo dục đại học văn minh, hạnh phúc và phát triển bền vững.</p>\n\n\n\n<h2>2. Nội dung Trọng tâm và Kết quả Triển khai</h2>\n<p>--- BM_01_Don_Gia_Nhap_Cong_Doan.docx --- CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT ĐƠN XIN GIA NHẬP TỔ CHỨC CÔNG ĐOÀN VIỆT NAM Kính gửi: Ban Thường vụ Công đoàn Trường Đại học Thủ Dầu Một; Kính gửi: Ban Chấp hành Tổ Công đoàn bộ phận. Tôi tên là: .......................................................................... Giới tính: .................... Ngày tháng năm sinh: ........................................ Nơi sinh: ............................</p>\n\n<blockquote style=\"border-left: 4px solid #0284C7; padding: 12px 20px; margin: 20px 0; background: #F0F9FF; font-style: italic; color: #0369A1; border-radius: 0 8px 8px 0;\">\n  \"Công đoàn Trường Đại học Thủ Dầu Một luôn kiên định mục tiêu vì quyền lợi thiết thực của đoàn viên, lấy sự hài lòng và hạnh phúc của người lao động làm thước đo cho hiệu quả hoạt động.\"\n</blockquote>\n\n<h2>3. Định hướng Công tác và Quyết tâm Hành động</h2>\n<p>Phát huy những kết quả đã đạt được, Ban Chấp hành Công đoàn kêu gọi toàn thể cán bộ, đoàn viên tiếp tục nỗ lực thi đua Dạy tốt - Học tốt, chủ động sáng tạo trong nghiên cứu khoa học và công tác quản lý, quyết tâm thực hiện thắng lợi mục tiêu năm học 2025 - 2026.</p>",
+      "image": "images/banner.jpg",
+      "author": "Auto-Pilot AI",
+      "authorId": 1,
+      "status": "published",
+      "statusName": "Đã Xuất Bản",
+      "isAiGenerated": true,
+      "aiPrompt": "Lập bài báo website truyền thông Công Đoàn TDMU hoàn chỉnh, trang trọng từ hồ sơ tư liệu.",
+      "genre": "tin_hoat_dong",
+      "packageData": {
+        "facebook": {
+          "caption": "🔔 [TIN TỨC CÔNG ĐOÀN TDMU 2026]\n✨ LẬP BÀI BÁO WEBSITE TRUYỀN THÔNG CÔNG ĐOÀN TDMU HOÀN CHỈNH, TRANG TRỌNG TỪ HỒ SƠ TƯ LIỆU\n\n📌 Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một tiếp tục đẩy mạnh các phong trào thi đua, chăm lo toàn diện đời sống vật chất và tinh thần cho người lao động.\n\n👉 Xem chi tiết bài viết tại Cổng thông tin Công đoàn TDMU!\n#CongDoanTDMU #TDMU2026 #DaiHocThuDauMot #BinhDuong",
+          "photos": []
+        },
+        "zalo": {
+          "message": "[CÔNG ĐOÀN TDMU] Thông báo: Lập bài báo website truyền thông Công Đoàn TDMU hoàn chỉnh, trang trọng từ hồ sơ tư liệu. Kính mời quý Thầy/Cô đoàn viên theo dõi chi tiết tại Cổng thông tin Công đoàn trường. Trân trọng!"
+        }
+      },
+      "photos": [],
+      "viewsCount": 0,
+      "likesCount": 0,
+      "sharesCount": 0,
+      "createdAt": "2026-09-13T15:32:33.986Z",
+      "publishedAt": "2026-09-13T17:13:57.951Z"
+    },
+    {
+      "id": 11,
+      "title": "Công Đoàn TDMU: shlhglihosdg",
+      "slug": "cong-oan-tdmu-shlhglihosdg-11",
+      "categoryId": 2,
+      "categoryName": "Tin Hoạt Động",
+      "summary": "Nhằm thực hiện thắng lợi các nhiệm vụ trọng tâm công tác năm 2026, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một (TDMU) đã tổ chức triển khai toàn diện các hoạt động chăm lo đời sống vật chất, tinh thần và bảo vệ quyền, lợi ích hợp pháp, chính đáng của đoàn viên, người lao động.",
+      "content": "<h1 class=\"article-title\">Công Đoàn TDMU: shlhglihosdg</h1>\n<p class=\"sapo\"><strong>Nhằm thực hiện thắng lợi các nhiệm vụ trọng tâm công tác năm 2026, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một (TDMU) đã tổ chức triển khai toàn diện các hoạt động chăm lo đời sống vật chất, tinh thần và bảo vệ quyền, lợi ích hợp pháp, chính đáng của đoàn viên, người lao động.</strong></p>\n\n<h2>1. Bối cảnh và Ý nghĩa Hoạt động</h2>\n<p>Trong không khí thi đua sôi nổi của toàn thể cán bộ, giảng viên và người lao động Trường Đại học Thủ Dầu Một, hoạt động đã diễn ra với sự tham gia đầy đủ, trách nhiệm của đại diện các Tổ Công đoàn bộ phận cùng đông đảo đoàn viên cơ sở. Đây là sự kiện có ý nghĩa thiết thực nhằm phát huy tinh thần đoàn kết, dân chủ và khát vọng đổi mới sáng tạo trong toàn trường.</p>\n<p>Phát biểu tại chương trình, đại diện Ban Thường vụ Công đoàn trường khẳng định tổ chức Công đoàn luôn giữ vai trò đồng hành tin cậy cùng tập thể sư phạm nhà trường, góp phần xây dựng môi trường giáo dục đại học văn minh, hạnh phúc và phát triển bền vững.</p>\n\n\n\n<h2>2. Nội dung Trọng tâm và Kết quả Triển khai</h2>\n<p>shlhglihosdg</p>\n\n<blockquote style=\"border-left: 4px solid #0284C7; padding: 12px 20px; margin: 20px 0; background: #F0F9FF; font-style: italic; color: #0369A1; border-radius: 0 8px 8px 0;\">\n  \"Công đoàn Trường Đại học Thủ Dầu Một luôn kiên định mục tiêu vì quyền lợi thiết thực của đoàn viên, lấy sự hài lòng và hạnh phúc của người lao động làm thước đo cho hiệu quả hoạt động.\"\n</blockquote>\n\n<h2>3. Định hướng Công tác và Quyết tâm Hành động</h2>\n<p>Phát huy những kết quả đã đạt được, Ban Chấp hành Công đoàn kêu gọi toàn thể cán bộ, đoàn viên tiếp tục nỗ lực thi đua Dạy tốt - Học tốt, chủ động sáng tạo trong nghiên cứu khoa học và công tác quản lý, quyết tâm thực hiện thắng lợi mục tiêu năm học 2025 - 2026.</p>",
+      "image": "images/banner.jpg",
+      "author": "Auto-Pilot AI",
+      "authorId": 1,
+      "status": "draft",
+      "statusName": "Bản Nháp (Auto-Pilot)",
+      "isAiGenerated": true,
+      "aiPrompt": "shlhglihosdg",
+      "genre": "tin_hoat_dong",
+      "packageData": {
+        "facebook": {
+          "caption": "🔔 [TIN TỨC CÔNG ĐOÀN TDMU 2026]\n✨ CÔNG ĐOÀN TDMU: SHLHGLIHOSDG\n\n📌 Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một tiếp tục đẩy mạnh các phong trào thi đua, chăm lo toàn diện đời sống vật chất và tinh thần cho người lao động.\n\n👉 Xem chi tiết bài viết tại Cổng thông tin Công đoàn TDMU!\n#CongDoanTDMU #TDMU2026 #DaiHocThuDauMot #BinhDuong",
+          "photos": []
+        },
+        "zalo": {
+          "message": "[CÔNG ĐOÀN TDMU] Thông báo: Công Đoàn TDMU: shlhglihosdg. Kính mời quý Thầy/Cô đoàn viên theo dõi chi tiết tại Cổng thông tin Công đoàn trường. Trân trọng!"
+        }
+      },
+      "photos": [],
+      "viewsCount": 0,
+      "likesCount": 0,
+      "sharesCount": 0,
+      "createdAt": "2026-09-13T17:12:45.482Z"
+    },
+    {
+      "id": 12,
+      "title": "Công Đoàn TDMU: shlhglihosdg",
+      "slug": "cong-oan-tdmu-shlhglihosdg-12",
+      "categoryId": 2,
+      "categoryName": "Tin Hoạt Động",
+      "summary": "Nhằm thực hiện thắng lợi các nhiệm vụ trọng tâm công tác năm 2026, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một (TDMU) đã tổ chức triển khai toàn diện các hoạt động chăm lo đời sống vật chất, tinh thần và bảo vệ quyền, lợi ích hợp pháp, chính đáng của đoàn viên, người lao động.",
+      "content": "<h1 class=\"article-title\">Công Đoàn TDMU: shlhglihosdg</h1>\n<p class=\"sapo\"><strong>Nhằm thực hiện thắng lợi các nhiệm vụ trọng tâm công tác năm 2026, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một (TDMU) đã tổ chức triển khai toàn diện các hoạt động chăm lo đời sống vật chất, tinh thần và bảo vệ quyền, lợi ích hợp pháp, chính đáng của đoàn viên, người lao động.</strong></p>\n\n<h2>1. Bối cảnh và Ý nghĩa Hoạt động</h2>\n<p>Trong không khí thi đua sôi nổi của toàn thể cán bộ, giảng viên và người lao động Trường Đại học Thủ Dầu Một, hoạt động đã diễn ra với sự tham gia đầy đủ, trách nhiệm của đại diện các Tổ Công đoàn bộ phận cùng đông đảo đoàn viên cơ sở. Đây là sự kiện có ý nghĩa thiết thực nhằm phát huy tinh thần đoàn kết, dân chủ và khát vọng đổi mới sáng tạo trong toàn trường.</p>\n<p>Phát biểu tại chương trình, đại diện Ban Thường vụ Công đoàn trường khẳng định tổ chức Công đoàn luôn giữ vai trò đồng hành tin cậy cùng tập thể sư phạm nhà trường, góp phần xây dựng môi trường giáo dục đại học văn minh, hạnh phúc và phát triển bền vững.</p>\n\n\n\n<h2>2. Nội dung Trọng tâm và Kết quả Triển khai</h2>\n<p>shlhglihosdg</p>\n\n<blockquote style=\"border-left: 4px solid #0284C7; padding: 12px 20px; margin: 20px 0; background: #F0F9FF; font-style: italic; color: #0369A1; border-radius: 0 8px 8px 0;\">\n  \"Công đoàn Trường Đại học Thủ Dầu Một luôn kiên định mục tiêu vì quyền lợi thiết thực của đoàn viên, lấy sự hài lòng và hạnh phúc của người lao động làm thước đo cho hiệu quả hoạt động.\"\n</blockquote>\n\n<h2>3. Định hướng Công tác và Quyết tâm Hành động</h2>\n<p>Phát huy những kết quả đã đạt được, Ban Chấp hành Công đoàn kêu gọi toàn thể cán bộ, đoàn viên tiếp tục nỗ lực thi đua Dạy tốt - Học tốt, chủ động sáng tạo trong nghiên cứu khoa học và công tác quản lý, quyết tâm thực hiện thắng lợi mục tiêu năm học 2025 - 2026.</p>",
+      "image": "images/banner.jpg",
+      "author": "Auto-Pilot AI",
+      "authorId": 1,
+      "status": "draft",
+      "statusName": "Bản Nháp (Auto-Pilot)",
+      "isAiGenerated": true,
+      "aiPrompt": "shlhglihosdg",
+      "genre": "tin_hoat_dong",
+      "packageData": {
+        "facebook": {
+          "caption": "🔔 [TIN TỨC CÔNG ĐOÀN TDMU 2026]\n✨ CÔNG ĐOÀN TDMU: SHLHGLIHOSDG\n\n📌 Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một tiếp tục đẩy mạnh các phong trào thi đua, chăm lo toàn diện đời sống vật chất và tinh thần cho người lao động.\n\n👉 Xem chi tiết bài viết tại Cổng thông tin Công đoàn TDMU!\n#CongDoanTDMU #TDMU2026 #DaiHocThuDauMot #BinhDuong",
+          "photos": []
+        },
+        "zalo": {
+          "message": "[CÔNG ĐOÀN TDMU] Thông báo: Công Đoàn TDMU: shlhglihosdg. Kính mời quý Thầy/Cô đoàn viên theo dõi chi tiết tại Cổng thông tin Công đoàn trường. Trân trọng!"
+        }
+      },
+      "photos": [],
+      "viewsCount": 0,
+      "likesCount": 0,
+      "sharesCount": 0,
+      "createdAt": "2026-09-13T17:13:12.962Z"
+    },
+    {
+      "id": 13,
+      "title": "Công Đoàn TDMU: shlhglihosdg",
+      "slug": "cong-oan-tdmu-shlhglihosdg-13",
+      "categoryId": 2,
+      "categoryName": "Tin Hoạt Động",
+      "summary": "Nhằm thực hiện thắng lợi các nhiệm vụ trọng tâm công tác năm 2026, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một (TDMU) đã tổ chức triển khai toàn diện các hoạt động chăm lo đời sống vật chất, tinh thần và bảo vệ quyền, lợi ích hợp pháp, chính đáng của đoàn viên, người lao động.",
+      "content": "<h1 class=\"article-title\">Công Đoàn TDMU: shlhglihosdg</h1>\n<p class=\"sapo\"><strong>Nhằm thực hiện thắng lợi các nhiệm vụ trọng tâm công tác năm 2026, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một (TDMU) đã tổ chức triển khai toàn diện các hoạt động chăm lo đời sống vật chất, tinh thần và bảo vệ quyền, lợi ích hợp pháp, chính đáng của đoàn viên, người lao động.</strong></p>\n\n<h2>1. Bối cảnh và Ý nghĩa Hoạt động</h2>\n<p>Trong không khí thi đua sôi nổi của toàn thể cán bộ, giảng viên và người lao động Trường Đại học Thủ Dầu Một, hoạt động đã diễn ra với sự tham gia đầy đủ, trách nhiệm của đại diện các Tổ Công đoàn bộ phận cùng đông đảo đoàn viên cơ sở. Đây là sự kiện có ý nghĩa thiết thực nhằm phát huy tinh thần đoàn kết, dân chủ và khát vọng đổi mới sáng tạo trong toàn trường.</p>\n<p>Phát biểu tại chương trình, đại diện Ban Thường vụ Công đoàn trường khẳng định tổ chức Công đoàn luôn giữ vai trò đồng hành tin cậy cùng tập thể sư phạm nhà trường, góp phần xây dựng môi trường giáo dục đại học văn minh, hạnh phúc và phát triển bền vững.</p>\n\n\n\n<h2>2. Nội dung Trọng tâm và Kết quả Triển khai</h2>\n<p>shlhglihosdg</p>\n\n<blockquote style=\"border-left: 4px solid #0284C7; padding: 12px 20px; margin: 20px 0; background: #F0F9FF; font-style: italic; color: #0369A1; border-radius: 0 8px 8px 0;\">\n  \"Công đoàn Trường Đại học Thủ Dầu Một luôn kiên định mục tiêu vì quyền lợi thiết thực của đoàn viên, lấy sự hài lòng và hạnh phúc của người lao động làm thước đo cho hiệu quả hoạt động.\"\n</blockquote>\n\n<h2>3. Định hướng Công tác và Quyết tâm Hành động</h2>\n<p>Phát huy những kết quả đã đạt được, Ban Chấp hành Công đoàn kêu gọi toàn thể cán bộ, đoàn viên tiếp tục nỗ lực thi đua Dạy tốt - Học tốt, chủ động sáng tạo trong nghiên cứu khoa học và công tác quản lý, quyết tâm thực hiện thắng lợi mục tiêu năm học 2025 - 2026.</p>",
+      "image": "images/banner.jpg",
+      "author": "Auto-Pilot AI",
+      "authorId": 1,
+      "status": "published",
+      "statusName": "Đã Xuất Bản",
+      "isAiGenerated": true,
+      "aiPrompt": "shlhglihosdg",
+      "genre": "tin_hoat_dong",
+      "packageData": {
+        "facebook": {
+          "caption": "🔔 [TIN TỨC CÔNG ĐOÀN TDMU 2026]\n✨ CÔNG ĐOÀN TDMU: SHLHGLIHOSDG\n\n📌 Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một tiếp tục đẩy mạnh các phong trào thi đua, chăm lo toàn diện đời sống vật chất và tinh thần cho người lao động.\n\n👉 Xem chi tiết bài viết tại Cổng thông tin Công đoàn TDMU!\n#CongDoanTDMU #TDMU2026 #DaiHocThuDauMot #BinhDuong",
+          "photos": []
+        },
+        "zalo": {
+          "message": "[CÔNG ĐOÀN TDMU] Thông báo: Công Đoàn TDMU: shlhglihosdg. Kính mời quý Thầy/Cô đoàn viên theo dõi chi tiết tại Cổng thông tin Công đoàn trường. Trân trọng!"
+        }
+      },
+      "photos": [],
+      "viewsCount": 0,
+      "likesCount": 0,
+      "sharesCount": 0,
+      "createdAt": "2026-09-13T17:13:18.832Z",
+      "publishedAt": "2026-09-13T17:13:24.724Z"
     }
   ],
   "monthly_reports": [
@@ -1071,8 +1197,8 @@
       "content": "Kính gửi Ban Thường vụ, Viện CNS đề xuất tích hợp chữ ký số và biểu mẫu trực tuyến để giảm thiểu in ấn giấy tờ báo cáo tháng.",
       "submitted_at": "2026-08-29T14:15:00Z",
       "status": "resolved",
-      "response": "Ban Thường vụ đã ghi nhận và giao Ban Tuyên giáo phối hợp triển khai phân hệ Kho biểu mẫu điện tử trên Cổng thông tin mới.",
-      "resolved_by": "TS. Lê Thị Kim Út",
+      "response": "Đã tiếp nhận và đang xử lý.",
+      "resolved_by": "TS. Lê Thị Kim Út (Ban Thường Vụ)",
       "resolved_at": "2026-08-30T10:00:00Z"
     },
     {
@@ -1224,13 +1350,27 @@
       "articleId": 9,
       "channel": "web",
       "scheduledAt": "2026-09-12T21:30:44.676Z",
-      "status": "pending",
+      "status": "done",
       "title": "Kỷ Niệm 50 Năm Ngày Thành Lập Công Đoàn và Đại Hội Thi Đua Yêu Nước TDMU",
       "contentSnapshot": "",
       "facebookSnapshot": {},
       "zaloSnapshot": {},
       "photos": [],
-      "createdAt": "2026-09-12T17:30:44.692Z"
+      "createdAt": "2026-09-12T17:30:44.692Z",
+      "executedAt": "2026-09-13T11:55:03.000Z"
+    },
+    {
+      "id": 5,
+      "articleId": 7,
+      "channel": "web",
+      "scheduledAt": "2026-09-25T05:01:00.000Z",
+      "status": "pending",
+      "title": "Lập bài báo website truyền thông Công Đoàn TDMU hoàn chỉnh, trang trọng từ hồ sơ tư liệu",
+      "contentSnapshot": "",
+      "facebookSnapshot": {},
+      "zaloSnapshot": {},
+      "photos": [],
+      "createdAt": "2026-09-13T16:02:27.346Z"
     }
   ],
   "documents": [
@@ -1362,8 +1502,8 @@
       "nguoi_ky": "Chủ Tịch Quốc Hội",
       "dung_luong": "5.2 MB",
       "DungLuong": "5.2 MB",
-      "luot_tai": 8921,
-      "LuotTai": 8921,
+      "luot_tai": 8922,
+      "LuotTai": 8922,
       "hieu_luc": "con_hieu_luc"
     },
     {
@@ -1516,6 +1656,82 @@
       "action": "auto_published",
       "executedAt": "2026-09-12T18:15:25.829Z",
       "createdAt": "2026-09-12T18:15:25.829Z"
+    },
+    {
+      "id": 12,
+      "scheduleId": 4,
+      "articleId": 9,
+      "channel": "web",
+      "action": "auto_published",
+      "executedAt": "2026-09-13T11:55:03.000Z",
+      "createdAt": "2026-09-13T11:55:03.000Z"
+    },
+    {
+      "id": 13,
+      "articleId": 7,
+      "channel": "facebook",
+      "action": "published_now",
+      "result": {
+        "postId": "FB_1789313609409_9252",
+        "channel": "Facebook Fanpage TDMU",
+        "status": "delivered",
+        "url": "https://facebook.com/tdmu.edu.vn/posts/FB_1789313609409_9252"
+      },
+      "publishedAt": "2026-09-13T15:33:29.409Z",
+      "createdAt": "2026-09-13T15:33:29.409Z"
+    },
+    {
+      "id": 14,
+      "scheduleId": 5,
+      "articleId": 7,
+      "channel": "web",
+      "action": "scheduled",
+      "scheduledAt": "2026-09-25T05:01:00.000Z",
+      "createdAt": "2026-09-13T16:02:27.346Z"
+    },
+    {
+      "id": 15,
+      "articleId": 13,
+      "channel": "web",
+      "action": "published_now",
+      "result": {
+        "url": "/baiviet?id=13"
+      },
+      "publishedAt": "2026-09-13T17:13:24.724Z",
+      "createdAt": "2026-09-13T17:13:24.724Z"
+    },
+    {
+      "id": 16,
+      "articleId": 10,
+      "channel": "web",
+      "action": "published_now",
+      "result": {
+        "url": "/baiviet?id=10"
+      },
+      "publishedAt": "2026-09-13T17:13:55.967Z",
+      "createdAt": "2026-09-13T17:13:55.967Z"
+    },
+    {
+      "id": 17,
+      "articleId": 10,
+      "channel": "web",
+      "action": "published_now",
+      "result": {
+        "url": "/baiviet?id=10"
+      },
+      "publishedAt": "2026-09-13T17:13:56.967Z",
+      "createdAt": "2026-09-13T17:13:56.967Z"
+    },
+    {
+      "id": 18,
+      "articleId": 10,
+      "channel": "web",
+      "action": "published_now",
+      "result": {
+        "url": "/baiviet?id=10"
+      },
+      "publishedAt": "2026-09-13T17:13:57.951Z",
+      "createdAt": "2026-09-13T17:13:57.951Z"
     }
   ],
   "templates": [
@@ -1529,7 +1745,7 @@
       "file_url": "uploads/templates/BM_01_Don_Gia_Nhap_Cong_Doan.docx",
       "file_type": "docx",
       "file_size": "4.1 KB",
-      "downloads_count": 146,
+      "downloads_count": 147,
       "created_at": "2026-09-01T08:00:00.000Z"
     },
     {

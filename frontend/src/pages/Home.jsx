@@ -264,17 +264,17 @@ const Home = () => {
                 {documents.length > 0 ? (
                   documents.map((doc) => (
                     <Link
-                      to={`/van-ban#${doc.loai_van_ban || 'tuyen-truyen'}`}
+                      to={`/van-ban#${doc.category || 'tuyen-truyen'}`}
                       className="list-group-vb-item d-flex justify-content-between align-items-center"
                       key={doc.id}
                     >
                       <span>
                         <i className="fa-regular fa-file-pdf text-danger me-2 fa-lg"></i>
-                        <strong>[{doc.so_hieu}]</strong> {doc.tieu_de}
+                        <strong>[{doc.reference_number}]</strong> {doc.title}
                       </span>
                       <span className="badge bg-light text-primary border">
                         <i className="fa-solid fa-download me-1"></i>
-                        {doc.dung_luong || '1.5 MB'}
+                        {doc.file_size || '1.5 MB'}
                       </span>
                     </Link>
                   ))

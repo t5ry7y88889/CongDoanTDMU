@@ -3,25 +3,16 @@ const router = express.Router();
 const path = require('path');
 const fs = require('fs');
 const { loadDB, saveDB } = require('../db');
-const { getDocumentsFromDb } = require('../mssql_db');
+const { getDocumentsFromDb, insertDocumentToDb, updateDocumentInDb, deleteDocumentFromDb } = require('../mssql_db');
 
 function stripVietnamese(str) {
   if (!str) return '';
   return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
 }
 
-const categoryNames = {
-  'tuyentruyen': 'Công văn tuyên truyền',
-  'kehoach': 'Kế hoạch hoạt động',
-  'luat': 'Văn bản luật',
-  'quyetdinh': 'Quyết định',
-  'huongdan': 'Hướng dẫn nghiệp vụ',
-  'thongbao': 'Thông báo kết luận'
-};
-
 router.get('/', async (req, res) => {
   try {
-    const { category, search, hieu_luc } = req.query;
+    const { category, search, validity } = req.query;
     let list = [];
     
     // First try MSSQL
@@ -37,22 +28,22 @@ router.get('/', async (req, res) => {
       list = db.documents || [];
 
       if (category && category !== 'all') {
-        list = list.filter(d => (d.loai_van_ban === category || d.LoaiVanBan === category));
+        list = list.filter(d => d.category === category);
       }
 
       if (search) {
         const q = stripVietnamese(search.trim());
         list = list.filter(d =>
-          stripVietnamese(d.so_hieu || d.SoHieuVanBan).includes(q) ||
-          stripVietnamese(d.tieu_de || d.TenVanBan).includes(q) ||
-          stripVietnamese(d.co_quan_ban_hanh || d.CoQuanBanHanh).includes(q) ||
-          stripVietnamese(d.nguoi_ky || d.NguoiKy).includes(q)
+          stripVietnamese(d.reference_number).includes(q) ||
+          stripVietnamese(d.title).includes(q) ||
+          stripVietnamese(d.issuer).includes(q) ||
+          stripVietnamese(d.signer).includes(q)
         );
       }
     }
 
-    if (hieu_luc && hieu_luc !== 'all') {
-      list = list.filter(d => (d.hieu_luc || 'con_hieu_luc') === hieu_luc);
+    if (validity && validity !== 'all') {
+      list = list.filter(d => (d.validity || 'con_hieu_luc') === validity);
     }
 
     res.json({ success: true, count: list.length, data: list });
@@ -61,49 +52,45 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:id', (req, res) => {
-  const db = loadDB();
+router.get('/:id', async (req, res) => {
   const id = parseInt(req.params.id);
-  const doc = (db.documents || []).find(d => d.id === id || d.MaVanBan === id);
+  const list = await getDocumentsFromDb('all');
+  const doc = list.find(d => Number(d.id) === id);
   if (!doc) {
     return res.status(404).json({ success: false, error: 'Không tìm thấy văn bản!' });
   }
   res.json({ success: true, data: doc });
 });
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const {
-    so_hieu,
-    tieu_de,
-    loai_van_ban,
-    co_quan_ban_hanh,
-    ngay_ban_hanh,
-    nguoi_ky,
-    hieu_luc,
-    dung_luong,
+    reference_number,
+    title,
+    category,
+    issuer,
+    issued_date,
+    signer,
+    validity,
+    file_size,
     file_url,
     fileBase64,
     fileName
   } = req.body;
 
-  if (!so_hieu || !tieu_de) {
+  if (!reference_number || !title) {
     return res.status(400).json({ success: false, error: 'Số hiệu và Trích yếu văn bản là bắt buộc!' });
   }
 
-  const db = loadDB();
-  db.documents = db.documents || [];
-  const nextId = db.documents.length > 0 ? Math.max(...db.documents.map(d => parseInt(d.id) || 0)) + 1 : 1;
-
-  let savedFileUrl = file_url || `uploads/documents/van_ban_${nextId}.pdf`;
-  let calculatedSize = dung_luong || '1.5 MB';
+  let savedFileUrl = file_url || `uploads/documents/van_ban_${Date.now()}.pdf`;
+  let calculatedSize = file_size || '1.5 MB';
 
   // Handle real file upload if provided
   if (fileBase64 && fileName) {
     try {
       const cleanBase64 = fileBase64.replace(/^data:.*?;base64,/, '');
       const buffer = Buffer.from(cleanBase64, 'base64');
-      const safeName = `VB_${nextId}_${fileName.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-      
+      const safeName = `VB_${Date.now()}_${fileName.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+
       const uploadDir1 = path.join(__dirname, '../../public/uploads/documents');
       if (!fs.existsSync(uploadDir1)) fs.mkdirSync(uploadDir1, { recursive: true });
       fs.writeFileSync(path.join(uploadDir1, safeName), buffer);
@@ -121,113 +108,84 @@ router.post('/', (req, res) => {
     }
   }
 
-  const newDoc = {
-    id: nextId,
-    MaVanBan: nextId,
-    so_hieu: so_hieu.trim(),
-    SoHieuVanBan: so_hieu.trim(),
-    tieu_de: tieu_de.trim(),
-    TenVanBan: tieu_de.trim(),
-    loai_van_ban: loai_van_ban || 'tuyentruyen',
-    LoaiVanBan: loai_van_ban || 'tuyentruyen',
-    loai_van_ban_ten: categoryNames[loai_van_ban] || 'Công văn tuyên truyền',
-    co_quan_ban_hanh: (co_quan_ban_hanh || 'Ban Thường Vụ Công Đoàn TDMU').trim(),
-    CoQuanBanHanh: (co_quan_ban_hanh || 'Ban Thường Vụ Công Đoàn TDMU').trim(),
-    ngay_ban_hanh: ngay_ban_hanh || new Date().toISOString().split('T')[0],
-    NgayBanHanh: ngay_ban_hanh || new Date().toISOString().split('T')[0],
-    nguoi_ky: (nguoi_ky || 'TS. Lê Thị Kim Út').trim(),
-    NguoiKy: (nguoi_ky || 'TS. Lê Thị Kim Út').trim(),
-    hieu_luc: hieu_luc || 'con_hieu_luc', // con_hieu_luc | het_hieu_luc
+  const newDoc = await insertDocumentToDb({
+    reference_number: (reference_number || '').trim(),
+    title: (title || '').trim(),
+    category: category || 'tuyentruyen',
+    issuer: (issuer || 'Ban Thường Vụ Công Đoàn TDMU').trim(),
+    issued_date: issued_date || new Date().toISOString().split('T')[0],
+    signer: (signer || 'TS. Lê Thị Kim Út').trim(),
+    validity: validity || 'con_hieu_luc',
+    file_size: calculatedSize,
     file_url: savedFileUrl,
-    FileUrl: savedFileUrl,
-    dung_luong: calculatedSize,
-    DungLuong: calculatedSize,
-    luot_tai: 0,
-    LuotTai: 0,
-    created_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
-  };
-
-  db.documents.unshift(newDoc);
-  saveDB(db);
+    savedFileUrl
+  });
 
   res.json({ success: true, message: 'Đã đăng tải văn bản chỉ đạo thành công!', data: newDoc });
 });
 
-router.put('/:id', (req, res) => {
-  const db = loadDB();
-  db.documents = db.documents || [];
+router.put('/:id', async (req, res) => {
   const id = parseInt(req.params.id);
-  const idx = db.documents.findIndex(d => d.id === id || d.MaVanBan === id);
+  const {
+    reference_number,
+    title,
+    category,
+    issuer,
+    issued_date,
+    signer,
+    validity,
+    file_size,
+    file_url,
+    fileBase64,
+    fileName
+  } = req.body;
 
-  if (idx === -1) {
+  let updatedFileUrl = file_url;
+  let updatedSize = file_size;
+
+  if (fileBase64 && fileName) {
+    try {
+      const cleanBase64 = fileBase64.replace(/^data:.*?;base64,/, '');
+      const buffer = Buffer.from(cleanBase64, 'base64');
+      const safeName = `VB_${Date.now()}_${fileName.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const uploadDir = path.join(__dirname, '../../public/uploads/documents');
+      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+      fs.writeFileSync(path.join(uploadDir, safeName), buffer);
+      updatedFileUrl = `uploads/documents/${safeName}`;
+      updatedSize = (buffer.length / 1024 > 1024)
+        ? (buffer.length / (1024 * 1024)).toFixed(1) + ' MB'
+        : (buffer.length / 1024).toFixed(1) + ' KB';
+    } catch (e) {
+      console.error('Error saving document file:', e);
+    }
+  }
+
+  const updated = await updateDocumentInDb(id, {
+    reference_number: (reference_number || '').trim(),
+    title: (title || '').trim(),
+    category,
+    issuer: (issuer || '').trim(),
+    issued_date,
+    signer: (signer || '').trim(),
+    validity,
+    file_size: updatedSize,
+    file_url: updatedFileUrl
+  });
+
+  if (!updated) {
     return res.status(404).json({ success: false, error: 'Không tìm thấy văn bản cần chỉnh sửa!' });
   }
 
-  const {
-    so_hieu,
-    tieu_de,
-    loai_van_ban,
-    co_quan_ban_hanh,
-    ngay_ban_hanh,
-    nguoi_ky,
-    hieu_luc,
-    dung_luong,
-    file_url
-  } = req.body;
-
-  if (so_hieu) {
-    db.documents[idx].so_hieu = so_hieu.trim();
-    db.documents[idx].SoHieuVanBan = so_hieu.trim();
-  }
-  if (tieu_de) {
-    db.documents[idx].tieu_de = tieu_de.trim();
-    db.documents[idx].TenVanBan = tieu_de.trim();
-  }
-  if (loai_van_ban) {
-    db.documents[idx].loai_van_ban = loai_van_ban;
-    db.documents[idx].LoaiVanBan = loai_van_ban;
-    db.documents[idx].loai_van_ban_ten = categoryNames[loai_van_ban] || loai_van_ban;
-  }
-  if (co_quan_ban_hanh) {
-    db.documents[idx].co_quan_ban_hanh = co_quan_ban_hanh.trim();
-    db.documents[idx].CoQuanBanHanh = co_quan_ban_hanh.trim();
-  }
-  if (ngay_ban_hanh) {
-    db.documents[idx].ngay_ban_hanh = ngay_ban_hanh;
-    db.documents[idx].NgayBanHanh = ngay_ban_hanh;
-  }
-  if (nguoi_ky) {
-    db.documents[idx].nguoi_ky = nguoi_ky.trim();
-    db.documents[idx].NguoiKy = nguoi_ky.trim();
-  }
-  if (hieu_luc) {
-    db.documents[idx].hieu_luc = hieu_luc;
-  }
-  if (dung_luong) {
-    db.documents[idx].dung_luong = dung_luong;
-    db.documents[idx].DungLuong = dung_luong;
-  }
-  if (file_url) {
-    db.documents[idx].file_url = file_url;
-    db.documents[idx].FileUrl = file_url;
-  }
-
-  saveDB(db);
-  res.json({ success: true, message: 'Đã cập nhật văn bản thành công!', data: db.documents[idx] });
+  res.json({ success: true, message: 'Đã cập nhật văn bản thành công!', data: updated });
 });
 
-router.delete('/:id', (req, res) => {
-  const db = loadDB();
-  db.documents = db.documents || [];
+router.delete('/:id', async (req, res) => {
   const id = parseInt(req.params.id);
-  const idx = db.documents.findIndex(d => d.id === id);
-  if (idx === -1) {
+  const deleted = await deleteDocumentFromDb(id);
+  if (!deleted) {
     return res.status(404).json({ success: false, error: 'Không tìm thấy văn bản!' });
   }
-
-  const deleted = db.documents.splice(idx, 1)[0];
-  saveDB(db);
-  res.json({ success: true, message: 'Đã xóa văn bản thành công!', data: deleted });
+  res.json({ success: true, message: 'Đã xóa văn bản thành công!', data: { id } });
 });
 
 // Download endpoint with download counter increment
@@ -235,18 +193,17 @@ router.get('/download/:id', (req, res) => {
   const db = loadDB();
   db.documents = db.documents || [];
   const id = parseInt(req.params.id);
-  const doc = db.documents.find(d => d.id === id || d.MaVanBan === id);
+  const doc = db.documents.find(d => d.id === id);
 
   if (!doc) {
     return res.status(404).send('Không tìm thấy văn bản.');
   }
 
   // Increment download counter
-  doc.luot_tai = (doc.luot_tai || 0) + 1;
-  doc.LuotTai = doc.luot_tai;
+  doc.download_count = (doc.download_count || 0) + 1;
   saveDB(db);
 
-  let rawFile = (doc.file_url || doc.FileUrl || '').replace(/^\/+/, '');
+  let rawFile = (doc.file_url || '').replace(/^\/+/, '');
   let filePath = path.join(__dirname, '../../public', rawFile);
 
   // Fallback check

@@ -117,7 +117,7 @@ function AppContent() {
       const item = {
         id: articleId,
         article_id: articleId,
-        title: article.title || article.tieu_de || 'Bài viết Công đoàn',
+        title: article.title || article.Title || 'Bài viết Công đoàn',
         thumbnail: article.image || article.thumbnail || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600',
         date: article.createdAt || article.date || new Date().toISOString()
       };

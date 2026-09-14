@@ -72,6 +72,21 @@ app.use('/api', (req, res) => {
 });
 
 // =========================================================================
+// REACT ADMIN SPA - built output served at /admin/*
+// =========================================================================
+const adminDistDir = path.join(__dirname, '../frontend-admin/dist');
+const adminDistIndex = path.join(adminDistDir, 'index.html');
+const hasAdminDist = fs.existsSync(adminDistIndex);
+
+if (hasAdminDist) {
+  app.use('/admin', express.static(adminDistDir, { etag: false, maxAge: 0 }));
+  app.get('/admin*', (req, res, next) => {
+    if (req.path.includes('.')) return next();
+    return res.sendFile(adminDistIndex);
+  });
+}
+
+// =========================================================================
 // REACT SPA (user-facing portal) - built output served in production
 // =========================================================================
 const distDir = path.join(__dirname, '../frontend/dist');

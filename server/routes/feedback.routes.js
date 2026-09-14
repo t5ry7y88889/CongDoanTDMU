@@ -1,7 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const { loadDB, saveDB } = require('../db');
-const { insertFeedbackToDb, getBookmarksFromDb, toggleBookmarkInDb, getCommentsFromDb, insertCommentToDb } = require('../mssql_db');
+const {
+  insertFeedbackToDb,
+  getFeedbackFromDb,
+  updateFeedbackInDb,
+  deleteFeedbackFromDb,
+  getBookmarksFromDb,
+  toggleBookmarkInDb,
+  getCommentsFromDb,
+  insertCommentToDb,
+  deleteCommentFromDb,
+  getInboxCommentsFromDb,
+  getArticlesFromDb,
+  getWelfareApplicationsFromDb
+} = require('../mssql_db');
 const { validate, z } = require('../middleware/validate');
 
 // =========================================================================
@@ -25,9 +38,8 @@ const allFeedback = (db) => {
   });
 };
 
-router.get('/feedback', (req, res) => {
-  const db = loadDB();
-  let list = allFeedback(db);
+router.get('/feedback', async (req, res) => {
+  let list = await getFeedbackFromDb();
   const { status, search } = req.query;
 
   if (status && status !== 'all') {
@@ -48,10 +60,10 @@ router.get('/feedback', (req, res) => {
   res.json({ success: true, count: list.length, data: list });
 });
 
-router.get('/feedback/:id', (req, res) => {
-  const db = loadDB();
+router.get('/feedback/:id', async (req, res) => {
   const id = parseInt(req.params.id);
-  const item = allFeedback(db).find(f => f.id === id);
+  const list = await getFeedbackFromDb();
+  const item = list.find(f => f.id === id || Number(f.id) === id);
   if (!item) return res.status(404).json({ success: false, error: 'Không tìm thấy ý kiến góp ý!' });
   res.json({ success: true, data: item });
 });
@@ -71,41 +83,25 @@ router.post('/feedback', validate(feedbackSchema), async (req, res) => {
   res.json({ success: true, data: newFeedback, message: 'Cảm ơn bạn! Ý kiến đã được chuyển trực tiếp đến Ban Chấp Hành Công đoàn.' });
 });
 
-router.put('/feedback/:id', (req, res) => {
-  const db = loadDB();
-  db.inbox_feedback = db.inbox_feedback || [];
+router.put('/feedback/:id', async (req, res) => {
   const id = parseInt(req.params.id);
-  const idx = db.inbox_feedback.findIndex(f => f.id === id);
+  const { status, response, resolved_by } = req.body;
 
-  if (idx === -1) {
+  const updated = await updateFeedbackInDb(id, { status, response, resolved_by });
+  if (!updated) {
     return res.status(404).json({ success: false, error: 'Không tìm thấy ý kiến góp ý cần cập nhật!' });
   }
 
-  const { status, response, resolved_by } = req.body;
-  if (status) db.inbox_feedback[idx].status = status;
-  if (response !== undefined) db.inbox_feedback[idx].response = response;
-  if (resolved_by) db.inbox_feedback[idx].resolved_by = resolved_by;
-  if (status === 'resolved' && !db.inbox_feedback[idx].resolved_at) {
-    db.inbox_feedback[idx].resolved_at = new Date().toISOString();
-  }
-
-  saveDB(db);
-  res.json({ success: true, data: db.inbox_feedback[idx], message: 'Đã cập nhật xử lý ý kiến thành công!' });
+  res.json({ success: true, data: updated, message: 'Đã cập nhật xử lý ý kiến thành công!' });
 });
 
-router.delete('/feedback/:id', (req, res) => {
-  const db = loadDB();
-  db.inbox_feedback = db.inbox_feedback || [];
+router.delete('/feedback/:id', async (req, res) => {
   const id = parseInt(req.params.id);
-  const idx = db.inbox_feedback.findIndex(f => f.id === id);
-
-  if (idx === -1) {
+  const removed = await deleteFeedbackFromDb(id);
+  if (!removed) {
     return res.status(404).json({ success: false, error: 'Không tìm thấy ý kiến góp ý!' });
   }
-
-  const removed = db.inbox_feedback.splice(idx, 1)[0];
-  saveDB(db);
-  res.json({ success: true, message: 'Đã xóa ý kiến góp ý thành công!', data: removed });
+  res.json({ success: true, message: 'Đã xóa ý kiến góp ý thành công!', data: { id } });
 });
 
 // =========================================================================
@@ -189,7 +185,27 @@ router.post('/comments', validate(localCommentSchema), async (req, res) => {
   res.json({ success: true, data: created, message: 'Đã gửi bình luận thành công!' });
 });
 
-router.get('/inbox/comments', (req, res) => res.json({ success: true, data: loadDB().comments || [] }));
+router.get('/inbox/comments', async (req, res) => {
+  const list = await getInboxCommentsFromDb();
+  const mapped = list.map(c => ({
+    id: c.id,
+    article_id: c.article_id,
+    article_title: c.article_title || '',
+    authorName: c.name || 'Đoàn viên TDMU',
+    commentText: c.content || '',
+    platform: c.platform || 'Website',
+    status: c.status,
+    createdAt: c.createdAt || ''
+  }));
+  res.json({ success: true, count: mapped.length, data: mapped });
+});
+
+router.delete('/comments/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const removed = await deleteCommentFromDb(id);
+  if (!removed) return res.status(404).json({ success: false, error: 'Không tìm thấy bình luận!' });
+  res.json({ success: true, message: 'Đã xóa bình luận thành công!' });
+});
 
 router.get('/article-audits', (req, res) => {
   const db = loadDB();
@@ -206,31 +222,45 @@ router.get('/schedules', (req, res) => {
   res.json({ success: true, data: db.schedules || db.lich_xuat_ban || [] });
 });
 
-router.get('/events', (req, res) => res.json({ success: true, data: loadDB().events || [] }));
-router.get('/media', (req, res) => res.json({ success: true, data: loadDB().media || [] }));
+// =========================================================================
+// 4. STATS & ANALYTICS DASHBOARD (SQL-FIRST)
+// =========================================================================
+const getDashboardStats = async (req, res) => {
+  try {
+    const arts = await getArticlesFromDb('all', 'all');
+    const feedbackList = await getFeedbackFromDb();
+    const welfareList = await getWelfareApplicationsFromDb('all');
+    const commentList = await getInboxCommentsFromDb();
 
-// =========================================================================
-// 4. STATS & ANALYTICS DASHBOARD
-// =========================================================================
-const getDashboardStats = (req, res) => {
-  const db = loadDB();
-  const arts = db.articles || [];
-  res.json({
-    success: true,
-    totalArticles: arts.length,
-    totalViews: arts.reduce((acc, a) => acc + (a.viewsCount || a.LuotXem || 0), 0),
-    totalLikes: arts.reduce((acc, a) => acc + (a.likesCount || a.LuotThich || 0), 0),
-    totalShares: arts.reduce((acc, a) => acc + (a.sharesCount || 0), 0),
-    aiArticlesCount: arts.filter(a => a.isAiGenerated || a.is_ai_generated).length,
-    publishedCount: arts.filter(a => a.status === 'published' || a.TrangThai === 'Published').length,
-    data: {
-      tong_bai: arts.length,
-      da_xuat_ban: arts.filter(a => a.status === 'published' || a.TrangThai === 'Published').length,
-      cho_duyet: arts.filter(a => a.status === 'pending' || a.TrangThai === 'Pending').length,
-      ban_nhap: arts.filter(a => a.status === 'draft' || a.TrangThai === 'Draft').length,
-      bai_gan_day: arts.slice(0, 5)
-    }
-  });
+    const published = arts.filter(a => (a.status || '').includes('publish') || (a.status || '').includes('approve'));
+    const pending = arts.filter(a => (a.status || '').includes('pending'));
+    const drafts = arts.filter(a => (a.status || '').includes('draft'));
+
+    res.json({
+      success: true,
+      totalArticles: arts.length,
+      totalViews: arts.reduce((acc, a) => acc + (a.viewsCount || a.LuotXem || 0), 0),
+      totalLikes: arts.reduce((acc, a) => acc + (a.likesCount || a.LuotThich || 0), 0),
+      totalShares: arts.reduce((acc, a) => acc + (a.sharesCount || 0), 0),
+      totalComments: commentList.length,
+      totalFeedback: feedbackList.length,
+      totalWelfareApplications: welfareList.length,
+      aiArticlesCount: arts.filter(a => a.isAiGenerated || a.is_ai_generated).length,
+      publishedCount: published.length,
+      data: {
+        tong_bai: arts.length,
+        da_xuat_ban: published.length,
+        cho_duyet: pending.length,
+        ban_nhap: drafts.length,
+        tong_gop_y: feedbackList.length,
+        tong_don_tro_cap: welfareList.length,
+        tong_binh_luan: commentList.length,
+        bai_gan_day: arts.slice(0, 5)
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Lỗi thống kê: ' + err.message });
+  }
 };
 
 router.get('/analytics', getDashboardStats);

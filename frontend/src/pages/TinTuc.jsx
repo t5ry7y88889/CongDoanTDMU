@@ -49,7 +49,7 @@ const TinTuc = () => {
     if (currentCategory === 'saved') {
       return isBookmarked(a.id);
     }
-    const cat = a.categoryName || a.category || a.ChuyenMuc || '';
+    const cat = a.categoryName || a.category || '';
     const matchCat = currentCategory === 'all' || cat.toLowerCase().includes(currentCategory.toLowerCase());
 
     const q = strip(searchQuery.trim());
@@ -240,7 +240,7 @@ const TinTuc = () => {
                         />
                         <div className="position-absolute bottom-0 start-0 m-2">
                           <span className="badge" style={{ background: 'rgba(0,40,85,0.88)', color: '#FEF08A', fontWeight: 700, fontSize: '11px' }}>
-                            {a.categoryName || a.category || a.ChuyenMuc || 'Tin tức'}
+                            {a.categoryName || a.category || 'Tin tức'}
                           </span>
                         </div>
                       </div>

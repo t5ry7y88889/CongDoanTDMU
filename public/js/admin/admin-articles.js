@@ -1,5 +1,5 @@
 // =========================================================================
-// 2. ARTICLES, MEDIA, SCHEDULES, USERS & AUDIT MANAGEMENT
+// 2. ARTICLES, SCHEDULES, USERS & AUDIT MANAGEMENT
 // =========================================================================
 let adminUsersPager = null;
 let rawUsersList = [];
@@ -48,7 +48,7 @@ function renderUsersPage() {
     const roleBadgeClass = u.role === 'admin' ? 'badge-gold' : (u.role === 'editor' ? 'badge-info' : 'badge-warning');
     return `
     <tr style="border-bottom: 1px solid var(--border-color);">
-      <td style="padding: 12px; font-weight: 700; color: #003865;">${u.ho_ten || u.name || 'Cán bộ TDMU'}</td>
+      <td style="padding: 12px; font-weight: 700; color: #003865;">${u.name || 'Cán bộ TDMU'}</td>
       <td style="padding: 12px;">${u.email || ''}</td>
       <td style="padding: 12px;"><span class="badge ${roleBadgeClass}">${roleLabel}</span></td>
       <td style="padding: 12px;">${u.unit || u.department || 'ĐH Thủ Dầu Một'}</td>
@@ -85,18 +85,17 @@ async function createNewUserAccount() {
 }
 
 async function deleteUserAccount(id) {
-  if (confirm("Bạn có chắc chắn muốn xóa tài khoản này khỏi hệ thống?")) {
-    try {
-      const res = await API.deleteUser(id);
-      if (res.success) {
-        alert("Đã xóa tài khoản thành công!");
-        loadUsersTable();
-        loadAuditLogs();
-      }
-    } catch (err) {
-      console.error(err);
+  if (!(await confirmModal("Bạn có chắc chắn muốn xóa tài khoản này khỏi hệ thống?"))) return;
+  try {
+    const res = await API.deleteUser(id);
+    if (res.success) {
+      alert("Đã xóa tài khoản thành công!");
+      loadUsersTable();
+      loadAuditLogs();
     }
-  }
+  } catch (err) {
+    console.error(err);
+    }
 }
 
 // 2. Dashboard Analytics
@@ -174,7 +173,7 @@ async function loadAdminArticles(filter = currentFilter, searchQuery = '') {
   const tbody = document.getElementById('admin_article_list');
   if (!tbody) return;
 
-  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang nạp bài viết từ CSDL...</td></tr>`;
+  tbody.innerHTML = renderLoadingRows(7, 'Đang nạp bài viết từ CSDL...');
 
   try {
     const res = await API.getArticles('all', filter, searchQuery);
@@ -212,7 +211,7 @@ function renderAdminArticleRows(list) {
   if (!tbody) return;
 
   if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px; color: var(--text-muted);">Không tìm thấy bài viết nào.</td></tr>`;
+    tbody.innerHTML = renderEmptyRows(7, 'Không tìm thấy bài viết nào.');
     return;
   }
 
@@ -320,39 +319,38 @@ async function deleteArticle(id) {
     return;
   }
 
-  if (confirm("Bạn có chắc chắn muốn xóa bài viết này khỏi CSDL vĩnh viễn?")) {
-    try {
-      const res = await API.deleteArticle(id);
-      if (res.success) {
-        alert("Đã xóa bài viết khỏi CSDL thành công!");
-        loadAdminArticles();
-        loadScheduleTable();
-        loadFacebookPublishSelect();
-        loadAdminDashboard();
-      }
-    } catch (err) {
-      console.error(err);
+  if (!(await confirmModal("Bạn có chắc chắn muốn xóa bài viết này khỏi CSDL vĩnh viễn?"))) return;
+  try {
+    const res = await API.deleteArticle(id);
+    if (res.success) {
+      alert("Đã xóa bài viết khỏi CSDL thành công!");
+      loadAdminArticles();
+      loadScheduleTable();
+      loadFacebookPublishSelect();
+      loadAdminDashboard();
     }
+  } catch (err) {
+    console.error(err);
   }
 }
 
 // Manual Create & Edit Article Modal
 function openCreateArticleModal() {
-  safeSetText('modal_article_heading', "Soạn Thảo Bài Viết Mới Với TinyMCE");
+  safeSetText('modal_article_heading', "Soạn Thảo Bài Viết Mới");
   safeSetVal('edit_article_id', "");
   safeSetVal('edit_title', "");
   safeSetVal('edit_summary', "");
   setEditorContent('edit_content_tinymce', "");
-  document.getElementById('article_edit_modal').classList.add('active');
+  document.getElementById('article_edit_modal').style.display = 'flex';
 }
 
 async function openEditArticleModal(id) {
   try {
     const res = await API.getArticleById(id);
-    if (!res.success) return;
+    if (!res.success) { showToast('Không tìm thấy bài viết để chỉnh sửa.', 'error'); return; }
 
     const art = res.data;
-    safeSetText('modal_article_heading', `Chỉnh Sửa Bài Viết #${art.id} VớI TinyMCE Editor`);
+    safeSetText('modal_article_heading', `Chỉnh Sửa Bài Viết #${art.id}`);
     safeSetVal('edit_article_id', art.id);
     safeSetVal('edit_title', art.title);
     safeSetVal('edit_category', art.categoryName);
@@ -360,14 +358,14 @@ async function openEditArticleModal(id) {
     safeSetVal('edit_summary', art.summary || "");
     setEditorContent('edit_content_tinymce', art.content || "");
 
-    document.getElementById('article_edit_modal').classList.add('active');
+    document.getElementById('article_edit_modal').style.display = 'flex';
   } catch (err) {
-    console.error(err);
+    showToast('Lỗi khi tải bài viết: ' + err.message, 'error');
   }
 }
 
 function closeArticleEditModal() {
-  document.getElementById('article_edit_modal').classList.remove('active');
+  document.getElementById('article_edit_modal').style.display = 'none';
 }
 
 async function saveManualArticle() {
@@ -411,64 +409,6 @@ async function saveManualArticle() {
 }
 
 // Prompt Templates
-
-async function saveStudioImageToMedia() {
-  const canvas = document.getElementById('studio_canvas');
-  const dataUrl = canvas.toDataURL('image/png');
-
-  try {
-    const res = await API.uploadMedia({ fileName: `ai_banner_${Date.now()}.png`, fileData: dataUrl, category: 'Ảnh Studio' });
-    if (res.success) {
-      alert("Đã lưu ảnh đã chỉnh sửa vào Kho Thư Viện Media!");
-      loadMediaLibrary();
-    }
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-// Media Library
-async function loadMediaLibrary() {
-  const grid = document.getElementById('media_gallery_grid');
-  if (!grid) return;
-
-  try {
-    const res = await API.getMedia();
-    if (res.success) {
-      grid.innerHTML = res.data.map(m => `
-        <div style="background: white; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
-          <img src="${m.filePath}" style="width: 100%; height: 120px; object-fit: cover;">
-          <div style="padding: 10px; font-size: 12px;">
-            <div style="font-weight: 700; truncate;">${m.fileName}</div>
-            <div style="color: var(--text-muted);">${m.fileSize} · ${m.uploadedAt}</div>
-            <div style="display: flex; justify-content: space-between; margin-top: 8px;">
-              <button class="btn btn-outline btn-sm" style="font-size: 10px;" onclick="copyMediaUrl('${m.filePath}')"><i class="fa-solid fa-copy"></i> Copy Link</button>
-              ${currentUserRole === 'admin' ? `<button class="btn btn-outline btn-sm" style="font-size: 10px; color: var(--danger);" onclick="deleteMediaFile(${m.id})"><i class="fa-solid fa-trash"></i></button>` : ''}
-            </div>
-          </div>
-        </div>
-      `).join('');
-    }
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-function copyMediaUrl(url) {
-  navigator.clipboard.writeText(url);
-  alert("Đã copy đường dẫn ảnh vào Clipboard!");
-}
-
-async function deleteMediaFile(id) {
-  if (confirm("Xóa tệp media này khỏi kho lưu trữ?")) {
-    try {
-      const res = await API.deleteMedia(id);
-      if (res.success) loadMediaLibrary();
-    } catch (err) {
-      console.error(err);
-    }
-  }
-}
 
 // Schedule Table Render
 let adminSchedulePager = null;
@@ -689,67 +629,12 @@ async function loadInboxComments() {
 }
 
 async function deleteCommentItem(id) {
-  if (confirm("Xóa bình luận này?")) {
-    try {
-      const res = await API.deleteComment(id);
-      if (res.success) loadInboxComments();
-    } catch (err) {
-      console.error(err);
-    }
-  }
-}
-
-// Events Management
-async function loadEventsList() {
-  const tbody = document.getElementById('events_admin_table');
-  if (!tbody) return;
-
+  if (!(await confirmModal("Xóa bình luận này?"))) return;
   try {
-    const res = await API.getEvents();
-    if (res.success) {
-      tbody.innerHTML = res.data.map(ev => `
-        <tr style="border-bottom: 1px solid var(--border-color);">
-          <td style="padding: 10px; font-weight: 700;">${ev.title}</td>
-          <td style="padding: 10px;">${ev.location}</td>
-          <td style="padding: 10px; font-weight: 600; color: var(--accent-gold);">${ev.startTime}</td>
-          <td style="padding: 10px;"><span class="badge badge-success">${ev.attendeesCount} Đoàn viên</span></td>
-          <td style="padding: 10px; text-align: right;">
-            ${currentUserRole === 'admin' ? `<button class="btn btn-outline btn-sm" style="color:var(--danger);" onclick="deleteEventItem(${ev.id})"><i class="fa-solid fa-trash"></i> Xóa</button>` : ''}
-          </td>
-        </tr>
-      `).join('');
-    }
+    const res = await API.deleteComment(id);
+    if (res.success) loadInboxComments();
   } catch (err) {
     console.error(err);
-  }
-}
-
-async function deleteEventItem(id) {
-  if (confirm("Xóa sự kiện này khỏi CSDL?")) {
-    try {
-      const res = await API.deleteEvent(id);
-      if (res.success) loadEventsList();
-    } catch (err) {
-      console.error(err);
-    }
-  }
-}
-
-async function createNewEvent() {
-  const title = prompt("Nhập tên sự kiện mới:", "Hội thao Công đoàn TDMU 2026");
-  const location = prompt("Nhập địa điểm tổ chức:", "Nhà Thi Đấu TDMU");
-  const startTime = prompt("Nhập ngày giờ diễn ra (YYYY-MM-DD HH:MM):", "2026-09-02 08:00");
-
-  if (title && location) {
-    try {
-      const res = await API.createEvent({ title, location, startTime, description: title });
-      if (res.success) {
-        alert("Đã tạo sự kiện mới thành công vào CSDL!");
-        loadEventsList();
-      }
-    } catch (err) {
-      console.error(err);
-    }
   }
 }
 

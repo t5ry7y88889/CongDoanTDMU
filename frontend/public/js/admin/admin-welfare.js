@@ -10,7 +10,7 @@ async function loadAdminWelfare() {
   const tbody = document.getElementById('admin_welfare_table_body');
   if (!tbody) return;
 
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; color: #64748B;"><i class="fa-solid fa-circle-notch fa-spin me-2"></i> Đang tải danh sách đơn đề nghị trợ cấp...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; color: #64748B; text-wrap:auto"><i class="fa-solid fa-circle-notch fa-spin me-2"></i> Đang tải danh sách đơn đề nghị trợ cấp...</td></tr>';
 
   try {
     const res = await fetch('/api/welfare/applications').then(r => r.json());
@@ -106,7 +106,7 @@ function renderAdminWelfareTable(searchQuery = '') {
     const appAmount = d.amount_approved ? (d.amount_approved).toLocaleString('vi-VN') + ' đ' : '<span style="color: #94A3B8;">Chưa duyệt</span>';
 
     return `
-      <tr style="border-bottom: 1px solid #F1F5F9; transition: background 0.15s;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'">
+      <tr style="border-bottom: 1px solid #F1F5F9; transition: background 0.15s;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'; text-warp:auto">
         <td style="padding: 12px; font-weight: 800; color: #002855; white-space: nowrap;">
           #TC-${d.id}<br>
           <span style="font-size: 11px; font-weight: 500; color: #94A3B8;">${dateStr}</span>
@@ -118,7 +118,7 @@ function renderAdminWelfareTable(searchQuery = '') {
         </td>
         <td style="padding: 12px;">
           <div style="font-weight: 700; color: #003865; margin-bottom: 3px;">${escapeHtml(d.type)}</div>
-          <div style="font-size: 12px; color: #475569; line-height: 1.4; max-width: 320px;">${escapeHtml(d.reason)}</div>
+          <div style="font-size: 12px; color: #475569; line-height: 1.4; max-width: 320px; text-wrap:auto">${escapeHtml(d.reason)}</div>
           ${d.proof_url ? `<a href="${d.proof_url}" target="_blank" style="font-size: 11px; color: #0284C7; text-decoration: none; font-weight: 600;"><i class="fa-solid fa-paperclip me-1"></i>Xem tệp minh chứng</a>` : ''}
         </td>
         <td style="padding: 12px; white-space: nowrap; font-weight: 700; color: #B45309;">
@@ -129,7 +129,7 @@ function renderAdminWelfareTable(searchQuery = '') {
         </td>
         <td style="padding: 12px; white-space: nowrap;">
           <div style="font-weight: 800; color: #059669;">${appAmount}</div>
-          <div style="font-size: 11px; color: #64748B; max-width: 220px;">${escapeHtml(d.decision_note || '')}</div>
+          <div style="font-size: 11px; color: #64748B; max-width: 220px; text-wrap:auto;">${escapeHtml(d.decision_note || '')}</div>
         </td>
         <td style="padding: 12px; text-align: right; white-space: nowrap;">
           <button type="button" onclick="openReviewWelfareModal(${d.id})" style="background: #D97706; color: white; border: none; border-radius: 6px; padding: 5px 12px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; margin-right: 4px;">

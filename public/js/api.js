@@ -48,7 +48,7 @@ const API = {
     const res = await fetch(`/api/articles/${id}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ authorName, commentText })
+      body: JSON.stringify({ name: authorName, content: commentText })
     });
     return await res.json();
   },
@@ -75,46 +75,6 @@ const API = {
 
   async deleteUser(id) {
     const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
-    return await res.json();
-  },
-
-  // Events REST API
-  async getEvents() {
-    const res = await fetch('/api/events');
-    return await res.json();
-  },
-
-  async createEvent(data) {
-    const res = await fetch('/api/events', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    return await res.json();
-  },
-
-  async deleteEvent(id) {
-    const res = await fetch(`/api/events/${id}`, { method: 'DELETE' });
-    return await res.json();
-  },
-
-  // Media Studio REST API
-  async getMedia() {
-    const res = await fetch('/api/media');
-    return await res.json();
-  },
-
-  async uploadMedia(data) {
-    const res = await fetch('/api/media/upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    return await res.json();
-  },
-
-  async deleteMedia(id) {
-    const res = await fetch(`/api/media/${id}`, { method: 'DELETE' });
     return await res.json();
   },
 

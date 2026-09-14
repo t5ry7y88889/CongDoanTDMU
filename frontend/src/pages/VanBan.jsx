@@ -39,21 +39,21 @@ const VanBan = () => {
     (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
 
   const filteredDocs = documents.filter(d => {
-    const cat = d.loai_van_ban || d.LoaiVanBan;
+    const cat = d.category || d.DocumentType;
     const matchCat = selectedCategory === 'all' || cat === selectedCategory;
     const q = strip(searchQuery.trim());
     const matchSearch = !q ||
-      strip(d.so_hieu || d.SoHieuVanBan).includes(q) ||
-      strip(d.tieu_de || d.TenVanBan).includes(q) ||
-      strip(d.co_quan_ban_hanh || d.CoQuanBanHanh).includes(q) ||
-      strip(d.nguoi_ky || d.NguoiKy).includes(q);
+      strip(d.reference_number).includes(q) ||
+      strip(d.title).includes(q) ||
+      strip(d.issuer).includes(q) ||
+      strip(d.signer).includes(q);
 
     return matchCat && matchSearch;
   });
 
   const getCount = (cat) => {
     if (cat === 'all') return documents.length;
-    return documents.filter(d => (d.loai_van_ban === cat || d.LoaiVanBan === cat)).length;
+    return documents.filter(d => (d.category === cat || d.DocumentType === cat)).length;
   };
 
   const catBadges = {
@@ -157,37 +157,37 @@ const VanBan = () => {
                   </thead>
                   <tbody>
                     {filteredDocs.map(d => {
-                      const isConHieuLuc = (d.hieu_luc || 'con_hieu_luc') === 'con_hieu_luc';
+                      const isConHieuLuc = (d.validity || 'con_hieu_luc') === 'con_hieu_luc';
                       return (
-                        <tr key={d.id || d.MaVanBan}>
+                        <tr key={d.id}>
                           <td className="fw-bold text-primary">
                             <i className="fa-solid fa-file-pdf text-danger me-2"></i>
-                            {d.so_hieu || d.SoHieuVanBan || 'N/A'}
+                            {d.reference_number || 'N/A'}
                           </td>
                           <td>
                             <div className="fw-bold text-dark mb-1">
-                              {d.tieu_de || d.TenVanBan || ''}
+                              {d.title || ''}
                             </div>
                             <div className="small text-muted">
-                              Ban hành: <strong>{d.co_quan_ban_hanh || d.CoQuanBanHanh || 'CĐ TDMU'}</strong> | Ký bởi: <strong>{d.nguoi_ky || d.NguoiKy || 'Ban Thường Vụ'}</strong>
+                              Ban hành: <strong>{d.issuer || 'CĐ TDMU'}</strong> | Ký bởi: <strong>{d.signer || 'Ban Thường Vụ'}</strong>
                               {' '}{!isConHieuLuc && <span className="badge bg-secondary ms-1">Hết hiệu lực</span>}
                             </div>
                           </td>
                           <td>
-                            {catBadges[d.loai_van_ban || d.LoaiVanBan] || <span className="badge bg-secondary">Văn bản</span>}
+                            {catBadges[d.category] || <span className="badge bg-secondary">Văn bản</span>}
                           </td>
                           <td className="text-secondary">
-                            {d.ngay_ban_hanh || d.NgayBanHanh || ''}
+                            {d.issued_date || ''}
                           </td>
                           <td className="text-center">
                             <span className="badge bg-light text-primary border">
                               <i className="fa-solid fa-download me-1"></i>
-                              {d.luot_tai || d.LuotTai || 0}
+                              {d.download_count || 0}
                             </span>
                           </td>
                           <td className="text-center">
                             <a
-                              href={`/api/documents/download/${d.id || d.MaVanBan}`}
+                              href={`/api/documents/download/${d.id}`}
                               target="_blank"
                               rel="noreferrer"
                               className="btn btn-sm btn-outline-danger fw-bold"
@@ -238,8 +238,8 @@ const VanBan = () => {
             </div>
             <div className="p-3" style={{ fontSize: '13px' }}>
               <p className="mb-2"><i className="fa-solid fa-file-lines text-primary me-2"></i> Tổng văn bản: <strong>{documents.length}</strong></p>
-              <p className="mb-2"><i className="fa-solid fa-download text-success me-2"></i> Tổng lượt tải: <strong>{documents.reduce((acc, d) => acc + (d.luot_tai || d.LuotTai || 0), 0)}</strong></p>
-              <p className="mb-0"><i className="fa-solid fa-shield-halved text-info me-2"></i> Còn hiệu lực: <strong>{documents.filter(d => (d.hieu_luc || 'con_hieu_luc') === 'con_hieu_luc').length}</strong></p>
+              <p className="mb-2"><i className="fa-solid fa-download text-success me-2"></i> Tổng lượt tải: <strong>{documents.reduce((acc, d) => acc + (d.download_count || 0), 0)}</strong></p>
+              <p className="mb-0"><i className="fa-solid fa-shield-halved text-info me-2"></i> Còn hiệu lực: <strong>{documents.filter(d => (d.validity || 'con_hieu_luc') === 'con_hieu_luc').length}</strong></p>
             </div>
           </div>
         </div>
