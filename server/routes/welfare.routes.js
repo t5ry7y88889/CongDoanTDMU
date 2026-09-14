@@ -98,7 +98,7 @@ router.get('/applications/:id', async (req, res) => {
   res.json({ success: true, data: item });
 });
 
-router.post('/apply', (req, res) => {
+router.post('/apply', async (req, res) => {
   const db = loadDB();
   db.don_tro_cap = db.don_tro_cap || [];
   const { full_name, unit, type, amount_requested, reason, phone, email, proofBase64, proofName } = req.body;

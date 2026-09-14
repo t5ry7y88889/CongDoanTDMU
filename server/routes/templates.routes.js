@@ -44,7 +44,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // 3. POST /api/templates (Add template or upload .docx)
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const { code, title, description, category, categoryName, fileBase64, fileName, file_size } = req.body;
 
   if (!code || !title) {

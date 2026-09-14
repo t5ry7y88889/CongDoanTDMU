@@ -128,7 +128,7 @@ router.get('/:id/reactions', (req, res) => {
   res.json({ success: true, summary, user_reaction: userReaction ? userReaction.reaction_type : null });
 });
 
-router.post('/:id/reactions', (req, res) => {
+router.post('/:id/reactions', async (req, res) => {
   const db = loadDB();
   db.article_reactions = db.article_reactions || [];
   const articleId = parseInt(req.params.id);
