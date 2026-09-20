@@ -89,29 +89,36 @@ const CKArticleEditor = forwardRef(({
         editorInstanceRef.current.setData(html || '');
       }
     },
-    // Chèn ảnh vào vị trí con trỏ hoặc cuối bài
+    // Chèn ảnh vào vị trí con trỏ hoặc cuối bài kèm chú thích chuẩn CKEditor 5
     insertPhoto: (url, caption = '') => {
       if (!editorInstanceRef.current) return;
       const editor = editorInstanceRef.current;
       
-      // Thực thi lệnh chèn ảnh chuẩn CKEditor Figure Model
-      editor.execute('insertImage', {
-        source: url,
-        alt: caption || 'Hình ảnh sự kiện Công đoàn TDMU'
-      });
-
-      // Nếu có caption, cập nhật caption vào model
-      if (caption) {
+      const cleanCap = (caption || 'Hình ảnh sự kiện Công đoàn TDMU').trim();
+      try {
         editor.model.change(writer => {
-          const selection = editor.model.document.selection;
-          const imageElement = selection.getSelectedElement();
-          if (imageElement && imageElement.is('element', 'imageBlock')) {
-            const captionElement = imageElement.getChild(0);
-            if (captionElement && captionElement.is('element', 'caption')) {
-              writer.insertText(caption, captionElement);
-            }
+          const imageElement = writer.createElement('imageBlock', {
+            src: url,
+            alt: cleanCap
+          });
+          if (cleanCap) {
+            const captionElement = writer.createElement('caption');
+            writer.insertText(cleanCap, captionElement);
+            writer.append(captionElement, imageElement);
           }
+          editor.model.insertObject(imageElement, null, null, { setSelection: 'after' });
         });
+      } catch (err) {
+        // Fallback through view/model fragment conversion
+        try {
+          const viewFragment = editor.data.processor.toView(
+            `<figure class="image"><img src="${url}" alt="${cleanCap}"><figcaption>${cleanCap}</figcaption></figure>`
+          );
+          const modelFragment = editor.data.toModel(viewFragment);
+          editor.model.insertContent(modelFragment);
+        } catch (e2) {
+          editor.execute('insertImage', { source: url, alt: cleanCap });
+        }
       }
     },
     // Thay thế đoạn bôi đen hoặc toàn bộ
@@ -213,7 +220,8 @@ const CKArticleEditor = forwardRef(({
     heading: {
       options: [
         { model: 'paragraph', title: 'Đoạn văn', class: 'ck-heading_paragraph' },
-        { model: 'heading2', view: 'h2', title: 'Tiêu đề chính (H2)', class: 'ck-heading_heading2' },
+        { model: 'heading1', view: 'h1', title: 'Tiêu đề chính (H1)', class: 'ck-heading_heading1' },
+        { model: 'heading2', view: 'h2', title: 'Tiêu đề mục (H2)', class: 'ck-heading_heading2' },
         { model: 'heading3', view: 'h3', title: 'Tiêu đề phụ (H3)', class: 'ck-heading_heading3' },
         { model: 'heading4', view: 'h4', title: 'Tiểu mục (H4)', class: 'ck-heading_heading4' }
       ]
@@ -373,6 +381,26 @@ const CKArticleEditor = forwardRef(({
           border-color: #93C5FD !important;
           outline: none !important;
           box-shadow: 0 0 0 3px rgba(37,99,235,0.08) !important;
+        }
+        .ckeditor-tdmu-wrapper .ck-content h1,
+        .ckeditor-tdmu-wrapper .ck-content h1.article-title {
+          font-size: 24px !important;
+          font-weight: 800 !important;
+          color: #002855 !important;
+          margin-top: 8px !important;
+          margin-bottom: 16px !important;
+          line-height: 1.35 !important;
+        }
+        .ckeditor-tdmu-wrapper .ck-content p.sapo,
+        .ckeditor-tdmu-wrapper .ck-content .article-lead {
+          font-size: 15px !important;
+          line-height: 1.7 !important;
+          color: #1E293B !important;
+          background: #F8FAFC !important;
+          border-left: 4px solid #2563EB !important;
+          padding: 12px 16px !important;
+          border-radius: 4px 8px 8px 4px !important;
+          margin-bottom: 20px !important;
         }
         .ckeditor-tdmu-wrapper .ck-content h2 {
           font-size: 20px !important;

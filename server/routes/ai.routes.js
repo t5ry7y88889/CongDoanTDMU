@@ -669,8 +669,8 @@ Hãy viết MỘT BÀI BÁO WEBSITE DUY NHẤT. YÊU CẦU BẮT BUỘC:
 - Đầu bài có thẻ <h1 class="article-title">Tiêu đề bài báo</h1>.
 - Đoạn tiếp theo là Sapo in đậm (<p class="sapo"><strong>...</strong></p>) tóm tắt 5W1H.
 - Thân bài chia các thẻ <h2> mạch lạc (Không ghi Phần 1, Phần 2).
-- Có ít nhất 1 trích dẫn <blockquote>.
-- Có gợi ý chèn ảnh bằng <figure class="journalism-figure"><img src="https://via.placeholder.com/800x450" alt="placeholder"><figcaption>...</figcaption></figure>.
+- Văn phong báo chí chính luận tự nhiên, mượt mà, không gượng ép trích dẫn khuôn mẫu.
+- Có gợi ý chèn ảnh bằng <figure class="image"><img src="https://via.placeholder.com/800x450" alt="placeholder"><figcaption>Chú thích ảnh sự kiện</figcaption></figure>.
 `;
 
     let webContent = "";
@@ -1692,27 +1692,27 @@ router.post('/generate-from-facts', async (req, res) => {
     const organizer = fs.organizer;
 
     const heroFigure = featuredPhoto ? `
-<figure class="journalism-figure" style="text-align: center; margin: 24px 0;">
+<figure class="image" style="text-align: center; margin: 24px auto;">
   <img src="${featuredPhoto.url}" alt="${featuredPhoto.altText || evtName}" style="${formatPhotoStyle(featuredPhoto, '16/9', '760px')}">
-  <figcaption style="font-size: 13px; color: #64748B; font-style: italic; margin-top: 8px;">${featuredPhoto.caption || ('Ảnh: ' + evtName)}</figcaption>
+  <figcaption>${featuredPhoto.caption || ('Ảnh: ' + evtName)}</figcaption>
 </figure>` : '';
 
     const bodyFigure1 = inBodyPhotos[0] ? `
-<figure class="journalism-figure" style="text-align: center; margin: 24px 0;">
+<figure class="image" style="text-align: center; margin: 24px auto;">
   <img src="${inBodyPhotos[0].url}" alt="${inBodyPhotos[0].altText || inBodyPhotos[0].caption || evtName}" style="${formatPhotoStyle(inBodyPhotos[0], '4/3', '700px')}">
-  <figcaption style="font-size: 13px; color: #64748B; font-style: italic; margin-top: 8px;">${inBodyPhotos[0].caption || ('Ảnh: ' + evtName)}</figcaption>
+  <figcaption>${inBodyPhotos[0].caption || ('Ảnh: ' + evtName)}</figcaption>
 </figure>` : '';
 
     const bodyFigure2 = inBodyPhotos[1] ? `
-<figure class="journalism-figure" style="text-align: center; margin: 24px 0;">
+<figure class="image" style="text-align: center; margin: 24px auto;">
   <img src="${inBodyPhotos[1].url}" alt="${inBodyPhotos[1].altText || inBodyPhotos[1].caption || evtName}" style="${formatPhotoStyle(inBodyPhotos[1], '4/3', '700px')}">
-  <figcaption style="font-size: 13px; color: #64748B; font-style: italic; margin-top: 8px;">${inBodyPhotos[1].caption || ('Ảnh: ' + evtName)}</figcaption>
+  <figcaption>${inBodyPhotos[1].caption || ('Ảnh: ' + evtName)}</figcaption>
 </figure>` : '';
 
     const extraFigures = inBodyPhotos.slice(2).map(p => `
-    <figure class="journalism-figure" style="margin: 0; text-align: center;">
+    <figure class="image" style="margin: 0 auto; text-align: center;">
       <img src="${p.url}" alt="${p.altText || p.caption || evtName}" style="${formatPhotoStyle(p, '16/9', '100%')}">
-      <figcaption style="font-size: 12px; color: #64748B; font-style: italic; margin-top: 6px;">${p.caption || ('Ảnh: ' + evtName)}</figcaption>
+      <figcaption>${p.caption || ('Ảnh: ' + evtName)}</figcaption>
     </figure>`).join('');
 
     const galleryHtml = extraFigures ? `
@@ -1792,16 +1792,16 @@ Nhiệm vụ: Dựa TUYỆT ĐỐI vào BẢNG DỮ LIỆU SỰ THẬT (FACT SHE
 QUY TẮC BẤT DI BẤT DỊCH (GUARDRAILS):
 1. CHỈ SỬ DỤNG SỰ THẬT TRONG FACT SHEET: Tuyệt đối KHÔNG tự ý bịa thêm đại biểu không có trong danh sách, KHÔNG tự chế số tiền kinh phí hay ngày tháng sai lệch.
 2. NGHỊ ĐỊNH 30/2020/NĐ-CP & ĐIỀU LỆ CÔNG ĐOÀN: Văn phong trang trọng, chuẩn mực, giàu tính nhân văn, tôn vinh người lao động TDMU.
-3. BÀI BÁO WEBSITE: Có Tiêu đề cuốn hút, Sapo tóm tắt 5W1H in đậm, các thẻ <h2> phân tích mạch lạc, trích dẫn phát biểu <blockquote>.
+3. BÀI BÁO WEBSITE: Có Tiêu đề cuốn hút, Sapo tóm tắt 5W1H in đậm, các thẻ <h2> phân tích mạch lạc, văn phong báo chí chính luận tự nhiên, không gượng ép khuôn mẫu.
 ${hasRealImage
   ? `DANH SÁCH ẢNH TƯ LIỆU THẬT ĐÃ DUYỆT ĐỂ CHÈN VÀO BÀI BÁO (BẮT BUỘC SỬ DỤNG ĐÚNG CÁC URL VÀ CHÚ THÍCH NÀY, TUYỆT ĐỐI KHÔNG TỰ BỊA URL KHÁC):
 ${photosPromptList}
 
 QUY TẮC PHÂN BỔ ẢNH BÁO CHÍ VÀO THÂN BÀI HTML:
 - Ảnh đại diện chính (${featuredPhoto ? featuredPhoto.url : ''}): Chèn ngay sau đoạn mở đầu / Sapo theo cấu trúc:
-  <figure class="journalism-figure" style="text-align: center; margin: 20px 0;"><img src="${featuredPhoto ? featuredPhoto.url : ''}" alt="${featuredPhoto ? (featuredPhoto.altText || featuredPhoto.caption) : ''}" style="max-width: 100%; border-radius: 8px;"><figcaption style="font-size: 13px; color: #64748B; font-style: italic; margin-top: 8px;">${featuredPhoto ? featuredPhoto.caption : ''}</figcaption></figure>
+  <figure class="image" style="text-align: center; margin: 20px auto;"><img src="${featuredPhoto ? featuredPhoto.url : ''}" alt="${featuredPhoto ? (featuredPhoto.altText || featuredPhoto.caption) : ''}" style="max-width: 100%; border-radius: 8px;"><figcaption>${featuredPhoto ? featuredPhoto.caption : ''}</figcaption></figure>
 - Các ảnh nội dung còn lại: Hãy phân bổ rải đều dưới các tiêu đề <h2> hoặc nội dung phù hợp với ngữ cảnh của chú thích ảnh.
-- Toàn bộ ảnh chèn phải dùng đúng thẻ <figure class="journalism-figure"><img><figcaption></figcaption></figure>.`
+- Toàn bộ ảnh chèn phải dùng đúng thẻ <figure class="image"><img><figcaption>Chú thích ảnh</figcaption></figure>. BẮT BUỘC chú thích ảnh phải nằm bên trong thẻ <figcaption>, TUYỆT ĐỐI KHÔNG tạo thêm thẻ <p> bên dưới để lặp lại chú thích ảnh.`
   : `QUY TẮC BẤT DI BẤT DỊCH VỀ HÌNH ẢNH: Sự kiện này KHÔNG CÓ tệp ảnh tư liệu hiện trường đính kèm. Tuyệt đối KHÔNG ĐƯỢC tự ý chèn thẻ <img>, <figure> hay bịa đường dẫn ảnh vào bài viết. Bài viết phải ở định dạng thuần văn bản báo chí chuẩn mực.`}
 4. FACEBOOK: 150-250 từ, mở đầu hook hấp dẫn, có icon, hashtag chuẩn (#CongDoanTDMU, #TDMU2026), lời kêu gọi tương tác.
 5. ZALO OA: Ngắn gọn dưới 80 từ, văn phong thông báo trang trọng trực diện.
@@ -2012,6 +2012,55 @@ function eliminateBulletPoints(html) {
   return clean;
 }
 
+/**
+ * Chuẩn hóa HTML bài báo sang chuẩn CKEditor 5:
+ * - Đảm bảo thẻ <figure class="image"> và <figcaption> chứa chú thích ảnh thật
+ * - Khử trùng lặp chú thích ảnh bị văng ra thẻ <p> bên dưới
+ * - Khử trích dẫn khuôn mẫu cứng nhắc
+ */
+function normalizeArticleHtml(html) {
+  if (!html || typeof html !== 'string') return '';
+  let res = html;
+
+  // 1. Khử markdown code fence nếu có
+  res = res.replace(/^```(?:html)?\s*/i, '').replace(/\s*```$/i, '');
+
+  // 2. Chuẩn hóa class của figure sang class="image" chuẩn CKEditor 5
+  res = res.replace(/<figure[^>]*class=["'][^"']*journalism-figure[^"']*["'][^>]*>/gi, '<figure class="image">');
+  res = res.replace(/<figure(?![^>]*class=)[^>]*>/gi, '<figure class="image">');
+
+  // 3. Khắc phục tình trạng chú thích ảnh bị văng ra thẻ <p> bên dưới figure
+  res = res.replace(
+    /<figure([^>]*)>([\s\S]*?)<img([^>]+)>([\s\S]*?)(?:<figcaption>([\s\S]*?)<\/figcaption>)?([\s\S]*?)<\/figure>\s*(?:<p[^>]*>(?:<em>)?(Toàn cảnh[\s\S]*?|Hình ảnh[\s\S]*?|Ảnh:?[\s\S]*?|Quang cảnh[\s\S]*?|Tọa đàm[\s\S]*?|Buổi[\s\S]*?|Đồng chí[\s\S]*?)(?:<\/em>)?<\/p>)/gi,
+    (match, figAttrs, preImg, imgAttrs, postImg, existingCaption, postCap, pCaption) => {
+      const finalCaption = (existingCaption && existingCaption.trim().length > 3) 
+        ? existingCaption.trim() 
+        : (pCaption ? pCaption.replace(/<[^>]*>/g, '').trim() : '');
+      const altMatch = imgAttrs.match(/alt=["']([^"']*)["']/i);
+      const altText = altMatch ? altMatch[1] : finalCaption;
+      const cleanImgAttrs = imgAttrs.replace(/alt=["'][^"']*["']/i, '').trim();
+      return `<figure class="image">${preImg}<img ${cleanImgAttrs} alt="${altText}" />${finalCaption ? `<figcaption>${finalCaption}</figcaption>` : ''}</figure>`;
+    }
+  );
+
+  // 4. Nếu figure đã có figcaption mà đoạn <p> liền kề lặp lại nội dung chú thích -> xóa thẻ <p> trùng lặp
+  res = res.replace(
+    /(<figure class="image">[\s\S]*?<figcaption>([\s\S]*?)<\/figcaption><\/figure>)\s*<p[^>]*>([\s\S]*?)<\/p>/gi,
+    (match, figureHtml, capText, pText) => {
+      const cleanCap = capText.replace(/<[^>]*>/g, '').trim().toLowerCase();
+      const cleanP = pText.replace(/<[^>]*>/g, '').trim().toLowerCase();
+      if (cleanCap && (cleanP === cleanCap || cleanP.includes(cleanCap) || cleanCap.includes(cleanP))) {
+        return figureHtml;
+      }
+      return match;
+    }
+  );
+
+  // 5. Khử trích dẫn khuôn mẫu cứng nhắc gượng ép
+  res = res.replace(/<blockquote>\s*<p>\s*["“]?Tổ chức Công đoàn Trường Đại học Thủ Dầu Một cam kết[\s\S]*?<\/blockquote>/gi, '');
+
+  return res;
+}
 
 function persistBase64Photo(p, idx = 0) {
   if (!p || !p.url) return { url: '/images/banner.jpg', caption: 'Hình ảnh sự kiện' };
@@ -2146,11 +2195,14 @@ function synthesizeLocalJournalism({ userPrompt, filesInfo, photos, genre, sourc
     }).join('\n');
   }
 
-  // 5. Compose full body HTML (No duplicate title & sapo because they are already set in Headline and Sapo fields)
-  const bodyHtml = fixVietnameseFont(`
+  // 5. Compose full journalistic article HTML (Headline H1 -> Sapo Lead -> Context -> Photos embedded naturally -> Sections -> Conclusion)
+  const bodyHtml = normalizeArticleHtml(fixVietnameseFont(`
+<h1 class="article-title">${title}</h1>
+<p class="sapo"><strong>${sapo}</strong></p>
+
 <h2>Bối cảnh và Ý nghĩa Sự kiện</h2>
 <p>${leadContext}</p>
-<p>Tham dự sự kiện có đại diện Ban Thường vụ Công đoàn trường, các đồng chí Tổ trưởng, Tổ phó cùng đông đảo cán bộ, giảng viên, nhân viên đại diện cho 16 Tổ Công đoàn bộ phận. Sự hiện diện đầy đủ của các đại biểu thể hiện tinh thần trách nhiệm cao đối với công tác chăm lo và phát triển bền vững của Nhà trường.</p>
+<p>Tham dự sự kiện có đại diện Ban Thường vụ Công đoàn trường, các đồng chí Tổ trưởng, Tổ phó cùng đông đảo cán bộ, giảng viên, nhân viên đại diện cho các Tổ Công đoàn bộ phận. Sự hiện diện đầy đủ của các đại biểu thể hiện tinh thần trách nhiệm cao đối với công tác chăm lo và phát triển bền vững của Nhà trường.</p>
 
 ${figuresHtml}
 
@@ -2161,14 +2213,10 @@ ${pptxSectionHtml || `
 
 ${excelSectionHtml}
 
-<blockquote>
-  <p>"Tổ chức Công đoàn Trường Đại học Thủ Dầu Một cam kết luôn tiên phong, trách nhiệm và tận tâm vì quyền lợi của đoàn viên, xây dựng môi trường đại học văn minh, nhân ái và ngập tràn hạnh phúc."</p>
-</blockquote>
-
 <h2>Định hướng Triển khai và Quyết tâm Hành động</h2>
 <p>Phát biểu kết luận, đại diện Ban Thường vụ Công đoàn trường ghi nhận và đánh giá cao tinh thần trách nhiệm của toàn thể đoàn viên; đồng thời đề nghị các Tổ Công đoàn cơ sở tiếp tục phổ biến, quán triệt sâu rộng các nội dung đã thống nhất đến từng cán bộ, người lao động.</p>
 <p>Toàn thể cán bộ, giảng viên quyết tâm đoàn kết một lòng, nỗ lực thi đua Dạy tốt - Học tốt - Quản lý tốt, góp phần khẳng định uy tín và vị thế của Trường Đại học Thủ Dầu Một trong giai đoạn phát triển mới.</p>
-`.trim());
+`.trim()));
 
   const fbCaption = fixVietnameseFont(`🔔 [CÔNG ĐOÀN TDMU 2026]\n✨ ${title.toUpperCase()}\n\n📌 ${sapo}\n\n👉 Xem toàn văn bài viết và hình ảnh hoạt động tại Cổng thông tin Công đoàn TDMU!\n#CongDoanTDMU #TDMU2026 #HoatDongDoanVien #DaiHocThuDauMot`);
 
@@ -2241,6 +2289,7 @@ async function streamSynthesisToClient(res, synthesis, photos, userPrompt, genre
     articleId: realId,
     title: title,
     summary: sapo,
+    webContent: bodyHtml,
     message: 'Hoàn tất! Bài báo đã được tạo và lưu vào hệ thống.'
   }) + '\n\n');
 
@@ -2289,36 +2338,39 @@ router.post('/autopilot-generate', async (req, res) => {
     res.write('data: ' + JSON.stringify({ step: 'status', message: 'Bước 1/3: Đang tự động đọc hiểu hồ sơ tư liệu và viết bài báo Website...' }) + '\n\n');
 
     const imageInstruction = hasPhotos
-      ? `- CHÈN ẢNH HIỆN TRƯỜNG: Chèn ảnh vào bài bằng thẻ:
-  <figure class="journalism-figure" style="text-align: center; margin: 24px auto; max-width: 100%;">
-    <img src="URL_CHÍNH_XÁC_TỪ_DANH_SÁCH" alt="Mô tả ảnh" style="width: 100%; max-height: 480px; object-fit: contain; border-radius: 8px;">
-    <figcaption style="font-size: 13px; color: #64748B; font-style: italic; margin-top: 8px;">Chú thích ảnh</figcaption>
-  </figure>
-- BẮT BUỘC: CHỈ ĐƯỢC PHÉP DÙNG các URL có trong danh sách ảnh được cung cấp ở trên. TUYỆT ĐỐI KHÔNG TỰ BỊA ĐẶT URL ẢNH KHÁC.`
+      ? `- QUY ĐỊNH CHÈN ẢNH TƯ LIỆU HIỆN TRƯỜNG CHUẨN CKEDITOR 5:
+  + Vị trí chèn: Tuyệt đối KHÔNG đặt ảnh cộc lốc ở đầu bài trước Tiêu đề hoặc Sapo. Ảnh tư liệu phải được chèn tự nhiên sau đoạn dẫn nhập (Sapo) hoặc xen kẽ giữa các phần thân bài <h2> nơi phù hợp nhất với ngữ cảnh của sự kiện.
+  + Thẻ chèn BẮT BUỘC dùng định dạng:
+    <figure class="image">
+      <img src="URL_CHÍNH_XÁC_TỪ_DANH_SÁCH" alt="Mô tả tóm tắt ảnh" />
+      <figcaption>Nội dung chú thích ảnh mô tả chi tiết, sinh động hoạt động tại sự kiện</figcaption>
+    </figure>
+  + BẮT BUỘC: Chú thích ảnh PHẢI NẰM BÊN TRONG thẻ <figcaption>...</figcaption>. Thẻ <figcaption> tuyệt đối KHÔNG được để trống.
+  + TUYỆT ĐỐI KHÔNG tạo thêm thẻ <p> bên dưới ảnh để ghi lại chú thích (tránh trùng lặp nội dung).
+  + CHỈ ĐƯỢC PHÉP DÙNG các URL có trong danh sách ảnh được cung cấp ở trên. TUYỆT ĐỐI KHÔNG tự bịa đặt URL ảnh khác.`
       : `- QUY ĐỊNH BẮT BUỘC VỀ HÌNH ẢNH: Hiện tại KHÔNG CÓ tệp ảnh hiện trường nào đính kèm. TUYỆT ĐỐI KHÔNG ĐƯỢC TỰ BỊA ĐẶT THẺ <img> HOẶC <figure> HOẶC ĐƯỜNG DẪN ẢNH ẢO DƯỚI MỌI HÌNH THỨC. Bài báo phải là thuần văn bản chuẩn mực, không có bất kỳ thẻ ảnh nào.`;
 
     const webSystemPrompt = `BẠN LÀ TỔNG THƯ KÝ TÒA SOẠN CỦA CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT (TDMU).
-CƠ CHẾ BIÊN TẬP TỰ ĐỘNG (AUTONOMOUS JOURNALISM):
-Người dùng nạp cả bộ hồ sơ tư liệu (Word, Excel, Slide PPTX, Scan PDF...). Bạn phải TỰ ĐỘNG ĐỌC HIỂU toàn bộ hồ sơ tệp nạp vào để:
-1. Nhận diện chủ đề sự kiện chính (ví dụ: Tọa đàm chuyên đề dinh dưỡng/sức khỏe, Hội thao viên chức, Đại hội Công đoàn, Chăm lo đời sống đoàn viên...).
-2. Tự đặt Tiêu đề bài báo (<h1 class="article-title">) đúng bản chất sự kiện, trang trọng, chuẩn mực báo chí đại học TDMU.
-3. Tự động trích xuất các số liệu thực tế từ bảng tính Excel (kinh phí, số lượng tham gia...) và các nội dung từ Slide PPTX để đưa vào các phần tương ứng của bài báo.
+BẠN LÀ CHUYÊN GIA BÁO CHÍ CHÍNH LUẬN VỚI PHONG CÁCH VIẾT BÁO HIỆN ĐẠI, MẠCH LẠC, TRANG TRỌNG VÀ GIÀU TÍNH NHÂN VĂN.
 
-NHIỆM VỤ: Phân tích kỹ lưỡng toàn bộ tài liệu tư liệu thực tế dưới đây và viết một bài báo hoàn chỉnh, mạch lạc, xuất sắc cho Website Công Đoàn TDMU.
+NHIỆM VỤ: Phân tích kỹ lưỡng toàn bộ hồ sơ tư liệu thực tế (Word, Excel, Slide PPTX, Scan...) và viết một bài báo hoàn chỉnh, sâu sắc, trọn vẹn bố cục cho Website Công Đoàn TDMU.
 
-YÊU CẦU BẮT BUỘC:
-- Trả về HTML RAW chuẩn (không bọc trong khối markdown \`\`\`html).
-- Bắt đầu bằng <h1 class="article-title">Tiêu đề bài báo thời sự lôi cuốn, phản ánh đúng sự kiện từ tài liệu</h1>
-- Tiếp theo là Sapo in đậm: <p class="sapo"><strong>Đoạn mở đầu 5W1H tóm lược sự kiện...</strong></p>
-- Thân bài chia các thẻ <h2> mạch lạc, sinh động (không viết rập khuôn Phần 1, Phần 2).
-- Có ít nhất 1 trích dẫn phát biểu ý nghĩa đặt trong thẻ <blockquote>.
-- Nếu có bảng biểu hay số liệu từ tài liệu, hãy trình bày rõ ràng, minh bạch.
+BỐ CỤC CHUẨN MỰC BÁO CHÍ CHUYÊN NGHIỆP:
+1. TIÊU ĐỀ BÀI BÁO (HEADLINE): Mở đầu bằng <h1 class="article-title">Tiêu đề bài báo thời sự lôi cuốn, phản ánh đúng trọng tâm và quy mô sự kiện từ tài liệu</h1>
+2. LỜI DẪN NHẬP / SAPO (LEAD 5W1H): Đoạn dẫn nhập đĩnh đạc, hấp dẫn đặt trong <p class="sapo"><strong>Tóm lược sắc nét 5W1H (Thời gian, địa điểm, sự kiện chính, thành phần tham dự và mục tiêu trọng tâm)...</strong></p>
+3. VỊ TRÍ ĐẶT ẢNH TƯ LIỆU: Ảnh hiện trường được đặt sau đoạn dẫn mở đầu hoặc xen kẽ giữa các phần thân bài <h2> tương ứng với không khí hoạt động (tuyệt đối không đặt ảnh chơ vơ ở đầu trang trước tiêu đề).
+4. THÂN BÀI CHUYÊN SÂU: Triển khai các tiêu mục bằng thẻ <h2> với văn xuôi mạch lạc, phân tích thấu đáo các nội dung, báo cáo chuyên đề và ý kiến đại biểu (không dùng lối đặt tên khô khan "Phần 1", "Phần 2"). Tự động trích xuất các số liệu thực tế từ bảng tính Excel (kinh phí, số lượng tham gia...) để trình bày dạng bảng HTML <table> hoặc lồng ghép tinh tế vào văn cảnh.
+5. VĂN PHONG VÀ TRÍCH DẪN TỰ NHIÊN:
+   - Viết văn xuôi chính luận truyền cảm hứng, khúc chiết, lan tỏa tinh thần chăm lo và phát triển bền vững của Công đoàn Nhà trường.
+   - TUYỆT ĐỐI KHÔNG tạo trích dẫn cứng nhắc, không khuôn mẫu gò bó. Không ép buộc thẻ <blockquote> rập khuôn nếu không có phát biểu trực tiếp thực tế trong tài liệu. Mọi ý kiến chỉ đạo, tâm tư nguyện vọng hãy được hòa quyện tự nhiên, mượt mà trong dòng văn bản.
+6. KẾT LUẬN / ĐỊNH HƯỚNG HÀNH ĐỘNG: Đúc kết ý nghĩa và phương hướng triển khai thời gian tới một cách đĩnh đạc, thể hiện quyết tâm của toàn thể đoàn viên.
+
+QUY CÁCH KỸ THUẬT:
+- Trả về HTML RAW chuẩn mực (không bọc trong khối mã markdown \`\`\`html).
+- TUYỆT ĐỐI KHÔNG SỬ DỤNG GẠCH ĐẦU DÒNG HOẶC BULLET (•, -, *, hoặc <ul><li>). Mọi luận điểm, số liệu phải được diễn giải thành các đoạn văn <p> hoàn chỉnh, chuẩn văn phong báo chí.
 ${imageInstruction}
-- TUYỆT ĐỐI KHÔNG SỬ DỤNG GẠCH ĐẦU DÒNG HOẶC CHẤM TRÒN BULLET (•, -, *, hoặc thẻ <ul><li>). Mọi luận điểm, số liệu, ý kiến phải được diễn giải thành các đoạn văn tường thuật hoàn chỉnh, mượt mà chuẩn văn phong báo chí chính luận.
-- ĐOẠN VĂN MẠCH LẠC: Sử dụng thẻ <p> với câu từ chau chuốt, đĩnh đạc, khoảng cách dòng thoáng.
-- Văn phong báo chí đại học hiện đại, đĩnh đạc, ấm áp, lan tỏa tinh thần tương thân tương ái.
-- Tuyệt đối BÁM SÁT SỰ THẬT trong tài liệu: số liệu, thời gian, địa điểm, thành phần đại biểu. Không bịa đặt thông tin sai lệch.
-- ĐẢM BẢO CHÍNH TẢ VÀ BẢNG MÃ TIẾNG VIỆT: Sử dụng 100% tiếng Việt chuẩn Unicode dựng sẵn (NFC), không để dấu rời rạc hay ký tự lạ.
+- ĐẢM BẢO CHÍNH TẢ VÀ BẢNG MÃ TIẾNG VIỆT: Sử dụng 100% tiếng Việt chuẩn Unicode dựng sẵn (NFC).
+- BÁM SÁT DỮ LIỆU THỰC TẾ TRONG HỒ SƠ TƯ LIỆU, không bịa đặt số liệu hoặc thông tin sai lệch.
 
 TƯ LIỆU THỰC TẾ:
 ${sourceBlock}`;
@@ -2416,7 +2468,7 @@ ${cleanPlainText}`;
     // Save article to DB
     const { insertArticleToDb } = require('../mssql_db');
     const featuredPhoto = (photos || []).find(p => p.isFeatured) || (photos || [])[0];
-    const cleanWebContent = eliminateBulletPoints(webContent);
+    const cleanWebContent = normalizeArticleHtml(eliminateBulletPoints(webContent));
 
     const newArticle = {
       title: extractedTitle,
@@ -2448,6 +2500,7 @@ ${cleanPlainText}`;
       articleId: realId,
       title: extractedTitle,
       summary: extractedSummary,
+      webContent: cleanWebContent,
       message: 'Hoàn tất! Bài báo đã được tạo và lưu vào hệ thống.'
     }) + '\n\n');
 

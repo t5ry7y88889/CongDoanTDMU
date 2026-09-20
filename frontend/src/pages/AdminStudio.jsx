@@ -663,7 +663,7 @@ export default function AdminStudio() {
     if (editorRef.current.insertPhoto) {
       editorRef.current.insertPhoto(url, caption);
     } else {
-      const html = `<figure style="margin:24px 0;text-align:center;"><img src="${url}" alt="${escHtml(caption)}" style="max-width:100%;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.08);"/><figcaption style="font-size:13px;font-style:italic;color:#64748B;margin-top:8px;">Ảnh: ${escHtml(caption || 'Hình ảnh sự kiện tại Trường Đại học Thủ Dầu Một')}</figcaption></figure><p></p>`;
+      const html = `<figure class="image"><img src="${url}" alt="${escHtml(caption)}" /><figcaption>${escHtml(caption || 'Hình ảnh sự kiện tại Trường Đại học Thủ Dầu Một')}</figcaption></figure><p></p>`;
       document.execCommand('insertHTML', false, html);
     }
     const updated = editorRef.current.getData ? editorRef.current.getData() : (editorRef.current.innerHTML || '');
@@ -762,10 +762,23 @@ export default function AdminStudio() {
             const evt = JSON.parse(line.slice(6));
             if (evt.step === 'web_chunk') {
               webHtml += evt.chunk || '';
-              const cleanChunk = webHtml.replace(/<h1 class="article-title">[\s\S]*?<\/h1>/i, '').replace(/<p class="sapo">[\s\S]*?<\/p>/i, '').trim();
+              
+              // Trích xuất Title và Sapo theo thời gian thực để cập nhật các ô thông tin phía trên
+              const tMatch = webHtml.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+              if (tMatch) {
+                const extTitle = tMatch[1].replace(/<[^>]*>/g, '').trim();
+                if (extTitle) setTitle(extTitle);
+              }
+              const sMatch = webHtml.match(/<p class="sapo"[^>]*>([\s\S]*?)<\/p>/i);
+              if (sMatch) {
+                const extSapo = sMatch[1].replace(/<[^>]*>/g, '').trim();
+                if (extSapo) setSapo(extSapo);
+              }
+
+              // Trình soạn thảo chứa TOÀN BỘ bài báo chi tiết chuẩn phong cách báo chí
               if (editorRef.current) {
-                if (editorRef.current.setData) editorRef.current.setData(cleanChunk);
-                else editorRef.current.innerHTML = cleanChunk;
+                if (editorRef.current.setData) editorRef.current.setData(webHtml);
+                else editorRef.current.innerHTML = webHtml;
               }
             } else if (evt.step === 'social_done') {
               fbCap = evt.facebook?.caption || '';
@@ -783,9 +796,9 @@ export default function AdminStudio() {
             } else if (evt.step === 'all_done') {
               if (evt.title) setTitle(evt.title);
               if (evt.summary) setSapo(evt.summary);
-              const cleanFinalHtml = webHtml.replace(/<h1 class="article-title">[\s\S]*?<\/h1>/i, '').replace(/<p class="sapo">[\s\S]*?<\/p>/i, '').trim();
-              setBodyHtml(cleanFinalHtml);
-              if (editorRef.current?.setData) editorRef.current.setData(cleanFinalHtml);
+              const finalHtml = evt.webContent || webHtml;
+              setBodyHtml(finalHtml);
+              if (editorRef.current?.setData) editorRef.current.setData(finalHtml);
               setActiveArticleId(evt.articleId || null);
               fetchDrafts();
               setChatMessages(p => p.map(m => m.id === progressMsgId ? {
