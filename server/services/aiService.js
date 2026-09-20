@@ -2,10 +2,13 @@ const { GoogleGenAI: RawGoogleGenAI } = require('@google/genai');
 const { fixVietnameseFont } = require('./documentParser');
 
 const GEMINI_MODELS = [
+  'gemini-flash-latest',
+  'gemini-3.5-flash',
   'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-2.5-flash-lite',
-  'gemini-1.5-flash'
+  'gemini-3.6-flash',
+  'gemini-3.1-flash-lite',
+  'gemini-flash-lite-latest',
+  'gemini-2.5-pro'
 ];
 
 class GoogleGenAI extends RawGoogleGenAI {
@@ -290,6 +293,134 @@ function normalizeAiChatOutput(parsed) {
   return { reply, editAction, editContent };
 }
 
+async function inspectPhotoWithAiVision({ imageBase64, mimeType, filePath, context = '', apiKey = '', groqApiKey = '' }) {
+  const fs = require('fs');
+  const path = require('path');
+  let finalBase64 = '';
+  let finalMime = mimeType || 'image/jpeg';
+
+  // 1. Extract base64 and mimeType
+  if (imageBase64) {
+    if (typeof imageBase64 === 'string' && imageBase64.startsWith('data:image/')) {
+      const match = imageBase64.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
+      if (match) {
+        finalMime = `image/${match[1] === 'jpg' ? 'jpeg' : match[1]}`;
+        finalBase64 = match[2];
+      } else {
+        finalBase64 = imageBase64.replace(/^data:.*?;base64,/, '');
+      }
+    } else {
+      finalBase64 = imageBase64;
+    }
+  } else if (filePath) {
+    let absPath = filePath;
+    if (!path.isAbsolute(absPath)) {
+      absPath = path.join(__dirname, '../..', filePath);
+    }
+    if (fs.existsSync(absPath)) {
+      finalBase64 = fs.readFileSync(absPath).toString('base64');
+      const ext = path.extname(absPath).toLowerCase().replace('.', '');
+      finalMime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+    }
+  }
+
+  if (!finalBase64) {
+    const fallbackText = context ? `Hình ảnh hoạt động ghi nhận tại ${context.slice(0, 80)}` : 'Hình ảnh hoạt động Công đoàn Trường Đại học Thủ Dầu Một';
+    return { caption: fallbackText, source: 'Default' };
+  }
+
+  const activeGemini = apiKey || process.env.GEMINI_API_KEY;
+  const activeGroq = groqApiKey || process.env.GROQ_API_KEY;
+
+  const visionPrompt = `BẠN LÀ PHÓNG VIÊN ẢNH VÀ BIÊN TẬP VIÊN BÁO CHÍ CHUYÊN NGHIỆP CỦA BÁO CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT (TDMU).
+Nhiệm vụ: Hãy quan sát tỉ mỉ bức ảnh tư liệu thực tế này:
+- Đọc các chữ trên phông nền (backdrop), băng rôn, slide máy chiếu hoặc tài liệu (nếu có).
+- Nhận diện bối cảnh (hội trường, phòng họp, lớp học, sân thể thao, bàn làm việc...).
+- Nhận diện nhân vật và hành động thực tế (báo cáo viên thuyết trình, chủ tọa phát biểu, đoàn viên biểu quyết/thảo luận, trao đổi học thuật, thi đấu thể thao...).
+${context ? `Ngữ cảnh sự kiện tham khảo: "${context}"` : ''}
+
+QUY ĐỊNH BẮT BUỘC:
+- Viết DUY NHẤT 1 CÂU TIÊU ĐỀ / CHÚ THÍCH BÁO CHÍ (Photo Caption) hoàn chỉnh từ 15 đến 25 từ bằng tiếng Việt trang trọng.
+- Phản ánh trung thực, chính xác những gì bạn nhìn thấy trong ảnh.
+- TUYỆT ĐỐI KHÔNG thêm lời dẫn giải ("Đây là ảnh...", "Bức ảnh chụp..."), KHÔNG đặt trong dấu ngoặc kép. Chỉ trả về một câu chú thích duy nhất.`;
+
+  // 2. Try Gemini Vision (using our custom GoogleGenAI with multi-model fallback)
+  if (activeGemini) {
+    try {
+      const ai = new GoogleGenAI({ apiKey: activeGemini });
+      const res = await ai.models.generateContent({
+        model: 'gemini-flash-latest',
+        contents: [
+          {
+            inlineData: {
+              mimeType: finalMime,
+              data: finalBase64
+            }
+          },
+          visionPrompt
+        ]
+      });
+      let text = (res.text || '').trim();
+      text = text.replace(/^["'“](.*)["'”]$/, '$1').trim();
+      text = fixVietnameseFont(text);
+      if (text.length > 8) {
+        return { caption: text, source: 'Gemini Vision' };
+      }
+    } catch (gErr) {
+      console.warn('[Gemini Vision Warning]:', gErr.message?.slice(0, 120));
+    }
+  }
+
+  // 3. Try Groq Vision Fallback (llama-3.2-11b-vision-preview)
+  if (activeGroq) {
+    try {
+      const fetch = (await import('node-fetch')).default || globalThis.fetch;
+      const groqPayload = {
+        model: 'llama-3.2-11b-vision-preview',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: visionPrompt },
+              { type: 'image_url', image_url: { url: `data:${finalMime};base64,${finalBase64}` } }
+            ]
+          }
+        ],
+        temperature: 0.2
+      };
+
+      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${activeGroq}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(groqPayload)
+      });
+
+      if (groqRes.ok) {
+        const groqData = await groqRes.json();
+        let text = (groqData.choices?.[0]?.message?.content || '').trim();
+        text = text.replace(/^["'“](.*)["'”]$/, '$1').trim();
+        text = fixVietnameseFont(text);
+        if (text.length > 8) {
+          return { caption: text, source: 'Groq Vision' };
+        }
+      }
+    } catch (qErr) {
+      console.warn('[Groq Vision Warning]:', qErr.message?.slice(0, 120));
+    }
+  }
+
+  // 4. Honest Contextual Dynamic Fallback (NO HARDCODED TEMPLATES)
+  const cleanContext = (context || '').replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
+  const caption = cleanContext
+    ? `Hình ảnh ghi nhận tại hoạt động ${cleanContext.slice(0, 80)}`
+    : 'Hình ảnh hoạt động ghi nhận tại Trường Đại học Thủ Dầu Một';
+
+  return { caption, source: 'Dynamic Context Fallback' };
+}
+
 module.exports = {
   GoogleGenAI,
   extractTfIdfKeywords,
@@ -299,6 +430,8 @@ module.exports = {
   handleAiError,
   normalizeAiGenerateOutput,
   normalizeAiChatOutput,
+  inspectPhotoWithAiVision,
   GEMINI_MODELS
 };
+
 

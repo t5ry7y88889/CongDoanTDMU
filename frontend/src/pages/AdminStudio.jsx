@@ -18,82 +18,34 @@ async function readAsDataURL(file) {
   });
 }
 
+function isMachineGeneratedCaption(cap) {
+  if (!cap) return true;
+  const s = String(cap).trim().replace(/\.[a-zA-Z0-9]{2,5}$/, '');
+  if (s.length < 4) return true;
+  if (/^[0-9_a-fA-F\-]{8,}$/.test(s)) return true;
+  if (/^\d{8,}/.test(s)) return true;
+  if (/^(img|dsc|photo|image|pic|screenshot|zalo|fb|facebook|capture|media|file|unnamed)[\d_\-]/i.test(s)) return true;
+  if (/^\d+_[a-zA-Z0-9_]+$/.test(s)) return true;
+  if (s.includes('1789')) return true;
+  if (!/[a-zA-Z\u00C0-\u1EF9]/.test(s)) return true;
+  return false;
+}
+
 function resolveJournalisticPhotoCaption(photo, index = 0, eventTitle = '', genre = '') {
   let cap = (typeof photo === 'string' ? photo : (photo?.caption || photo?.title || photo?.name || photo?.fileName || '')).trim();
   cap = cap.replace(/\.[a-zA-Z0-9]{2,5}$/, '').trim();
 
-  const isMachineHash = /^[0-9_a-fA-F\-]{8,}$/.test(cap) ||
-                        /^\d{8,}/.test(cap) ||
-                        /^(img|dsc|photo|image|pic|screenshot|zalo|fb|facebook|capture|media|file|unnamed)[\d_\-]/i.test(cap) ||
-                        cap.length < 4 ||
-                        !/[a-zA-Z\u00C0-\u1EF9]/.test(cap);
-
-  if (/^\d+_[a-zA-Z0-9_]+$/.test(cap)) {
-    const cleanLower = cap.toLowerCase();
-    if (cleanLower.includes('hoi_truong') || cleanLower.includes('toan_canh')) {
-      return 'Toàn cảnh Hội trường buổi Tọa đàm chuyên đề tại Trường Đại học Thủ Dầu Một';
-    }
-    if (cleanLower.includes('trao_qua') || cleanLower.includes('tang_qua') || cleanLower.includes('khen_thuong')) {
-      return 'Đại diện Ban Chấp hành Công đoàn trao quà lưu niệm và động viên đoàn viên tham gia chương trình';
-    }
-    if (cleanLower.includes('thao_luan') || cleanLower.includes('phat_bieu')) {
-      return 'Đoàn viên công đoàn tích cực đóng góp ý kiến và thảo luận sôi nổi tại sự kiện';
-    }
+  // If already a valid, human or AI-generated caption with meaningful Vietnamese words
+  if (!isMachineGeneratedCaption(cap) && cap.length >= 6) {
+    return cap;
   }
 
-  if (!isMachineHash && cap.length > 5 && !cap.includes('1789360281352')) {
-    if (/\s/.test(cap) || /[\u00C0-\u1EF9]/.test(cap)) {
-      return cap;
-    }
+  // Dynamic contextual fallback based on event title (ABSOLUTELY NO HARDCODED TEMPLATES)
+  const cleanContext = (eventTitle || genre || '').replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
+  if (cleanContext) {
+    return `Hình ảnh hoạt động ghi nhận tại ${cleanContext.slice(0, 80)}`;
   }
-
-  const contextStr = `${eventTitle} ${genre}`.toLowerCase();
-
-  if (contextStr.includes('dinh dưỡng') || contextStr.includes('tọa đàm') || contextStr.includes('sức khỏe') || contextStr.includes('học đường')) {
-    if (index === 0) {
-      return 'Toàn cảnh buổi Tọa đàm chuyên đề "Dinh dưỡng vì sức khỏe gia đình" do Công đoàn Trường Đại học Thủ Dầu Một tổ chức';
-    } else if (index === 1) {
-      return 'Đại diện Ban Chấp hành Công đoàn Trường trao quà lưu niệm và chụp ảnh cùng các đoàn viên tham dự';
-    } else if (index === 2) {
-      return 'Đoàn viên các Tổ Công đoàn chăm chú theo dõi phần trình bày chuyên sâu của báo cáo viên';
-    } else {
-      return `Không khí trao đổi, thảo luận sôi nổi của các đại biểu tại buổi tọa đàm (Ảnh ${index + 1})`;
-    }
-  }
-
-  if (contextStr.includes('hội thao') || contextStr.includes('thể thao') || contextStr.includes('bóng đá') || contextStr.includes('cầu lông')) {
-    if (index === 0) {
-      return 'Lễ khai mạc Hội thao truyền thống Cán bộ, Viên chức và Người lao động Trường Đại học Thủ Dầu Một';
-    } else if (index === 1) {
-      return 'Các vận động viên là cán bộ, giảng viên thi đấu hết mình với tinh thần đoàn kết, cao thượng';
-    } else {
-      return 'Ban Tổ chức trao giải và chụp ảnh lưu niệm cùng các đội thi đạt thành tích xuất sắc';
-    }
-  }
-
-  if (contextStr.includes('chăm lo') || contextStr.includes('tết') || contextStr.includes('tháng công nhân')) {
-    if (index === 0) {
-      return 'Công đoàn Trường Đại học Thủ Dầu Một tổ chức chương trình chăm lo đời sống đoàn viên, người lao động';
-    } else {
-      return 'Đại diện Ban Thường vụ Công đoàn trao tặng các phần quà nghĩa tình đến đoàn viên';
-    }
-  }
-
-  if (contextStr.includes('đại hội') || contextStr.includes('hội nghị')) {
-    if (index === 0) {
-      return 'Toàn cảnh Đại hội Công đoàn Trường Đại học Thủ Dầu Một với sự tham gia của đông đảo đại biểu';
-    } else {
-      return 'Đại biểu biểu quyết thông qua Nghị quyết Đại hội với sự đồng thuận, nhất trí cao';
-    }
-  }
-
-  if (index === 0) {
-    return 'Toàn cảnh sự kiện hoạt động của Công đoàn Trường Đại học Thủ Dầu Một';
-  } else if (index === 1) {
-    return 'Đại diện lãnh đạo Công đoàn Trường và các đại biểu tham dự, trao đổi tại chương trình';
-  } else {
-    return `Hình ảnh ghi nhận hoạt động tập thể sôi nổi của đoàn viên tại sự kiện (Ảnh ${index + 1})`;
-  }
+  return 'Hình ảnh hoạt động Công đoàn Trường Đại học Thủ Dầu Một';
 }
 
 async function getFilesFromDataTransferItems(items) {
@@ -229,6 +181,20 @@ export default function AdminStudio() {
   // ── Inspector modal ───────────────────────────────────────────────────────────
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [inspectorTab, setInspectorTab] = useState('text');
+
+  // ── AI Settings Modal ─────────────────────────────────────────────────────────
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
+  const [groqKey, setGroqKey] = useState(() => localStorage.getItem('groq_api_key') || '');
+
+  const saveAiSettings = (gKey, qKey) => {
+    localStorage.setItem('gemini_api_key', (gKey || '').trim());
+    localStorage.setItem('groq_api_key', (qKey || '').trim());
+    setGeminiKey((gKey || '').trim());
+    setGroqKey((qKey || '').trim());
+    setSettingsOpen(false);
+    alert('✅ Đã cập nhật cấu hình API Key cho AI Vision & Tòa Soạn thành công!');
+  };
 
   // ── Drop zone ─────────────────────────────────────────────────────────────────
   const [isDraggingOver, setIsDraggingOver] = useState(false);
@@ -655,8 +621,13 @@ export default function AdminStudio() {
       if (f.type.startsWith('image/') || /\.(jpe?g|png|webp|gif|bmp)$/i.test(f.name)) {
         const url = await readAsDataURL(f);
         newFileObjs.push({ name: f.name, size: (f.size / 1024).toFixed(1) + ' KB', type: 'image', dataUrl: url });
-        const cleanCaption = resolveJournalisticPhotoCaption({ caption: f.name }, newPhotos.length, title, 'Tọa đàm');
-        newPhotos.push({ url, caption: cleanCaption, isFeatured: false, fileName: f.name });
+        newPhotos.push({
+          url,
+          caption: '👁️ AI Vision đang xem ảnh...',
+          isFeatured: false,
+          fileName: f.name,
+          isAnalyzingVision: true
+        });
       } else {
         newFileObjs.push({ name: f.name, size: (f.size / 1024).toFixed(1) + ' KB', type: f.type || 'document' });
       }
@@ -678,6 +649,32 @@ export default function AdminStudio() {
       return combined;
     });
 
+    // Tự động phân tích ảnh đa phương thức (Multimodal AI Vision) trong nền
+    newPhotos.forEach(async (photo) => {
+      try {
+        const res = await fetch('/api/ai/vision-caption', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: photo.url,
+            fileName: photo.fileName,
+            context: title || 'Công đoàn Trường Đại học Thủ Dầu Một',
+            apiKey: localStorage.getItem('gemini_api_key') || '',
+            groqApiKey: localStorage.getItem('groq_api_key') || ''
+          })
+        });
+        const data = await res.json();
+        if (data.success && data.caption) {
+          setEventPhotos(prev => prev.map(p => (p.url === photo.url ? { ...p, caption: data.caption, isAnalyzingVision: false } : p)));
+        } else {
+          setEventPhotos(prev => prev.map(p => (p.url === photo.url ? { ...p, caption: resolveJournalisticPhotoCaption({ caption: photo.fileName }, 0, title), isAnalyzingVision: false } : p)));
+        }
+      } catch (err) {
+        console.warn('[Vision Caption Frontend Error]:', err);
+        setEventPhotos(prev => prev.map(p => (p.url === photo.url ? { ...p, caption: resolveJournalisticPhotoCaption({ caption: photo.fileName }, 0, title), isAnalyzingVision: false } : p)));
+      }
+    });
+
     // CHỐNG CHỒNG THẺ HỒ SƠ: Xóa thẻ dossier cũ, chỉ giữ 1 thẻ duy nhất
     setChatMessages(p => {
       const withoutOld = p.filter(m => m.type !== 'dossier');
@@ -693,7 +690,7 @@ export default function AdminStudio() {
         }
       ];
     });
-  }, []);
+  }, [title]);
 
   const handleDrop = async (e) => {
     e.preventDefault(); e.stopPropagation(); setIsDraggingOver(false);
@@ -765,6 +762,33 @@ export default function AdminStudio() {
     setEventPhotos(prev => prev.map((p, i) => i === idx ? { ...p, caption: newCap } : p));
   };
 
+  const triggerAiVision = async (idx) => {
+    const photo = eventPhotos[idx];
+    if (!photo) return;
+    setEventPhotos(prev => prev.map((p, i) => i === idx ? { ...p, isAnalyzingVision: true } : p));
+    try {
+      const res = await fetch('/api/ai/vision-caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: photo.url,
+          fileName: photo.fileName,
+          context: title || aiPrompt || 'Công đoàn Trường Đại học Thủ Dầu Một',
+          apiKey: localStorage.getItem('gemini_api_key') || '',
+          groqApiKey: localStorage.getItem('groq_api_key') || ''
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.caption) {
+        setEventPhotos(prev => prev.map((p, i) => i === idx ? { ...p, caption: data.caption, isAnalyzingVision: false } : p));
+      } else {
+        setEventPhotos(prev => prev.map((p, i) => i === idx ? { ...p, isAnalyzingVision: false } : p));
+      }
+    } catch (e) {
+      setEventPhotos(prev => prev.map((p, i) => i === idx ? { ...p, isAnalyzingVision: false } : p));
+    }
+  };
+
   const removeAttachedFile = (fileName) => {
     setAttachedFiles(prev => prev.filter(f => f.name !== fileName));
   };
@@ -808,7 +832,9 @@ export default function AdminStudio() {
         sourceText: '',
         userPrompt: promptToUse || 'Lập bài báo website truyền thông Công Đoàn TDMU hoàn chỉnh, trang trọng từ hồ sơ tư liệu.',
         filesInfo: attachedFiles.map(f => ({ name: f.name, size: f.size, type: f.type, text: f.text || '' })),
-        photos: eventPhotos
+        photos: eventPhotos,
+        apiKey: localStorage.getItem('gemini_api_key') || '',
+        groqApiKey: localStorage.getItem('groq_api_key') || ''
       };
       const response = await fetch('/api/ai/autopilot-generate', {
         method: 'POST',
@@ -1085,6 +1111,9 @@ export default function AdminStudio() {
             </button>
             <button id="btn-export-pdf" onClick={handleExportPdf} className="action-btn" style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px' }} title="Tải bài viết về máy dưới dạng Adobe PDF (.pdf)">
               <i className="fa-solid fa-file-pdf" /> Xuất PDF
+            </button>
+            <button onClick={() => setSettingsOpen(true)} className="action-btn" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }} title="Cài đặt API Key cho Gemini Vision và Groq">
+              ⚙️ Cài Đặt AI
             </button>
             <button onClick={saveDraft} className="action-btn" style={{ background: '#FFF', border: '1px solid #CBD5E1', color: '#002855' }}>💾 Lưu Bản Thảo</button>
             <button onClick={publishLive} className="action-btn" style={{ background: 'linear-gradient(135deg,#002855,#2563EB)', color: 'white' }}>🚀 Xuất Bản Live</button>
@@ -1621,7 +1650,15 @@ export default function AdminStudio() {
                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
                                 {eventPhotos.map((p, pidx) => (
                                   <div key={pidx} style={{ border: p.isFeatured ? '1.5px solid #2563EB' : '1px solid #E2E8F0', borderRadius: '6px', overflow: 'hidden', background: '#FFF', position: 'relative' }}>
-                                    <img src={p.url} alt={p.caption} style={{ width: '100%', height: '64px', objectFit: 'cover', display: 'block' }} />
+                                    <div style={{ position: 'relative' }}>
+                                      <img src={p.url} alt={p.caption} style={{ width: '100%', height: '64px', objectFit: 'cover', display: 'block' }} />
+                                      {p.isAnalyzingVision && (
+                                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(2,132,199,0.78)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white', gap: '2px', fontSize: '8.5px', fontWeight: '800' }}>
+                                          <i className="fa-solid fa-eye fa-bounce" style={{ fontSize: '13px' }} />
+                                          <span>AI Vision đang xem...</span>
+                                        </div>
+                                      )}
+                                    </div>
                                     <div style={{ padding: '2px 3px' }}>
                                       <input
                                         type="text"
@@ -1638,14 +1675,15 @@ export default function AdminStudio() {
                                           color: '#1E293B',
                                           background: '#F8FAFC'
                                         }}
-                                        title="Bấm để chỉnh sửa chú thích ảnh báo chí"
-                                        placeholder="Chú thích ảnh..."
+                                        title="Bấm để chỉnh sửa tiêu đề chú thích ảnh"
+                                        placeholder="AI Vision đang đặt tiêu đề..."
                                       />
                                     </div>
                                     <div style={{ display: 'flex', gap: '2px', padding: '2px 4px', background: '#F8FAFC', borderTop: '1px solid #F1F5F9' }}>
-                                      <button onClick={() => insertPhoto(p.url, p.caption)} style={{ flex: 1, background: '#EFF6FF', color: '#1D4ED8', border: 'none', borderRadius: '3px', fontSize: '9px', fontWeight: '700', padding: '2px', cursor: 'pointer' }}>+ Chèn</button>
-                                      <button onClick={() => setFeaturedPhoto(pidx)} style={{ background: p.isFeatured ? '#2563EB' : '#F1F5F9', color: p.isFeatured ? 'white' : '#64748B', border: 'none', borderRadius: '3px', fontSize: '9px', fontWeight: '700', padding: '2px 4px', cursor: 'pointer' }} title={p.isFeatured ? 'Ảnh đại diện' : 'Đặt làm ảnh đại diện'}>★</button>
-                                      <button onClick={() => removePhoto(pidx)} style={{ background: '#FFF1F2', color: '#E11D48', border: 'none', borderRadius: '3px', fontSize: '9px', fontWeight: '700', padding: '2px 5px', cursor: 'pointer' }} title="Xóa ảnh này khỏi hồ sơ">✕</button>
+                                      <button onClick={() => insertPhoto(p.url, p.caption)} style={{ flex: 1, background: '#EFF6FF', color: '#1D4ED8', border: 'none', borderRadius: '3px', fontSize: '8.5px', fontWeight: '700', padding: '2px', cursor: 'pointer' }} title="Chèn vào CKEditor 5">+ Chèn</button>
+                                      <button onClick={() => triggerAiVision(pidx)} disabled={p.isAnalyzingVision} style={{ background: '#F0FDF4', color: '#15803D', border: '1px solid #BBF7D0', borderRadius: '3px', fontSize: '8.5px', fontWeight: '700', padding: '2px 4px', cursor: 'pointer' }} title="Nhờ AI Vision nhìn lại ảnh này và tự đặt tiêu đề mới">👁️ AI</button>
+                                      <button onClick={() => setFeaturedPhoto(pidx)} style={{ background: p.isFeatured ? '#2563EB' : '#F1F5F9', color: p.isFeatured ? 'white' : '#64748B', border: 'none', borderRadius: '3px', fontSize: '8.5px', fontWeight: '700', padding: '2px 4px', cursor: 'pointer' }} title={p.isFeatured ? 'Ảnh đại diện' : 'Đặt làm ảnh đại diện'}>★</button>
+                                      <button onClick={() => removePhoto(pidx)} style={{ background: '#FFF1F2', color: '#E11D48', border: 'none', borderRadius: '3px', fontSize: '8.5px', fontWeight: '700', padding: '2px 5px', cursor: 'pointer' }} title="Xóa ảnh này khỏi hồ sơ">✕</button>
                                     </div>
                                     {p.isFeatured && <span style={{ position: 'absolute', top: '2px', left: '2px', background: '#2563EB', color: 'white', fontSize: '7px', fontWeight: '800', padding: '1px 3px', borderRadius: '2px' }}>Đại diện</span>}
                                   </div>
@@ -1813,6 +1851,59 @@ export default function AdminStudio() {
           </aside>
         </div>
       </div>
+
+      {/* ── AI SETTINGS MODAL ────────────────────────────────────────── */}
+      {settingsOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: '#FFFFFF', borderRadius: '12px', width: '100%', maxWidth: '520px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2), 0 10px 10px -5px rgba(0,0,0,0.1)', overflow: 'hidden', border: '1px solid #E2E8F0' }}>
+            <div style={{ padding: '16px 20px', background: 'linear-gradient(135deg,#002855,#001A38)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '800' }}>
+                <i className="fa-solid fa-sliders" style={{ color: '#38BDF8' }} />
+                <span>Cấu Hình API Key AI Vision & Tòa Soạn</span>
+              </div>
+              <button onClick={() => setSettingsOpen(false)} style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: '18px', cursor: 'pointer', lineHeight: '1' }}>✕</button>
+            </div>
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ fontSize: '12px', color: '#475569', lineHeight: '1.5', background: '#EFF6FF', border: '1px solid #BFDBFE', padding: '10px 12px', borderRadius: '8px' }}>
+                💡 <strong>AI Vision tự động:</strong> Khi nạp ảnh, hệ thống sẽ sử dụng <strong>Google Gemini Flash</strong> hoặc <strong>Groq Llama 3.2 Vision</strong> để trực tiếp đọc chữ trên backdrop, băng rôn và nhận diện nhân vật, hoạt động để tự động đặt tiêu đề báo chí trung thực, không hardcode.
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#002855', marginBottom: '6px' }}>
+                  🔑 Google Gemini API Key (Khuyên Dùng cho Vision & Viết Bài):
+                </label>
+                <input
+                  type="password"
+                  value={geminiKey}
+                  onChange={e => setGeminiKey(e.target.value)}
+                  placeholder="AIzaSy..."
+                  style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box' }}
+                />
+                <span style={{ fontSize: '10.5px', color: '#64748B', marginTop: '4px', display: 'block' }}>Hỗ trợ Gemini Flash với khả năng nhận diện hình ảnh hiện trường siêu sắc nét.</span>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#002855', marginBottom: '6px' }}>
+                  ⚡ Groq API Key (Dự phòng siêu tốc):
+                </label>
+                <input
+                  type="password"
+                  value={groqKey}
+                  onChange={e => setGroqKey(e.target.value)}
+                  placeholder="gsk_..."
+                  style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box' }}
+                />
+                <span style={{ fontSize: '10.5px', color: '#64748B', marginTop: '4px', display: 'block' }}>Tự động dùng Llama 3.2 11B Vision để đọc ảnh khi cần.</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '10px' }}>
+                <button onClick={() => setSettingsOpen(false)} style={{ padding: '8px 14px', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#475569', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>Hủy</button>
+                <button onClick={() => saveAiSettings(geminiKey, groqKey)} style={{ padding: '8px 18px', borderRadius: '6px', border: 'none', background: 'linear-gradient(135deg,#002855,#2563EB)', color: 'white', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>💾 Lưu Cấu Hình</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

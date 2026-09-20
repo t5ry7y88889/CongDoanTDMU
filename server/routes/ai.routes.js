@@ -8,7 +8,8 @@ const {
   handleAiError,
   extractJsonFromText,
   normalizeAiGenerateOutput,
-  normalizeAiChatOutput
+  normalizeAiChatOutput,
+  inspectPhotoWithAiVision
 } = require('../services/aiService');
 
 // =========================================================================
@@ -2093,86 +2094,34 @@ function persistBase64Photo(p, idx = 0) {
   return p;
 }
 
+function isMachineGeneratedCaption(cap) {
+  if (!cap) return true;
+  const s = String(cap).trim().replace(/\.[a-zA-Z0-9]{2,5}$/, '');
+  if (s.length < 4) return true;
+  if (/^[0-9_a-fA-F\-]{8,}$/.test(s)) return true;
+  if (/^\d{8,}/.test(s)) return true;
+  if (/^(img|dsc|photo|image|pic|screenshot|zalo|fb|facebook|capture|media|file|unnamed)[\d_\-]/i.test(s)) return true;
+  if (/^\d+_[a-zA-Z0-9_]+$/.test(s)) return true;
+  if (s.includes('1789')) return true;
+  if (!/[a-zA-Z\u00C0-\u1EF9]/.test(s)) return true;
+  return false;
+}
+
 function resolveJournalisticPhotoCaption(photo, index = 0, eventTitle = '', genre = '') {
   let cap = (typeof photo === 'string' ? photo : (photo?.caption || photo?.title || photo?.name || photo?.fileName || '')).trim();
   cap = cap.replace(/\.[a-zA-Z0-9]{2,5}$/, '').trim();
 
-  // Phát hiện chuỗi mã hóa máy, timestamp, hash ngẫu nhiên
-  const isMachineHash = /^[0-9_a-fA-F\-]{8,}$/.test(cap) ||
-                        /^\d{8,}/.test(cap) ||
-                        /^(img|dsc|photo|image|pic|screenshot|zalo|fb|facebook|capture|media|file|unnamed)[\d_\-]/i.test(cap) ||
-                        cap.length < 4 ||
-                        !/[a-zA-Z\u00C0-\u1EF9]/.test(cap);
-
-  // Xử lý tệp mẫu demo như 5_Anh_Toa_dam_Hoi_truong hoặc 6_Anh_Trao_qua_Doan_vien
-  if (/^\d+_[a-zA-Z0-9_]+$/.test(cap)) {
-    const cleanLower = cap.toLowerCase();
-    if (cleanLower.includes('hoi_truong') || cleanLower.includes('toan_canh')) {
-      return 'Toàn cảnh Hội trường buổi Tọa đàm chuyên đề tại Trường Đại học Thủ Dầu Một';
-    }
-    if (cleanLower.includes('trao_qua') || cleanLower.includes('tang_qua') || cleanLower.includes('khen_thuong')) {
-      return 'Đại diện Ban Chấp hành Công đoàn trao quà lưu niệm và động viên đoàn viên tham gia chương trình';
-    }
-    if (cleanLower.includes('thao_luan') || cleanLower.includes('phat_bieu')) {
-      return 'Đoàn viên công đoàn tích cực đóng góp ý kiến và thảo luận sôi nổi tại sự kiện';
-    }
+  // If already a valid, human or AI-generated caption with meaningful Vietnamese words
+  if (!isMachineGeneratedCaption(cap) && cap.length >= 6) {
+    return fixVietnameseFont(cap);
   }
 
-  // Nếu người dùng đã gõ tiêu đề có nghĩa bằng tiếng Việt (có dấu cách hoặc nguyên âm tiếng Việt)
-  if (!isMachineHash && cap.length > 5 && !cap.includes('1789360281352')) {
-    if (/\s/.test(cap) || /[\u00C0-\u1EF9]/.test(cap)) {
-      return cap;
-    }
+  // Dynamic contextual fallback based on event title (ABSOLUTELY NO HARDCODED PRE-CANNED TEMPLATES)
+  const cleanContext = (eventTitle || genre || '').replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
+  if (cleanContext) {
+    return fixVietnameseFont(`Hình ảnh hoạt động ghi nhận tại ${cleanContext.slice(0, 80)}`);
   }
-
-  // Khởi tạo tiêu đề ảnh chuẩn phong cách báo chí chính luận theo ngữ cảnh chủ đề
-  const contextStr = `${eventTitle} ${genre}`.toLowerCase();
-
-  if (contextStr.includes('dinh dưỡng') || contextStr.includes('tọa đàm') || contextStr.includes('sức khỏe') || contextStr.includes('học đường')) {
-    if (index === 0) {
-      return 'Toàn cảnh buổi Tọa đàm chuyên đề "Dinh dưỡng vì sức khỏe gia đình" do Công đoàn Trường Đại học Thủ Dầu Một tổ chức';
-    } else if (index === 1) {
-      return 'Đại diện Ban Chấp hành Công đoàn Trường trao quà lưu niệm và chụp ảnh cùng các đoàn viên tham dự';
-    } else if (index === 2) {
-      return 'Đoàn viên các Tổ Công đoàn chăm chú theo dõi phần trình bày chuyên sâu của báo cáo viên';
-    } else {
-      return `Không khí trao đổi, thảo luận sôi nổi của các đại biểu tại buổi tọa đàm (Ảnh ${index + 1})`;
-    }
-  }
-
-  if (contextStr.includes('hội thao') || contextStr.includes('thể thao') || contextStr.includes('bóng đá') || contextStr.includes('cầu lông')) {
-    if (index === 0) {
-      return 'Lễ khai mạc Hội thao truyền thống Cán bộ, Viên chức và Người lao động Trường Đại học Thủ Dầu Một';
-    } else if (index === 1) {
-      return 'Các vận động viên là cán bộ, giảng viên thi đấu hết mình với tinh thần đoàn kết, cao thượng';
-    } else {
-      return 'Ban Tổ chức trao giải và chụp ảnh lưu niệm cùng các đội thi đạt thành tích xuất sắc';
-    }
-  }
-
-  if (contextStr.includes('chăm lo') || contextStr.includes('tết') || contextStr.includes('tháng công nhân')) {
-    if (index === 0) {
-      return 'Công đoàn Trường Đại học Thủ Dầu Một tổ chức chương trình chăm lo đời sống đoàn viên, người lao động';
-    } else {
-      return 'Đại diện Ban Thường vụ Công đoàn trao tặng các phần quà nghĩa tình đến đoàn viên';
-    }
-  }
-
-  if (contextStr.includes('đại hội') || contextStr.includes('hội nghị')) {
-    if (index === 0) {
-      return 'Toàn cảnh Đại hội Công đoàn Trường Đại học Thủ Dầu Một với sự tham gia của đông đảo đại biểu';
-    } else {
-      return 'Đại biểu biểu quyết thông qua Nghị quyết Đại hội với sự đồng thuận, nhất trí cao';
-    }
-  }
-
-  if (index === 0) {
-    return 'Toàn cảnh sự kiện hoạt động của Công đoàn Trường Đại học Thủ Dầu Một';
-  } else if (index === 1) {
-    return 'Đại diện lãnh đạo Công đoàn Trường và các đại biểu tham dự, trao đổi tại chương trình';
-  } else {
-    return `Hình ảnh ghi nhận hoạt động tập thể sôi nổi của đoàn viên tại sự kiện (Ảnh ${index + 1})`;
-  }
+  return 'Hình ảnh hoạt động Công đoàn Trường Đại học Thủ Dầu Một';
 }
 
 function synthesizeLocalJournalism({ userPrompt, filesInfo, photos, genre, sourceText }) {
@@ -2427,21 +2376,92 @@ async function streamSynthesisToClient(res, synthesis, photos, userPrompt, genre
   res.end();
 }
 
+// =========================================================================
+// REAL-TIME MULTIMODAL AI VISION CAPTIONING
+// Uses Gemini Vision / Groq Vision to examine actual photo pixels
+// =========================================================================
+router.post('/vision-caption', async (req, res) => {
+  try {
+    const { imageBase64, mimeType, filePath, photoUrl, context, apiKey, groqApiKey } = req.body;
+    const activeGemini = apiKey || process.env.GEMINI_API_KEY;
+    const activeGroq = groqApiKey || process.env.GROQ_API_KEY;
+
+    let targetBase64 = imageBase64;
+    let targetPath = filePath;
+    if (!targetBase64 && photoUrl) {
+      if (photoUrl.startsWith('data:image/')) {
+        targetBase64 = photoUrl;
+      } else if (photoUrl.startsWith('/uploads/') || photoUrl.startsWith('/demo_samples/') || photoUrl.startsWith('images/') || photoUrl.startsWith('/images/')) {
+        const path = require('path');
+        targetPath = path.join(__dirname, '../../public', photoUrl.startsWith('/') ? photoUrl : '/' + photoUrl);
+      }
+    }
+
+    const result = await inspectPhotoWithAiVision({
+      imageBase64: targetBase64,
+      mimeType,
+      filePath: targetPath,
+      context: context || 'Công đoàn Trường Đại học Thủ Dầu Một',
+      apiKey: activeGemini,
+      groqApiKey: activeGroq
+    });
+
+    res.json({
+      success: true,
+      caption: result.caption,
+      source: result.source
+    });
+  } catch (err) {
+    console.error('[Vision Caption Error]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/autopilot-generate', async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
 
-  const { sourceText, filesInfo, photos, userPrompt, genre, apiKey } = req.body;
-  const cleanPhotos = (photos || []).map((p, idx) => {
-    const persisted = persistBase64Photo(p, idx);
-    const cleanCap = resolveJournalisticPhotoCaption(persisted, idx, userPrompt || '', genre || '');
-    return {
-      ...persisted,
-      caption: cleanCap
-    };
-  });
+  const { sourceText, filesInfo, photos, userPrompt, genre, apiKey, groqApiKey } = req.body;
   const activeKey = apiKey || process.env.GEMINI_API_KEY;
+  const activeGroq = groqApiKey || process.env.GROQ_API_KEY;
+
+  // Asynchronously inspect photos with genuine Multimodal AI Vision if captions are missing or machine hashes
+  const cleanPhotos = [];
+  const rawPhotos = photos || [];
+  for (let idx = 0; idx < rawPhotos.length; idx++) {
+    const p = rawPhotos[idx];
+    const persisted = persistBase64Photo(p, idx);
+    let currentCap = (persisted.caption || persisted.title || persisted.name || persisted.fileName || '').trim();
+
+    if (isMachineGeneratedCaption(currentCap)) {
+      res.write('data: ' + JSON.stringify({
+        step: 'status',
+        message: `👁️ AI Vision đang quan sát bức ảnh tư liệu ${idx + 1}/${rawPhotos.length} để đặt tiêu đề báo chí...`
+      }) + '\n\n');
+
+      try {
+        const visionResult = await inspectPhotoWithAiVision({
+          imageBase64: (typeof p.url === 'string' && p.url.startsWith('data:image/')) ? p.url : null,
+          filePath: (typeof persisted.url === 'string' && persisted.url.startsWith('/uploads/')) ? persisted.url : null,
+          context: userPrompt || genre || 'Công đoàn Trường Đại học Thủ Dầu Một',
+          apiKey: activeKey,
+          groqApiKey: activeGroq
+        });
+        if (visionResult?.caption) {
+          currentCap = visionResult.caption;
+        }
+      } catch (ve) {
+        console.warn(`[AI Vision on photo ${idx + 1} warning]:`, ve.message);
+      }
+    }
+
+    cleanPhotos.push({
+      ...persisted,
+      caption: resolveJournalisticPhotoCaption({ ...persisted, caption: currentCap }, idx, userPrompt || '', genre || '')
+    });
+  }
+
   const synth = synthesizeLocalJournalism({ userPrompt, filesInfo, photos: cleanPhotos, genre, sourceText });
   const genreName = synth.genreName || 'Tin Hoạt Động';
 
