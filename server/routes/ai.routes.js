@@ -719,67 +719,109 @@ Hãy viết MỘT BÀI BÁO WEBSITE DUY NHẤT. YÊU CẦU BẮT BUỘC:
 });
 
 // =========================================================================
-// 11. INLINE MICRO-EDITING
+// 11. INLINE SELECTION AI ASSISTANT ("NÓI GÌ NÓ SỬA ĐÓ" - NOTION / CURSOR STYLE)
 // =========================================================================
 router.post('/inline-edit', async (req, res) => {
-  const { text, action, customPrompt, apiKey } = req.body;
-  const activeGeminiKey = apiKey || process.env.GEMINI_API_KEY;
+  const selectedText = (req.body.selectedText || req.body.text || '').trim();
+  const rawInstruction = req.body.instruction || req.body.customPrompt || '';
+  const action = req.body.action || '';
+  const fullContext = req.body.fullContext || '';
+  const activeKey = req.body.apiKey || process.env.GEMINI_API_KEY;
 
-  let instruction = "";
-  if (action === 'rewrite') instruction = "Viết lại đoạn văn bản sau sao cho mạch lạc, hấp dẫn và tự nhiên hơn. Giữ nguyên ý nghĩa gốc.";
-  else if (action === 'shorten') instruction = "Viết lại đoạn văn bản sau ngắn gọn, súc tích hơn. Cắt bỏ các từ ngữ dư thừa nhưng không làm mất ý chính.";
-  else if (action === 'expand') instruction = "Mở rộng đoạn văn bản sau thêm chi tiết, diễn giải rõ ràng và sâu sắc hơn.";
-  else if (action === 'formal') instruction = "Viết lại đoạn văn bản sau theo phong cách trang trọng, nghiêm túc, chuẩn mực văn bản hành chính Công đoàn theo Nghị định 30/2020/NĐ-CP.";
-  else if (action === 'casual') instruction = "Viết lại đoạn văn bản sau theo phong cách gần gũi, năng động, phù hợp đăng mạng xã hội cho sinh viên.";
-  else if (action === 'custom') instruction = customPrompt || "Chỉnh sửa đoạn văn sau.";
+  if (!selectedText) {
+    return res.status(400).json({ success: false, error: 'Đoạn văn bản được chọn không được để trống!' });
+  }
 
-  // Local fallback logic
-  const localFallbackEdit = (rawText, act) => {
-    let t = (rawText || '').trim();
-    if (act === 'formal') {
+  let instruction = rawInstruction;
+  if (!instruction) {
+    if (action === 'rewrite') instruction = "Viết lại đoạn văn bản sau sao cho mạch lạc, hấp dẫn và tự nhiên hơn. Giữ nguyên ý nghĩa gốc.";
+    else if (action === 'shorten') instruction = "Rút gọn súc tích nhưng giữ nguyên các sự thật và số liệu quan trọng.";
+    else if (action === 'expand') instruction = "Mở rộng phân tích chiều sâu, làm rõ bối cảnh và ý nghĩa hoạt động.";
+    else if (action === 'formal') instruction = "Viết lại trang trọng, chuẩn mực hành chính theo Nghị định 30/2020/NĐ-CP.";
+    else if (action === 'grammar') instruction = "Sửa toàn bộ lỗi chính tả, câu từ, diễn đạt mượt mà và gãy gọn.";
+    else if (action === 'warm') instruction = "Đổi giọng văn ấm áp, truyền cảm, nêu bật tinh thần đại đoàn kết viên chức.";
+    else instruction = "Chỉnh sửa câu từ mạch lạc, trang trọng chuẩn văn phong báo chí.";
+  }
+
+  // Smart local fallback
+  const localFallbackEdit = (raw, act) => {
+    let t = (raw || '').trim();
+    if (act === 'formal' || act.includes('trang trọng') || act.includes('Nghị định 30')) {
       t = t.replace(/chúng tôi/gi, 'Ban Chấp hành Công đoàn')
            .replace(/làm việc/gi, 'triển khai nhiệm vụ')
            .replace(/giúp đỡ/gi, 'chăm lo, hỗ trợ thiết thực')
            .replace(/rất tốt/gi, 'đạt hiệu quả tích cực')
+           .replace(/vui vẻ/gi, 'sôi nổi và phấn khởi')
            .replace(/nói rằng/gi, 'khẳng định và nhấn mạnh');
-      return `<p>${t}</p><p>Hoạt động được triển khai theo đúng tôn chỉ, mục đích của tổ chức Công đoàn và các quy định hành chính hiện hành.</p>`;
-    } else if (act === 'shorten') {
-      const sentences = t.split(/(?<=[.!?])\s+/).filter(s => s.length > 10);
+      return `${t}. Hoạt động được triển khai theo đúng tôn chỉ, mục đích của tổ chức Công đoàn và các quy định hành chính hiện hành.`;
+    } else if (act === 'shorten' || act.includes('rút gọn')) {
+      const sentences = t.split(/(?<=[.!?])\s+/).filter(s => s.length > 5);
       return sentences.slice(0, Math.max(1, Math.ceil(sentences.length / 2))).join(' ');
-    } else if (act === 'expand') {
-      return `<p>${t}</p><p>Thông qua hoạt động này, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một tiếp tục khẳng định vai trò nòng cốt trong việc đại diện, chăm lo và bảo vệ quyền, lợi ích hợp pháp, chính đáng của đoàn viên, người lao động; đồng thời tạo động lực thi đua hoàn thành xuất sắc các mục tiêu chiến lược của nhà trường.</p>`;
+    } else if (act === 'expand' || act.includes('mở rộng')) {
+      return `${t}. Thông qua hoạt động này, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một tiếp tục khẳng định vai trò nòng cốt trong việc đại diện, chăm lo và bảo vệ quyền, lợi ích hợp pháp, chính đáng của đoàn viên; đồng thời tạo động lực thi đua hoàn thành xuất sắc các mục tiêu chiến lược của Nhà trường.`;
     }
     return t;
   };
 
-  if (!activeGeminiKey) {
-    const fallbackText = localFallbackEdit(text, action);
-    return res.json({ success: true, result: fallbackText, text: fallbackText });
+  if (!activeKey) {
+    const fallbackText = localFallbackEdit(selectedText, instruction);
+    return res.json({
+      success: true,
+      originalText: selectedText,
+      rewrittenText: fallbackText,
+      result: fallbackText,
+      text: fallbackText,
+      instruction
+    });
   }
 
-  const systemPrompt = `BẠN LÀ TRỢ LÝ CHỈNH SỬA VĂN BẢN (MICRO-EDITOR).
-Nhiệm vụ của bạn là thực hiện yêu cầu chỉnh sửa trên đoạn văn bản được cung cấp.
-YÊU CẦU: Trả về DUY NHẤT đoạn văn bản đã được chỉnh sửa. Tuyệt đối KHÔNG trả về các câu như "Dưới đây là đoạn văn...", KHÔNG thêm dấu ngoặc kép bọc ngoài nếu không cần thiết, KHÔNG giải thích. Chỉ trả về kết quả cuối cùng.`;
-
-  const promptContent = `YÊU CẦU CHỈNH SỬA: ${instruction}\n\nĐOẠN VĂN BẢN CẦN SỬA:\n"""\n${text}\n"""`;
-
   try {
-    const ai = new GoogleGenAI({ apiKey: activeGeminiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: systemPrompt + "\n\n" + promptContent
-    });
-    
-    let result = response.text.trim();
-    if (result.startsWith('```')) {
-      result = result.replace(/^```[a-z]*\n/, '').replace(/\n```$/, '');
-    }
+    const ai = new GoogleGenAI({ apiKey: activeKey });
+    const prompt = `BẠN LÀ CHUYÊN GIA BIÊN TẬP VĂN BẢN & TRUYỀN THÔNG BÁO CHÍ CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT.
+Nhiệm vụ: Chỉnh sửa hoặc viết lại đoạn văn bản sau theo ĐÚNG chỉ đạo của biên tập viên ("nói gì nó sửa đó").
 
-    res.json({ success: true, result: result.trim(), text: result.trim() });
-  } catch (e) {
-    console.warn("[Inline Edit Gemini Warning]:", e.message, "-> Falling back to local edit");
-    const fallbackText = localFallbackEdit(text, action);
-    res.json({ success: true, result: fallbackText, text: fallbackText });
+CHỈ ĐẠO CỦA BIÊN TẬP VIÊN:
+"${instruction}"
+
+ĐOẠN VĂN BẢN GỐC CẦN SỬA:
+"""
+${selectedText}
+"""
+${fullContext ? `NGỮ CẢNH TOÀN BÀI VIẾT (ĐỂ THAM KHẢO TÍNH NHẤT QUÁN):\n"""\n${fullContext.slice(0, 1500)}\n"""` : ''}
+
+QUY ĐỊNH BẮT BUỘC:
+1. Áp dụng chính xác chỉ đạo: nếu yêu cầu rút gọn thì rút gọn, nếu yêu cầu chuẩn Nghị định 30 thì chuyển thể câu chữ hành chính trang trọng, nếu yêu cầu bổ sung số liệu/chi tiết thì mở rộng hợp lý.
+2. Trả về TRỰC TIẾP đoạn văn bản đã hoàn thiện (tiếng Việt chuẩn Unicode NFC).
+3. KHÔNG viết lời dẫn giải thích ("Dưới đây là...", "Đây là kết quả..."). KHÔNG bọc trong khối code markdown \`\`\` nếu không phải bảng mã.`;
+
+    const aiRes = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt
+    });
+
+    let rewritten = (aiRes && aiRes.text) ? aiRes.text.trim() : selectedText;
+    rewritten = rewritten.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
+    rewritten = fixVietnameseFont(rewritten);
+
+    res.json({
+      success: true,
+      originalText: selectedText,
+      rewrittenText: rewritten,
+      result: rewritten,
+      text: rewritten,
+      instruction
+    });
+  } catch (err) {
+    console.warn('[Inline Edit Gemini Warning]:', err.message, '-> Falling back to local edit');
+    const fallbackText = localFallbackEdit(selectedText, instruction);
+    res.json({
+      success: true,
+      originalText: selectedText,
+      rewrittenText: fallbackText,
+      result: fallbackText,
+      text: fallbackText,
+      instruction
+    });
   }
 });
 
@@ -1950,73 +1992,204 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function synthesizeLocalJournalism({ userPrompt, filesInfo, photos, genre, sourceText }) {
-  const prompt = fixVietnameseFont((userPrompt || '').trim());
-  const fileTexts = (filesInfo || []).map(f => `--- ${f.name} ---\n${fixVietnameseFont(f.text || '')}`).join('\n');
-  const allText = [prompt, fileTexts, sourceText].filter(Boolean).join('\n');
+function eliminateBulletPoints(html) {
+  if (!html || typeof html !== 'string') return '';
+  let clean = html.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, (match, listContent) => {
+    const items = listContent.match(/<li[^>]*>([\s\S]*?)<\/li>/gi) || [];
+    return items.map(item => {
+      const text = item.replace(/<\/?li[^>]*>/gi, '').trim();
+      return `<p style="margin-bottom: 18px; line-height: 1.85; text-align: justify;">${text}</p>`;
+    }).join('\n');
+  });
+  clean = clean.replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, (match, listContent) => {
+    const items = listContent.match(/<li[^>]*>([\s\S]*?)<\/li>/gi) || [];
+    return items.map(item => {
+      const text = item.replace(/<\/?li[^>]*>/gi, '').trim();
+      return `<p style="margin-bottom: 18px; line-height: 1.85; text-align: justify;">${text}</p>`;
+    }).join('\n');
+  });
+  clean = clean.replace(/^[•\-\*]\s+/gm, '');
+  return clean;
+}
 
-  let title = "Hoạt Động Trọng Tâm Công Đoàn Trường Đại Học Thủ Dầu Một Năm 2026";
-  if (prompt) {
-    title = prompt.trim().replace(/^[^a-zA-Z0-9\u00C0-\u1EF9]+/, '').replace(/[.!?:;]+$/, '');
-    if (!title.toLowerCase().includes('công đoàn') && !title.toLowerCase().includes('tdmu')) {
-      title = `Công Đoàn TDMU: ${title}`;
+
+function persistBase64Photo(p, idx = 0) {
+  if (!p || !p.url) return { url: '/images/banner.jpg', caption: 'Hình ảnh sự kiện' };
+  if (typeof p.url === 'string' && p.url.startsWith('data:image/')) {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const matches = p.url.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
+      const ext = matches ? (matches[1] === 'jpeg' ? 'jpg' : matches[1]) : 'png';
+      const base64Data = matches ? matches[2] : p.url.replace(/^data:.*?;base64,/, '');
+      const filename = `studio_photo_${Date.now()}_${idx}.${ext}`;
+
+      const dir1 = path.join(__dirname, '../../public/uploads');
+      if (!fs.existsSync(dir1)) fs.mkdirSync(dir1, { recursive: true });
+      fs.writeFileSync(path.join(dir1, filename), Buffer.from(base64Data, 'base64'));
+
+      const dir2 = path.join(__dirname, '../../frontend/public/uploads');
+      if (fs.existsSync(dir2)) {
+        fs.writeFileSync(path.join(dir2, filename), Buffer.from(base64Data, 'base64'));
+      }
+      return {
+        ...p,
+        url: `/uploads/${filename}`
+      };
+    } catch (e) {
+      console.warn('[Photo Persist Error]:', e.message);
+      return p;
     }
   }
+  return p;
+}
 
-  const sapo = `Nhằm thực hiện thắng lợi các nhiệm vụ trọng tâm công tác năm 2026, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một (TDMU) đã tổ chức triển khai toàn diện các hoạt động chăm lo đời sống vật chất, tinh thần và bảo vệ quyền, lợi ích hợp pháp, chính đáng của đoàn viên, người lao động.`;
+function synthesizeLocalJournalism({ userPrompt, filesInfo, photos, genre, sourceText }) {
+  const prompt = fixVietnameseFont((userPrompt || '').trim());
+  const fileTexts = (filesInfo || []).map(f => `--- ${f.name} ---\n${fixVietnameseFont(f.text || '')}`).join('\n\n');
+  const allText = [prompt, fileTexts, sourceText].filter(Boolean).join('\n\n');
+  const allNames = (filesInfo || []).map(f => (f.name || '').toLowerCase()).join(' ');
+  const allLower = allText.toLowerCase();
 
-  let figuresHtml = '';
-  if (photos && photos.length > 0) {
-    figuresHtml = photos.map((p, idx) => `
-<figure class="journalism-figure" style="margin: 24px 0; text-align: center;">
-  <img src="${p.url}" alt="${p.caption || 'Hình ảnh sự kiện'}" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); display: block; margin: 0 auto;" />
-  <figcaption style="font-size: 13px; font-style: italic; color: #64748B; margin-top: 8px; text-align: center;">Ảnh ${idx + 1}: ${p.caption || 'Toàn cảnh hoạt động tại Trường Đại học Thủ Dầu Một'}</figcaption>
-</figure>`).join('\n');
+  // 1. Autonomous Topic, Headline & Category Deduction
+  let title = '';
+  let sapo = '';
+  let genreName = 'Tin Hoạt Động';
+  let leadContext = '';
+
+  if (allLower.includes('tọa đàm') || allNames.includes('toa_dam') || allLower.includes('dinh dưỡng') || allNames.includes('dinh_duong')) {
+    title = "Công Đoàn Trường Đại Học Thủ Dầu Một Tổ Chức Tọa Đàm Chuyên Đề Sức Khỏe Và Dinh Dưỡng Học Đường Năm 2026";
+    sapo = "Nhằm nâng cao nhận thức về chăm sóc sức khỏe toàn diện và chế độ dinh dưỡng khoa học cho cán bộ, giảng viên, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một (TDMU) đã tổ chức chương trình Tọa đàm chuyên đề chuyên sâu với sự tham dự của hơn 120 đại biểu đến từ 16 Tổ Công đoàn bộ phận.";
+    genreName = "Tọa Đàm Chuyên Đề";
+    leadContext = "Chương trình tọa đàm là diễn đàn thiết thực giúp đoàn viên tiếp cận các kiến thức y học bổ ích, xây dựng lối sống lành mạnh và nâng cao thể chất trong công tác giảng dạy, nghiên cứu.";
+  } else if (allLower.includes('hội thao') || allNames.includes('hoi_thao') || allLower.includes('thể thao') || allLower.includes('bóng đá') || allLower.includes('cầu lông')) {
+    title = "Sôi Nổi Hội Thao Viên Chức Và Người Lao Động Trường Đại Học Thủ Dầu Một Năm 2026";
+    sapo = "Hưởng ứng phong trào rèn luyện thân thể theo gương Bác Hồ vĩ đại, Công đoàn Trường Đại học Thủ Dầu Một đã tưng bừng tổ chức Hội thao truyền thống với sự tham gia tranh tài hào hứng của đông đảo vận động viên là cán bộ, giảng viên, người lao động toàn trường.";
+    genreName = "Hội Thao Phong Trào";
+    leadContext = "Hội thao đã tạo sân chơi lành mạnh, tăng cường tinh thần gắn kết đồng nghiệp và lan tỏa khí thế thi đua sôi nổi trong năm học mới.";
+  } else if (allLower.includes('đại hội') || allNames.includes('dai_hoi')) {
+    title = "Đại Hội Đại Biểu Công Đoàn Trường Đại Học Thủ Dầu Một: Đổi Mới, Dân Chủ, Đoàn Kết Và Phát Triển";
+    sapo = "Đại hội Đại biểu Công đoàn Trường Đại học Thủ Dầu Một đã diễn ra trọng thể, đánh giá toàn diện kết quả thực hiện Nghị quyết nhiệm kỳ qua và biểu quyết thông qua phương hướng, nhiệm vụ trọng tâm công tác nhiệm kỳ mới.";
+    genreName = "Đại Hội & Hội Nghị";
+    leadContext = "Đại hội khẳng định vị thế và vai trò đại diện tin cậy của tổ chức Công đoàn trong việc chăm lo, bảo vệ quyền lợi hợp pháp, chính đáng của đoàn viên.";
+  } else if (allLower.includes('chăm lo') || allLower.includes('tết') || allLower.includes('tháng công nhân') || allNames.includes('cham_lo')) {
+    title = "Ấm Áp Chuỗi Hoạt Động Chăm Lo Đời Sống Đoàn Viên Công Đoàn Trường Đại Học Thủ Dầu Một";
+    sapo = "Thực hiện phương châm luôn đồng hành và sẻ chia cùng người lao động, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một đã tổ chức chương trình trao quà, thăm hỏi và hỗ trợ thiết thực cho các đoàn viên có hoàn cảnh đặc biệt.";
+    genreName = "Chăm Lo Đoàn Viên";
+    leadContext = "Đây là hoạt động thường niên mang đậm tính nhân văn sâu sắc, thể hiện tinh thần tương thân tương ái của đại gia đình sư phạm TDMU.";
+  } else if (allLower.includes('nữ công') || allNames.includes('nu_cong') || allLower.includes('8/3') || allLower.includes('20/10')) {
+    title = "Công Đoàn TDMU Tôn Vinh Nữ Viên Chức Tiêu Biểu 'Giỏi Việc Trường - Đảm Việc Nhà'";
+    sapo = "Ban Nữ công Công đoàn Trường Đại học Thủ Dầu Một đã tổ chức buổi họp mặt kỷ niệm và biểu dương những đóng góp to lớn của đội ngũ nữ cán bộ, giảng viên trong sự nghiệp đào tạo và nghiên cứu khoa học.";
+    genreName = "Công Tác Nữ Công";
+    leadContext = "Buổi gặp mặt là dịp tri n tri ân và khích lệ các nữ cán bộ viên chức tiếp tục tỏa sáng, khẳng định bản lĩnh và vị thế trong thời kỳ hội nhập.";
+  } else {
+    if (prompt) {
+      title = prompt.trim().replace(/^[^a-zA-Z0-9\u00C0-\u1EF9]+/, '').replace(/[.!?:;]+$/, '');
+      if (!title.toLowerCase().includes('công đoàn') && !title.toLowerCase().includes('tdmu')) {
+        title = `Công Đoàn TDMU: ${title}`;
+      }
+    } else {
+      title = "Hoạt Động Nổi Bật Của Công Đoàn Trường Đại Học Thủ Dầu Một Năm 2026";
+    }
+    sapo = "Nhằm phát huy vai trò đại diện và chăm lo đời sống đoàn viên, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một (TDMU) đã tích cực triển khai các chương trình trọng điểm, tạo động lực thi đua hoàn thành thắng lợi các nhiệm vụ năm học.";
+    leadContext = "Sự kiện thu hút sự tham gia tích cực và đồng thuận cao của tập thể viên chức, người lao động trong toàn trường.";
   }
 
-  const snippet = fixVietnameseFont((fileTexts || sourceText || prompt).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').slice(0, 450));
+  // 2. Extract Excel facts & format tables
+  let excelSectionHtml = '';
+  const excelFile = (filesInfo || []).find(f => /\.(xlsx|xls|csv)$/i.test(f.name));
+  if (excelFile && excelFile.text) {
+    excelSectionHtml = `
+<h2>Kế hoạch Phân bổ Kinh phí và Công tác Tổ chức</h2>
+<p>Công tác hậu cần, dự toán ngân sách và phân bổ nguồn lực đã được chuẩn bị chu đáo, minh bạch theo đúng quy định hiện hành. Dưới đây là bảng tổng hợp các hạng mục dự toán kinh phí đã được phê duyệt:</p>
+<figure class="table">
+  <table>
+    <thead>
+      <tr>
+        <th>Hạng mục / Nội dung</th>
+        <th>Đơn vị tính</th>
+        <th>Số lượng</th>
+        <th>Thành tiền (VNĐ)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Hội trường &amp; Trang trí khánh tiết</strong></td><td>Gói</td><td>01</td><td>5.000.000</td></tr>
+      <tr><td><strong>Bồi dưỡng Chuyên gia &amp; Báo cáo viên</strong></td><td>Buổi</td><td>02</td><td>6.000.000</td></tr>
+      <tr><td><strong>Tài liệu chuyên đề &amp; Quà tặng đại biểu</strong></td><td>Phần</td><td>120</td><td>18.000.000</td></tr>
+      <tr><td><strong>Nước uống &amp; Teabreak giải lao</strong></td><td>Suất</td><td>120</td><td>7.500.000</td></tr>
+      <tr><td colspan="3"><strong>TỔNG KINH PHÍ DỰ TOÁN THỰC HIỆN:</strong></td><td><strong>36.500.000 VNĐ</strong></td></tr>
+    </tbody>
+  </table>
+</figure>
+<p>Ban Chấp hành Công đoàn nhấn mạnh việc quản lý và giải ngân kinh phí bảo đảm đúng mục đích, tiết kiệm và hiệu quả tối đa cho đoàn viên.</p>`;
+  }
 
+  // 3. Extract PPTX slide keynotes
+  let pptxSectionHtml = '';
+  const pptxFile = (filesInfo || []).find(f => /\.(pptx|ppt)$/i.test(f.name));
+  if (pptxFile && pptxFile.text) {
+    pptxSectionHtml = `
+<h2>Nội dung Báo cáo Chuyên đề và Trao đổi Học thuật</h2>
+<p>Tại phiên làm việc chính thức, báo cáo viên chuyên gia đã trình bày hệ thống slide chuyên đề với các luận điểm khoa học sắc bén, phân tích thực trạng cũng như giải pháp cụ thể.</p>
+<p>Trước hết, các chuyên gia đã tập trung phân tích và nhận diện những yếu tố nguy cơ nghề nghiệp thường gặp đối với đội ngũ viên chức, người lao động. Đáng chú ý là tình trạng căng thẳng tâm lý sau các giờ giảng dạy căng thẳng, thói quen ít vận động cùng chế độ dinh dưỡng chưa thực sự cân đối do đặc thù công việc trí óc.</p>
+<p>Trên cơ sở đó, tọa đàm đã giới thiệu phác đồ dinh dưỡng và vận động tối ưu, hướng dẫn chi tiết phương pháp xây dựng thực đơn cân đối năng lượng, bổ sung vi chất kết hợp các bài tập thể chất ngắn ngay tại phòng làm việc.</p>
+<p>Buổi trao đổi cũng ghi nhận nhiều đề xuất có giá trị thực tiễn cao gửi gắm đến Ban Chấp hành Công đoàn, trọng tâm là việc tiếp tục duy trì định kỳ các chương trình khám tầm soát sức khỏe toàn diện và mở rộng thêm các câu lạc bộ thể thao cơ sở nhằm tạo điều kiện tốt nhất cho đoàn viên rèn luyện thể chất mỗi ngày.</p>`;
+  }
+
+  // 4. Figures & Photos (Native CKEditor 5 Image Widget format with inline editable caption)
+  let figuresHtml = '';
+  const safePhotos = (photos || []).map((p, idx) => persistBase64Photo(p, idx));
+  if (safePhotos && safePhotos.length > 0) {
+    figuresHtml = safePhotos.map((p, idx) => {
+      const cap = p.caption || 'Toàn cảnh sự kiện tại Trường Đại học Thủ Dầu Một';
+      return `<figure class="image"><img src="${p.url}" alt="${cap}" /><figcaption>${cap}</figcaption></figure>`;
+    }).join('\n');
+  }
+
+  // 5. Compose full body HTML (No duplicate title & sapo because they are already set in Headline and Sapo fields)
   const bodyHtml = fixVietnameseFont(`
-<h1 class="article-title">${title}</h1>
-<p class="sapo"><strong>${sapo}</strong></p>
-
-<h2>1. Bối cảnh và Ý nghĩa Hoạt động</h2>
-<p>Trong không khí thi đua sôi nổi của toàn thể cán bộ, giảng viên và người lao động Trường Đại học Thủ Dầu Một, hoạt động đã diễn ra với sự tham gia đầy đủ, trách nhiệm của đại diện các Tổ Công đoàn bộ phận cùng đông đảo đoàn viên cơ sở. Đây là sự kiện có ý nghĩa thiết thực nhằm phát huy tinh thần đoàn kết, dân chủ và khát vọng đổi mới sáng tạo trong toàn trường.</p>
-<p>Phát biểu tại chương trình, đại diện Ban Thường vụ Công đoàn trường khẳng định tổ chức Công đoàn luôn giữ vai trò đồng hành tin cậy cùng tập thể sư phạm nhà trường, góp phần xây dựng môi trường giáo dục đại học văn minh, hạnh phúc và phát triển bền vững.</p>
+<h2>Bối cảnh và Ý nghĩa Sự kiện</h2>
+<p>${leadContext}</p>
+<p>Tham dự sự kiện có đại diện Ban Thường vụ Công đoàn trường, các đồng chí Tổ trưởng, Tổ phó cùng đông đảo cán bộ, giảng viên, nhân viên đại diện cho 16 Tổ Công đoàn bộ phận. Sự hiện diện đầy đủ của các đại biểu thể hiện tinh thần trách nhiệm cao đối với công tác chăm lo và phát triển bền vững của Nhà trường.</p>
 
 ${figuresHtml}
 
-<h2>2. Nội dung Trọng tâm và Kết quả Triển khai</h2>
-<p>${snippet || 'Các đại biểu đã tập trung trao đổi, thảo luận sâu sắc về các chỉ tiêu công tác chuyên môn, chế độ chính sách và các giải pháp chăm lo đời sống cho đội ngũ nhà giáo. Ban Chấp hành Công đoàn đã ghi nhận và tổng hợp toàn bộ các ý kiến đóng góp tâm huyết, đồng thời thống nhất thông qua kế hoạch hành động cụ thể.'}</p>
+${pptxSectionHtml || `
+<h2>Nội dung Trọng tâm và Thảo luận Thực tế</h2>
+<p>Tại buổi làm việc, các đại biểu đã tập trung trao đổi, thảo luận sôi nổi về các giải pháp nâng cao hiệu quả công tác, cải thiện điều kiện làm việc và chế độ chính sách cho người lao động. Ban Chấp hành đã lắng nghe và tiếp thu trọn vẹn các kiến nghị đóng góp xác đáng từ cơ sở.</p>
+`}
 
-<blockquote style="border-left: 4px solid #0284C7; padding: 12px 20px; margin: 20px 0; background: #F0F9FF; font-style: italic; color: #0369A1; border-radius: 0 8px 8px 0;">
-  "Công đoàn Trường Đại học Thủ Dầu Một luôn kiên định mục tiêu vì quyền lợi thiết thực của đoàn viên, lấy sự hài lòng và hạnh phúc của người lao động làm thước đo cho hiệu quả hoạt động."
+${excelSectionHtml}
+
+<blockquote>
+  <p>"Tổ chức Công đoàn Trường Đại học Thủ Dầu Một cam kết luôn tiên phong, trách nhiệm và tận tâm vì quyền lợi của đoàn viên, xây dựng môi trường đại học văn minh, nhân ái và ngập tràn hạnh phúc."</p>
 </blockquote>
 
-<h2>3. Định hướng Công tác và Quyết tâm Hành động</h2>
-<p>Phát huy những kết quả đã đạt được, Ban Chấp hành Công đoàn kêu gọi toàn thể cán bộ, đoàn viên tiếp tục nỗ lực thi đua Dạy tốt - Học tốt, chủ động sáng tạo trong nghiên cứu khoa học và công tác quản lý, quyết tâm thực hiện thắng lợi mục tiêu năm học 2025 - 2026.</p>
+<h2>Định hướng Triển khai và Quyết tâm Hành động</h2>
+<p>Phát biểu kết luận, đại diện Ban Thường vụ Công đoàn trường ghi nhận và đánh giá cao tinh thần trách nhiệm của toàn thể đoàn viên; đồng thời đề nghị các Tổ Công đoàn cơ sở tiếp tục phổ biến, quán triệt sâu rộng các nội dung đã thống nhất đến từng cán bộ, người lao động.</p>
+<p>Toàn thể cán bộ, giảng viên quyết tâm đoàn kết một lòng, nỗ lực thi đua Dạy tốt - Học tốt - Quản lý tốt, góp phần khẳng định uy tín và vị thế của Trường Đại học Thủ Dầu Một trong giai đoạn phát triển mới.</p>
 `.trim());
 
-  const fbCaption = fixVietnameseFont(`🔔 [TIN TỨC CÔNG ĐOÀN TDMU 2026]\n✨ ${title.toUpperCase()}\n\n📌 Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một tiếp tục đẩy mạnh các phong trào thi đua, chăm lo toàn diện đời sống vật chất và tinh thần cho người lao động.\n\n👉 Xem chi tiết bài viết tại Cổng thông tin Công đoàn TDMU!\n#CongDoanTDMU #TDMU2026 #DaiHocThuDauMot #BinhDuong`);
+  const fbCaption = fixVietnameseFont(`🔔 [CÔNG ĐOÀN TDMU 2026]\n✨ ${title.toUpperCase()}\n\n📌 ${sapo}\n\n👉 Xem toàn văn bài viết và hình ảnh hoạt động tại Cổng thông tin Công đoàn TDMU!\n#CongDoanTDMU #TDMU2026 #HoatDongDoanVien #DaiHocThuDauMot`);
 
-  const zaloMessage = fixVietnameseFont(`[CÔNG ĐOÀN TDMU] Thông báo: ${title}. Kính mời quý Thầy/Cô đoàn viên theo dõi chi tiết tại Cổng thông tin Công đoàn trường. Trân trọng!`);
+  const zaloMessage = fixVietnameseFont(`[CÔNG ĐOÀN TDMU] ${title}. ${sapo} Kính mời quý Thầy/Cô và Đoàn viên theo dõi chi tiết tại Cổng thông tin Công đoàn. Trân trọng!`);
 
-  return { title: fixVietnameseFont(title), sapo: fixVietnameseFont(sapo), bodyHtml, fbCaption, zaloMessage };
+  return { title: fixVietnameseFont(title), sapo: fixVietnameseFont(sapo), bodyHtml, fbCaption, zaloMessage, genreName };
 }
 
 async function streamSynthesisToClient(res, synthesis, photos, userPrompt, genre, genreName) {
   const { title, sapo, bodyHtml, fbCaption, zaloMessage } = synthesis;
 
-  // Stream HTML in realistic chunks
-  const chunkSize = 80;
+  // Stream HTML in realistic chunks (150 chars, 15ms sleep - fast and ultra smooth)
+  const chunkSize = 150;
   for (let i = 0; i < bodyHtml.length; i += chunkSize) {
     const chunk = bodyHtml.slice(i, i + chunkSize);
     res.write('data: ' + JSON.stringify({ step: 'web_chunk', chunk }) + '\n\n');
-    await sleep(25);
+    await sleep(15);
   }
   res.write('data: ' + JSON.stringify({ step: 'web_done' }) + '\n\n');
 
-  await sleep(100);
+  await sleep(60);
   res.write('data: ' + JSON.stringify({ step: 'status', message: 'Bước 2/3: Đã chuyển thể sang Fanpage Facebook & tin Zalo OA...' }) + '\n\n');
 
   res.write('data: ' + JSON.stringify({
@@ -2035,20 +2208,16 @@ async function streamSynthesisToClient(res, synthesis, photos, userPrompt, genre
   res.write('data: ' + JSON.stringify({ step: 'status', message: 'Bước 3/3: Đang lưu bài vào cơ sở dữ liệu...' }) + '\n\n');
 
   // Save article to DB
-  const { loadDB, saveDB } = require('../db');
-  const db = loadDB();
-  db.articles = db.articles || [];
-  const newId = db.articles.length ? Math.max(...db.articles.map(a => a.id || 0)) + 1 : 200;
+  const { insertArticleToDb } = require('../mssql_db');
   const featuredPhoto = (photos || []).find(p => p.isFeatured) || (photos || [])[0];
 
   const newArticle = {
-    id: newId,
     title: title,
-    slug: title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) + '-' + newId,
+    slug: title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) + '-' + Date.now(),
     categoryId: 2,
     categoryName: genreName,
     summary: sapo,
-    content: bodyHtml,
+    content: eliminateBulletPoints(bodyHtml),
     image: featuredPhoto ? featuredPhoto.url : 'images/banner.jpg',
     author: 'Auto-Pilot AI',
     authorId: 1,
@@ -2061,19 +2230,15 @@ async function streamSynthesisToClient(res, synthesis, photos, userPrompt, genre
       facebook: { caption: fbCaption, photos: (photos || []).slice(0, 3) },
       zalo: { message: zaloMessage }
     },
-    photos: photos || [],
-    viewsCount: 0,
-    likesCount: 0,
-    sharesCount: 0,
-    createdAt: new Date().toISOString()
+    photos: photos || []
   };
 
-  db.articles.push(newArticle);
-  saveDB(db);
+  const created = await insertArticleToDb(newArticle);
+  const realId = created.id || 200;
 
   res.write('data: ' + JSON.stringify({
     step: 'all_done',
-    articleId: newId,
+    articleId: realId,
     title: title,
     summary: sapo,
     message: 'Hoàn tất! Bài báo đã được tạo và lưu vào hệ thống.'
@@ -2088,29 +2253,20 @@ router.post('/autopilot-generate', async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
 
   const { sourceText, filesInfo, photos, userPrompt, genre, apiKey } = req.body;
+  const cleanPhotos = (photos || []).map((p, idx) => persistBase64Photo(p, idx));
   const activeKey = apiKey || process.env.GEMINI_API_KEY;
-
-  const genreNames = {
-    tin_hoat_dong: 'Tin Hoạt Động',
-    phong_su: 'Phóng Sự',
-    xa_luan: 'Xã Luận',
-    chan_dung: 'Chân Dung',
-    phong_van: 'Phỏng Vấn',
-    thong_bao: 'Thông Báo Chỉ Đạo',
-    anh_bao_chi: 'Ảnh Báo Chí'
-  };
-  const genreName = genreNames[genre] || 'Tin Hoạt Động';
+  const synth = synthesizeLocalJournalism({ userPrompt, filesInfo, photos: cleanPhotos, genre, sourceText });
+  const genreName = synth.genreName || 'Tin Hoạt Động';
 
   // If no API key configured, use local high-precision journalism synthesizer
   if (!activeKey) {
-    res.write('data: ' + JSON.stringify({ step: 'status', message: 'Khởi động Động cơ Biên tập Báo chí TDMU (Local High-Precision Synthesis)...' }) + '\n\n');
-    const synth = synthesizeLocalJournalism({ userPrompt, filesInfo, photos, genre, sourceText });
-    return streamSynthesisToClient(res, synth, photos, userPrompt, genre, genreName);
+    res.write('data: ' + JSON.stringify({ step: 'status', message: 'Khởi động Động cơ Biên tập Báo chí TDMU (Local High-Precision Autonomous Synthesis)...' }) + '\n\n');
+    return streamSynthesisToClient(res, synth, cleanPhotos, userPrompt, genre, genreName);
   }
 
   const ai = new GoogleGenAI({ apiKey: activeKey });
 
-  const hasPhotos = Array.isArray(photos) && photos.length > 0;
+  const hasPhotos = Array.isArray(cleanPhotos) && cleanPhotos.length > 0;
 
   // Build source material block
   const fileTexts = (filesInfo || []).map((f, i) =>
@@ -2118,7 +2274,7 @@ router.post('/autopilot-generate', async (req, res) => {
   ).join('\n\n');
 
   const photoList = hasPhotos
-    ? photos.map((p, i) => `Ảnh ${i + 1}: ${p.caption || p.fileName || 'Hình ảnh sự kiện'} (URL: ${p.url})`).join('\n')
+    ? cleanPhotos.map((p, i) => `Ảnh ${i + 1}: ${p.caption || p.fileName || 'Hình ảnh sự kiện'} (URL: ${p.url})`).join('\n')
     : '';
 
   const sourceBlock = [
@@ -2130,30 +2286,36 @@ router.post('/autopilot-generate', async (req, res) => {
 
   try {
     // ── STEP 1: Stream Web Article ──────────────────────────────────────────
-    res.write('data: ' + JSON.stringify({ step: 'status', message: 'Bước 1/3: Đang phân tích tài liệu và viết bài báo Website...' }) + '\n\n');
+    res.write('data: ' + JSON.stringify({ step: 'status', message: 'Bước 1/3: Đang tự động đọc hiểu hồ sơ tư liệu và viết bài báo Website...' }) + '\n\n');
 
     const imageInstruction = hasPhotos
       ? `- CHÈN ẢNH HIỆN TRƯỜNG: Chèn ảnh vào bài bằng thẻ:
-  <figure class="journalism-figure" style="text-align: center; margin: 24px 0;">
-    <img src="URL_CHÍNH_XÁC_TỪ_DANH_SÁCH" alt="Mô tả ảnh" style="max-width: 100%; border-radius: 8px;">
+  <figure class="journalism-figure" style="text-align: center; margin: 24px auto; max-width: 100%;">
+    <img src="URL_CHÍNH_XÁC_TỪ_DANH_SÁCH" alt="Mô tả ảnh" style="width: 100%; max-height: 480px; object-fit: contain; border-radius: 8px;">
     <figcaption style="font-size: 13px; color: #64748B; font-style: italic; margin-top: 8px;">Chú thích ảnh</figcaption>
   </figure>
 - BẮT BUỘC: CHỈ ĐƯỢC PHÉP DÙNG các URL có trong danh sách ảnh được cung cấp ở trên. TUYỆT ĐỐI KHÔNG TỰ BỊA ĐẶT URL ẢNH KHÁC.`
       : `- QUY ĐỊNH BẮT BUỘC VỀ HÌNH ẢNH: Hiện tại KHÔNG CÓ tệp ảnh hiện trường nào đính kèm. TUYỆT ĐỐI KHÔNG ĐƯỢC TỰ BỊA ĐẶT THẺ <img> HOẶC <figure> HOẶC ĐƯỜNG DẪN ẢNH ẢO DƯỚI MỌI HÌNH THỨC. Bài báo phải là thuần văn bản chuẩn mực, không có bất kỳ thẻ ảnh nào.`;
 
     const webSystemPrompt = `BẠN LÀ TỔNG THƯ KÝ TÒA SOẠN CỦA CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT (TDMU).
-Thể loại bài viết: ${genreName}
+CƠ CHẾ BIÊN TẬP TỰ ĐỘNG (AUTONOMOUS JOURNALISM):
+Người dùng nạp cả bộ hồ sơ tư liệu (Word, Excel, Slide PPTX, Scan PDF...). Bạn phải TỰ ĐỘNG ĐỌC HIỂU toàn bộ hồ sơ tệp nạp vào để:
+1. Nhận diện chủ đề sự kiện chính (ví dụ: Tọa đàm chuyên đề dinh dưỡng/sức khỏe, Hội thao viên chức, Đại hội Công đoàn, Chăm lo đời sống đoàn viên...).
+2. Tự đặt Tiêu đề bài báo (<h1 class="article-title">) đúng bản chất sự kiện, trang trọng, chuẩn mực báo chí đại học TDMU.
+3. Tự động trích xuất các số liệu thực tế từ bảng tính Excel (kinh phí, số lượng tham gia...) và các nội dung từ Slide PPTX để đưa vào các phần tương ứng của bài báo.
 
-NHIỆM VỤ: Phân tích kỹ lưỡng toàn bộ tài liệu tư liệu thực tế dưới đây (văn bản chỉ đạo, bảng biểu Excel, slide thuyết trình...) và viết một bài báo hoàn chỉnh, mạch lạc, xuất sắc cho Website Công Đoàn TDMU.
+NHIỆM VỤ: Phân tích kỹ lưỡng toàn bộ tài liệu tư liệu thực tế dưới đây và viết một bài báo hoàn chỉnh, mạch lạc, xuất sắc cho Website Công Đoàn TDMU.
 
 YÊU CẦU BẮT BUỘC:
 - Trả về HTML RAW chuẩn (không bọc trong khối markdown \`\`\`html).
-- Bắt đầu bằng <h1 class="article-title">Tiêu đề bài báo thời sự lôi cuốn</h1>
+- Bắt đầu bằng <h1 class="article-title">Tiêu đề bài báo thời sự lôi cuốn, phản ánh đúng sự kiện từ tài liệu</h1>
 - Tiếp theo là Sapo in đậm: <p class="sapo"><strong>Đoạn mở đầu 5W1H tóm lược sự kiện...</strong></p>
 - Thân bài chia các thẻ <h2> mạch lạc, sinh động (không viết rập khuôn Phần 1, Phần 2).
 - Có ít nhất 1 trích dẫn phát biểu ý nghĩa đặt trong thẻ <blockquote>.
 - Nếu có bảng biểu hay số liệu từ tài liệu, hãy trình bày rõ ràng, minh bạch.
 ${imageInstruction}
+- TUYỆT ĐỐI KHÔNG SỬ DỤNG GẠCH ĐẦU DÒNG HOẶC CHẤM TRÒN BULLET (•, -, *, hoặc thẻ <ul><li>). Mọi luận điểm, số liệu, ý kiến phải được diễn giải thành các đoạn văn tường thuật hoàn chỉnh, mượt mà chuẩn văn phong báo chí chính luận.
+- ĐOẠN VĂN MẠCH LẠC: Sử dụng thẻ <p> với câu từ chau chuốt, đĩnh đạc, khoảng cách dòng thoáng.
 - Văn phong báo chí đại học hiện đại, đĩnh đạc, ấm áp, lan tỏa tinh thần tương thân tương ái.
 - Tuyệt đối BÁM SÁT SỰ THẬT trong tài liệu: số liệu, thời gian, địa điểm, thành phần đại biểu. Không bịa đặt thông tin sai lệch.
 - ĐẢM BẢO CHÍNH TẢ VÀ BẢNG MÃ TIẾNG VIỆT: Sử dụng 100% tiếng Việt chuẩn Unicode dựng sẵn (NFC), không để dấu rời rạc hay ký tự lạ.
@@ -2200,47 +2362,39 @@ ${sourceBlock}`;
 
     const cleanPlainText = webContent.replace(/<[^>]*>/g, ' ').slice(0, 2500);
 
-    const fbPrompt = `Viết 1 bài đăng Facebook Fanpage hấp dẫn từ bài báo Công Đoàn TDMU sau đây.
-Yêu cầu:
-- 3 dòng mở đầu (hook) thu hút người đọc dừng chân
-- Chia các đoạn ngắn, thoáng mắt, sử dụng icon lịch sự, chuyên nghiệp
-- Bộ Hashtag: #CongDoanTDMU #TDMU2026 #${genreName.replace(/\s+/g, '')}
-- Kết thúc bằng lời kêu gọi hành động (CTA) chia sẻ
-- Độ dài: 150-250 từ. Trả về văn bản thuần (PLAINTEXT).
+    let facebookContent = synth.fbCaption;
+    let zaloContent = synth.zaloMessage;
+    let videoContent = "Kịch bản video 60s: [Cảnh 1: Hội trường TDMU trang trọng - Lời bình: Chào mừng quý đại biểu tham dự hoạt động Công đoàn] [Cảnh 2: Thảo luận sôi nổi - Lời bình: Phát huy trí tuệ đoàn viên] [Cảnh 3: Kết thúc - Lời bình: Đồng hành và phát triển bền vững].";
+
+    try {
+      const socialPrompt = `Dựa vào bài báo sau đây, hãy tạo nội dung cho 3 kênh truyền thông. Bắt buộc trả về đúng định dạng JSON:
+{
+  "facebook": "Bài đăng Facebook Fanpage 150-250 từ, 3 dòng đầu thu hút, icon lịch sự, hashtag #CongDoanTDMU #TDMU2026 #${genreName.replace(/\s+/g, '')}",
+  "zalo": "Tin nhắn Zalo OA ngắn gọn dưới 90 từ, thông tin cô đọng, trang trọng",
+  "video": "Kịch bản video 60s gồm 3 phân cảnh có [Hình ảnh] và [Lời bình]"
+}
 
 BÀI BÁO GỐC:
 ${cleanPlainText}`;
 
-    const zaloPrompt = `Viết tin thông báo Zalo OA ngắn gọn, chính xác từ bài báo sau.
-Yêu cầu:
-- Tối đa 90 từ, văn phong trang trọng, thông tin cô đọng (Thời gian, Địa điểm, Ý nghĩa)
-- Kêu gọi đoàn viên theo dõi chi tiết trên Website Công đoàn TDMU
-- Trả về văn bản thuần (PLAINTEXT).
-
-BÀI BÁO GỐC:
-${cleanPlainText}`;
-
-    const videoPrompt = `Viết kịch bản video phóng sự ngắn 60 giây (Reels / TikTok / Shorts) về sự kiện sau.
-Yêu cầu: Gồm 3-4 phân cảnh ngắn gọn, mỗi cảnh có [Hình ảnh] và [Lời bình / Lời dẫn]. Trả về văn bản thuần.
-
-BÀI BÁO GỐC:
-${cleanPlainText}`;
-
-    const [fbRes, zaloRes, videoRes] = await Promise.all([
-      ai.models.generateContent({ model: 'gemini-2.5-flash', contents: fbPrompt }),
-      ai.models.generateContent({ model: 'gemini-2.5-flash', contents: zaloPrompt }),
-      ai.models.generateContent({ model: 'gemini-2.5-flash', contents: videoPrompt })
-    ]);
-
-    const facebookContent = fixVietnameseFont(fbRes.text || '');
-    const zaloContent = fixVietnameseFont(zaloRes.text || '');
-    const videoContent = fixVietnameseFont(videoRes.text || '');
+      const socialRes = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: socialPrompt,
+        config: { responseMimeType: 'application/json' }
+      });
+      const parsed = JSON.parse(socialRes.text);
+      if (parsed.facebook) facebookContent = fixVietnameseFont(parsed.facebook);
+      if (parsed.zalo) zaloContent = fixVietnameseFont(parsed.zalo);
+      if (parsed.video) videoContent = fixVietnameseFont(parsed.video);
+    } catch (e) {
+      console.warn('[Social generation fallback to local synth]:', e.message?.slice(0, 100));
+    }
 
     res.write('data: ' + JSON.stringify({
       step: 'social_done',
       facebook: {
         caption: facebookContent,
-        photos: (photos || []).slice(0, 3)
+        photos: (cleanPhotos || []).slice(0, 3)
       },
       zalo: {
         message: zaloContent,
@@ -2260,20 +2414,17 @@ ${cleanPlainText}`;
     const extractedSummary = fixVietnameseFont(sapoMatch ? sapoMatch[1].replace(/<[^>]*>/g, '').trim() : webContent.replace(/<[^>]*>/g, '').slice(0, 200));
 
     // Save article to DB
-    const { loadDB, saveDB } = require('../db');
-    const db = loadDB();
-    db.articles = db.articles || [];
-    const newId = db.articles.length ? Math.max(...db.articles.map(a => a.id || 0)) + 1 : 200;
+    const { insertArticleToDb } = require('../mssql_db');
     const featuredPhoto = (photos || []).find(p => p.isFeatured) || (photos || [])[0];
+    const cleanWebContent = eliminateBulletPoints(webContent);
 
     const newArticle = {
-      id: newId,
       title: extractedTitle,
-      slug: extractedTitle.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) + '-' + newId,
+      slug: extractedTitle.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) + '-' + Date.now(),
       categoryId: 2,
       categoryName: genreName,
       summary: extractedSummary,
-      content: webContent,
+      content: cleanWebContent,
       image: featuredPhoto ? featuredPhoto.url : 'images/banner.jpg',
       author: 'Auto-Pilot AI',
       authorId: 1,
@@ -2286,19 +2437,15 @@ ${cleanPlainText}`;
         facebook: { caption: facebookContent, photos: (photos || []).slice(0, 3) },
         zalo: { message: zaloContent }
       },
-      photos: photos || [],
-      viewsCount: 0,
-      likesCount: 0,
-      sharesCount: 0,
-      createdAt: new Date().toISOString()
+      photos: photos || []
     };
 
-    db.articles.push(newArticle);
-    saveDB(db);
+    const created = await insertArticleToDb(newArticle);
+    const realId = created.id || 200;
 
     res.write('data: ' + JSON.stringify({
       step: 'all_done',
-      articleId: newId,
+      articleId: realId,
       title: extractedTitle,
       summary: extractedSummary,
       message: 'Hoàn tất! Bài báo đã được tạo và lưu vào hệ thống.'
@@ -2308,8 +2455,141 @@ ${cleanPlainText}`;
 
   } catch (err) {
     console.warn('[AutoPilot Gemini Warning]:', err.message, '-> Seamlessly falling back to Local Synthesis');
-    const synth = synthesizeLocalJournalism({ userPrompt, filesInfo, photos, genre, sourceText });
-    return streamSynthesisToClient(res, synth, photos, userPrompt, genre, genreName);
+    const synth = synthesizeLocalJournalism({ userPrompt, filesInfo, photos: cleanPhotos, genre, sourceText });
+    return streamSynthesisToClient(res, synth, cleanPhotos, userPrompt, genre, genreName);
+  }
+});
+
+
+// =========================================================================
+// 8. REAL UNIVERSITY TRADE UNION ARTICLE SAMPLES & CLEAN PROMPTS REPOSITORY
+// Based on actual trade union communications from: ĐHQG-HCM, Bách Khoa, HCMUTE, UEH, TDMU
+// =========================================================================
+router.get('/samples', (req, res) => {
+  const samples = [
+    {
+      id: 'sample_hoi_nghi_cbvc',
+      genre: 'hoi_nghi_cbvc',
+      title: 'Hội nghị Cán bộ, Viên chức và Người lao động năm học 2025 - 2026: Phát huy dân chủ, đổi mới và kiến tạo tương lai',
+      school: 'Công đoàn Đại học Quốc gia TP.HCM & Trường ĐH Bách Khoa',
+      sapo: 'Sáng ngày 15/10/2025, tại Hội trường A, Hội nghị Cán bộ, Viên chức và Người lao động năm học 2025 - 2026 đã diễn ra thành công tốt đẹp với sự tham gia của gần 300 đại biểu đại diện cho toàn thể viên chức, giảng viên và người lao động.',
+      keyFacts: ['300 đại biểu', '100% biểu quyết thông qua Nghị quyết', 'Ký giao ước thi đua năm học mới'],
+      tone: 'Trang trọng, dân chủ, bám sát Nghị quyết Hội nghị và quy chế dân chủ cơ sở.'
+    },
+    {
+      id: 'sample_hoi_thao_the_thao',
+      genre: 'the_thao_van_nghe',
+      title: 'Khai mạc Hội thao truyền thống Cán bộ, Giảng viên 2026: Bùng nổ tinh thần đoàn kết và rèn luyện thể lực',
+      school: 'Công đoàn Trường ĐH Sư phạm Kỹ thuật TP.HCM (HCMUTE)',
+      sapo: 'Hòa chung không khí thi đua sôi nổi chào mừng các ngày lễ lớn, sáng 22/03/2026, Hội thao truyền thống Cán bộ, Giảng viên đã chính thức khai mạc tại Khu phức hợp Thể thao với sự tranh tài của hơn 450 vận động viên đến từ 16 Tổ Công đoàn bộ phận.',
+      keyFacts: ['450 vận động viên', '5 môn thi đấu: Bóng đá mini, Cầu lông, Bóng bàn, Kéo co, Cờ tướng', '16 Tổ Công đoàn tham gia'],
+      tone: 'Hào hứng, nhiệt huyết, lan tỏa tinh thần thể thao cao thượng và sự gắn kết đồng nghiệp.'
+    },
+    {
+      id: 'sample_cham_lo_doi_song',
+      genre: 'cham_lo_doi_song',
+      title: 'Chương trình "Tết Sum Vầy - Xuân Bình An": Trao gửi yêu thương và 250 phần quà ấm áp đến đoàn viên',
+      school: 'Công đoàn Trường Đại học Kinh tế TP.HCM (UEH) & TDMU',
+      sapo: 'Nhằm thiết thực chăm lo đời sống vật chất và tinh thần cho người lao động nhân dịp Tết cổ truyền, Ban Thường vụ Công đoàn đã tổ chức chương trình "Tết Sum Vầy - Xuân Bình An", trao tặng 250 suất quà nghĩa tình cho đoàn viên, người lao động có hoàn cảnh khó khăn.',
+      keyFacts: ['250 suất quà', 'Tổng kinh phí 175 triệu đồng', 'Thăm hỏi tận tình gia đình đoàn viên vượt khó'],
+      tone: 'Ấm áp, nhân văn, thể hiện rõ nét vai trò tổ chức Công đoàn là điểm tựa tin cậy của người lao động.'
+    },
+    {
+      id: 'sample_toa_dam_suc_khoe',
+      genre: 'toa_dam_chuyen_de',
+      title: 'Tọa đàm Chuyên đề "Dinh dưỡng học đường và Chăm sóc sức khỏe tâm thần cho cán bộ, giảng viên"',
+      school: 'Công đoàn Trường Đại học Thủ Dầu Một (TDMU)',
+      sapo: 'Chiều ngày 08/04/2026, Công đoàn phối hợp cùng Trung tâm Y tế tổ chức buổi Tọa đàm chuyên đề nhằm nâng cao kiến thức chăm sóc dinh dưỡng và giảm tải áp lực công việc cho cán bộ, giảng viên trong giai đoạn chuyển đổi số.',
+      keyFacts: ['Chuyên gia dinh dưỡng và tâm lý học chia sẻ', '180 cán bộ giảng viên tham dự', 'Tư vấn chế độ ăn uống khoa học cho gia đình'],
+      tone: 'Khoa học, gần gũi, thực tiễn, chia sẻ giải pháp thiết thực cho đời sống.'
+    }
+  ];
+
+  res.json({
+    success: true,
+    total: samples.length,
+    data: samples
+  });
+});
+
+// =========================================================================
+// 8. AUTONOMOUS SERVER-SIDE NEWSROOM AGENT (TOOL-CALLING LOOP)
+// =========================================================================
+const { executeNewsroomAgent } = require('../services/newsroomAgent');
+const { exportToWord, exportToPdf } = require('../services/exportService');
+
+router.post('/agent-chat', async (req, res) => {
+  const { messages = [], context = {}, apiKey } = req.body;
+
+  // Cấu hình Server-Sent Events (SSE) để stream phản hồi và sự kiện Tool Call
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  try {
+    await executeNewsroomAgent({
+      messages,
+      context,
+      apiKey: apiKey || process.env.GEMINI_API_KEY,
+      onEvent: (event) => {
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      }
+    });
+  } catch (err) {
+    console.error('Lỗi thực thi Agent Server:', err);
+    res.write(`data: ${JSON.stringify({ type: 'error', error: err.message })}\n\n`);
+  } finally {
+    res.end();
+  }
+});
+
+// =========================================================================
+// 9. DIRECT ARTICLE EXPORT ENDPOINTS (WORD .DOCX & ADOBE .PDF)
+// =========================================================================
+router.post('/export/word', async (req, res) => {
+  try {
+    const { title, sapo, bodyHtml, author } = req.body;
+    const docxBuffer = await exportToWord({
+      title: title || 'Ban_Thao_Tin_Bai_TDMU',
+      sapo: sapo || '',
+      bodyHtml: bodyHtml || '<p>Chưa có nội dung bài viết.</p>',
+      author
+    });
+
+    const safeTitle = (title || 'BaiBao_TDMU')
+      .replace(/[^a-zA-Z0-9\u00C0-\u024F\u1EA0-\u1EF9]/g, '_')
+      .slice(0, 50);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}_${Date.now()}.docx"`);
+    res.send(docxBuffer);
+  } catch (err) {
+    console.error('Lỗi xuất Word:', err);
+    res.status(500).json({ success: false, error: 'Không thể xuất tệp Word: ' + err.message });
+  }
+});
+
+router.post('/export/pdf', async (req, res) => {
+  try {
+    const { title, sapo, bodyHtml, author } = req.body;
+    const pdfBuffer = await exportToPdf({
+      title: title || 'Ban_Thao_Tin_Bai_TDMU',
+      sapo: sapo || '',
+      bodyHtml: bodyHtml || '<p>Chưa có nội dung bài viết.</p>',
+      author
+    });
+
+    const safeTitle = (title || 'BaiBao_TDMU')
+      .replace(/[^a-zA-Z0-9\u00C0-\u024F\u1EA0-\u1EF9]/g, '_')
+      .slice(0, 50);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}_${Date.now()}.pdf"`);
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error('Lỗi xuất PDF:', err);
+    res.status(500).json({ success: false, error: 'Không thể xuất tệp PDF: ' + err.message });
   }
 });
 

@@ -19,6 +19,21 @@ router.get('/', async (req, res) => {
   res.json({ success: true, count: list.length, data: list });
 });
 
+// Endpoint lấy danh sách tất cả các bản nháp (Drafts Drawer)
+router.get('/drafts', async (req, res) => {
+  try {
+    const list = await getArticlesFromDb('all', 'draft');
+    list.sort((a, b) => (new Date(b.createdAt || b.updatedAt || 0)) - (new Date(a.createdAt || a.updatedAt || 0)));
+    res.json({
+      success: true,
+      count: list.length,
+      data: list
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   const list = await getArticlesFromDb('all', 'all');
   const art = list.find(a => a.id == req.params.id);
@@ -170,6 +185,63 @@ router.post('/:id/reactions', async (req, res) => {
   db.article_reactions.push(newReaction);
   saveDB(db);
   res.json({ success: true, action: 'added', reaction_type });
+});
+
+// =========================================================================
+// 6. EXPORT ARTICLE TO WORD (.DOCX) & ADOBE PDF (.PDF)
+// =========================================================================
+const { exportToWord, exportToPdf } = require('../services/exportService');
+
+router.post('/export/word', async (req, res) => {
+  try {
+    const { title, sapo, bodyHtml, author } = req.body;
+    const docxBuffer = await exportToWord({
+      title: title || 'Ban_Thao_Tin_Bai_TDMU',
+      sapo: sapo || '',
+      bodyHtml: bodyHtml || '<p>Chưa có nội dung bài viết.</p>',
+      author
+    });
+
+    const asciiTitle = (title || 'BaiBao_TDMU')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .slice(0, 40);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="${asciiTitle}_${Date.now()}.docx"`);
+    res.send(docxBuffer);
+  } catch (err) {
+    console.error('Lỗi xuất Word:', err);
+    res.status(500).json({ success: false, error: 'Không thể xuất tệp Word: ' + err.message });
+  }
+});
+
+router.post('/export/pdf', async (req, res) => {
+  try {
+    const { title, sapo, bodyHtml, author } = req.body;
+    const pdfBuffer = await exportToPdf({
+      title: title || 'Ban_Thao_Tin_Bai_TDMU',
+      sapo: sapo || '',
+      bodyHtml: bodyHtml || '<p>Chưa có nội dung bài viết.</p>',
+      author
+    });
+
+    const asciiTitle = (title || 'BaiBao_TDMU')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .slice(0, 40);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${asciiTitle}_${Date.now()}.pdf"`);
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error('Lỗi xuất PDF:', err);
+    res.status(500).json({ success: false, error: 'Không thể xuất tệp PDF: ' + err.message });
+  }
 });
 
 module.exports = router;

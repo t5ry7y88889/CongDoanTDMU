@@ -1,5 +1,5 @@
 // SERVICE WORKER - PWA CACHING FOR TDMU TRADE UNION PORTAL
-const CACHE_NAME = 'tdmu-union-cache-v1';
+const CACHE_NAME = 'tdmu-union-cache-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -32,7 +32,26 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
+
+  // Bypass service worker for dynamic CMS APIs, admin pages, uploads, and streaming
+  if (url.pathname.startsWith('/api/') || 
+      url.pathname.includes('admin') || 
+      url.pathname.startsWith('/uploads/') ||
+      url.pathname.includes('autopilot')) {
+    return;
+  }
+
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    fetch(event.request)
+      .catch(async () => {
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+        return new Response('Network offline', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+        });
+      })
   );
 });

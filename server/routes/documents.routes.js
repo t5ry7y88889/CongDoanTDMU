@@ -61,6 +61,59 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Endpoint nạp nhanh toàn bộ thư mục demo Tinbaiviet (1-Click Demo)
+router.get('/demo-tinbaiviet', (req, res) => {
+  try {
+    const demoDir = path.join(__dirname, '../../public/demo_samples/Tinbaiviet');
+    if (!fs.existsSync(demoDir)) {
+      return res.status(404).json({ success: false, error: 'Thư mục demo Tinbaiviet chưa được khởi tạo.' });
+    }
+
+    const fileNames = fs.readdirSync(demoDir);
+    const mimeMap = {
+      '.pdf': 'application/pdf',
+      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.txt': 'text/plain; charset=utf-8'
+    };
+
+    const files = [];
+    for (const fn of fileNames) {
+      const fullPath = path.join(demoDir, fn);
+      const stat = fs.statSync(fullPath);
+      if (stat.isFile()) {
+        const ext = path.extname(fn).toLowerCase();
+        const buf = fs.readFileSync(fullPath);
+        const mime = mimeMap[ext] || 'application/octet-stream';
+        const base64 = buf.toString('base64');
+        files.push({
+          name: fn,
+          sizeBytes: stat.size,
+          size: (stat.size / 1024).toFixed(1) + ' KB',
+          type: mime,
+          ext,
+          dataUrl: `data:${mime};base64,${base64}`,
+          base64
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      folderName: 'Tinbaiviet',
+      count: files.length,
+      files
+    });
+  } catch (err) {
+    console.error('[Demo Tinbaiviet Error]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.get('/:id', (req, res) => {
   const db = loadDB();
   const id = parseInt(req.params.id);
@@ -345,4 +398,5 @@ router.post('/parse-docx', async (req, res) => {
 });
 
 module.exports = router;
+
 

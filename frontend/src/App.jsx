@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import BookmarksDrawer from './components/BookmarksDrawer';
@@ -12,6 +12,7 @@ import VanBan from './pages/VanBan';
 import BieuMau from './pages/BieuMau';
 import LienHe from './pages/LienHe';
 import BaiViet from './pages/BaiViet';
+import AdminStudio from './pages/AdminStudio';
 
 export const BookmarkContext = createContext();
 
@@ -61,7 +62,12 @@ const LinkInterceptor = ({ children }) => {
       if (a && a.href) {
         const url = new URL(a.href);
         if (url.origin === window.location.origin) {
-          if (url.pathname === '/admin.html' || url.pathname === '/admin' || url.pathname === '/bao-cao-thang.html') {
+          if (url.pathname === '/admin.html' || url.pathname === '/admin' || url.pathname === '/admin/studio') {
+            e.preventDefault();
+            navigate('/admin' + url.search + url.hash);
+            return;
+          }
+          if (url.pathname === '/bao-cao-thang.html') {
             return;
           }
           if (url.pathname.endsWith('.html')) {
@@ -84,6 +90,8 @@ const LinkInterceptor = ({ children }) => {
 function AppContent() {
   const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
   const [bookmarks, setBookmarks] = useState([]);
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith('/admin') || location.pathname === '/admin.html';
 
   // Load bookmarks from localStorage on initial render
   useEffect(() => {
@@ -137,6 +145,22 @@ function AppContent() {
     return bookmarks.some(b => (b.id == articleId || b.article_id == articleId));
   };
 
+  // Dedicated clean layout for Admin Newsroom Studio
+  if (isAdmin) {
+    return (
+      <BookmarkContext.Provider value={{ bookmarks, toggleBookmark, removeBookmark, isBookmarked }}>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/admin" element={<AdminStudio />} />
+            <Route path="/admin/studio" element={<AdminStudio />} />
+            <Route path="/admin.html" element={<AdminStudio />} />
+            <Route path="*" element={<AdminStudio />} />
+          </Routes>
+        </ErrorBoundary>
+      </BookmarkContext.Provider>
+    );
+  }
+
   return (
     <BookmarkContext.Provider value={{ bookmarks, toggleBookmark, removeBookmark, isBookmarked }}>
       <LinkInterceptor>
@@ -158,6 +182,9 @@ function AppContent() {
               <Route path="/bieu-mau" element={<BieuMau />} />
               <Route path="/lien-he" element={<LienHe />} />
               <Route path="/bai-viet" element={<BaiViet />} />
+              <Route path="/admin" element={<AdminStudio />} />
+              <Route path="/admin/studio" element={<AdminStudio />} />
+              <Route path="/admin.html" element={<AdminStudio />} />
 
               {/* Aliases without hyphens */}
               <Route path="/gioithieu" element={<GioiThieu />} />

@@ -2,6 +2,11 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
+  <script>
+    if (window.location.pathname.endsWith('admin.html') || window.location.pathname === '/admin.html') {
+      window.location.replace('/admin' + window.location.hash);
+    }
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quản lý website truyền thông công đoàn TDMU</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -805,115 +810,61 @@
         </div>
       </section>
 
-<!-- TAB 3: PHÒNG BIÊN TẬP ĐA KÊNH TRỌN GÓI (XƯỞNG BIÊN TẬP AI LATEST) -->
-            <!-- TAB 3: PHÒNG BIÊN TẬP & SẢN XUẤT ĐA KÊNH TRỌN GÓI (ENTERPRISE AI STUDIO) -->
-      <!-- TAB 3: PHÒNG BIÊN TẬP MANUS & JENNI AI WORKSPACE -->
+<!-- TAB 3: PHÒNG BIÊN TẬP & SẢN XUẤT ĐA KÊNH TRỌN GÓI (ENTERPRISE AI STUDIO 3.0) -->
       <section id="tab_ai-creator_content" style="display: block;">
-  <div style="max-width: 1560px; margin: 0 auto;">
+  <div style="max-width: 1580px; margin: 0 auto;">
     <!-- TOP NEWSROOM COMPOSER HEADER -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 16px 24px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 10px rgba(0,0,0,0.02); flex-wrap: wrap; gap: 14px;">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #002855, #0284C7); display: flex; align-items: center; justify-content: center; color: #FCD34D; font-size: 20px; font-weight: 900; box-shadow: 0 2px 8px rgba(0,40,85,0.25);">
-          <i class="fa-solid fa-pen-nib"></i>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; background: white; padding: 12px 20px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 1px 4px rgba(0,0,0,0.02); flex-wrap: wrap; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="width: 38px; height: 38px; border-radius: 9px; background: linear-gradient(135deg, #002855, #2563EB); display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-size: 16px; font-weight: 800; box-shadow: 0 2px 6px rgba(37,99,235,0.25);">
+          <i class="fa-solid fa-feather-pointed"></i>
         </div>
         <div>
-          <h1 style="margin: 0; font-size: 19px; font-weight: 900; color: #002855; display: flex; align-items: center; gap: 8px;">
-            Tòa Soạn AI Công Đoàn TDMU
-            <span style="background: #EFF6FF; color: #1D4ED8; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 12px; border: 1px solid #BFDBFE;">COMPOSER 2.0</span>
+          <h1 style="margin: 0; font-size: 16.5px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">
+            Tòa Soạn Báo Chí &amp; Truyền Thông AI
+            <span style="background: #F0FDF4; color: #15803D; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 10px; border: 1px solid #BBF7D0;"><i class="fa-solid fa-circle text-success" style="font-size: 7px; margin-right: 4px;"></i>Gemini Live</span>
           </h1>
-          <p style="margin: 2px 0 0; font-size: 12.5px; color: #64748B;">Mô hình tòa soạn hiện đại (The Washington Post Arc XP &amp; NYT Oak): Tiếp nhận tư liệu &rarr; Lập bài báo gốc &rarr; Phân phối đa kênh</p>
+          <p style="margin: 2px 0 0; font-size: 11.5px; color: #64748B;">Hồ sơ sự kiện Tinbaiviet &bull; Trợ lý AI tác nhân &bull; Xuất bản đa nền tảng</p>
         </div>
       </div>
-      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-        <div style="display: flex; align-items: center; gap: 6px; background: #F0FDF4; border: 1px solid #BBF7D0; padding: 6px 12px; border-radius: 8px;">
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #16A34A; display: inline-block;"></span>
-          <span style="font-size: 12px; font-weight: 700; color: #15803D;">Gemini 2.5 Flash Live</span>
-        </div>
-        <button type="button" onclick="saveComposerDraft()" style="background: white; border: 1.5px solid #CBD5E1; color: #334155; padding: 8px 16px; border-radius: 8px; font-size: 12.5px; font-weight: 700; cursor: pointer;">
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <!-- Nút Mở Tủ Bản Thảo -->
+        <button type="button" onclick="openDraftsDrawer()" style="background: white; border: 1px solid #CBD5E1; color: #334155; padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+          <i class="fa-solid fa-box-archive text-primary"></i> Tủ Bản Thảo
+          <span id="composer_drafts_count_badge" style="background: #2563EB; color: white; font-size: 10px; padding: 1px 6px; border-radius: 8px; font-weight: 800;">0</span>
+        </button>
+        <!-- Nút Lưu Nháp -->
+        <button type="button" onclick="saveComposerDraft()" style="background: white; border: 1px solid #CBD5E1; color: #334155; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer;">
           <i class="fa-regular fa-floppy-disk me-1"></i> Lưu Nháp
         </button>
-        <button type="button" onclick="publishComposerLive()" style="background: #002855; color: #FCD34D; border: none; padding: 9px 20px; border-radius: 8px; font-size: 13px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,40,85,0.25);">
+        <!-- Nút Xuất Bản Live (BTV) -->
+        <button type="button" id="btn_composer_publish_live" onclick="publishComposerLive()" style="background: #002855; color: #FCD34D; border: none; padding: 8px 18px; border-radius: 8px; font-size: 12.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(0,40,85,0.2);">
           <i class="fa-solid fa-paper-plane"></i> Xuất Bản Live
+        </button>
+        <!-- Nút Gửi Gói Tư Liệu (CTV) -->
+        <button type="button" id="btn_composer_submit_ctv" onclick="submitContributorDossier()" style="display: none; background: #059669; color: white; border: none; padding: 8px 18px; border-radius: 8px; font-size: 12.5px; font-weight: 800; cursor: pointer; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(5,150,105,0.2);">
+          <i class="fa-solid fa-cloud-arrow-up"></i> Nộp Gói Tư Liệu
         </button>
       </div>
     </div>
-    <!-- MAIN 2-COLUMN NEWSROOM WORKSPACE -->
-    <div style="display: grid; grid-template-columns: 380px 1fr; gap: 22px; align-items: start;">
-      <!-- CỘT 1: KHAY TIẾP NHẬN TƯ LIỆU (INGESTION TRAY) -->
-      <div style="display: flex; flex-direction: column; gap: 16px;">
-        <div style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <span style="font-size: 13px; font-weight: 800; color: #002855; display: flex; align-items: center; gap: 6px;">
-              <i class="fa-solid fa-paperclip text-primary"></i> Khay Tiếp Nhận Tư Liệu (Ingest)
-            </span>
-            <span style="font-size: 11px; color: #64748B;">Word, PDF, PowerPoint, Excel, TXT, Ảnh</span>
-          </div>
-          <div id="composer_dropzone" onclick="document.getElementById('composer_file_input').click()"
-            ondragover="event.preventDefault(); this.style.borderColor='#0284C7'; this.style.background='#F0F9FF';"
-            ondragleave="this.style.borderColor='#CBD5E1'; this.style.background='#F8FAFC';"
-            ondrop="event.preventDefault(); this.style.borderColor='#CBD5E1'; this.style.background='#F8FAFC'; handleComposerFiles(event.dataTransfer.files);"
-            style="border: 2px dashed #CBD5E1; background: #F8FAFC; border-radius: 10px; padding: 22px 16px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 12px;">
-            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 26px; color: #0284C7; margin-bottom: 6px;"></i>
-            <div style="font-size: 13.5px; font-weight: 800; color: #002855;">Kéo thả tệp hoặc click chọn</div>
-            <div style="font-size: 11.5px; color: #64748B; margin-top: 3px;">Word (.docx), PDF, PowerPoint (.pptx), Excel (.xlsx), Báo cáo TXT và Ảnh sự kiện</div>
-            <input type="file" id="composer_file_input" multiple accept=".docx,.doc,.pdf,.pptx,.ppt,.xlsx,.xls,.csv,.txt,image/*" style="display: none;" onchange="handleComposerFiles(this.files)">
-          </div>
-          <div id="composer_files_list" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px;"></div>
-          <div id="composer_photos_list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;"></div>
-          <div style="margin-bottom: 14px;">
-            <label style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">
-              Chỉ đạo bổ sung của Thư ký Tòa soạn (Tùy chọn):
-            </label>
-            <textarea id="composer_prompt_input" rows="3" placeholder="Gõ lưu ý riêng (VD: Nhấn mạnh 120 đoàn viên tham gia, đội Khoa CNTT vô địch... hoặc để trống để AI tự phân tích tài liệu)" style="width: 100%; padding: 10px 12px; border: 1.5px solid #CBD5E1; border-radius: 8px; font-size: 13px; outline: none; box-sizing: border-box; resize: vertical; line-height: 1.5; font-family: inherit;"></textarea>
-          </div>
-          <button type="button" id="btn_composer_generate" onclick="runComposerGeneration()" style="width: 100%; background: linear-gradient(135deg, #002855 0%, #0284C7 100%); color: #FCD34D; border: none; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 16px rgba(0,40,85,0.3); transition: all 0.2s;">
-            <i class="fa-solid fa-wand-magic-sparkles text-warning"></i> ⚡ LẬP BÀI BÁO GỐC (MASTER STORY) &rarr;
-          </button>
-        </div>
-        <div style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <span style="font-size: 12px; font-weight: 800; color: #002855; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
-              <i class="fa-solid fa-bolt text-warning"></i> Tiến Trình Tòa Soạn AI
-            </span>
-            <span id="composer_activity_badge" style="font-size: 10.5px; font-weight: 700; background: #F1F5F9; color: #64748B; padding: 2px 8px; border-radius: 10px;">Chờ tác vụ</span>
-          </div>
-          <div id="composer_activity_stream" style="display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: #475569; max-height: 200px; overflow-y: auto;">
-            <div class="empty-placeholder" style="color: #94A3B8; font-style: italic;">Chưa có tác vụ nào đang chạy. Thả tài liệu và bấm Lập bài báo gốc để bắt đầu.</div>
-          </div>
-        </div>
-        <div style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
-          <div style="font-size: 12px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 10px;">
-            <i class="fa-solid fa-feather-pointed text-primary me-1"></i> Tinh Chỉnh Báo Chí (1 Chạm)
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <button type="button" onclick="runComposerQuickTool('formal')" style="background: #F8FAFC; border: 1px solid #CBD5E1; color: #334155; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: left;">
-              ⚖️ Nghị Định 30
-            </button>
-            <button type="button" onclick="runComposerQuickTool('shorten')" style="background: #F8FAFC; border: 1px solid #CBD5E1; color: #334155; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: left;">
-              ✂️ Rút Gọn Súc Tích
-            </button>
-            <button type="button" onclick="runComposerQuickTool('expand')" style="background: #F8FAFC; border: 1px solid #CBD5E1; color: #334155; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: left;">
-              📝 Mở Rộng Chiều Sâu
-            </button>
-            <button type="button" onclick="runComposerQuickTool('factcheck')" style="background: #F8FAFC; border: 1px solid #CBD5E1; color: #334155; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: left;">
-              🔍 Kiểm Số Liệu
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- CỘT 2: TRANG SOẠN THẢO KHỐI BÁO CHÍ (SEMANTIC CANVAS & SYNDICATION) -->
+
+    <!-- MAIN NEWSROOM WORKSPACE: TRÁI LÀ CANVAS SOẠN THẢO, PHẢI LÀ KHAY NẠP FOLDER & KHO ẢNH TƯ LIỆU -->
+    <div style="display: grid; grid-template-columns: 1fr 410px; gap: 20px; align-items: start;">
+      
+      <!-- CỘT TRÁI / TRUNG TÂM: SOẠN THẢO BÁO CHÍ & ĐA KÊNH -->
       <div style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 4px 20px rgba(0,0,0,0.03); overflow: hidden; display: flex; flex-direction: column;">
+        <!-- NAVIGATION TABS -->
         <div style="display: flex; align-items: center; border-bottom: 1.5px solid #E2E8F0; background: #F8FAFC; padding: 0 16px; flex-wrap: wrap;">
-          <button type="button" id="tab_btn_web" onclick="switchComposerTab('web')" style="background: white; color: #002855; border: none; border-bottom: 3px solid #002855; padding: 15px 22px; font-size: 13.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <button type="button" id="tab_btn_web" onclick="switchComposerTab('web')" style="background: white; color: #002855; border: none; border-bottom: 3px solid #002855; padding: 14px 20px; font-size: 13px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px;">
             <i class="fa-solid fa-globe text-primary"></i> 📰 Bài Báo Website (Gốc)
           </button>
-          <button type="button" id="tab_btn_fb" onclick="switchComposerTab('fb')" style="background: transparent; color: #64748B; border: none; border-bottom: 3px solid transparent; padding: 15px 18px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <button type="button" id="tab_btn_fb" onclick="switchComposerTab('fb')" style="background: transparent; color: #64748B; border: none; border-bottom: 3px solid transparent; padding: 14px 18px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
             <i class="fa-brands fa-facebook" style="color: #1877F2;"></i> 📘 Fanpage Facebook
           </button>
-          <button type="button" id="tab_btn_zalo" onclick="switchComposerTab('zalo')" style="background: transparent; color: #64748B; border: none; border-bottom: 3px solid transparent; padding: 15px 18px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <button type="button" id="tab_btn_zalo" onclick="switchComposerTab('zalo')" style="background: transparent; color: #64748B; border: none; border-bottom: 3px solid transparent; padding: 14px 18px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
             <i class="fa-solid fa-comment-dots" style="color: #0068FF;"></i> 💬 Zalo OA
           </button>
-          <button type="button" id="tab_btn_schedule" onclick="switchComposerTab('schedule')" style="background: transparent; color: #64748B; border: none; border-bottom: 3px solid transparent; padding: 15px 18px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <button type="button" id="tab_btn_schedule" onclick="switchComposerTab('schedule')" style="background: transparent; color: #64748B; border: none; border-bottom: 3px solid transparent; padding: 14px 18px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
             <i class="fa-regular fa-clock" style="color: #8B5CF6;"></i> ⏰ Hẹn Lịch Đăng
           </button>
           <div style="margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 12px; color: #64748B; font-weight: 700; padding: 10px 0;">
@@ -921,11 +872,14 @@
             <span>&bull;</span>
             <span id="composer_read_time">~0 phút đọc</span>
             <span>&bull;</span>
-            <span id="composer_autosave_status" style="color: #10B981; font-size: 11.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-cloud-arrow-up"></i> Đã đồng bộ</span>
+            <span id="composer_autosave_status" style="color: #10B981; font-size: 11.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Đã đồng bộ
+            </span>
           </div>
         </div>
-        <!-- 1. PANE WEBSITE MASTER DOCUMENT (SEMANTIC BLOCKS) -->
-        <div id="pane_web" style="display: block; padding: 32px 40px; min-height: 580px; position: relative;">
+
+        <!-- 1. PANE WEBSITE MASTER DOCUMENT (SEMANTIC BLOCKS & TYPOGRAPHY) -->
+        <div id="pane_web" style="display: block; padding: 28px 36px; min-height: 580px; position: relative;">
           <!-- Autosave Restore Notice Banner -->
           <div id="composer_restore_banner" style="display: none; background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; font-size: 13px; color: #92400E; display: flex; align-items: center; justify-content: space-between;">
             <span><i class="fa-solid fa-clock-rotate-left me-2"></i> Phát hiện bản thảo đã tự động lưu gần đây. Bạn có muốn khôi phục không?</span>
@@ -935,46 +889,166 @@
             </div>
           </div>
 
-          <!-- Contextual Floating Bubble Menu -->
-          <div id="composer_bubble_menu" style="display: none; position: absolute; z-index: 1000; background: #0F172A; color: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); padding: 5px 8px; gap: 4px; align-items: center; font-size: 12px;">
-            <button type="button" onclick="formatBlockSelection('bold')" style="background: transparent; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: 800;">B</button>
-            <button type="button" onclick="formatBlockSelection('italic')" style="background: transparent; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-style: italic;">I</button>
-            <button type="button" onclick="formatBlockSelection('h2')" style="background: transparent; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: 700;">H2</button>
-            <button type="button" onclick="formatBlockSelection('quote')" style="background: transparent; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer;"><i class="fa-solid fa-quote-left"></i></button>
-            <span style="color: #475569; margin: 0 2px;">|</span>
-            <button type="button" onclick="runComposerQuickTool('formal')" style="background: rgba(2, 132, 199, 0.3); border: 1px solid #0284C7; color: #38BDF8; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: 700; font-size: 11px;">⚡ Nghị Định 30</button>
-            <button type="button" onclick="runComposerQuickTool('shorten')" style="background: rgba(148, 163, 184, 0.2); border: 1px solid #64748B; color: #E2E8F0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">✂ Rút Gọn</button>
-            <button type="button" onclick="runComposerQuickTool('expand')" style="background: rgba(148, 163, 184, 0.2); border: 1px solid #64748B; color: #E2E8F0; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">✨ Mở Rộng</button>
+          <!-- Headline Input -->
+          <div style="margin-bottom: 14px;">
+            <input type="text" id="composer_title_input" placeholder="Tiêu đề bài báo (Headline)..." style="width: 100%; border: none; outline: none; font-size: 28px; font-weight: 900; color: #0F172A; font-family: 'Plus Jakarta Sans', Georgia, serif; padding: 0; background: transparent; line-height: 1.3;" oninput="updateComposerMetrics()">
           </div>
-          <div style="margin-bottom: 16px;">
-            <input type="text" id="composer_title_input" placeholder="Tiêu đề bài báo báo chí (Headline)..." style="width: 100%; border: none; outline: none; font-size: 26px; font-weight: 900; color: #002855; font-family: 'Plus Jakarta Sans', Georgia, serif; padding: 0; background: transparent; line-height: 1.3;" oninput="updateComposerMetrics()">
+
+          <!-- Sapo Deck Input (Auto-Expanding) -->
+          <div style="margin-bottom: 18px;">
+            <textarea id="composer_sapo_input" rows="1" placeholder="Đoạn mở đầu Sapo (Lead 5W1H): Tóm lược thời gian, địa điểm, sự kiện và thông điệp trọng tâm..." style="width: 100%; min-height: 52px; border: none; border-left: 3.5px solid #2563EB; background: #F8FAFC; padding: 12px 18px; border-radius: 0 8px 8px 0; font-size: 14.5px; font-weight: 600; color: #334155; line-height: 1.65; outline: none; resize: none; overflow: hidden; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s;" oninput="autoResizeSapo(); updateComposerMetrics();"></textarea>
           </div>
-          <div style="margin-bottom: 20px;">
-            <textarea id="composer_sapo_input" rows="2" placeholder="Đoạn mở đầu Sapo 5W1H (Deck): Tóm lược thời gian, địa điểm, sự kiện và thông điệp trọng tâm..." style="width: 100%; border: none; border-left: 3.5px solid #0284C7; background: #F8FAFC; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 14px; font-weight: 600; color: #334155; line-height: 1.6; outline: none; resize: vertical; box-sizing: border-box; font-family: inherit;" oninput="updateComposerMetrics()"></textarea>
-          </div>
-          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; margin-bottom: 20px; flex-wrap: wrap;">
-            <button type="button" onclick="execComposerFormat('bold')" style="background: white; border: 1px solid #CBD5E1; padding: 5px 12px; border-radius: 4px; font-weight: 800; font-size: 12px; cursor: pointer;">B</button>
-            <button type="button" onclick="execComposerFormat('italic')" style="background: white; border: 1px solid #CBD5E1; padding: 5px 12px; border-radius: 4px; font-style: italic; font-size: 12px; cursor: pointer;">I</button>
-            <button type="button" onclick="execComposerFormat('underline')" style="background: white; border: 1px solid #CBD5E1; padding: 5px 12px; border-radius: 4px; text-decoration: underline; font-size: 12px; cursor: pointer;">U</button>
+
+          <!-- ADVANCED JOURNALISTIC TOOLBAR (TYPOGRAPHY + UNDO/REDO + FORMAT) -->
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+            <!-- Typography: Font Family -->
+            <select id="composer_font_family" onchange="applyComposerFontFamily(this.value)" title="Kiểu chữ" style="padding: 4px 8px; border: 1px solid #CBD5E1; border-radius: 4px; font-size: 12px; font-weight: 700; color: #002855; background: white; cursor: pointer;">
+              <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans (Hiện đại)</option>
+              <option value="Georgia, 'Times New Roman', serif">Georgia / Times (Báo chí)</option>
+              <option value="Roboto, Arial, sans-serif">Roboto / Arial (Công vụ)</option>
+              <option value="'Merriweather', serif">Merriweather (Tạp chí)</option>
+            </select>
+
+            <!-- Typography: Font Size -->
+            <select id="composer_font_size" onchange="applyComposerFontSize(this.value)" title="Cỡ chữ" style="padding: 4px 8px; border: 1px solid #CBD5E1; border-radius: 4px; font-size: 12px; font-weight: 700; color: #002855; background: white; cursor: pointer;">
+              <option value="14px">14px - Chú thích</option>
+              <option value="16px" selected>16px - Chuẩn báo</option>
+              <option value="18px">18px - Điểm nhấn</option>
+              <option value="20px">20px - Tiểu mục H3</option>
+              <option value="24px">24px - Đề mục H2</option>
+            </select>
+
             <span style="color: #CBD5E1;">|</span>
-            <button type="button" onclick="insertComposerH2()" style="background: white; border: 1px solid #CBD5E1; padding: 5px 12px; border-radius: 4px; font-weight: 700; font-size: 12px; cursor: pointer;">+ Đề mục H2</button>
-            <button type="button" onclick="insertComposerQuote()" style="background: white; border: 1px solid #CBD5E1; padding: 5px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;"><i class="fa-solid fa-quote-left me-1 text-warning"></i> Trích dẫn</button>
+
+            <!-- Format basic -->
+            <button type="button" onclick="execComposerFormat('bold')" title="In đậm (Ctrl+B)" style="background: white; border: 1px solid #CBD5E1; padding: 4px 10px; border-radius: 4px; font-weight: 800; font-size: 12px; cursor: pointer;">B</button>
+            <button type="button" onclick="execComposerFormat('italic')" title="In nghiêng (Ctrl+I)" style="background: white; border: 1px solid #CBD5E1; padding: 4px 10px; border-radius: 4px; font-style: italic; font-size: 12px; cursor: pointer;">I</button>
+            <button type="button" onclick="execComposerFormat('underline')" title="Gạch chân (Ctrl+U)" style="background: white; border: 1px solid #CBD5E1; padding: 4px 10px; border-radius: 4px; text-decoration: underline; font-size: 12px; cursor: pointer;">U</button>
+            <button type="button" onclick="insertComposerH2()" style="background: white; border: 1px solid #CBD5E1; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 12px; cursor: pointer;">+ H2</button>
+            <button type="button" onclick="insertComposerQuote()" style="background: white; border: 1px solid #CBD5E1; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;"><i class="fa-solid fa-quote-left text-warning"></i></button>
+
             <span style="color: #CBD5E1;">|</span>
-            <button type="button" onclick="document.getElementById('composer_direct_img_input').click()" style="background: white; border: 1px solid #CBD5E1; padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 700; color: #0284C7; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-              <i class="fa-solid fa-image text-success"></i> + Ném Ảnh Vào Bài
+
+            <!-- UNIFIED UNDO / REDO ENGINE (AI & MANUAL) -->
+            <button type="button" id="btn_composer_undo" onclick="composerUndo()" title="Lùi lại (Ctrl+Z)" style="background: white; border: 1px solid #CBD5E1; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 12px; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+              <i class="fa-solid fa-rotate-left"></i> Lùi
+            </button>
+            <button type="button" id="btn_composer_redo" onclick="composerRedo()" title="Tiến lên (Ctrl+Y)" style="background: white; border: 1px solid #CBD5E1; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 12px; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+              <i class="fa-solid fa-rotate-right"></i> Tiến
+            </button>
+
+            <span style="color: #CBD5E1;">|</span>
+
+            <!-- Direct Photo Inserter -->
+            <button type="button" onclick="document.getElementById('composer_direct_img_input').click()" style="background: white; border: 1px solid #CBD5E1; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 700; color: #0284C7; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+              <i class="fa-solid fa-image text-success"></i> + Chèn Ảnh
             </button>
             <input type="file" id="composer_direct_img_input" accept="image/*" multiple style="display: none;" onchange="insertDirectPhotoToCanvas(this.files)">
           </div>
-          <div id="composer_canvas_editor" contenteditable="true" oninput="updateComposerMetrics()" style="min-height: 440px; outline: none; font-size: 16px; line-height: 1.85; font-family: Georgia, 'Times New Roman', serif; color: #1E293B;">
-            <p style="color: #94A3B8; font-style: italic;">Nội dung bài báo sẽ xuất hiện tại đây khi AI lập bài gốc, hoặc bạn có thể bắt đầu gõ trực tiếp như trên Google Docs...</p>
+
+          <!-- FLOATING / ATTACHED IMAGE RESIZE & ALIGN CONTROLS -->
+          <div id="image_resizer_floating_bar" style="display: none; position: absolute; z-index: 10000; background: #002855; color: white; border-radius: 8px; padding: 6px 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); font-size: 11.5px; align-items: center; gap: 8px; flex-wrap: wrap; border: 1.5px solid #38BDF8;">
+            <span style="font-weight: 800; color: #FCD34D;"><i class="fa-solid fa-image"></i> Cỡ ảnh:</span>
+            <button type="button" onclick="setImageFigureWidth('25%')" style="background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: 700;">25%</button>
+            <button type="button" onclick="setImageFigureWidth('50%')" style="background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: 700;">50%</button>
+            <button type="button" onclick="setImageFigureWidth('75%')" style="background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: 700;">75%</button>
+            <button type="button" onclick="setImageFigureWidth('100%')" style="background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: 700;">100%</button>
+            <span style="color: rgba(255,255,255,0.3);">|</span>
+            <span style="font-weight: 800; color: #38BDF8;">Vị trí:</span>
+            <button type="button" onclick="setImageFigureAlign('left')" title="Canh trái chữ bao quanh" style="background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 3px 8px; border-radius: 4px; cursor: pointer;"><i class="fa-solid fa-align-left"></i> Trái</button>
+            <button type="button" onclick="setImageFigureAlign('center')" title="Canh giữa trang" style="background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 3px 8px; border-radius: 4px; cursor: pointer;"><i class="fa-solid fa-align-center"></i> Giữa</button>
+            <button type="button" onclick="setImageFigureAlign('right')" title="Canh phải chữ bao quanh" style="background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 3px 8px; border-radius: 4px; cursor: pointer;"><i class="fa-solid fa-align-right"></i> Phải</button>
+            <span style="color: rgba(255,255,255,0.3);">|</span>
+            <button type="button" onclick="deleteActiveImageFigure()" title="Xóa ảnh này" style="background: #DC2626; color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: 700;"><i class="fa-solid fa-trash"></i> Xóa</button>
+            <button type="button" onclick="closeImageResizer()" style="background: none; border: none; color: #94A3B8; cursor: pointer; font-size: 14px; margin-left: 4px;">✕</button>
+          </div>
+
+          <!-- ContentEditable Canvas Editor -->
+          <div id="composer_canvas_editor" contenteditable="true" oninput="handleCanvasUserInput()" style="min-height: 480px; outline: none; font-size: 16px; line-height: 1.85; font-family: 'Plus Jakarta Sans', Georgia, serif; color: #1E293B; text-align: justify;">
+            <p style="color: #94A3B8; font-style: italic;">Nội dung bài báo sẽ xuất hiện tại đây khi AI lập bài gốc từ thư mục Tinbaiviet, hoặc bạn có thể bắt đầu gõ trực tiếp như trên Google Docs...</p>
+          </div>
+
+          <!-- FLOATING INLINE AI SELECTION COPILOT (NOTION / CURSOR STYLE) -->
+          <div id="floating_inline_ai_copilot" style="display: none; position: absolute; z-index: 10001; background: #0F172A; color: white; border-radius: 12px; padding: 10px 14px; box-shadow: 0 12px 36px rgba(0,0,0,0.35); border: 1.5px solid #38BDF8; width: 380px; max-width: 90vw; backdrop-filter: blur(8px);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; color: #38BDF8;">
+                <i class="fa-solid fa-wand-magic-sparkles text-warning"></i>
+                <span id="inline_ai_status">Nói gì sửa đó...</span>
+              </div>
+              <button type="button" onclick="closeInlineAiCopilot()" style="background: none; border: none; color: #94A3B8; font-size: 14px; cursor: pointer; padding: 0 2px;">✕</button>
+            </div>
+            <!-- Quick action chips -->
+            <div style="display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap;">
+              <button type="button" onclick="submitInlineQuickAction('formal')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #E2E8F0; font-size: 11px; padding: 3px 8px; border-radius: 6px; cursor: pointer;">✨ Trang trọng</button>
+              <button type="button" onclick="submitInlineQuickAction('grammar')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #E2E8F0; font-size: 11px; padding: 3px 8px; border-radius: 6px; cursor: pointer;">💡 Trau chuốt</button>
+              <button type="button" onclick="submitInlineQuickAction('shorten')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #E2E8F0; font-size: 11px; padding: 3px 8px; border-radius: 6px; cursor: pointer;">✂️ Tóm gọn ý</button>
+              <button type="button" onclick="submitInlineQuickAction('warm')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #E2E8F0; font-size: 11px; padding: 3px 8px; border-radius: 6px; cursor: pointer;">❤️ Truyền cảm</button>
+            </div>
+            <!-- Input & Submit -->
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <input type="text" id="inline_ai_prompt_input" placeholder="Gõ yêu cầu sửa (VD: Thêm số liệu, đổi giọng văn...)" style="flex: 1; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 8px; padding: 7px 10px; font-size: 12px; color: white; outline: none;" onkeydown="if(event.key==='Enter') submitInlineSelectionPrompt();">
+              <button type="button" onclick="submitInlineSelectionPrompt()" style="background: linear-gradient(135deg, #0284C7, #2563EB); color: white; border: none; padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+                <span>⚡ Sửa</span>
+              </button>
+            </div>
           </div>
         </div>
-        <!-- 2. PANE FACEBOOK (SYNDICATION) -->
-        <div id="pane_fb" style="display: none; padding: 32px 40px;">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+
+        <!-- 2. PANE FACEBOOK (FANPAGE STUDIO & ASSET PICKER & RATIO HELPER) -->
+        <div id="pane_fb" style="display: none; padding: 28px 36px;">
+          <!-- Facebook Tools Bar -->
+          <div style="background: #F0F2F5; border: 1px solid #CBD5E1; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <!-- Ratio helpers -->
+              <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #1877F2;">
+                <span><i class="fa-solid fa-crop-simple me-1"></i> Tỷ lệ ảnh chuẩn:</span>
+                <button type="button" onclick="applyFbRatioGuide('1:1')" style="background: white; border: 1px solid #CBD5E1; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer;">1:1 Vuông</button>
+                <button type="button" onclick="applyFbRatioGuide('4:5')" style="background: white; border: 1px solid #CBD5E1; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer;">4:5 Dọc</button>
+                <button type="button" onclick="applyFbRatioGuide('16:9')" style="background: white; border: 1px solid #CBD5E1; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer;">16:9 Ngang</button>
+                <button type="button" onclick="applyFbRatioGuide('album4')" style="background: white; border: 1px solid #CBD5E1; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer;">Album 4 ảnh</button>
+              </div>
+
+              <!-- Hashtag Insert -->
+              <div style="display: flex; gap: 4px;">
+                <button type="button" onclick="insertFbHashtag('#CongDoanTDMU')" style="background: white; border: 1px solid #CBD5E1; padding: 2px 6px; border-radius: 4px; font-size: 11px; color: #1877F2; font-weight: 700; cursor: pointer;">#CongDoanTDMU</button>
+                <button type="button" onclick="insertFbHashtag('#HoatDongDoanVien')" style="background: white; border: 1px solid #CBD5E1; padding: 2px 6px; border-radius: 4px; font-size: 11px; color: #1877F2; font-weight: 700; cursor: pointer;">#HoatDongDoanVien</button>
+                <button type="button" onclick="insertFbHashtag('#TDMU2026')" style="background: white; border: 1px solid #CBD5E1; padding: 2px 6px; border-radius: 4px; font-size: 11px; color: #1877F2; font-weight: 700; cursor: pointer;">#TDMU2026</button>
+              </div>
+            </div>
+
+            <!-- Stickers / Emoji Tray -->
+            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px;">
+              <span style="font-weight: 700; color: #64748B;">Sticker nhanh:</span>
+              <button type="button" onclick="insertFbEmoji('📢')" style="background: white; border: 1px solid #CBD5E1; padding: 2px 6px; border-radius: 4px; cursor: pointer;">📢</button>
+              <button type="button" onclick="insertFbEmoji('🎓')" style="background: white; border: 1px solid #CBD5E1; padding: 2px 6px; border-radius: 4px; cursor: pointer;">🎓</button>
+              <button type="button" onclick="insertFbEmoji('✨')" style="background: white; border: 1px solid #CBD5E1; padding: 2px 6px; border-radius: 4px; cursor: pointer;">✨</button>
+              <button type="button" onclick="insertFbEmoji('🏆')" style="background: white; border: 1px solid #CBD5E1; padding: 2px 6px; border-radius: 4px; cursor: pointer;">🏆</button>
+              <button type="button" onclick="insertFbEmoji('🔥')" style="background: white; border: 1px solid #CBD5E1; padding: 2px 6px; border-radius: 4px; cursor: pointer;">🔥</button>
+              <button type="button" onclick="insertFbEmoji('❤️')" style="background: white; border: 1px solid #CBD5E1; padding: 2px 6px; border-radius: 4px; cursor: pointer;">❤️</button>
+              <button type="button" onclick="insertFbEmoji('📌')" style="background: white; border: 1px solid #CBD5E1; padding: 2px 6px; border-radius: 4px; cursor: pointer;">📌</button>
+              <button type="button" onclick="insertFbEmoji('🤝')" style="background: white; border: 1px solid #CBD5E1; padding: 2px 6px; border-radius: 4px; cursor: pointer;">🤝</button>
+              <button type="button" onclick="insertFbEmoji('⚽')" style="background: white; border: 1px solid #CBD5E1; padding: 2px 6px; border-radius: 4px; cursor: pointer;">⚽</button>
+              <button type="button" onclick="insertFbEmoji('🎉')" style="background: white; border: 1px solid #CBD5E1; padding: 2px 6px; border-radius: 4px; cursor: pointer;">🎉</button>
+              <button type="button" onclick="syncFbFromWebMaster()" style="margin-left: auto; background: #1877F2; color: white; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;">
+                <i class="fa-solid fa-rotate me-1"></i> Đồng bộ từ bài Web
+              </button>
+            </div>
+
+            <!-- BỘ CHỌN ẢNH TỪ KHO TINBAIVIET CHO FACEBOOK -->
+            <div id="fb_asset_picker_box" style="margin-top: 4px; border-top: 1px solid #E2E8F0; padding-top: 8px;">
+              <div style="font-size: 11.5px; font-weight: 800; color: #002855; margin-bottom: 6px;">
+                <i class="fa-solid fa-images text-success me-1"></i> Chọn ảnh từ kho Tinbaiviet đính kèm bài Facebook:
+              </div>
+              <div id="fb_asset_picker_grid" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
+                <span style="font-size: 11.5px; color: #94A3B8; font-style: italic;">Chưa có ảnh nào trong kho tư liệu.</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div>
               <label style="font-size: 12.5px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 8px; display: block;">Nội Dung Caption Facebook:</label>
-              <textarea id="composer_fb_caption" rows="12" style="width: 100%; padding: 14px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 13.5px; line-height: 1.65; outline: none; box-sizing: border-box; font-family: inherit;" oninput="safeSetText('composer_fb_preview_text', this.value)"></textarea>
+              <textarea id="composer_fb_caption" rows="14" style="width: 100%; padding: 14px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 13.5px; line-height: 1.65; outline: none; box-sizing: border-box; font-family: inherit;" oninput="safeSetText('composer_fb_preview_text', this.value)"></textarea>
             </div>
             <div>
               <label style="font-size: 12.5px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 8px; display: block;">Bản Xem Trước Fanpage:</label>
@@ -994,12 +1068,22 @@
             </div>
           </div>
         </div>
+
         <!-- 3. PANE ZALO OA (SYNDICATION) -->
-        <div id="pane_zalo" style="display: none; padding: 32px 40px;">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <div id="pane_zalo" style="display: none; padding: 28px 36px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div>
-              <label style="font-size: 12.5px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 8px; display: block;">Nội Dung Tin Nhắn Zalo OA:</label>
-              <textarea id="composer_zalo_caption" rows="8" style="width: 100%; padding: 14px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 13.5px; line-height: 1.65; outline: none; box-sizing: border-box; font-family: inherit;" oninput="safeSetText('composer_zalo_preview_text', this.value)"></textarea>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label style="font-size: 12.5px; font-weight: 800; color: #002855; text-transform: uppercase; margin: 0;">Nội Dung Tin Nhắn Zalo OA:</label>
+                <button type="button" onclick="syncZaloFromWebMaster()" style="background: #0068FF; color: white; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;">
+                  <i class="fa-solid fa-rotate me-1"></i> Đồng bộ từ bài Web
+                </button>
+              </div>
+              <textarea id="composer_zalo_caption" rows="10" style="width: 100%; padding: 14px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 13.5px; line-height: 1.65; outline: none; box-sizing: border-box; font-family: inherit;" oninput="updateZaloPreview(this.value)"></textarea>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 11.5px; color: #64748B;">
+                <span id="zalo_char_count">0 / 1000 ký tự</span>
+                <span>*in đậm*, - gạch đầu dòng</span>
+              </div>
             </div>
             <div>
               <label style="font-size: 12.5px; font-weight: 800; color: #002855; text-transform: uppercase; margin-bottom: 8px; display: block;">Xem Trước Zalo OA:</label>
@@ -1008,32 +1092,33 @@
                   <div style="font-size: 12px; font-weight: 800; color: #0068FF; margin-bottom: 6px;"><i class="fa-solid fa-comment-dots me-1"></i> Tin nhắn nhóm Công Đoàn TDMU</div>
                   <div id="composer_zalo_preview_text" style="font-size: 13px; line-height: 1.6; color: #1E293B; white-space: pre-wrap;"></div>
                   <button type="button" onclick="copyComposerZalo()" style="margin-top: 10px; background: #0068FF; color: white; border: none; padding: 7px 16px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
-                    <i class="fa-solid fa-copy me-1"></i> Copy tin nhắn
+                    <i class="fa-solid fa-copy me-1"></i> Copy tin nhắn Zalo
                   </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
         <!-- 4. PANE SCHEDULE (SYNDICATION) -->
-        <div id="pane_schedule" style="display: none; padding: 32px 40px;">
+        <div id="pane_schedule" style="display: none; padding: 28px 36px;">
           <h3 style="margin: 0 0 16px; font-size: 16px; font-weight: 800; color: #002855;">
             <i class="fa-solid fa-calendar-check text-primary me-2"></i> Lịch Hẹn Đăng Đa Nền Tảng (Cron Tự Động)
           </h3>
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px;">
-            <div style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 18px;">
+            <div style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px;">
               <div style="font-weight: 800; font-size: 14px; color: #002855; margin-bottom: 4px;">📰 Cổng Website TDMU</div>
               <div style="font-size: 12px; color: #64748B; margin-bottom: 12px;">Đăng chính thức lên trang chủ</div>
               <button type="button" onclick="publishComposerChannel('web')" style="width: 100%; background: #002855; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-bottom: 6px;">Đăng Ngay</button>
               <button type="button" onclick="openComposerScheduleModal('web')" style="width: 100%; background: #F0F9FF; border: 1px solid #BAE6FD; color: #0284C7; padding: 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer;">Hẹn Giờ Đăng</button>
             </div>
-            <div style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 18px;">
+            <div style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px;">
               <div style="font-weight: 800; font-size: 14px; color: #1877F2; margin-bottom: 4px;">📘 Fanpage Facebook</div>
               <div style="font-size: 12px; color: #64748B; margin-bottom: 12px;">Kèm hình ảnh và hashtag</div>
               <button type="button" onclick="publishComposerChannel('facebook')" style="width: 100%; background: #1877F2; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-bottom: 6px;">Đăng Lên Fanpage</button>
               <button type="button" onclick="openComposerScheduleModal('facebook')" style="width: 100%; background: #F0F9FF; border: 1px solid #BAE6FD; color: #0284C7; padding: 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer;">Hẹn Giờ Đăng</button>
             </div>
-            <div style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 18px;">
+            <div style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px;">
               <div style="font-weight: 800; font-size: 14px; color: #0068FF; margin-bottom: 4px;">💬 Zalo OA</div>
               <div style="font-size: 12px; color: #64748B; margin-bottom: 12px;">Thông báo ngắn cho đoàn viên</div>
               <button type="button" onclick="publishComposerChannel('zalo')" style="width: 100%; background: #0068FF; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-bottom: 6px;">Copy &amp; Gửi</button>
@@ -1041,6 +1126,137 @@
             </div>
           </div>
           <div id="composer_schedule_list" style="font-size: 12px; color: #64748B;"></div>
+        </div>
+      </div>
+
+      <!-- CỘT PHÍA TRÊN BÊN PHẢI: UNIFIED AI COPILOT & ASSETS PANEL (MANUS / GEMINI STYLE) -->
+      <div style="background: white; border-radius: 14px; border: 1px solid #E2E8F0; box-shadow: 0 4px 20px rgba(0,0,0,0.03); overflow: hidden; display: flex; flex-direction: column;">
+        
+        <!-- COPILOT HEADER: TƯ LIỆU & CÔNG CỤ -->
+        <div style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between; background: #FAFAFA;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #002855, #2563EB); display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-size: 13px;">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+            <div>
+              <div style="font-size: 13px; font-weight: 800; color: #0F172A;">Trợ Lý AI &amp; Hồ Sơ Tư Liệu</div>
+              <div style="font-size: 10.5px; color: #64748B;">Đọc hiểu tự động đa định dạng</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <button type="button" onclick="clearComposerTray()" title="Xóa toàn bộ tệp trong khay" style="background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; border-radius: 6px; font-size: 11px; font-weight: 700; padding: 4px 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px;">
+              <i class="fa-solid fa-trash-can"></i> Xóa Khay
+            </button>
+          </div>
+        </div>
+
+        <!-- SUB-TABS: HỒ SƠ TƯ LIỆU vs TRỢ LÝ CHATBOT AI -->
+        <div style="display: flex; border-bottom: 1px solid #E2E8F0; background: #F8FAFC;">
+          <button type="button" id="btn_studio_subtab_files" onclick="switchStudioRightTab('files')" style="flex: 1; padding: 10px 12px; border: none; border-bottom: 2.5px solid #2563EB; background: white; font-size: 12px; font-weight: 800; color: #2563EB; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <i class="fa-solid fa-folder-open"></i> Hồ Sơ &amp; Nạp Tệp
+          </button>
+          <button type="button" id="btn_studio_subtab_chat" onclick="switchStudioRightTab('chat')" style="flex: 1; padding: 10px 12px; border: none; border-bottom: 2.5px solid transparent; background: transparent; font-size: 12px; font-weight: 700; color: #64748B; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <i class="fa-solid fa-comments text-primary"></i> Trợ Lý Chatbot AI
+          </button>
+        </div>
+
+        <!-- TAB CONTENT 1: HỒ SƠ TƯ LIỆU VÀ NẠP TỆP -->
+        <div id="panel_studio_files" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 14px;">
+          <!-- 1. COMPACT DROPZONE -->
+          <div id="composer_dropzone" onclick="document.getElementById('composer_file_input').click()"
+            ondragover="event.preventDefault(); this.style.borderColor='#2563EB'; this.style.background='#F0F7FF';"
+            ondragleave="this.style.borderColor='#CBD5E1'; this.style.background='#F8FAFC';"
+            ondrop="event.preventDefault(); this.style.borderColor='#CBD5E1'; this.style.background='#F8FAFC'; handleComposerDrop(event);"
+            style="border: 1.5px dashed #CBD5E1; background: #F8FAFC; border-radius: 10px; padding: 14px 12px; text-align: center; cursor: pointer; transition: all 0.2s;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #2563EB; font-weight: 700; font-size: 12px;">
+              <i class="fa-solid fa-cloud-arrow-up" style="font-size: 16px;"></i>
+              <span>Kéo thả hoặc bấm để nạp tài liệu &amp; ảnh</span>
+            </div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 3px;">Hỗ trợ Word, PPTX, Excel, PDF scan &amp; Ảnh sự kiện</div>
+            <input type="file" id="composer_file_input" multiple accept=".docx,.doc,.pdf,.pptx,.ppt,.xlsx,.xls,.csv,.txt,image/*" style="display: none;" onchange="handleComposerFiles(this.files)">
+          </div>
+
+          <!-- 2. INGESTED FILES CHIPS CONTAINER -->
+          <div id="composer_files_list" style="display: flex; flex-direction: column; gap: 5px; max-height: 150px; overflow-y: auto;">
+            <div style="color: #94A3B8; font-size: 11.5px; font-style: italic; padding: 2px 0;">Chưa có tệp nào trong hồ sơ tư liệu.</div>
+          </div>
+
+          <!-- 3. PHOTO ASSET STRIP (SMART MEDIA GALLERY) -->
+          <div style="border-top: 1px solid #F1F5F9; padding-top: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-size: 11.5px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">
+                <i class="fa-solid fa-images text-success me-1"></i> Kho Ảnh Sự Kiện
+              </span>
+              <span id="composer_photos_count_badge" style="font-size: 10.5px; font-weight: 700; color: #16A34A; background: #DCFCE7; padding: 1px 7px; border-radius: 10px;">0 ảnh</span>
+            </div>
+            <div id="composer_photos_list" style="display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;">
+              <div style="color: #94A3B8; font-size: 11.5px; font-style: italic;">Chưa có ảnh. Ảnh sẽ tự động hiển thị khi nạp tệp.</div>
+            </div>
+          </div>
+
+          <!-- 4. CHATGPT / GEMINI STYLE OMNIBAR PROMPT & ACTION -->
+          <div style="border-top: 1px solid #F1F5F9; padding-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 10px 12px; transition: border-color 0.2s;" onfocusin="this.style.borderColor='#2563EB';" onfocusout="this.style.borderColor='#E2E8F0';">
+              <textarea id="composer_prompt_input" rows="2" placeholder="Gõ yêu cầu hoặc để trống để AI tự phân tích tư liệu... (VD: Nhấn mạnh 16 Tổ tham gia, TS. Dung báo cáo...)" style="width: 100%; border: none; background: transparent; outline: none; font-size: 12.5px; color: #1E293B; resize: none; font-family: inherit; line-height: 1.45;"></textarea>
+              
+              <!-- Quick Prompt Chips -->
+              <div style="display: flex; align-items: center; gap: 5px; margin-top: 6px; flex-wrap: wrap;">
+                <span style="font-size: 10px; color: #94A3B8; font-weight: 700;">Gợi ý:</span>
+                <button type="button" onclick="setComposerPromptSuggestion('Lập bài báo thời sự đầy đủ, trang trọng, nêu bật ý nghĩa phong trào đoàn viên')" style="background: white; border: 1px solid #CBD5E1; border-radius: 12px; padding: 2px 7px; font-size: 10.5px; color: #475569; cursor: pointer;">✨ Toàn cảnh</button>
+                <button type="button" onclick="setComposerPromptSuggestion('Tập trung phân tích kỹ bảng dự toán kinh phí và các hạng mục tài chính')" style="background: white; border: 1px solid #CBD5E1; border-radius: 12px; padding: 2px 7px; font-size: 10.5px; color: #475569; cursor: pointer;">📊 Kinh phí</button>
+                <button type="button" onclick="setComposerPromptSuggestion('Nhấn mạnh các giải pháp dinh dưỡng và phác đồ chuyên đề từ slide')" style="background: white; border: 1px solid #CBD5E1; border-radius: 12px; padding: 2px 7px; font-size: 10.5px; color: #475569; cursor: pointer;">💡 Chuyên đề</button>
+              </div>
+            </div>
+
+            <!-- PRIMARY GENERATION BUTTON -->
+            <button type="button" id="btn_composer_generate" onclick="runComposerGeneration()" style="width: 100%; background: linear-gradient(135deg, #002855 0%, #2563EB 100%); color: #FFFFFF; border: none; padding: 12px; border-radius: 10px; font-size: 13.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(37,99,235,0.25); transition: all 0.2s;">
+              <i class="fa-solid fa-wand-magic-sparkles text-warning"></i> ✨ LẬP BÀI BÁO GỐC (AI AUTONOMOUS) &rarr;
+            </button>
+          </div>
+
+          <!-- 5. AGENT ACTIVITY TIMELINE (MANUS STYLE STEPPER) -->
+          <div style="border-top: 1px solid #F1F5F9; padding-top: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Tiến trình tác nhân AI</span>
+              <span id="composer_activity_badge" style="font-size: 10px; font-weight: 700; background: #F1F5F9; color: #64748B; padding: 1px 6px; border-radius: 6px;">Chờ tác vụ</span>
+            </div>
+            <div id="composer_activity_stream" style="display: flex; flex-direction: column; gap: 5px; font-size: 11.5px; color: #475569; max-height: 120px; overflow-y: auto;">
+              <div class="empty-placeholder" style="color: #94A3B8; font-style: italic; font-size: 11px;">Chưa có tác vụ nào đang chạy.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB CONTENT 2: TRỢ LÝ CHATBOT AI TÒA SOẠN -->
+        <div id="panel_studio_chat" style="display: none; flex-direction: column; height: 580px; padding: 14px 16px;">
+          <!-- Chat messages list -->
+          <div id="studio_chat_messages" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; padding-right: 4px;">
+            <div style="display: flex; gap: 8px; align-items: flex-start;">
+              <div style="width: 28px; height: 28px; border-radius: 8px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0;">AI</div>
+              <div style="background: #F1F5F9; border-radius: 0 10px 10px 10px; padding: 10px 12px; font-size: 12.5px; color: #1E293B; line-height: 1.5; max-width: 90%;">
+                👋 Chào Thầy/Cô! Em là <b>Trợ lý AI Tòa Soạn TDMU</b>. Em nắm vững toàn bộ hồ sơ tư liệu và nội dung đang soạn trên Canvas để hỗ trợ:
+                <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 3px; font-size: 11.5px; color: #475569;">
+                  <div>• Viết tiếp, kết bài hoặc mở rộng ý từ slide, bảng tính</div>
+                  <div>• Nắn lại câu chữ chuẩn văn phong báo chí hành chính</div>
+                  <div>• Bấm nút <b>"Chèn vào bài báo"</b> để tích hợp ngay lập tức</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Prompts Tray -->
+          <div style="display: flex; gap: 5px; margin-bottom: 8px; overflow-x: auto; padding-bottom: 3px; flex-shrink: 0;">
+            <button type="button" onclick="sendQuickStudioChat('Thêm 1 đoạn kết bài truyền cảm, nêu bật quyết tâm thi đua và tinh thần đoàn kết của viên chức')" style="white-space: nowrap; background: #EFF6FF; border: 1px solid #BFDBFE; color: #1D4ED8; font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer;">✨ Viết kết bài</button>
+            <button type="button" onclick="sendQuickStudioChat('Trau chuốt lại câu từ các đoạn văn cho thật gãy gọn, chuẩn văn phong báo chí')" style="white-space: nowrap; background: #EFF6FF; border: 1px solid #BFDBFE; color: #1D4ED8; font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer;">💡 Trau chuốt câu từ</button>
+            <button type="button" onclick="sendQuickStudioChat('Gợi ý 3 câu hỏi phỏng vấn nhanh đoàn viên về hoạt động này')" style="white-space: nowrap; background: #EFF6FF; border: 1px solid #BFDBFE; color: #1D4ED8; font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer;">🎤 Phỏng vấn</button>
+          </div>
+
+          <!-- Chat Input -->
+          <div style="display: flex; gap: 6px; align-items: center; background: #F8FAFC; border: 1.5px solid #CBD5E1; border-radius: 10px; padding: 6px 10px;">
+            <textarea id="studio_chat_input" rows="2" placeholder="Nhập yêu cầu hỏi đáp hoặc chỉ đạo sửa bài..." style="flex: 1; border: none; background: transparent; outline: none; font-size: 12.5px; color: #1E293B; resize: none; font-family: inherit; line-height: 1.4;" onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); sendStudioChatMessage(); }"></textarea>
+            <button type="button" onclick="sendStudioChatMessage()" style="background: #2563EB; color: white; border: none; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;" title="Gửi yêu cầu">
+              <i class="fa-solid fa-paper-plane" style="font-size: 12px;"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1616,6 +1832,120 @@
         <button type="button" onclick="closeAiQualityAuditModal()" style="background: none; border: none; font-size: 26px; color: white; cursor: pointer; line-height: 1;">&times;</button>
       </div>
       <div id="ai_quality_audit_report" style="padding: 24px;"></div>
+    </div>
+  <!-- MODAL BỘ SOI DỮ LIỆU THÔ (INGESTION INSPECTOR) -->
+  <div id="modal_ingestion_inspector" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); align-items: center; justify-content: center; z-index: 999999; backdrop-filter: blur(4px);">
+    <div style="background: white; border-radius: 14px; width: 95%; max-width: 960px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); display: flex; flex-direction: column;">
+      <div style="background: linear-gradient(135deg, #002855, #0284C7); color: white; border-radius: 14px 14px 0 0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10;">
+        <div>
+          <h3 style="font-size: 16.5px; font-weight: 900; color: white; margin: 0; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-magnifying-glass-chart text-warning"></i> BỘ SOI DỮ LIỆU THÔ &amp; KHO ẢNH (INGESTION INSPECTOR)
+          </h3>
+          <p style="margin: 2px 0 0; font-size: 12px; color: #BAE6FD;">Kiểm tra dữ liệu trích xuất nguyên bản từ tệp trước khi gửi qua xử lý AI</p>
+        </div>
+        <button type="button" onclick="closeIngestionInspector()" style="background: none; border: none; font-size: 26px; color: white; cursor: pointer; line-height: 1;">&times;</button>
+      </div>
+
+      <div style="padding: 24px;">
+        <!-- 4 Thẻ KPI chẩn đoán -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px;">
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px;">
+            <div style="font-size: 11.5px; color: #64748B; font-weight: 700;">Tổng số tệp tiếp nhận</div>
+            <div id="insp_stat_files" style="font-size: 22px; font-weight: 900; color: #002855; margin-top: 2px;">0 tệp</div>
+          </div>
+          <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 12px 14px;">
+            <div style="font-size: 11.5px; color: #166534; font-weight: 700;">Bóc tách thành công</div>
+            <div id="insp_stat_success" style="font-size: 22px; font-weight: 900; color: #15803D; margin-top: 2px;">0 tệp</div>
+          </div>
+          <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 12px 14px;">
+            <div style="font-size: 11.5px; color: #1E40AF; font-weight: 700;">Tổng ký tự thô thu được</div>
+            <div id="insp_stat_chars" style="font-size: 22px; font-weight: 900; color: #2563EB; margin-top: 2px;">0 ký tự</div>
+          </div>
+          <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 14px;">
+            <div style="font-size: 11.5px; color: #B45309; font-weight: 700;">Ảnh tư liệu phát hiện</div>
+            <div id="insp_stat_photos" style="font-size: 22px; font-weight: 900; color: #D97706; margin-top: 2px;">0 ảnh</div>
+          </div>
+        </div>
+
+        <!-- Subtabs điều hướng -->
+        <div style="display: flex; gap: 8px; border-bottom: 2px solid #E2E8F0; margin-bottom: 16px;">
+          <button type="button" id="insp_subtab_text" onclick="switchInspectorSubtab('text')" style="background: #002855; color: white; border: none; padding: 8px 16px; border-radius: 6px 6px 0 0; font-size: 12.5px; font-weight: 800; cursor: pointer;">
+            <i class="fa-solid fa-file-lines me-1"></i> 1. Chi Tiết Text Thô Từng Tệp
+          </button>
+          <button type="button" id="insp_subtab_media" onclick="switchInspectorSubtab('media')" style="background: #F1F5F9; color: #475569; border: none; padding: 8px 16px; border-radius: 6px 6px 0 0; font-size: 12.5px; font-weight: 700; cursor: pointer;">
+            <i class="fa-solid fa-images me-1"></i> 2. Kho Ảnh Thô Chưa Qua AI
+          </button>
+        </div>
+
+        <!-- Panel 1: Chi tiết Text thô -->
+        <div id="insp_panel_text" style="display: block;">
+          <div id="insp_files_text_container" style="display: flex; flex-direction: column; gap: 12px;"></div>
+        </div>
+
+        <!-- Panel 2: Phân tích Kho Ảnh Thô -->
+        <div id="insp_panel_media" style="display: none;">
+          <div style="font-size: 12px; color: #64748B; margin-bottom: 12px;">
+            💡 Danh sách toàn bộ ảnh trích xuất trực tiếp từ các tệp DOCX, PPTX, PDF. Các ảnh quá nhỏ hoặc watermark banner đã tự động được lọc loại trừ để giữ bài viết sạch sẽ chuẩn báo chí.
+          </div>
+          <div id="insp_media_grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAWER TỦ BẢN THẢO BÁO CHÍ (DRAFTS DRAWER) -->
+  <div id="drawer_composer_drafts" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 999998; backdrop-filter: blur(2px); justify-content: flex-end;">
+    <div style="background: white; width: 100%; max-width: 520px; height: 100%; box-shadow: -10px 0 30px rgba(0,0,0,0.25); display: flex; flex-direction: column; animation: slideLeft 0.25s ease;">
+      <div style="background: #002855; color: white; padding: 18px 22px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h3 style="font-size: 16px; font-weight: 800; color: white; margin: 0; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-box-archive text-warning"></i> TỦ QUẢN LÝ BẢN THẢO (DRAFTS)
+          </h3>
+          <p style="margin: 2px 0 0; font-size: 11.5px; color: #BAE6FD;">Lưu trữ trên CSDL hệ thống, mở lại bất cứ lúc nào trước khi xuất bản</p>
+        </div>
+        <button type="button" onclick="closeDraftsDrawer()" style="background: none; border: none; font-size: 24px; color: white; cursor: pointer; line-height: 1;">&times;</button>
+      </div>
+
+      <div style="padding: 14px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; background: #F8FAFC;">
+        <button type="button" onclick="createNewDraftArticle()" style="background: linear-gradient(135deg, #0284C7, #0369A1); color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-plus"></i> + Soạn Bài Báo Mới
+        </button>
+        <button type="button" onclick="loadDraftsList()" style="background: white; border: 1px solid #CBD5E1; color: #475569; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
+          <i class="fa-solid fa-rotate me-1"></i> Làm Mới
+        </button>
+      </div>
+
+      <div id="drawer_drafts_list" style="flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="color: #94A3B8; font-style: italic; text-align: center; padding: 40px 0;">Đang tải danh sách bản thảo...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING INLINE SELECTION AI COPILOT ("NÓI GÌ NÓ SỬA ĐÓ" - CURSOR / NOTION STYLE) -->
+  <div id="floating_inline_ai_copilot" style="display: none; position: absolute; z-index: 10001; background: #0F172A; border: 1.5px solid #38BDF8; border-radius: 12px; box-shadow: 0 20px 40px -8px rgba(0,0,0,0.5); padding: 10px 14px; width: 390px; max-width: 90vw; box-sizing: border-box; transition: opacity 0.15s ease; backdrop-filter: blur(12px);">
+    <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 8px;">
+      <div style="width: 20px; height: 20px; border-radius: 6px; background: linear-gradient(135deg, #38BDF8, #2563EB); display: flex; align-items: center; justify-content: center; color: white; font-size: 10px;">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+      </div>
+      <span style="font-size: 11.5px; font-weight: 800; color: #38BDF8; letter-spacing: 0.3px;">Trợ Lý Sửa Đoạn Bôi Đen (Inline AI)</span>
+      <span id="inline_ai_status" style="font-size: 10.5px; color: #94A3B8; margin-left: auto;">Nói gì sửa đó...</span>
+      <button type="button" onclick="closeInlineAiCopilot()" style="background: none; border: none; color: #94A3B8; font-size: 14px; cursor: pointer; padding: 0 4px; line-height: 1;">✕</button>
+    </div>
+
+    <!-- Input prompt nói gì sửa đó -->
+    <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+      <input type="text" id="inline_ai_prompt_input" placeholder="Chỉ đạo sửa đoạn vừa chọn... (VD: Trang trọng hơn, bổ sung số liệu...)" style="flex: 1; background: #1E293B; border: 1px solid #334155; border-radius: 8px; color: white; padding: 7px 11px; font-size: 12px; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#38BDF8'" onblur="this.style.borderColor='#334155'" onkeydown="if(event.key==='Enter') submitInlineSelectionPrompt();">
+      <button type="button" id="btn_inline_ai_send" onclick="submitInlineSelectionPrompt()" style="background: linear-gradient(135deg, #0284C7, #2563EB); color: white; border: none; border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 8px rgba(37,99,235,0.35);">
+        <span>⚡ Sửa</span>
+      </button>
+    </div>
+
+    <!-- Quick Action Chips -->
+    <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+      <button type="button" onclick="submitInlineQuickAction('formal')" style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: #38BDF8; padding: 3px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 700; cursor: pointer;">✨ Viết trang trọng</button>
+      <button type="button" onclick="submitInlineQuickAction('grammar')" style="background: rgba(148, 163, 184, 0.15); border: 1px solid rgba(148, 163, 184, 0.3); color: #E2E8F0; padding: 3px 8px; border-radius: 6px; font-size: 10.5px; cursor: pointer;">💡 Trau chuốt câu từ</button>
+      <button type="button" onclick="submitInlineQuickAction('shorten')" style="background: rgba(148, 163, 184, 0.15); border: 1px solid rgba(148, 163, 184, 0.3); color: #E2E8F0; padding: 3px 8px; border-radius: 6px; font-size: 10.5px; cursor: pointer;">✂️ Tóm gọn ý</button>
+      <button type="button" onclick="submitInlineQuickAction('warm')" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #FCD34D; padding: 3px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 700; cursor: pointer;">❤️ Truyền cảm</button>
     </div>
   </div>
 

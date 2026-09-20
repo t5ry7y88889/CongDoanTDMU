@@ -33,19 +33,13 @@ document.addEventListener('DOMContentLoaded', () => {
   loadAuditLogs();
   loadFacebookPublishSelect();
 
-  const initialHash = window.location.hash.replace('#', '');
-  if (initialHash && ['dashboard', 'articles', 'ai-creator', 'schedule', 'social', 'events', 'media', 'roles', 'users', 'audits', 'inbox', 'image-studio'].includes(initialHash)) {
-    showAdminTab(initialHash);
-  } else {
-    showAdminTab('ai-creator');
-  }
+  const rawHash = window.location.hash.replace('#', '');
+  showAdminTab(rawHash || 'ai-creator');
 });
 
 window.addEventListener('hashchange', () => {
   const hash = window.location.hash.replace('#', '');
-  if (hash && ['dashboard', 'articles', 'ai-creator', 'schedule', 'social', 'events', 'media', 'roles', 'users', 'audits', 'inbox', 'image-studio'].includes(hash)) {
-    showAdminTab(hash);
-  }
+  showAdminTab(hash || 'ai-creator');
 });
 
 // Initialize TinyMCE Rich Text Editor
@@ -88,8 +82,15 @@ function switchUserRole(role) {
   loadAdminArticles();
 }
 
-function showAdminTab(tabName, subFilter = null) {
+function showAdminTab(rawTabName, subFilter = null) {
+  let tabName = (rawTabName || '').replace(/^tab_/, '').trim();
+  if (['writer', 'studio', 'composer', 'editor', 'tinbaiviet', 'tab_writer'].includes(rawTabName) || ['writer', 'studio', 'composer', 'editor', 'tinbaiviet'].includes(tabName)) {
+    tabName = 'ai-creator';
+  }
   const tabs = ['dashboard', 'articles', 'ai-creator', 'welfare', 'feedback', 'reports', 'templates', 'documents', 'schedule', 'users', 'audits'];
+  if (!tabs.includes(tabName)) {
+    tabName = 'ai-creator';
+  }
   const titles = {
     'dashboard': 'Bảng Điều Hành & Thống Kê',
     'articles': 'Quản Lý Tin Tức & Bài Viết',

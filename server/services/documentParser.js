@@ -359,46 +359,10 @@ async function parsePdf(buffer, originalFilename = 'document.pdf') {
       caption: `Trang scan: ${path.basename(originalFilename)}`
     }));
 
-    // 2. Run Gemini Multimodal Vision OCR to extract all text from the scanned pages
-    const activeKey = process.env.GEMINI_API_KEY;
-    if (activeKey) {
-      try {
-        const { GoogleGenAI } = require('./aiService');
-        const ai = new GoogleGenAI({ apiKey: activeKey });
-        const ocrContents = [
-          `BẠN LÀ CHUYÊN GIA OCR VĂN BẢN HÀNH CHÍNH & TRUYỀN THÔNG CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT.
-Nhiệm vụ: Hãy đọc và bóc tách đầy đủ toàn bộ nội dung văn bản, bảng biểu, kế hoạch, số liệu từ các trang tài liệu scan sau đây sang định dạng Markdown chuẩn tiếng Việt (Unicode NFC):`
-        ];
-
-        for (const img of extractedImages.slice(0, 8)) {
-          if (img.buffer) {
-            ocrContents.push({
-              inlineData: { mimeType: 'image/jpeg', data: img.buffer.toString('base64') }
-            });
-          } else {
-            const diskPath = path.join(__dirname, '../../public', img.url);
-            if (fs.existsSync(diskPath)) {
-              ocrContents.push({
-                inlineData: { mimeType: 'image/jpeg', data: fs.readFileSync(diskPath).toString('base64') }
-              });
-            }
-          }
-        }
-
-        const ocrRes = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: ocrContents
-        });
-
-        if (ocrRes && ocrRes.text) {
-          clean = fixVietnameseFont(ocrRes.text.trim());
-          console.log(`[Document OCR] Bóc tách thành công ${clean.length} ký tự từ ${extractedImages.length} trang scan của ${originalFilename}`);
-        }
-      } catch (ocrErr) {
-        console.warn('[Gemini OCR Notice]:', ocrErr.message);
-      }
+    // 2. Set informative scan notice for raw inspection (instant, no slow network AI blocking upload)
+    if (!clean || clean.length < 50) {
+      clean = `[Tài Liệu Scan]: Văn bản scan gồm ${extractedImages.length} trang giấy từ tệp "${path.basename(originalFilename)}". Toàn bộ nội dung sẽ được AI tự động đọc hiểu khi phân tích bài báo.`;
     }
-
     // 3. For a scanned document, DO NOT treat the black & white scanned paper pages as event photos!
     // Event photos are photos of people, ceremonies, banners. Scanned pages are document text.
     finalImages = [];

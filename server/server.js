@@ -22,26 +22,36 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware Configuration
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
 app.use((req, res, next) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   next();
 });
-// Static Assets Priority:
-// 1. Uploads directory (user-uploaded documents, templates, images)
-app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+// Priority 0: React Admin Newsroom Studio routes (Vite / React 19 SPA)
+app.get(['/admin', '/admin.html', '/admin/studio'], (req, res) => {
+  const spaHtml = path.join(__dirname, '../frontend/dist/index.html');
+  if (require('fs').existsSync(spaHtml)) {
+    return res.sendFile(spaHtml);
+  }
+  res.sendFile(path.join(__dirname, '../public/admin.html'));
+});
 
-// 2. Official Production Portal & Admin CMS (All pages: index, tin-tuc, bai-viet, etc.)
-app.use(express.static(path.join(__dirname, '../public'), {
+// React Production Assets
+app.use('/assets', express.static(path.join(__dirname, '../frontend/dist/assets')));
+app.use('/spa', express.static(path.join(__dirname, '../frontend/dist'), {
   etag: false,
   maxAge: 0
 }));
 
-// 3. React Production Assets & SPA bundle mounted under /spa
-app.use('/assets', express.static(path.join(__dirname, '../frontend/dist/assets')));
-app.use('/spa', express.static(path.join(__dirname, '../frontend/dist'), {
+// Static Assets Priority:
+// 1. Uploads directory (user-uploaded documents, templates, images)
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+
+// 2. Official Production Portal & Public Pages
+app.use(express.static(path.join(__dirname, '../public'), {
   etag: false,
   maxAge: 0
 }));
@@ -153,13 +163,14 @@ setInterval(() => {
 // Clean URL routes for portal pages without .html extension
 const cleanRoutes = [
   'gioi-thieu', 'co-cau-to-chuc', 'tin-tuc', 'bai-viet',
-  'phuc-loi-doan-vien', 'van-ban', 'bieu-mau', 'lien-he', 'admin', 'bao-cao-thang'
+  'phuc-loi-doan-vien', 'van-ban', 'bieu-mau', 'lien-he', 'bao-cao-thang'
 ];
 cleanRoutes.forEach(slug => {
   app.get(`/${slug}`, (req, res) => {
     res.sendFile(path.join(__dirname, `../public/${slug}.html`));
   });
 });
+
 
 // Optional React SPA fallback for /spa/*
 app.get('/spa/*', (req, res) => {

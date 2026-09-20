@@ -66,7 +66,8 @@ async function getArticlesFromDb(category = 'all', status = 'all', search = '') 
           a.LuotXem AS viewsCount,
           a.LuotThich AS likesCount,
           COALESCE(a.LuotVoTay, 0) AS clapsCount,
-          CONVERT(VARCHAR(19), a.NgayTao, 120) AS createdAt
+          CONVERT(VARCHAR(19), a.NgayTao, 120) AS createdAt,
+          CONVERT(VARCHAR(19), COALESCE(a.NgayCapNhat, a.NgayTao), 120) AS updatedAt
         FROM dbo.ARTICLES a
         LEFT JOIN dbo.CATEGORIES c ON a.CategoryId = c.CategoryId
         LEFT JOIN dbo.NHAN_SU ns ON a.MaTacGia = ns.MaNhanSu
@@ -140,7 +141,11 @@ async function insertArticleToDb(data) {
       req.input('authorId', sql.Int, data.authorId || 1);
       req.input('summary', sql.NVarChar, data.summary || data.title);
       req.input('content', sql.NVarChar, data.content || data.title);
-      req.input('image', sql.VarChar, data.image || 'images/banner.jpg');
+      let safeImage = data.image || 'images/banner.jpg';
+      if (typeof safeImage === 'string' && (safeImage.startsWith('data:image/') || safeImage.length > 490)) {
+        safeImage = safeImage.startsWith('data:image/') ? 'images/banner.jpg' : safeImage.slice(0, 490);
+      }
+      req.input('image', sql.VarChar, safeImage);
       req.input('status', sql.VarChar, data.status || 'pending_review');
       req.input('isAiGenerated', sql.Bit, data.isAiGenerated ? 1 : 0);
       req.input('aiPrompt', sql.NVarChar, data.aiPrompt || null);
@@ -188,7 +193,11 @@ async function updateArticleInDb(id, data) {
       req.input('title', sql.NVarChar, data.title || null);
       req.input('summary', sql.NVarChar, data.summary || null);
       req.input('content', sql.NVarChar, data.content || null);
-      req.input('image', sql.VarChar, data.image || null);
+      let safeUpdateImage = data.image || null;
+      if (typeof safeUpdateImage === 'string' && (safeUpdateImage.startsWith('data:image/') || safeUpdateImage.length > 490)) {
+        safeUpdateImage = safeUpdateImage.startsWith('data:image/') ? 'images/banner.jpg' : safeUpdateImage.slice(0, 490);
+      }
+      req.input('image', sql.VarChar, safeUpdateImage);
       req.input('status', sql.VarChar, data.status || null);
 
       await req.query(`

@@ -17,6 +17,15 @@ bootstrap/cache/*.php
 public/uploads/pdf_*
 public/uploads/pptx_*
 public/uploads/docx_*
+public/uploads/studio_photo_*
 frontend/public/uploads/pdf_*
 frontend/public/uploads/pptx_*
 frontend/public/uploads/docx_*
+frontend/public/uploads/studio_photo_*
+
+# Exported documents & scratch
+public/exports/
+scratch/
+admin_*.png
+*.backup.*
+*.ckeditor_v4.*

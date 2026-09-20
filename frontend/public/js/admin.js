@@ -1,4 +1,4 @@
-﻿// =========================================================================
+// =========================================================================
 // TÒA SOẠN QUẢN TRỊ TRUYỀN THÔNG ĐA KÊNH & CMS TDMU - MAIN COORDINATOR
 // =========================================================================
 console.log('🏛️ TDMU Trade Union CMS Modular Architecture Initialized.');
@@ -12,17 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof loadAuditLogs === 'function') loadAuditLogs();
   if (typeof loadFacebookPublishSelect === 'function') loadFacebookPublishSelect();
 
-  const initialHash = window.location.hash.replace('#', '');
-  if (initialHash && ['dashboard', 'articles', 'ai-creator', 'reports', 'documents', 'schedule', 'social', 'events', 'media', 'roles', 'users', 'audits', 'inbox', 'image-studio'].includes(initialHash)) {
-    if (typeof showAdminTab === 'function') showAdminTab(initialHash);
-  } else {
-    if (typeof showAdminTab === 'function') showAdminTab('ai-creator');
-  }
+  const rawHash = window.location.hash.replace('#', '');
+  if (typeof showAdminTab === 'function') showAdminTab(rawHash || 'ai-creator');
 });
 
 window.addEventListener('hashchange', () => {
   const hash = window.location.hash.replace('#', '');
-  if (hash && ['dashboard', 'articles', 'ai-creator', 'reports', 'documents', 'schedule', 'social', 'events', 'media', 'roles', 'users', 'audits', 'inbox', 'image-studio'].includes(hash)) {
-    if (typeof showAdminTab === 'function') showAdminTab(hash);
-  }
+  if (typeof showAdminTab === 'function') showAdminTab(hash || 'ai-creator');
 });
