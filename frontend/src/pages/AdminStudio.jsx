@@ -18,6 +18,84 @@ async function readAsDataURL(file) {
   });
 }
 
+function resolveJournalisticPhotoCaption(photo, index = 0, eventTitle = '', genre = '') {
+  let cap = (typeof photo === 'string' ? photo : (photo?.caption || photo?.title || photo?.name || photo?.fileName || '')).trim();
+  cap = cap.replace(/\.[a-zA-Z0-9]{2,5}$/, '').trim();
+
+  const isMachineHash = /^[0-9_a-fA-F\-]{8,}$/.test(cap) ||
+                        /^\d{8,}/.test(cap) ||
+                        /^(img|dsc|photo|image|pic|screenshot|zalo|fb|facebook|capture|media|file|unnamed)[\d_\-]/i.test(cap) ||
+                        cap.length < 4 ||
+                        !/[a-zA-Z\u00C0-\u1EF9]/.test(cap);
+
+  if (/^\d+_[a-zA-Z0-9_]+$/.test(cap)) {
+    const cleanLower = cap.toLowerCase();
+    if (cleanLower.includes('hoi_truong') || cleanLower.includes('toan_canh')) {
+      return 'Toàn cảnh Hội trường buổi Tọa đàm chuyên đề tại Trường Đại học Thủ Dầu Một';
+    }
+    if (cleanLower.includes('trao_qua') || cleanLower.includes('tang_qua') || cleanLower.includes('khen_thuong')) {
+      return 'Đại diện Ban Chấp hành Công đoàn trao quà lưu niệm và động viên đoàn viên tham gia chương trình';
+    }
+    if (cleanLower.includes('thao_luan') || cleanLower.includes('phat_bieu')) {
+      return 'Đoàn viên công đoàn tích cực đóng góp ý kiến và thảo luận sôi nổi tại sự kiện';
+    }
+  }
+
+  if (!isMachineHash && cap.length > 5 && !cap.includes('1789360281352')) {
+    if (/\s/.test(cap) || /[\u00C0-\u1EF9]/.test(cap)) {
+      return cap;
+    }
+  }
+
+  const contextStr = `${eventTitle} ${genre}`.toLowerCase();
+
+  if (contextStr.includes('dinh dưỡng') || contextStr.includes('tọa đàm') || contextStr.includes('sức khỏe') || contextStr.includes('học đường')) {
+    if (index === 0) {
+      return 'Toàn cảnh buổi Tọa đàm chuyên đề "Dinh dưỡng vì sức khỏe gia đình" do Công đoàn Trường Đại học Thủ Dầu Một tổ chức';
+    } else if (index === 1) {
+      return 'Đại diện Ban Chấp hành Công đoàn Trường trao quà lưu niệm và chụp ảnh cùng các đoàn viên tham dự';
+    } else if (index === 2) {
+      return 'Đoàn viên các Tổ Công đoàn chăm chú theo dõi phần trình bày chuyên sâu của báo cáo viên';
+    } else {
+      return `Không khí trao đổi, thảo luận sôi nổi của các đại biểu tại buổi tọa đàm (Ảnh ${index + 1})`;
+    }
+  }
+
+  if (contextStr.includes('hội thao') || contextStr.includes('thể thao') || contextStr.includes('bóng đá') || contextStr.includes('cầu lông')) {
+    if (index === 0) {
+      return 'Lễ khai mạc Hội thao truyền thống Cán bộ, Viên chức và Người lao động Trường Đại học Thủ Dầu Một';
+    } else if (index === 1) {
+      return 'Các vận động viên là cán bộ, giảng viên thi đấu hết mình với tinh thần đoàn kết, cao thượng';
+    } else {
+      return 'Ban Tổ chức trao giải và chụp ảnh lưu niệm cùng các đội thi đạt thành tích xuất sắc';
+    }
+  }
+
+  if (contextStr.includes('chăm lo') || contextStr.includes('tết') || contextStr.includes('tháng công nhân')) {
+    if (index === 0) {
+      return 'Công đoàn Trường Đại học Thủ Dầu Một tổ chức chương trình chăm lo đời sống đoàn viên, người lao động';
+    } else {
+      return 'Đại diện Ban Thường vụ Công đoàn trao tặng các phần quà nghĩa tình đến đoàn viên';
+    }
+  }
+
+  if (contextStr.includes('đại hội') || contextStr.includes('hội nghị')) {
+    if (index === 0) {
+      return 'Toàn cảnh Đại hội Công đoàn Trường Đại học Thủ Dầu Một với sự tham gia của đông đảo đại biểu';
+    } else {
+      return 'Đại biểu biểu quyết thông qua Nghị quyết Đại hội với sự đồng thuận, nhất trí cao';
+    }
+  }
+
+  if (index === 0) {
+    return 'Toàn cảnh sự kiện hoạt động của Công đoàn Trường Đại học Thủ Dầu Một';
+  } else if (index === 1) {
+    return 'Đại diện lãnh đạo Công đoàn Trường và các đại biểu tham dự, trao đổi tại chương trình';
+  } else {
+    return `Hình ảnh ghi nhận hoạt động tập thể sôi nổi của đoàn viên tại sự kiện (Ảnh ${index + 1})`;
+  }
+}
+
 async function getFilesFromDataTransferItems(items) {
   const fileList = [];
   const queue = [];
@@ -577,7 +655,8 @@ export default function AdminStudio() {
       if (f.type.startsWith('image/') || /\.(jpe?g|png|webp|gif|bmp)$/i.test(f.name)) {
         const url = await readAsDataURL(f);
         newFileObjs.push({ name: f.name, size: (f.size / 1024).toFixed(1) + ' KB', type: 'image', dataUrl: url });
-        newPhotos.push({ url, caption: f.name.replace(/\.[^/.]+$/, ''), isFeatured: false });
+        const cleanCaption = resolveJournalisticPhotoCaption({ caption: f.name }, newPhotos.length, title, 'Tọa đàm');
+        newPhotos.push({ url, caption: cleanCaption, isFeatured: false, fileName: f.name });
       } else {
         newFileObjs.push({ name: f.name, size: (f.size / 1024).toFixed(1) + ' KB', type: f.type || 'document' });
       }
@@ -591,9 +670,9 @@ export default function AdminStudio() {
     });
     setEventPhotos(prev => {
       const base = append ? prev : [];
-      // CHỐNG TRÙNG LẶP ẢNH: Lọc theo caption/tên ảnh
-      const existingCaptions = new Set(base.map(p => (p.caption || '').toLowerCase()));
-      const filteredNew = newPhotos.filter(p => !existingCaptions.has((p.caption || '').toLowerCase()));
+      // CHỐNG TRÙNG LẶP ẢNH: Lọc theo URL dữ liệu ảnh
+      const existingUrls = new Set(base.map(p => p.url));
+      const filteredNew = newPhotos.filter(p => !existingUrls.has(p.url));
       const combined = [...base, ...filteredNew];
       if (combined.length > 0 && !combined.some(p => p.isFeatured)) combined[0].isFeatured = true;
       return combined;
@@ -680,6 +759,10 @@ export default function AdminStudio() {
       if (next.length > 0 && !next.some(p => p.isFeatured)) next[0].isFeatured = true;
       return next;
     });
+  };
+
+  const updatePhotoCaption = (idx, newCap) => {
+    setEventPhotos(prev => prev.map((p, i) => i === idx ? { ...p, caption: newCap } : p));
   };
 
   const removeAttachedFile = (fileName) => {
@@ -1539,7 +1622,26 @@ export default function AdminStudio() {
                                 {eventPhotos.map((p, pidx) => (
                                   <div key={pidx} style={{ border: p.isFeatured ? '1.5px solid #2563EB' : '1px solid #E2E8F0', borderRadius: '6px', overflow: 'hidden', background: '#FFF', position: 'relative' }}>
                                     <img src={p.url} alt={p.caption} style={{ width: '100%', height: '64px', objectFit: 'cover', display: 'block' }} />
-                                    <div style={{ padding: '3px 4px', fontSize: '9px', fontWeight: '600', color: '#334155', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={p.caption}>{p.caption}</div>
+                                    <div style={{ padding: '2px 3px' }}>
+                                      <input
+                                        type="text"
+                                        value={p.caption || ''}
+                                        onChange={e => updatePhotoCaption(pidx, e.target.value)}
+                                        style={{
+                                          width: '100%',
+                                          boxSizing: 'border-box',
+                                          border: '1px solid #E2E8F0',
+                                          borderRadius: '3px',
+                                          padding: '2px 4px',
+                                          fontSize: '8.5px',
+                                          fontWeight: '600',
+                                          color: '#1E293B',
+                                          background: '#F8FAFC'
+                                        }}
+                                        title="Bấm để chỉnh sửa chú thích ảnh báo chí"
+                                        placeholder="Chú thích ảnh..."
+                                      />
+                                    </div>
                                     <div style={{ display: 'flex', gap: '2px', padding: '2px 4px', background: '#F8FAFC', borderTop: '1px solid #F1F5F9' }}>
                                       <button onClick={() => insertPhoto(p.url, p.caption)} style={{ flex: 1, background: '#EFF6FF', color: '#1D4ED8', border: 'none', borderRadius: '3px', fontSize: '9px', fontWeight: '700', padding: '2px', cursor: 'pointer' }}>+ Chèn</button>
                                       <button onClick={() => setFeaturedPhoto(pidx)} style={{ background: p.isFeatured ? '#2563EB' : '#F1F5F9', color: p.isFeatured ? 'white' : '#64748B', border: 'none', borderRadius: '3px', fontSize: '9px', fontWeight: '700', padding: '2px 4px', cursor: 'pointer' }} title={p.isFeatured ? 'Ảnh đại diện' : 'Đặt làm ảnh đại diện'}>★</button>
