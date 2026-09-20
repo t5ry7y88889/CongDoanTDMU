@@ -220,6 +220,7 @@ export default function AdminStudio() {
   const chatBottomRef = useRef(null);
   const fileInputRef = useRef(null);
   const folderInputRef = useRef(null);
+  const portalIframeRef = useRef(null);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // ACTIVITY LOG
@@ -268,6 +269,18 @@ export default function AdminStudio() {
     }
   }, [sapo, activeChannel, activeNav]);
 
+  // Switch tab in embedded portal instantly with zero reload
+  const syncPortalTab = useCallback((tabId) => {
+    if (tabId === 'ai-creator' || !portalIframeRef.current?.contentWindow) return;
+    try {
+      if (typeof portalIframeRef.current.contentWindow.showAdminTab === 'function') {
+        portalIframeRef.current.contentWindow.showAdminTab(tabId);
+      } else {
+        portalIframeRef.current.contentWindow.location.hash = tabId;
+      }
+    } catch {}
+  }, []);
+
   // Sync activeNav with URL hash (#dashboard, #articles, #schedule, etc.)
   useEffect(() => {
     const handleHash = () => {
@@ -275,12 +288,13 @@ export default function AdminStudio() {
       const validTabs = ['dashboard', 'articles', 'ai-creator', 'schedule', 'documents', 'templates', 'feedback', 'welfare', 'reports', 'users', 'audits'];
       if (hash && validTabs.includes(hash)) {
         setActiveNav(hash);
+        syncPortalTab(hash);
       }
     };
     handleHash();
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
-  }, []);
+  }, [syncPortalTab]);
 
   // Listen for navigation messages from embedded admin portal
   useEffect(() => {
@@ -298,6 +312,13 @@ export default function AdminStudio() {
   const handleNavClick = (id) => {
     setActiveNav(id);
     window.location.hash = id;
+    syncPortalTab(id);
+  };
+
+  const handlePortalIframeLoad = () => {
+    if (activeNav !== 'ai-creator') {
+      syncPortalTab(activeNav);
+    }
   };
 
   const newArticle = async () => {
@@ -1941,16 +1962,24 @@ export default function AdminStudio() {
             )}
           </aside>
         </div>
-        {activeNav !== 'ai-creator' && (
-          <div style={{ flex: 1, width: '100%', height: '100%', overflow: 'hidden', background: '#F8FAFC', position: 'relative' }}>
-            <iframe
-              key={activeNav}
-              src={`/admin-portal.html?embed=1#${activeNav}`}
-              style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-              title={`TDMU Admin - ${activeNav}`}
-            />
-          </div>
-        )}
+        {/* PERSISTENT EMBEDDED MODULE CANVAS (Zero-reload, instant 0ms switching) */}
+        <div style={{
+          flex: 1,
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
+          background: '#F8FAFC',
+          position: 'relative',
+          display: activeNav === 'ai-creator' ? 'none' : 'flex'
+        }}>
+          <iframe
+            ref={portalIframeRef}
+            src="/admin-portal.html?embed=1#dashboard"
+            style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+            title="TDMU Admin Portal"
+            onLoad={handlePortalIframeLoad}
+          />
+        </div>
       </div>
 
       {/* ── AI SETTINGS MODAL ────────────────────────────────────────── */}
