@@ -39,6 +39,11 @@ app.get(['/admin', '/admin.html', '/admin/studio'], (req, res) => {
   res.sendFile(path.join(__dirname, '../public/admin.html'));
 });
 
+// Dedicated route for embedded/standalone admin management portal (All 11 modules)
+app.get(['/admin-portal', '/admin-portal.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/admin.html'));
+});
+
 // React Production Assets
 app.use('/assets', express.static(path.join(__dirname, '../frontend/dist/assets')));
 app.use('/spa', express.static(path.join(__dirname, '../frontend/dist'), {

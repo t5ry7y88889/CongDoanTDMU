@@ -67,7 +67,7 @@ const LinkInterceptor = ({ children }) => {
             navigate('/admin' + url.search + url.hash);
             return;
           }
-          if (url.pathname === '/bao-cao-thang.html') {
+          if (url.pathname === '/admin-portal.html' || url.pathname === '/admin-portal' || url.pathname === '/bao-cao-thang.html') {
             return;
           }
           if (url.pathname.endsWith('.html')) {

@@ -105,6 +105,20 @@ const navSections = [
   ]}
 ];
 
+const navTitles = {
+  'dashboard': 'Bảng Điều Hành & Thống Kê',
+  'articles': 'Quản Lý Tin Tức & Bài Viết',
+  'ai-creator': 'Phòng Biên Tập Đa Kênh',
+  'schedule': 'Lịch Xuất Bản Đa Kênh',
+  'documents': 'Kho Văn Bản Chỉ Đạo & Điều Hành',
+  'templates': 'Kho Biểu Mẫu Nghiệp Vụ Công Đoàn',
+  'feedback': 'Hòm Thư Góp Ý & Nguyện Vọng',
+  'welfare': 'Quản Lý Trợ Cấp & Chăm Lo',
+  'reports': 'Báo Cáo Định Kỳ 16 Tổ Công Đoàn',
+  'users': 'Cán Bộ & Phân Quyền',
+  'audits': 'Nhật Ký Tác Nghiệp Hệ Thống'
+};
+
 const FB_EMOJIS = ['📢','🎓','✨','🏆','🔥','❤️','📌','🤝','⚽','🎉','👏','💪','🌟','📸','🎯'];
 const FB_HASHTAGS = ['#CongDoanTDMU','#HoatDongDoanVien','#TDMU2026','#GiaoVienTDMU','#DoanVienCongDoan','#TruongThuDauMot'];
 const ZALO_TEMPLATES = [
@@ -238,6 +252,53 @@ export default function AdminStudio() {
       }
     } catch {}
   }, []);
+
+  // Auto-expand Headline & Sapo textareas according to text content
+  useEffect(() => {
+    if (titleRef.current && activeNav === 'ai-creator') {
+      titleRef.current.style.height = 'auto';
+      titleRef.current.style.height = `${Math.max(54, titleRef.current.scrollHeight)}px`;
+    }
+  }, [title, activeChannel, activeNav]);
+
+  useEffect(() => {
+    if (sapoRef.current && activeNav === 'ai-creator') {
+      sapoRef.current.style.height = 'auto';
+      sapoRef.current.style.height = `${Math.max(80, sapoRef.current.scrollHeight)}px`;
+    }
+  }, [sapo, activeChannel, activeNav]);
+
+  // Sync activeNav with URL hash (#dashboard, #articles, #schedule, etc.)
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.replace('#', '').trim();
+      const validTabs = ['dashboard', 'articles', 'ai-creator', 'schedule', 'documents', 'templates', 'feedback', 'welfare', 'reports', 'users', 'audits'];
+      if (hash && validTabs.includes(hash)) {
+        setActiveNav(hash);
+      }
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
+  // Listen for navigation messages from embedded admin portal
+  useEffect(() => {
+    const handleMsg = (e) => {
+      if (e.data && e.data.type === 'NAVIGATE_TAB') {
+        const tab = e.data.tab || 'ai-creator';
+        setActiveNav(tab);
+        window.location.hash = tab;
+      }
+    };
+    window.addEventListener('message', handleMsg);
+    return () => window.removeEventListener('message', handleMsg);
+  }, []);
+
+  const handleNavClick = (id) => {
+    setActiveNav(id);
+    window.location.hash = id;
+  };
 
   const newArticle = async () => {
     // Giống ChatGPT: lưu bản hiện tại vào DB trước khi tạo mới
@@ -1054,10 +1115,10 @@ export default function AdminStudio() {
               {sec.items.map(item => {
                 const collapsed = sidebarCollapsed && !sidebarHovered;
                 return (
-                  <div key={item.id} onClick={() => setActiveNav(item.id)}
+                  <div key={item.id} onClick={() => handleNavClick(item.id)}
                     className={`nav-item ${activeNav === item.id ? 'active' : ''}`}
                     data-tip={collapsed ? item.label : undefined}
-                    style={{ justifyContent: collapsed ? 'center' : 'flex-start', padding: collapsed ? '10px 0' : '9px 12px' }}
+                    style={{ justifyContent: collapsed ? 'center' : 'flex-start', padding: collapsed ? '10px 0' : '9px 12px', cursor: 'pointer' }}
                   >
                     <i className={`${item.icon}`} style={{ color: item.color, fontSize: collapsed ? '16px' : '14px', width: collapsed ? '100%' : '18px', textAlign: 'center', flexShrink: 0 }} />
                     {(!sidebarCollapsed || sidebarHovered) && (
@@ -1091,38 +1152,60 @@ export default function AdminStudio() {
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', color: '#64748B' }}>
               <span>Trang Quản Trị</span><span>/</span>
-              <strong style={{ color: '#002855' }}>Phòng Biên Tập Đa Kênh</strong>
+              <strong style={{ color: '#002855' }}>
+                {navTitles[activeNav] || 'Phòng Biên Tập Đa Kênh'}
+              </strong>
             </div>
-            <button onClick={() => setDraftsOpen(!draftsOpen)} style={{ background: draftsOpen ? '#EFF6FF' : '#F8FAFC', border: '1px solid #CBD5E1', color: draftsOpen ? '#1D4ED8' : '#64748B', borderRadius: '6px', padding: '5px 10px', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}>
-              <i className="fa-solid fa-box-archive" /> Tủ Bản Thảo ({draftsList.length})
-            </button>
+            {activeNav === 'ai-creator' && (
+              <button onClick={() => setDraftsOpen(!draftsOpen)} style={{ background: draftsOpen ? '#EFF6FF' : '#F8FAFC', border: '1px solid #CBD5E1', color: draftsOpen ? '#1D4ED8' : '#64748B', borderRadius: '6px', padding: '5px 10px', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}>
+                <i className="fa-solid fa-box-archive" /> Tủ Bản Thảo ({draftsList.length})
+              </button>
+            )}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ fontSize: '11.5px', color: '#475569', display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: isSaving ? '#F59E0B' : '#10B981', display: 'inline-block' }} />
-              <span>{isSaving ? 'Đang lưu...' : (lastSaveTime ? `Lưu tự động: ${lastSaveTime}` : 'Sẵn sàng')}</span>
-            </div>
-            <button onClick={newArticle} className="action-btn" style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px' }} title="Tạo bài mới (tự động lưu bài hiện tại vào Tủ Bản Thảo)">
-              <i className="fa-solid fa-plus" /> Bài mới
-            </button>
-            <button id="btn-export-word" onClick={handleExportWord} className="action-btn" style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#15803D', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px' }} title="Tải bài viết về máy dưới dạng Microsoft Word (.docx)">
-              <i className="fa-solid fa-file-word" /> Xuất Word
-            </button>
-            <button id="btn-export-pdf" onClick={handleExportPdf} className="action-btn" style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px' }} title="Tải bài viết về máy dưới dạng Adobe PDF (.pdf)">
-              <i className="fa-solid fa-file-pdf" /> Xuất PDF
-            </button>
-            <button onClick={() => setSettingsOpen(true)} className="action-btn" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }} title="Cài đặt API Key cho Gemini Vision và Groq">
-              ⚙️ Cài Đặt AI
-            </button>
-            <button onClick={saveDraft} className="action-btn" style={{ background: '#FFF', border: '1px solid #CBD5E1', color: '#002855' }}>💾 Lưu Bản Thảo</button>
-            <button onClick={publishLive} className="action-btn" style={{ background: 'linear-gradient(135deg,#002855,#2563EB)', color: 'white' }}>🚀 Xuất Bản Live</button>
+            {activeNav === 'ai-creator' ? (
+              <>
+                <div style={{ fontSize: '11.5px', color: '#475569', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: isSaving ? '#F59E0B' : '#10B981', display: 'inline-block' }} />
+                  <span>{isSaving ? 'Đang lưu...' : (lastSaveTime ? `Lưu tự động: ${lastSaveTime}` : 'Sẵn sàng')}</span>
+                </div>
+                <button onClick={newArticle} className="action-btn" style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px' }} title="Tạo bài mới (tự động lưu bài hiện tại vào Tủ Bản Thảo)">
+                  <i className="fa-solid fa-plus" /> Bài mới
+                </button>
+                <button id="btn-export-word" onClick={handleExportWord} className="action-btn" style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#15803D', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px' }} title="Tải bài viết về máy dưới dạng Microsoft Word (.docx)">
+                  <i className="fa-solid fa-file-word" /> Xuất Word
+                </button>
+                <button id="btn-export-pdf" onClick={handleExportPdf} className="action-btn" style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px' }} title="Tải bài viết về máy dưới dạng Adobe PDF (.pdf)">
+                  <i className="fa-solid fa-file-pdf" /> Xuất PDF
+                </button>
+                <button onClick={() => setSettingsOpen(true)} className="action-btn" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }} title="Cài đặt API Key cho Gemini Vision và Groq">
+                  ⚙️ Cài Đặt AI
+                </button>
+                <button onClick={saveDraft} className="action-btn" style={{ background: '#FFF', border: '1px solid #CBD5E1', color: '#002855' }}>💾 Lưu Bản Thảo</button>
+                <button onClick={publishLive} className="action-btn" style={{ background: 'linear-gradient(135deg,#002855,#2563EB)', color: 'white' }}>🚀 Xuất Bản Live</button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => handleNavClick('ai-creator')}
+                  className="action-btn"
+                  style={{ background: 'linear-gradient(135deg,#002855,#2563EB)', color: 'white', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  title="Mở Phòng Biên Tập Đa Kênh AI"
+                >
+                  <i className="fa-solid fa-wand-magic-sparkles" /> Phòng Biên Tập AI
+                </button>
+                <button onClick={() => setSettingsOpen(true)} className="action-btn" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }} title="Cài đặt API Key cho Gemini Vision và Groq">
+                  ⚙️ Cài Đặt AI
+                </button>
+              </>
+            )}
             <Link to="/" style={{ color: '#002855', fontSize: '12px', textDecoration: 'none', marginLeft: '2px' }} title="Xem Website"><i className="fa-solid fa-arrow-up-right-from-square" /></Link>
           </div>
         </header>
 
-        {/* 3-PANE LAYOUT */}
-        <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+        {/* 3-PANE STUDIO CANVAS */}
+        <div style={{ flex: 1, display: activeNav === 'ai-creator' ? 'flex' : 'none', overflow: 'hidden', position: 'relative' }}>
 
           {/* PANE 1: DRAFTS DRAWER */}
           {draftsOpen && (
@@ -1221,12 +1304,16 @@ export default function AdminStudio() {
                     <textarea
                       id="article-title"
                       ref={titleRef}
-                      rows={1}
                       value={title}
                       onChange={e => setTitle(e.target.value)}
+                      onInput={e => {
+                        e.target.style.height = 'auto';
+                        e.target.style.height = `${Math.max(54, e.target.scrollHeight)}px`;
+                      }}
                       placeholder="Nhập tiêu đề chính luận báo chí trang trọng..."
                       style={{
                         width: '100%',
+                        minHeight: '54px',
                         fontSize: '20px',
                         fontWeight: '800',
                         color: '#002855',
@@ -1239,7 +1326,7 @@ export default function AdminStudio() {
                         background: '#FFFFFF',
                         boxSizing: 'border-box',
                         resize: 'none',
-                        overflow: 'hidden',
+                        overflowY: 'hidden',
                         transition: 'border-color 0.2s, box-shadow 0.2s'
                       }}
                       onFocus={e => { e.target.style.borderColor = '#2563EB'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.1)'; }}
@@ -1257,10 +1344,14 @@ export default function AdminStudio() {
                       ref={sapoRef}
                       value={sapo}
                       onChange={e => setSapo(e.target.value)}
+                      onInput={e => {
+                        e.target.style.height = 'auto';
+                        e.target.style.height = `${Math.max(80, e.target.scrollHeight)}px`;
+                      }}
                       placeholder="Tóm lược thông tin quan trọng: Ai, làm gì, ở đâu, khi nào, vì sao và kết quả trọng tâm..."
                       style={{
                         width: '100%',
-                        minHeight: '75px',
+                        minHeight: '80px',
                         border: '1.5px solid #CBD5E1',
                         borderLeft: '4px solid #2563EB',
                         background: '#F8FAFC',
@@ -1271,7 +1362,7 @@ export default function AdminStudio() {
                         color: '#334155',
                         outline: 'none',
                         resize: 'none',
-                        overflow: 'hidden',
+                        overflowY: 'hidden',
                         fontFamily: 'inherit',
                         boxSizing: 'border-box',
                         transition: 'border-color 0.2s, background 0.2s'
@@ -1850,6 +1941,16 @@ export default function AdminStudio() {
             )}
           </aside>
         </div>
+        {activeNav !== 'ai-creator' && (
+          <div style={{ flex: 1, width: '100%', height: '100%', overflow: 'hidden', background: '#F8FAFC', position: 'relative' }}>
+            <iframe
+              key={activeNav}
+              src={`/admin-portal.html?embed=1#${activeNav}`}
+              style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+              title={`TDMU Admin - ${activeNav}`}
+            />
+          </div>
+        )}
       </div>
 
       {/* ── AI SETTINGS MODAL ────────────────────────────────────────── */}

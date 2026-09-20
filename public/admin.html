@@ -3,8 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <script>
-    if (window.location.pathname.endsWith('admin.html') || window.location.pathname === '/admin.html') {
+    const isEmbedded = window.self !== window.top || window.location.search.includes('embed=1');
+    if (!isEmbedded && !window.location.pathname.includes('admin-portal') && (window.location.pathname.endsWith('admin.html') || window.location.pathname === '/admin.html')) {
       window.location.replace('/admin' + window.location.hash);
+    }
+    if (isEmbedded) {
+      document.documentElement.classList.add('is-embedded');
+      document.addEventListener('DOMContentLoaded', () => {
+        document.body.classList.add('is-embedded');
+      });
     }
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,6 +36,27 @@
       --text-muted: #64748B;
     }
     * { box-sizing: border-box; }
+
+    /* Embedded mode inside React Studio layout */
+    html.is-embedded .admin-sidebar,
+    html.is-embedded .admin-top-header,
+    body.is-embedded .admin-sidebar,
+    body.is-embedded .admin-top-header {
+      display: none !important;
+    }
+    html.is-embedded .admin-main-wrapper,
+    body.is-embedded .admin-main-wrapper {
+      margin-left: 0 !important;
+      width: 100% !important;
+      min-height: 100vh !important;
+      background: #F8FAFC !important;
+    }
+    html.is-embedded .admin-main,
+    body.is-embedded .admin-main {
+      padding: 16px 20px !important;
+      max-width: 100% !important;
+    }
+
     body {
       background-color: var(--bg-body);
       margin: 0;

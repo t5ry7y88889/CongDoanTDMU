@@ -91,6 +91,16 @@ function showAdminTab(rawTabName, subFilter = null) {
   if (!tabs.includes(tabName)) {
     tabName = 'ai-creator';
   }
+
+  if (tabName === 'ai-creator') {
+    if (window.self !== window.top) {
+      window.parent.postMessage({ type: 'NAVIGATE_TAB', tab: 'ai-creator' }, '*');
+      return;
+    } else if (window.location.pathname.includes('admin-portal')) {
+      window.location.href = '/admin#ai-creator';
+      return;
+    }
+  }
   const titles = {
     'dashboard': 'Bảng Điều Hành & Thống Kê',
     'articles': 'Quản Lý Tin Tức & Bài Viết',
