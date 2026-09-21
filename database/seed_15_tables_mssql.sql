@@ -6,10 +6,10 @@
 USE TDMU_TradeUnion_DB;
 GO
 
--- 1. Nạp TO_CHUC
-IF NOT EXISTS (SELECT 1 FROM dbo.TO_CHUC)
+-- 1. Nạp ORGANIZATIONS (Cũ: TO_CHUC)
+IF NOT EXISTS (SELECT 1 FROM dbo.ORGANIZATIONS)
 BEGIN
-    INSERT INTO dbo.TO_CHUC (TenToChuc, NhiemKy, MoTaChucNang, ThuTuHienThi) VALUES
+    INSERT INTO dbo.ORGANIZATIONS (TenToChuc, NhiemKy, MoTaChucNang, ThuTuHienThi) VALUES
     (N'Ban Thường vụ', N'Nhiệm kỳ 2023 - 2028', N'Lãnh đạo, điều hành toàn diện hoạt động Công đoàn giữa hai kỳ họp BCH', 1),
     (N'Ban Chấp hành', N'Nhiệm kỳ 2023 - 2028', N'Cơ quan lãnh đạo cao nhất của Công đoàn cơ sở TDMU', 2),
     (N'Ủy ban Kiểm tra', N'Nhiệm kỳ 2023 - 2028', N'Kiểm tra việc chấp hành Điều lệ Công đoàn và quản lý tài chính', 3),
@@ -18,10 +18,10 @@ BEGIN
 END
 GO
 
--- 2. Nạp TO_CONG_DOAN (Đủ 16 Tổ công đoàn bộ phận)
-IF NOT EXISTS (SELECT 1 FROM dbo.TO_CONG_DOAN)
+-- 2. Nạp UNION_BRANCHES (Đủ 16 Tổ công đoàn bộ phận - Cũ: TO_CONG_DOAN)
+IF NOT EXISTS (SELECT 1 FROM dbo.UNION_BRANCHES)
 BEGIN
-    INSERT INTO dbo.TO_CONG_DOAN (MaDinhDanh, TenToCongDoan, ToTruong, EmailLienHe) VALUES
+    INSERT INTO dbo.UNION_BRANCHES (MaDinhDanh, TenToCongDoan, ToTruong, EmailLienHe) VALUES
     ('TCD_01', N'Tổ Công đoàn 1 - Khối Hiệu Bộ', N'Đ/c Nguyễn Văn A', 'tcd01@tdmu.edu.vn'),
     ('TCD_02', N'Tổ Công đoàn 2 - Phòng Đào Tạo & Khảo Thí', N'Đ/c Trần Thị B', 'tcd02@tdmu.edu.vn'),
     ('TCD_03', N'Tổ Công đoàn 3 - Viện Công Nghệ Số', N'Đ/c Lê Văn C', 'tcd03@tdmu.edu.vn'),
@@ -41,10 +41,10 @@ BEGIN
 END
 GO
 
--- 3. Nạp NHAN_SU (17 Cán bộ BCH, UBKT và Đoàn viên tiêu biểu)
-IF NOT EXISTS (SELECT 1 FROM dbo.NHAN_SU)
+-- 3. Nạp MEMBERS (17 Cán bộ BCH, UBKT và Đoàn viên tiêu biểu - Cũ: NHAN_SU)
+IF NOT EXISTS (SELECT 1 FROM dbo.MEMBERS)
 BEGIN
-    INSERT INTO dbo.NHAN_SU (MaToCongDoan, MaToChuc, MaCanBo, HoVaTen, Email, ChucVuCongDoan, HocHamHocVi) VALUES
+    INSERT INTO dbo.MEMBERS (MaToCongDoan, MaToChuc, MaCanBo, HoVaTen, Email, ChucVuCongDoan, HocHamHocVi) VALUES
     (1, 1, 'CB_001', N'TS. Lê Thị Kim Út', 'utltk@tdmu.edu.vn', N'Chủ tịch Công đoàn', N'Tiến sĩ Quản lý'),
     (1, 1, 'CB_002', N'ThS. Nguyễn Minh Danh', 'danhnm@tdmu.edu.vn', N'Phó Chủ tịch Công đoàn, Chủ nhiệm UBKT', N'Thạc sĩ'),
     (1, 1, 'CB_003', N'ThS. Phan Nguyễn Quỳnh Anh', 'anhpnq@tdmu.edu.vn', N'Phó Chủ tịch Công đoàn', N'Thạc sĩ'),
@@ -170,10 +170,10 @@ BEGIN
 END
 GO
 
--- 13. Nạp PHUC_LOI (4 Gói phúc lợi chính thức)
-IF NOT EXISTS (SELECT 1 FROM dbo.PHUC_LOI)
+-- 13. Nạp WELFARE_PROGRAMS (4 Gói phúc lợi chính thức - Cũ: PHUC_LOI)
+IF NOT EXISTS (SELECT 1 FROM dbo.WELFARE_PROGRAMS)
 BEGIN
-    INSERT INTO dbo.PHUC_LOI (MaPhucLoi, TieuDe, ChuyenMuc, DoiTuongHuong, MucHoTro, MoTa, Icon) VALUES
+    INSERT INTO dbo.WELFARE_PROGRAMS (MaPhucLoi, TieuDe, ChuyenMuc, DoiTuongHuong, MucHoTro, MoTa, Icon) VALUES
     ('PL-01', N'Chăm Lo Quà Tặng Dịp Lễ, Tết & Kỷ Niệm', 'le_tet', N'100% Cán bộ, Giảng viên, Đoàn viên Công đoàn', N'500.000đ - 1.500.000đ / suất', N'Tặng quà Tết Nguyên đán, Quốc tế Phụ nữ 8/3, Ngày Nhà giáo Việt Nam 20/11.', 'fa-gift'),
     ('PL-02', N'Chính Sách Chăm Lo Nữ Công & Trẻ Em', 'nu_cong', N'Nữ cán bộ sinh con & con cán bộ đạt học sinh giỏi', N'1.000.000đ - 2.000.000đ / suất', N'Hỗ trợ thai sản, khen thưởng con cán bộ đạt giải quốc gia, học bổng khuyến học.', 'fa-person-breastfeeding'),
     ('PL-03', N'Trợ Cấp Khó Khăn & Bệnh Hiểm Nghèo', 'tro_cap', N'Đoàn viên gặp tai nạn lao động hoặc bệnh hiểm nghèo', N'2.000.000đ - 10.000.000đ / đợt', N'Thăm hỏi ốm đau dài ngày, phẫu thuật, hỗ trợ kinh phí điều trị đặc biệt.', 'fa-hand-holding-medical'),
@@ -181,10 +181,10 @@ BEGIN
 END
 GO
 
--- 14. Nạp DON_TRO_CAP (4 Đơn đề nghị trợ cấp thực tế)
-IF NOT EXISTS (SELECT 1 FROM dbo.DON_TRO_CAP)
+-- 14. Nạp AID_REQUESTS (4 Đơn đề nghị trợ cấp thực tế - Cũ: DON_TRO_CAP)
+IF NOT EXISTS (SELECT 1 FROM dbo.AID_REQUESTS)
 BEGIN
-    INSERT INTO dbo.DON_TRO_CAP (HoTen, DonVi, LoaiTroCap, SoTienDeXuat, SoTienDuocDuyet, LyDo, TrangThai, NguoiDuyet, GhiChu, SoDienThoai, Email)
+    INSERT INTO dbo.AID_REQUESTS (HoTen, DonVi, LoaiTroCap, SoTienDeXuat, SoTienDuocDuyet, LyDo, TrangThai, NguoiDuyet, GhiChu, SoDienThoai, Email)
     VALUES 
     (N'ThS. Huỳnh Thị Lệ Kha', N'Khoa Luật', N'Chế độ nghỉ dưỡng thai sản', 2000000, 2000000, N'Thực hiện chế độ chăm lo nữ công thai sản quý 3', 'approved', N'TS. Lê Thị Kim Út', N'Đã duyệt chi chuyển khoản qua KHTC', '0912.345.678', 'khatl@tdmu.edu.vn'),
     (N'TS. Lê Thị Kim Út', N'Phòng Quản lý Khoa học', N'Trợ cấp ốm đau nằm viện dài ngày', 2000000, 2000000, N'Hỗ trợ viện phí sau phẫu thuật', 'approved', N'Ban Thường Vụ', N'Đã duyệt chi hỗ trợ', '0918.370.363', 'utltk@tdmu.edu.vn'),
