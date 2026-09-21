@@ -51,6 +51,8 @@ const CKArticleEditor = forwardRef(({
   disabled = false
 }, ref) => {
   const editorInstanceRef = useRef(null);
+  const lastRangeRef = useRef(null);
+  const lastSelectedTextRef = useRef('');
 
   // Expose các API phẫu thuật Document ra bên ngoài cho AI & Controller
   useImperativeHandle(ref, () => ({
@@ -121,7 +123,7 @@ const CKArticleEditor = forwardRef(({
         }
       }
     },
-    // Thay thế đoạn bôi đen hoặc toàn bộ
+    // Thay thế đoạn bôi đen hoặc đoạn đã bôi trước đó
     replaceSelection: (newText) => {
       if (!editorInstanceRef.current) return;
       const editor = editorInstanceRef.current;
@@ -131,14 +133,28 @@ const CKArticleEditor = forwardRef(({
           const range = selection.getFirstRange();
           writer.remove(range);
           writer.insertText(newText, range.start);
+          return;
+        }
+        if (lastRangeRef.current) {
+          try {
+            writer.remove(lastRangeRef.current);
+            writer.insertText(newText, lastRangeRef.current.start);
+            lastRangeRef.current = null;
+            return;
+          } catch {}
         }
       });
     },
+    // Xóa ghi nhớ vùng bôi đen
+    clearSelection: () => {
+      lastRangeRef.current = null;
+      lastSelectedTextRef.current = '';
+    },
     // Lấy text đang được bôi đen
     getSelectedText: () => {
-      if (!editorInstanceRef.current) return '';
+      if (!editorInstanceRef.current) return lastSelectedTextRef.current || '';
       const selection = editorInstanceRef.current.model.document.selection;
-      if (selection.isCollapsed) return '';
+      if (selection.isCollapsed) return lastSelectedTextRef.current || '';
       const range = selection.getFirstRange();
       let text = '';
       for (const item of range.getItems()) {
@@ -146,7 +162,7 @@ const CKArticleEditor = forwardRef(({
           text += item.data;
         }
       }
-      return text.trim();
+      return text.trim() || lastSelectedTextRef.current || '';
     },
     // Focus vào editor
     focus: () => {
@@ -300,10 +316,9 @@ const CKArticleEditor = forwardRef(({
     }
     // Lắng nghe sự kiện bôi đen (selection) trên Document Model
     editor.model.document.selection.on('change:range', () => {
-      if (!onSelectionChange) return;
       const selection = editor.model.document.selection;
       if (selection.isCollapsed) {
-        onSelectionChange('');
+        // Không xóa selection khi con trỏ chỉ di chuyển hoặc blur sang khung chat
         return;
       }
       const range = selection.getFirstRange();
@@ -313,7 +328,12 @@ const CKArticleEditor = forwardRef(({
           text += item.data;
         }
       }
-      onSelectionChange(text.trim());
+      const trimmed = text.trim();
+      if (trimmed.length > 0) {
+        lastRangeRef.current = range;
+        lastSelectedTextRef.current = trimmed;
+        if (onSelectionChange) onSelectionChange(trimmed);
+      }
     });
   }, [value, onSelectionChange]);
 

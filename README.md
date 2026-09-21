@@ -126,13 +126,13 @@ Cơ sở dữ liệu được thiết kế đạt chuẩn **Chuẩn hóa dạng 
 
 ```text
                                +--------------------+
-                               |      TO_CHUC       |
+                               |   ORGANIZATIONS    |
                                +--------------------+
                                          | 1
                                          | (MaToChuc)
                                          | n
     +--------------------+ 1    n +--------------------+ 1    n +--------------------+
-    |    TO_CONG_DOAN    |--------|      NHAN_SU       |--------|      ARTICLES      |
+    |   UNION_BRANCHES   |--------|      MEMBERS       |--------|      ARTICLES      |
     +--------------------+        +--------------------+        +--------------------+
               | 1                           | 1                   | 1    | 1     | 1
               | (MaToCongDoan)              |                     |      |       |
@@ -156,12 +156,12 @@ Cơ sở dữ liệu được thiết kế đạt chuẩn **Chuẩn hóa dạng 
 
                  [ PHÂN HỆ CHĂM LO PHÚC LỢI & Ý KIẾN ĐOÀN VIÊN ]
             +--------------------+ 1          n +--------------------+
-            |      PHUC_LOI      |--------------|    DON_TRO_CAP     |
+            |  WELFARE_PROGRAMS  |--------------|    AID_REQUESTS    |
             +--------------------+ (PhucLoiId)  +--------------------+
                                                           | n
                                                           | 1 (MaNhanSu)
                                                 +--------------------+
-                                                |      NHAN_SU       |
+                                                |      MEMBERS       |
                                                 +--------------------+
                                                           | 1
                                                           | n (UserId / MaNhanSu)
@@ -170,25 +170,27 @@ Cơ sở dữ liệu được thiết kế đạt chuẩn **Chuẩn hóa dạng 
                                                 +--------------------+
 ```
 
-### 🏛️ Bảng Đặc Tả 15 Bảng Nghiệp Vụ Trong CSDL:
+### 🏛️ Bảng Đặc Tả Các Bảng Nghiệp Vụ Trong CSDL:
 
 | STT | Tên Bảng | Mục Đích Nghiệp Vụ | Khóa Ngoại Liên Kết (FK) |
 |:---:|:---|:---|:---|
-| **1** | `TO_CHUC` | Quản lý 5 Ban cấp Trường (BTV, BCH, UBKT, Nữ công, Tuyên giáo) | Khóa chính tham chiếu bởi `NHAN_SU` |
-| **2** | `TO_CONG_DOAN` | Danh mục 16 Tổ Công đoàn cơ sở trực thuộc | Khóa chính tham chiếu bởi `NHAN_SU`, `MONTHLY_REPORTS` |
-| **3** | `NHAN_SU` | Danh bạ cán bộ, giảng viên, đoàn viên toàn trường | `MaToCongDoan` → `TO_CONG_DOAN`, `MaToChuc` → `TO_CHUC` |
+| **1** | `ORGANIZATIONS` | Quản lý 5 Ban cấp Trường (BTV, BCH, UBKT, Nữ công, Tuyên giáo) *(Cũ: TO_CHUC)* | Khóa chính tham chiếu bởi `MEMBERS` |
+| **2** | `UNION_BRANCHES` | Danh mục 16 Tổ Công đoàn cơ sở trực thuộc *(Cũ: TO_CONG_DOAN)* | Khóa chính tham chiếu bởi `MEMBERS`, `MONTHLY_REPORTS` |
+| **3** | `MEMBERS` | Danh bạ cán bộ, giảng viên, đoàn viên toàn trường *(Cũ: NHAN_SU)* | `MaToCongDoan` → `UNION_BRANCHES`, `MaToChuc` → `ORGANIZATIONS` |
 | **4** | `CATEGORIES` | Danh mục chuyên đề bài báo và văn bản | Khóa chính tham chiếu bởi `ARTICLES` |
-| **5** | `ARTICLES` | Bài viết, nội dung báo chí, đa kênh AI, cờ AI, lượt xem | `CategoryId` → `CATEGORIES`, `AuthorId` → `NHAN_SU` |
+| **5** | `ARTICLES` | Bài viết, nội dung báo chí, đa kênh AI, cờ AI, lượt xem | `CategoryId` → `CATEGORIES`, `AuthorId` → `MEMBERS` |
 | **6** | `DOCUMENTS` | Văn bản chỉ đạo 4 loại (*Tuyên truyền, Kế hoạch, Luật, Quyết định*) | Độc lập danh mục văn bản ban hành |
-| **7** | `MONTHLY_REPORTS` | Báo cáo tháng & Đánh giá thi đua 16 Tổ CĐ theo mẫu BM-02/CĐ | `MaToCongDoan` → `TO_CONG_DOAN` |
+| **7** | `MONTHLY_REPORTS` | Báo cáo tháng & Đánh giá thi đua 16 Tổ CĐ theo mẫu BM-02/CĐ | `MaToCongDoan` → `UNION_BRANCHES` |
 | **8** | `SCHEDULES` | Lịch hẹn giờ xuất bản bài tự động đa kênh | `ArticleId` → `ARTICLES` |
-| **9** | `USERS` | Tài khoản xác thực & phân quyền 3 Role (`admin`, `editor`, `contributor`) | `MaNhanSu` → `NHAN_SU` |
+| **9** | `USERS` | Tài khoản xác thực & phân quyền 3 Role (`admin`, `editor`, `contributor`) | `MaNhanSu` → `MEMBERS` |
 | **10**| `ARTICLE_AUDITS`| Lịch sử tác nghiệp biên tập & dấu vết duyệt bài (audit lineage) | `ArticleId` → `ARTICLES`, `UserId` → `USERS` |
 | **11**| `COMMENTS` | Ý kiến đóng góp & phản hồi của đoàn viên dưới bài viết | `ArticleId` → `ARTICLES`, `UserId` → `USERS` |
 | **12**| `BOOKMARKS` | Tủ sách đọc sau cá nhân lưu trữ bài viết | `ArticleId` → `ARTICLES`, `UserId` → `USERS` |
-| **13**| `PHUC_LOI` | Danh mục chính sách chăm lo (Quà Tết, Thai sản, Bệnh hiểm nghèo, Vay vốn) | Khóa chính tham chiếu bởi `DON_TRO_CAP` |
-| **14**| `DON_TRO_CAP` | Đơn đề nghị hỗ trợ khó khăn & theo dõi phê duyệt giải ngân | `PhucLoiId` → `PHUC_LOI`, `MaNhanSu` → `NHAN_SU` |
-| **15**| `INBOX_FEEDBACK`| Hòm thư tư liệu, góp ý, phản ánh tâm tư nguyện vọng gửi về BTV | `MaNhanSu` → `NHAN_SU`, `UserId` → `USERS` |
+| **13**| `WELFARE_PROGRAMS` | Danh mục chính sách chăm lo (Quà Tết, Thai sản, Bệnh hiểm nghèo, Vay vốn) *(Cũ: PHUC_LOI)* | Khóa chính tham chiếu bởi `AID_REQUESTS` |
+| **14**| `AID_REQUESTS` | Đơn đề nghị hỗ trợ khó khăn & theo dõi phê duyệt giải ngân *(Cũ: DON_TRO_CAP)* | `PhucLoiId` → `WELFARE_PROGRAMS`, `MaNhanSu` → `MEMBERS` |
+| **15**| `INBOX_FEEDBACK`| Hòm thư tư liệu, góp ý, phản ánh tâm tư nguyện vọng gửi về BTV | `MaNhanSu` → `MEMBERS`, `UserId` → `USERS` |
+| **16**| `TEMPLATES` | Kho biểu mẫu chuẩn hóa định dạng văn phòng (.docx, .xlsx, .pdf) | Độc lập danh mục biểu mẫu |
+| **17**| `PUBLISH_LOGS` | Lịch sử xuất bản bài viết tự động sang Website, Fanpage, Zalo OA | `ArticleId` → `ARTICLES` |
 
 ---
 

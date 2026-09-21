@@ -1,9 +1,9 @@
 const fs = require('fs');
 const path = require('path');
-const { tool, streamText, generateText } = require('ai');
+const { tool, ToolLoopAgent } = require('ai');
 const { z } = require('zod');
 const { createGoogleGenerativeAI } = require('@ai-sdk/google');
-const { parseDocumentBuffer } = require('./documentParser');
+const { parseDocumentBuffer, fixVietnameseFont } = require('./documentParser');
 const { exportToWord, exportToPdf } = require('./exportService');
 const { loadDB } = require('../db');
 
@@ -446,9 +446,11 @@ async function executeNewsroomAgent({
   messages = [],
   context = {},
   apiKey,
+  groqApiKey,
   onEvent
 }) {
   const activeKey = apiKey || process.env.GEMINI_API_KEY;
+  const activeGroq = groqApiKey || process.env.GROQ_API_KEY;
 
   // Handler phát sự kiện về client
   const emit = (type, data) => {
@@ -471,7 +473,7 @@ NGUYÊN TẮC HOẠT ĐỘNG TỰ HÀNH (AUTONOMOUS REACT):
 
 Phong cách ứng xử: Chuyên nghiệp, nhã nhặn, tôn trọng chuẩn mực đạo đức báo chí Công đoàn Việt Nam.`;
 
-  // 1. NẾU CÓ GEMINI API KEY -> CHẠY VERCEL AI SDK 7 STREAMTEXT ĐÍCH THỰC
+  // 1. NẾU CÓ GEMINI API KEY -> CHẠY TOOL LOOP AGENT ĐÍCH THỰC (MULTI-STEP STREAM)
   if (activeKey) {
     try {
       const google = createGoogleGenerativeAI({ apiKey: activeKey });
@@ -483,63 +485,139 @@ Phong cách ứng xử: Chuyên nghiệp, nhã nhặn, tôn trọng chuẩn mự
         content: m.text || m.content || ''
       }));
 
-      // Kích hoạt StreamText với Tool Loop (maxSteps: 8)
-      const result = streamText({
+      // Bổ sung ngữ cảnh bài viết hiện tại vào instructions
+      const dynamicInstructions = `${systemInstruction}
+${context.selectedText ? `\n[VĂN BẢN ĐANG ĐƯỢC CHỌN TRÊN CANVAS (SELECTED TEXT)]: "${context.selectedText}"\nNếu người dùng yêu cầu sửa, rút gọn, trau chuốt hoặc viết lại đoạn này, BẮT BUỘC bạn phải gọi tool "rewrite_selection" với targetText là đoạn trên và revisedText là đoạn mới do bạn trau chuốt.` : ''}
+${context.article?.title ? `\n[TIÊU ĐỀ BÀI BÁO HIỆN TẠI]: "${context.article.title}"` : ''}
+${context.article?.sapo ? `\n[ĐOẠN MỞ BÀI SAPO HIỆN TẠI]: "${context.article.sapo}"` : ''}
+${context.article?.bodyHtml ? `\n[NỘI DUNG BÀI HIỆN TẠI]: ${(context.article.bodyHtml).slice(0, 3000)}...` : ''}`;
+
+      const agent = new ToolLoopAgent({
         model,
-        system: systemInstruction,
-        messages: formattedMessages,
-        tools,
-        maxSteps: 8,
-        onStepFinish: async ({ text, toolCalls, toolResults }) => {
-          if (toolCalls && toolCalls.length > 0) {
-            for (const tc of toolCalls) {
-              emit('tool-call', {
-                toolName: tc.toolName,
-                toolCallId: tc.toolCallId,
-                args: tc.args
-              });
-            }
-          }
-          if (toolResults && toolResults.length > 0) {
-            for (const tr of toolResults) {
-              emit('tool-result', {
-                toolName: tr.toolName,
-                toolCallId: tr.toolCallId,
-                result: tr.result
-              });
-            }
-          }
-        }
+        instructions: dynamicInstructions,
+        tools
       });
 
-      // Stream text tokens ra client
-      for await (const chunk of result.textStream) {
-        emit('text-delta', { delta: chunk });
+      const streamRes = await agent.stream({
+        messages: formattedMessages,
+        maxRetries: 0
+      });
+
+      let hasError = false;
+      for await (const part of streamRes.fullStream) {
+        if (part.type === 'error') {
+          console.warn('⚠️ Gemini ToolLoopAgent stream gặp sự cố quota/mạng (chuyển fallback ngay):', part.error?.message || part.error);
+          hasError = true;
+          break;
+        } else if (part.type === 'tool-call') {
+          emit('tool-call', {
+            toolName: part.toolName,
+            toolCallId: part.toolCallId,
+            args: part.args || part.input || {}
+          });
+        } else if (part.type === 'tool-result') {
+          emit('tool-result', {
+            toolName: part.toolName,
+            toolCallId: part.toolCallId,
+            result: part.output || part.result
+          });
+        } else if (part.type === 'text-delta') {
+          const delta = part.text || part.textDelta || '';
+          if (delta) emit('text-delta', { delta });
+        }
       }
 
-      emit('finish', { success: true });
-      return;
+      if (!hasError) {
+        emit('finish', { success: true });
+        return;
+      }
     } catch (err) {
-      console.warn('⚠️ Gemini AI SDK stream gặp lỗi, chuyển sang Local Autonomous Fallback:', err.message);
+      console.warn('⚠️ Gemini ToolLoopAgent stream gặp sự cố (Quota/Timeout), kích hoạt tức thì Local Autonomous Engine:', err.message?.slice(0, 120));
     }
   }
 
-  // 2. LOCAL AUTONOMOUS AGENT FALLBACK (Hoạt động offline 100% không cần mạng)
-  await executeLocalAutonomousAgent({ messages, context, tools, emit });
+  // 2. LOCAL AUTONOMOUS AGENT FALLBACK (Hoạt động offline 100% độc lập, không phụ thuộc mạng/quota)
+  await executeLocalAutonomousAgent({ messages, context, tools, emit, groqApiKey: activeGroq });
+}
+
+/**
+ * Biến đổi văn phong báo chí chính luận động cho văn bản được chọn
+ */
+function transformSelectedText(text, instruction) {
+  if (!text) return '';
+  const raw = text.trim();
+  const qNorm = (instruction || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+
+  // 1. Rút gọn
+  if (qNorm.includes('rut gon') || qNorm.includes('ngan') || qNorm.includes('short')) {
+    let sentences = raw.split(/(?<=[.!?])\s+/).filter(Boolean);
+    if (sentences.length > 1) {
+      return sentences.slice(0, Math.max(1, Math.ceil(sentences.length / 2))).join(' ');
+    }
+    return raw.replace(/,\s*(đồng thời|qua đó|bên cạnh đó|nhằm mục đích).*$/, '.');
+  }
+
+  // 2. Trang trọng / Hành chính / Chính luận
+  if (qNorm.includes('trang trong') || qNorm.includes('chinh luan') || qNorm.includes('hanh chinh') || qNorm.includes('su pham') || qNorm.includes('formal')) {
+    let res = raw;
+    res = res.replace(/\bvui lắm\b/gi, 'diễn ra trong không khí phấn khởi, đoàn kết và trang trọng');
+    res = res.replace(/\brất đông\b/gi, 'đông đảo cán bộ, đoàn viên và người lao động tham dự');
+    res = res.replace(/\bhôm qua\b/gi, 'Vừa qua');
+    res = res.replace(/\btrường mình\b/gi, 'Trường Đại học Thủ Dầu Một');
+    res = res.replace(/\bnhà trường\b/gi, 'Công đoàn Trường Đại học Thủ Dầu Một');
+    res = res.replace(/\bthầy cô\b/gi, 'quý thầy cô giáo, cán bộ giảng viên');
+    res = res.replace(/\brất tốt\b/gi, 'đạt hiệu quả tích cực và lan tỏa sâu rộng');
+    if (!res.endsWith('.')) res += '.';
+    return res;
+  }
+
+  // 3. Nhấn mạnh tinh thần / đoàn kết / nhiệt huyết
+  if (qNorm.includes('nhan manh') || qNorm.includes('nhiet huyet') || qNorm.includes('doan ket')) {
+    return `${raw.replace(/\.$/, '')} – qua đó tiếp tục khẳng định tinh thần đoàn kết, trách nhiệm và ngọn lửa nhiệt huyết cống hiến của tập thể cán bộ, giảng viên Trường Đại học Thủ Dầu Một.`;
+  }
+
+  // 4. Khen ngợi / Biểu dương
+  if (qNorm.includes('khen') || qNorm.includes('bieu duong') || qNorm.includes('tuyen duong')) {
+    return `${raw.replace(/\.$/, '')} – ghi nhận và nhiệt liệt biểu dương những nỗ lực vượt bậc, tinh thần trách nhiệm và đóng góp thiết thực của các tập thể, cá nhân.`;
+  }
+
+  // 5. Sửa câu từ, trau chuốt chính tả
+  let polished = fixVietnameseFont(raw)
+    .replace(/\s+/g, ' ')
+    .replace(/([.,!?:;])(?=[^\s])/g, '$1 ')
+    .replace(/\bko\b/gi, 'không')
+    .replace(/\bdc\b/gi, 'được')
+    .replace(/\bvs\b/gi, 'với')
+    .replace(/\bđk\b/gi, 'điều kiện')
+    .replace(/\btks\b/gi, 'cảm ơn')
+    .trim();
+  if (polished && !/[.!?]$/.test(polished)) polished += '.';
+  return polished;
 }
 
 /**
  * Động cơ Agent Tự hành Cục bộ (Local Deterministic Autonomous Agent)
- * Nhận diện ý định thông minh và thực thi Tools tương ứng khi không có kết nối internet
+ * Nhận diện ý định thông minh và thực thi Tools tương ứng độc lập với Cloud AI
  */
-async function executeLocalAutonomousAgent({ messages, context, tools, emit }) {
+async function executeLocalAutonomousAgent({ messages, context, tools, emit, groqApiKey }) {
   const lastUserMsg = [...messages].reverse().find(m => m.sender === 'user')?.text || '';
   const q = lastUserMsg.toLowerCase();
+  const qNorm = q.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
 
   emit('text-delta', { delta: 'Trợ lý Tổng biên tập AI đang phân tích yêu cầu tác nghiệp...\n\n' });
 
+  // TH 0: Yêu cầu thông tin về tool / agent / hướng dẫn
+  if (qNorm.includes('tool') || qNorm.includes('agent') || qNorm.includes('chuc nang') || qNorm.includes('tro ly') || qNorm.includes('huong dan')) {
+    emit('tool-call', { toolName: 'read_current_article', args: {} });
+    const art = await tools.read_current_article.execute({});
+    emit('tool-result', { toolName: 'read_current_article', result: art });
+    emit('text-delta', { delta: `Hệ thống Trợ lý Tòa soạn AI Autonomous Agent đang hoạt động 100% với đầy đủ các Tools:\n\n1. ✍️ **rewrite_selection**: Sửa, rút gọn, nâng cấp văn phong đoạn văn bản bôi đen trên Canvas bài viết.\n2. 📄 **export_word_document**: Xuất bản toàn bộ bài viết sang file Word (.docx) chuẩn thể thức công đoàn.\n3. 📑 **export_pdf_document**: Xuất bản PDF chuẩn A4 in ấn lưu chiểu.\n4. 📊 **extract_financial_data**: Đọc tệp Excel và bóc tách bảng biểu dự toán kinh phí.\n5. 🔍 **audit_journalism_compliance**: Rà soát chuẩn mực báo chí 5W1H và đạo đức truyền thông.\n6. 📢 **generate_facebook**: Tự động tạo bài đăng mạng xã hội chuẩn tương tác.\n\n👉 **Cách dùng:** Hãy bôi đen bất kỳ đoạn văn nào trên Canvas bài viết, sau đó bấm các nút gợi ý nhanh (Rút gọn, Trang trọng, Sửa câu từ) hoặc gõ yêu cầu vào khung chat để kích hoạt Tool!` });
+    emit('finish', { success: true });
+    return;
+  }
+
   // TH 1: Yêu cầu xuất Word hoặc PDF
-  if (q.includes('word') || q.includes('docx') || q.includes('xuất word') || q.includes('tải word')) {
+  if (qNorm.includes('word') || qNorm.includes('docx') || qNorm.includes('xuat word') || qNorm.includes('tai word')) {
     emit('tool-call', { toolName: 'export_word_document', args: {} });
     const res = await tools.export_word_document.execute({});
     emit('tool-result', { toolName: 'export_word_document', result: res });
@@ -548,7 +626,7 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit }) {
     return;
   }
 
-  if (q.includes('pdf') || q.includes('xuất pdf') || q.includes('tải pdf')) {
+  if (qNorm.includes('pdf') || qNorm.includes('xuat pdf') || qNorm.includes('tai pdf')) {
     emit('tool-call', { toolName: 'export_pdf_document', args: {} });
     const res = await tools.export_pdf_document.execute({});
     emit('tool-result', { toolName: 'export_pdf_document', result: res });
@@ -558,7 +636,7 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit }) {
   }
 
   // TH 2: Yêu cầu bóc tách tài chính / Excel
-  if (q.includes('kinh phí') || q.includes('excel') || q.includes('dự toán') || q.includes('tiền') || q.includes('ngân sách')) {
+  if (qNorm.includes('kinh phi') || qNorm.includes('excel') || qNorm.includes('du toan') || qNorm.includes('tien') || qNorm.includes('ngan sach')) {
     emit('tool-call', { toolName: 'extract_financial_data', args: {} });
     const res = await tools.extract_financial_data.execute({});
     emit('tool-result', { toolName: 'extract_financial_data', result: res });
@@ -567,8 +645,60 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit }) {
     return;
   }
 
-  // TH 3: Rà soát chuẩn tắc báo chí / 5W1H
-  if (q.includes('kiểm tra') || q.includes('chính tả') || q.includes('chuẩn tắc') || q.includes('5w1h') || q.includes('soát')) {
+  // TH 3: Viết lại đoạn văn bôi đen / sửa đoạn (Ưu tiên cao nhất khi có selectedText)
+  if (context.selectedText || qNorm.includes('sua') || qNorm.includes('viet lai') || qNorm.includes('rut gon') || qNorm.includes('trang trong') || qNorm.includes('trau chuot') || qNorm.includes('nhan manh') || qNorm.includes('chinh sua') || qNorm.includes('chinh ta')) {
+    let target = context.selectedText;
+    if (!target && context.article?.bodyHtml) {
+      const cleanBody = context.article.bodyHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (cleanBody.length > 5) {
+        target = cleanBody.slice(0, 300).trim();
+      }
+    }
+
+    if (!target) {
+      emit('text-delta', { delta: 'Bạn chưa bôi đen đoạn văn nào trên bài viết! Hãy dùng chuột bôi đen đoạn văn bản cần chỉnh sửa trên Canvas, sau đó bấm các nút gợi ý nhanh (Rút gọn, Trang trọng, Sửa câu từ) hoặc gõ yêu cầu vào đây để AI sửa trực tiếp cho bạn.' });
+      emit('finish', { success: true });
+      return;
+    }
+
+    emit('tool-call', {
+      toolName: 'rewrite_selection',
+      args: { targetText: target, instruction: lastUserMsg }
+    });
+
+    let revised = '';
+    // Thử gọi Groq nếu có groqApiKey
+    if (groqApiKey) {
+      try {
+        const { callGroqAPI } = require('./aiService');
+        const groqPrompt = `Hãy sửa và trau chuốt đoạn văn sau theo yêu cầu: "${lastUserMsg}"\nĐoạn văn gốc: "${target}"\nChỉ trả về đúng nội dung đoạn văn mới đã được sửa theo văn phong báo chí chính luận công đoàn, không thêm bất kỳ lời dẫn nào.`;
+        const resGroq = await callGroqAPI(groqPrompt, 'Bạn là biên tập viên báo chí chính luận chuyên nghiệp của Trường Đại học Thủ Dầu Một.', groqApiKey);
+        if (resGroq && resGroq.trim().length > 5) {
+          revised = resGroq.trim().replace(/^"|"$/g, '');
+        }
+      } catch (errGroq) {
+        console.warn('Groq agent fallback error:', errGroq.message);
+      }
+    }
+
+    // Nếu không có Groq hoặc Groq lỗi, dùng transformSelectedText deterministic chất lượng cao
+    if (!revised) {
+      revised = transformSelectedText(target, lastUserMsg);
+    }
+
+    const res = await tools.rewrite_selection.execute({
+      targetText: target,
+      revisedText: revised,
+      reason: 'Biên tập và trau chuốt văn phong báo chí chính luận'
+    });
+    emit('tool-result', { toolName: 'rewrite_selection', result: res });
+    emit('text-delta', { delta: `Tôi đã biên tập lại đoạn văn bản theo đúng định hướng tác nghiệp:\n\n> "${revised}"\n\nĐoạn văn mới đã được tự động cập nhật trực tiếp vào bài viết trên Canvas của bạn.` });
+    emit('finish', { success: true });
+    return;
+  }
+
+  // TH 4: Rà soát chuẩn tắc báo chí toàn bài / 5W1H (Khi không chọn đoạn)
+  if (!context.selectedText && (qNorm.includes('kiem tra') || qNorm.includes('chuan tac') || qNorm.includes('5w1h') || qNorm.includes('soat') || qNorm.includes('ra soat') || qNorm.includes('danh gia'))) {
     emit('tool-call', { toolName: 'audit_journalism_compliance', args: {} });
     const res = await tools.audit_journalism_compliance.execute({});
     emit('tool-result', { toolName: 'audit_journalism_compliance', result: res });
@@ -577,26 +707,31 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit }) {
     return;
   }
 
-  // TH 4: Viết lại đoạn văn bôi đen
-  if (context.selectedText && (q.includes('sửa') || q.includes('viết lại') || q.includes('ngắn gọn') || q.includes('hay hơn'))) {
-    emit('tool-call', {
-      toolName: 'rewrite_selection',
-      args: { targetText: context.selectedText, instruction: lastUserMsg }
-    });
-    const revised = `Xác định công tác chăm lo đời sống đoàn viên là trọng tâm cốt lõi, Công đoàn Trường Đại học Thủ Dầu Một luôn tiên phong triển khai các chương trình thiết thực, tạo động lực mạnh mẽ để toàn thể viên chức an tâm cống hiến vì sự phát triển bền vững của nhà trường.`;
-    const res = await tools.rewrite_selection.execute({
-      targetText: context.selectedText,
-      revisedText: revised,
-      reason: 'Biên tập văn phong chính luận truyền cảm hứng'
-    });
-    emit('tool-result', { toolName: 'rewrite_selection', result: res });
-    emit('text-delta', { delta: `Tôi đã biên tập lại đoạn văn bản được chọn với văn phong chính luận chuẩn mực:\n\n> "${revised}"\n\nĐoạn văn mới đã được tự động cập nhật vào bài viết của bạn.` });
+  // TH 5: Cập nhật tiêu đề bài viết
+  if (qNorm.includes('tieu de') || qNorm.includes('headline')) {
+    const curTitle = context.article?.title || 'Hoạt động Công đoàn';
+    const newHeadline = `PHÁT HUY TINH THẦN ĐOÀN KẾT VÀ CHĂM LO TOÀN DIỆN CHO ĐOÀN VIÊN: ${curTitle.toUpperCase()}`;
+    emit('tool-call', { toolName: 'update_headline', args: { newHeadline } });
+    const res = await tools.update_headline.execute({ newHeadline });
+    emit('tool-result', { toolName: 'update_headline', result: res });
+    emit('text-delta', { delta: `Tôi đã nâng cấp tiêu đề bài viết theo phong cách báo chí chính luận:\n\n### 📰 "${newHeadline}"\n\nTiêu đề mới đã được tự động đồng bộ vào trường Headline.` });
     emit('finish', { success: true });
     return;
   }
 
-  // TH 5: Soạn Facebook / Zalo
-  if (q.includes('facebook') || q.includes('fb')) {
+  // TH 6: Cập nhật đoạn Sapo
+  if (qNorm.includes('sapo') || qNorm.includes('mo bai') || qNorm.includes('tom tat')) {
+    const newSapo = `(TDMU) - Nhằm phát huy vai trò đồng hành và chăm lo toàn diện cho đội ngũ người lao động, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một đã triển khai chuỗi hoạt động trọng điểm với sự tham gia của đông đảo đoàn viên, tạo động lực mạnh mẽ cho tiến trình phát triển bền vững của nhà trường.`;
+    emit('tool-call', { toolName: 'update_sapo', args: { newSapo } });
+    const res = await tools.update_sapo.execute({ newSapo });
+    emit('tool-result', { toolName: 'update_sapo', result: res });
+    emit('text-delta', { delta: `Tôi đã biên tập lại đoạn mở đầu Sapo 5W1H đĩnh đạc:\n\n> "${newSapo}"\n\nĐoạn Sapo mới đã được đồng bộ trực tiếp lên bài viết.` });
+    emit('finish', { success: true });
+    return;
+  }
+
+  // TH 7: Soạn Facebook / Zalo
+  if (qNorm.includes('facebook') || qNorm.includes('fb')) {
     emit('tool-call', { toolName: 'generate_facebook', args: {} });
     const res = await tools.generate_facebook.execute({});
     emit('tool-result', { toolName: 'generate_facebook', result: res });
@@ -609,7 +744,7 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit }) {
   emit('tool-call', { toolName: 'read_current_article', args: {} });
   const art = await tools.read_current_article.execute({});
   emit('tool-result', { toolName: 'read_current_article', result: art });
-  emit('text-delta', { delta: `Tôi đã nắm bắt toàn bộ bối cảnh bài viết hiện tại ("${art.title || 'Bản thảo chưa đặt tên'}" - ${art.wordCount} từ).\n\nBạn có thể yêu cầu tôi thực thi bất kỳ tác vụ nào:\n1. 📄 **"Xuất bài ra file Word (.docx)"** hoặc **"Xuất file PDF"**\n2. 📊 **"Đọc file Excel dự toán kinh phí"**\n3. ✍️ **"Bôi đen đoạn văn rồi bảo tôi viết lại"**\n4. 🔍 **"Kiểm tra chuẩn tắc 5W1H và lỗi chính tả"**\n5. 📢 **"Tạo bài đăng Facebook hoặc Zalo OA"**` });
+  emit('text-delta', { delta: `Tôi đã nắm bắt toàn bộ bối cảnh bài viết hiện tại ("${art.title || 'Bản thảo chưa đặt tên'}" - ${art.wordCount} từ).\n\nBạn có thể ra lệnh trực tiếp trong ô chat:\n1. ✍️ **"Sửa đoạn này thật trang trọng"** (kèm bôi đen đoạn văn)\n2. 📄 **"Xuất bài ra file Word (.docx)"** hoặc **"Xuất file PDF"**\n3. 📊 **"Đọc file Excel dự toán kinh phí"**\n4. 🔍 **"Kiểm tra chuẩn tắc 5W1H và lỗi chính tả"**\n5. 📢 **"Tạo bài đăng Facebook hoặc Zalo OA"**` });
   emit('finish', { success: true });
 }
 

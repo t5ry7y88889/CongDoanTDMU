@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const {
   getOrgDataFromDb,
@@ -42,12 +42,27 @@ router.get('/to-chuc', async (req, res) => {
   res.json({ success: true, data: org.boards || [] });
 });
 
+router.get('/organizations', async (req, res) => {
+  const org = await getOrgDataFromDb();
+  res.json({ success: true, data: org.boards || [] });
+});
+
 router.get('/to-cong-doan', async (req, res) => {
   const org = await getOrgDataFromDb();
   res.json({ success: true, data: org.units || [] });
 });
 
+router.get('/union-branches', async (req, res) => {
+  const org = await getOrgDataFromDb();
+  res.json({ success: true, data: org.units || [] });
+});
+
 router.get('/nhan-su', async (req, res) => {
+  const org = await getOrgDataFromDb();
+  res.json({ success: true, data: org.cadres || [] });
+});
+
+router.get('/members', async (req, res) => {
   const org = await getOrgDataFromDb();
   res.json({ success: true, data: org.cadres || [] });
 });

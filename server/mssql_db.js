@@ -70,7 +70,7 @@ async function getArticlesFromDb(category = 'all', status = 'all', search = '') 
           CONVERT(VARCHAR(19), COALESCE(a.NgayCapNhat, a.NgayTao), 120) AS updatedAt
         FROM dbo.ARTICLES a
         LEFT JOIN dbo.CATEGORIES c ON a.CategoryId = c.CategoryId
-        LEFT JOIN dbo.NHAN_SU ns ON a.MaTacGia = ns.MaNhanSu
+        LEFT JOIN dbo.MEMBERS ns ON a.MaTacGia = ns.MaNhanSu
         LEFT JOIN dbo.USERS u ON u.MaNhanSu = ns.MaNhanSu
         WHERE 1=1
       `;
@@ -351,21 +351,25 @@ async function getCategoriesFromDb() {
 }
 
 // =========================================================================
-// 4. ORG STRUCTURE & NHAN SU (dbo.TO_CHUC, dbo.TO_CONG_DOAN, dbo.NHAN_SU)
+// 4. ORG STRUCTURE & MEMBERS (dbo.ORGANIZATIONS, dbo.UNION_BRANCHES, dbo.MEMBERS)
 // =========================================================================
 async function getOrgDataFromDb() {
   if (isMssqlConnected && mssqlPool) {
     try {
-      const boards = (await mssqlPool.request().query("SELECT MaToChuc AS id, TenToChuc AS name, NhiemKy AS tenure, MoTaChucNang AS description FROM dbo.TO_CHUC ORDER BY ThuTuHienThi")).recordset;
-      const units = (await mssqlPool.request().query("SELECT MaToCongDoan AS id, MaDinhDanh AS code, TenToCongDoan AS name, ToTruong AS leader, EmailLienHe AS email FROM dbo.TO_CONG_DOAN ORDER BY MaToCongDoan")).recordset;
-      const cadres = (await mssqlPool.request().query("SELECT MaNhanSu AS id, MaCanBo AS code, HoVaTen AS name, Email AS email, ChucVuCongDoan AS role, MaToCongDoan AS unit_id, MaToChuc AS board_id FROM dbo.NHAN_SU")).recordset;
+      const boards = (await mssqlPool.request().query("SELECT MaToChuc AS id, TenToChuc AS name, NhiemKy AS tenure, MoTaChucNang AS description FROM dbo.ORGANIZATIONS ORDER BY ThuTuHienThi")).recordset;
+      const units = (await mssqlPool.request().query("SELECT MaToCongDoan AS id, MaDinhDanh AS code, TenToCongDoan AS name, ToTruong AS leader, EmailLienHe AS email FROM dbo.UNION_BRANCHES ORDER BY MaToCongDoan")).recordset;
+      const cadres = (await mssqlPool.request().query("SELECT MaNhanSu AS id, MaCanBo AS code, HoVaTen AS name, Email AS email, ChucVuCongDoan AS role, MaToCongDoan AS unit_id, MaToChuc AS board_id FROM dbo.MEMBERS")).recordset;
       return { boards, units, cadres };
     } catch (err) {
       console.error("MSSQL Org Data Error:", err.message);
     }
   }
   const db = loadDB();
-  return { boards: db.to_chuc || [], units: db.to_cong_doan || [], cadres: db.nhan_su || [] };
+  return { 
+    boards: db.organizations || db.to_chuc || [], 
+    units: db.union_branches || db.to_cong_doan || [], 
+    cadres: db.members || db.nhan_su || [] 
+  };
 }
 
 // =========================================================================
@@ -394,7 +398,7 @@ async function getMonthlyReportsFromDb() {
           r.LinkMinhChung AS proof_link,
           CONVERT(VARCHAR(19), r.NgayNop, 120) AS submitted_at
         FROM dbo.MONTHLY_REPORTS r
-        LEFT JOIN dbo.TO_CONG_DOAN tc ON r.MaToCongDoan = tc.MaToCongDoan
+        LEFT JOIN dbo.UNION_BRANCHES tc ON r.MaToCongDoan = tc.MaToCongDoan
         ORDER BY r.ReportId DESC
       `);
       return result.recordset;
@@ -406,7 +410,7 @@ async function getMonthlyReportsFromDb() {
 }
 
 // =========================================================================
-// 6. WELFARE (dbo.PHUC_LOI)
+// 6. WELFARE (dbo.WELFARE_PROGRAMS)
 // =========================================================================
 async function getWelfareFromDb() {
   if (isMssqlConnected && mssqlPool) {
@@ -433,7 +437,7 @@ async function getWelfareFromDb() {
             ELSE 'primary'
           END AS color,
           'active' AS status
-        FROM dbo.PHUC_LOI
+        FROM dbo.WELFARE_PROGRAMS
         ORDER BY PhucLoiId ASC
       `);
       return result.recordset;
@@ -441,7 +445,7 @@ async function getWelfareFromDb() {
       console.error("MSSQL Welfare Error:", err.message);
     }
   }
-  return loadDB().phuc_loi || [];
+  return loadDB().welfare_programs || loadDB().phuc_loi || [];
 }
 
 // =========================================================================
@@ -571,7 +575,7 @@ async function incrementTemplateDownloadInDb(id) {
 }
 
 // =========================================================================
-// 9. DON_TRO_CAP (dbo.DON_TRO_CAP)
+// 9. AID_REQUESTS (dbo.AID_REQUESTS - Cũ: DON_TRO_CAP)
 // =========================================================================
 async function getWelfareApplicationsFromDb(status = 'all', search = '') {
   if (isMssqlConnected && mssqlPool) {
@@ -593,7 +597,7 @@ async function getWelfareApplicationsFromDb(status = 'all', search = '') {
           NguoiDuyet AS approved_by,
           GhiChu AS decision_note,
           CONVERT(VARCHAR(19), NgayNop, 120) AS submitted_at
-        FROM dbo.DON_TRO_CAP
+        FROM dbo.AID_REQUESTS
         WHERE 1=1
       `;
       const req = mssqlPool.request();
@@ -632,7 +636,7 @@ async function insertWelfareApplicationToDb(data) {
       req.input('decisionNote', sql.NVarChar, data.decision_note || 'Chờ Ban Thường Vụ xét duyệt');
 
       const query = `
-        INSERT INTO dbo.DON_TRO_CAP (HoTen, DonVi, SoDienThoai, Email, LoaiTroCap, SoTienDeXuat, LyDo, TepMinhChung, TrangThai, GhiChu, NgayNop)
+        INSERT INTO dbo.AID_REQUESTS (HoTen, DonVi, SoDienThoai, Email, LoaiTroCap, SoTienDeXuat, LyDo, TepMinhChung, TrangThai, GhiChu, NgayNop)
         OUTPUT INSERTED.DonId AS id
         VALUES (@fullName, @unit, @phone, @email, @type, @amountRequested, @reason, @proofUrl, @status, @decisionNote, SYSDATETIME())
       `;
@@ -658,7 +662,7 @@ async function updateWelfareApplicationInDb(id, data) {
       req.input('approvedBy', sql.NVarChar, data.approved_by || null);
 
       await req.query(`
-        UPDATE dbo.DON_TRO_CAP
+        UPDATE dbo.AID_REQUESTS
         SET TrangThai = COALESCE(@status, TrangThai),
             SoTienDuocDuyet = COALESCE(@amountApproved, SoTienDuocDuyet),
             GhiChu = COALESCE(@decisionNote, GhiChu),

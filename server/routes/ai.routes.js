@@ -2731,7 +2731,7 @@ const { executeNewsroomAgent } = require('../services/newsroomAgent');
 const { exportToWord, exportToPdf } = require('../services/exportService');
 
 router.post('/agent-chat', async (req, res) => {
-  const { messages = [], context = {}, apiKey } = req.body;
+  const { messages = [], context = {}, apiKey, groqApiKey } = req.body;
 
   // Cấu hình Server-Sent Events (SSE) để stream phản hồi và sự kiện Tool Call
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -2744,6 +2744,7 @@ router.post('/agent-chat', async (req, res) => {
       messages,
       context,
       apiKey: apiKey || process.env.GEMINI_API_KEY,
+      groqApiKey: groqApiKey || process.env.GROQ_API_KEY,
       onEvent: (event) => {
         res.write(`data: ${JSON.stringify(event)}\n\n`);
       }

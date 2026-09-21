@@ -68,7 +68,13 @@ function loadDB() {
   initDB();
   try {
     const raw = fs.readFileSync(dbFilePath, 'utf8');
-    return JSON.parse(raw);
+    const data = JSON.parse(raw);
+    data.organizations = data.organizations || data.to_chuc || [];
+    data.union_branches = data.union_branches || data.to_cong_doan || [];
+    data.members = data.members || data.nhan_su || [];
+    data.welfare_programs = data.welfare_programs || data.phuc_loi || [];
+    data.aid_requests = data.aid_requests || data.don_tro_cap || [];
+    return data;
   } catch (err) {
     return defaultData;
   }

@@ -475,14 +475,21 @@ export default function AdminStudio() {
   // ═══════════════════════════════════════════════════════════════════════════
   const handleEditorSelection = () => {
     const sel = window.getSelection();
-    if (!sel || sel.isCollapsed) { setSelectedText(''); setSelectionRange(null); return; }
+    if (!sel || sel.isCollapsed) return;
     const text = sel.toString().trim();
     if (text.length > 2 && editorRef.current && editorRef.current.contains(sel.anchorNode)) {
       setSelectedText(text);
       try { setSelectionRange(sel.getRangeAt(0).cloneRange()); } catch {}
     }
   };
-  const clearSelection = () => { setSelectedText(''); setSelectionRange(null); window.getSelection()?.removeAllRanges(); };
+  const clearSelection = () => {
+    setSelectedText('');
+    setSelectionRange(null);
+    if (editorRef.current?.clearSelection) {
+      try { editorRef.current.clearSelection(); } catch {}
+    }
+    window.getSelection()?.removeAllRanges();
+  };
 
   // ═══════════════════════════════════════════════════════════════════════════
   // AI COPILOT
@@ -586,7 +593,9 @@ export default function AdminStudio() {
             attachedFiles,
             eventPhotos,
             selectedText
-          }
+          },
+          apiKey: localStorage.getItem('gemini_api_key') || '',
+          groqApiKey: localStorage.getItem('groq_api_key') || ''
         })
       });
 
@@ -633,12 +642,60 @@ export default function AdminStudio() {
               // Tác động trực tiếp vào Canvas hoặc giao diện dựa trên kết quả Tool
               if (ev.result) {
                 if (ev.result.action === 'replace_selection' && ev.result.revisedText) {
+                  let applied = false;
+                  // 1. Thử thay thế trực tiếp qua CKEditor model selection/range
                   if (editorRef.current?.replaceSelection) {
-                    editorRef.current.replaceSelection(ev.result.revisedText);
+                    try {
+                      editorRef.current.replaceSelection(ev.result.revisedText);
+                      const checkData = editorRef.current.getData?.() || '';
+                      if (checkData.includes(ev.result.revisedText)) applied = true;
+                    } catch {}
                   }
+
+                  // 2. Thử thay thế chuỗi trên HTML nội dung
+                  const curData = editorRef.current?.getData ? editorRef.current.getData() : bodyHtml;
+                  const targetStr = ev.result.targetText || selectedText;
+                  if (!applied && targetStr && curData) {
+                    if (curData.includes(targetStr)) {
+                      const nextHtml = curData.replace(targetStr, ev.result.revisedText);
+                      if (editorRef.current?.setData) editorRef.current.setData(nextHtml);
+                      setBodyHtml(nextHtml);
+                      applied = true;
+                    } else {
+                      try {
+                        const escaped = targetStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+                        const reg = new RegExp(escaped, 'i');
+                        if (reg.test(curData)) {
+                          const nextHtml = curData.replace(reg, ev.result.revisedText);
+                          if (editorRef.current?.setData) editorRef.current.setData(nextHtml);
+                          setBodyHtml(nextHtml);
+                          applied = true;
+                        }
+                      } catch {}
+                    }
+                  }
+
+                  // 3. Fallback: Nếu không tìm thấy vị trí do cấu trúc thẻ lồng nhau, bổ sung vào cuối
+                  if (!applied && ev.result.revisedText) {
+                    const nextHtml = curData ? `${curData}\n<p>${ev.result.revisedText}</p>` : `<p>${ev.result.revisedText}</p>`;
+                    if (editorRef.current?.setData) editorRef.current.setData(nextHtml);
+                    setBodyHtml(nextHtml);
+                  } else {
+                    const updated = editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || '');
+                    setBodyHtml(updated);
+                  }
+
                   clearSelection();
-                  const updated = editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || '');
-                  setBodyHtml(updated);
+                } else if (ev.result.action === 'replace_block' && ev.result.newBlockHtml) {
+                  const curData = editorRef.current?.getData ? editorRef.current.getData() : bodyHtml;
+                  const nextHtml = curData + '\n' + ev.result.newBlockHtml;
+                  if (editorRef.current?.setData) editorRef.current.setData(nextHtml);
+                  setBodyHtml(nextHtml);
+                } else if (ev.result.action === 'insert_block' && ev.result.contentHtml) {
+                  const curData = editorRef.current?.getData ? editorRef.current.getData() : bodyHtml;
+                  const nextHtml = ev.result.position === 'top' ? (ev.result.contentHtml + '\n' + curData) : (curData + '\n' + ev.result.contentHtml);
+                  if (editorRef.current?.setData) editorRef.current.setData(nextHtml);
+                  setBodyHtml(nextHtml);
                 } else if (ev.result.action === 'update_headline' && ev.result.headline) {
                   setTitle(ev.result.headline);
                 } else if (ev.result.action === 'update_sapo' && ev.result.sapo) {

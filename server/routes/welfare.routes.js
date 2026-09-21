@@ -40,7 +40,7 @@ router.get('/applications', async (req, res) => {
   }
 
   const db = loadDB();
-  let list = db.don_tro_cap || [];
+  let list = db.aid_requests || db.don_tro_cap || [];
   if (status && status !== 'all') {
     list = list.filter(d => d.status === status);
   }
@@ -68,7 +68,7 @@ router.get('/don-tro-cap', async (req, res) => {
   }
 
   const db = loadDB();
-  let list = db.don_tro_cap || [];
+  let list = db.aid_requests || db.don_tro_cap || [];
   if (status && status !== 'all') {
     list = list.filter(d => d.status === status);
   }
@@ -84,31 +84,29 @@ router.get('/don-tro-cap', async (req, res) => {
   res.json({ success: true, count: list.length, data: list });
 });
 
-router.get('/applications/:id', async (req, res) => {
+router.get('/applications/:id', (req, res) => {
   const id = parseInt(req.params.id);
-  try {
-    const list = await getWelfareApplicationsFromDb('all', '');
-    const found = (list || []).find(d => d.id === id);
-    if (found) return res.json({ success: true, data: found });
-  } catch (e) {}
-
   const db = loadDB();
-  const item = (db.don_tro_cap || []).find(d => d.id === id);
-  if (!item) return res.status(404).json({ success: false, error: 'Không tìm thấy hồ sơ đề nghị trợ cấp!' });
+  const list = db.aid_requests || db.don_tro_cap || [];
+  const item = list.find(d => d.id === id);
+  if (!item) return res.status(404).json({ success: false, message: 'Không tìm thấy hồ sơ' });
   res.json({ success: true, data: item });
 });
 
-router.post('/apply', async (req, res) => {
+router.post('/applications', async (req, res) => {
   const db = loadDB();
-  db.don_tro_cap = db.don_tro_cap || [];
-  const { full_name, unit, type, amount_requested, reason, phone, email, proofBase64, proofName } = req.body;
+  db.aid_requests = db.aid_requests || db.don_tro_cap || [];
+  const {
+    full_name, unit, phone, email, type,
+    amount_requested, reason, proof_url, proofBase64, proofName
+  } = req.body;
 
   if (!full_name || !type || !reason) {
-    return res.status(400).json({ success: false, error: 'Vui lòng điền đầy đủ họ tên, loại trợ cấp và lý do' });
+    return res.status(400).json({ success: false, message: 'Vui lòng điền đủ các thông tin bắt buộc!' });
   }
 
-  const nextId = db.don_tro_cap.length ? Math.max(...db.don_tro_cap.map(d => d.id || 0)) + 1 : 1;
-  let proofUrl = null;
+  const nextId = db.aid_requests.length ? Math.max(...db.aid_requests.map(d => d.id || 0)) + 1 : 1;
+  let proofUrl = proof_url || null;
 
   if (proofBase64 && proofName) {
     try {
