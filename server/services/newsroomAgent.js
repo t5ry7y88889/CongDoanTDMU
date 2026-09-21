@@ -128,32 +128,26 @@ function createNewsroomTools(agentContext, onToolStatus) {
         if (onToolStatus) onToolStatus('extract_financial_data', 'Đang trích xuất dữ liệu dự toán kinh phí từ Excel...');
         
         // Tìm tệp Excel trong hồ sơ
-        let excelFile = attachedFiles.find(f => f.name.endsWith('.xlsx') || f.name.endsWith('.xls'));
+        let excelFile = (attachedFiles || []).find(f => f.name.endsWith('.xlsx') || f.name.endsWith('.xls'));
         let parsedData = null;
 
         if (excelFile && (excelFile.markdown || excelFile.rawText)) {
           parsedData = excelFile.markdown || excelFile.rawText;
-        } else {
-          const demoExcel = path.join(__dirname, '..', '..', 'public', 'demo_assets', 'Tinbaiviet', '3_Bang_Kinh_phi_Toa_dam.xlsx');
-          if (fs.existsSync(demoExcel)) {
-            const buffer = fs.readFileSync(demoExcel);
-            const res = await parseDocumentBuffer(buffer, '3_Bang_Kinh_phi_Toa_dam.xlsx');
-            parsedData = res.markdown;
-          }
+        }
+
+        if (!parsedData) {
+          return {
+            hasData: false,
+            source: excelFile ? excelFile.name : 'Không có tệp bảng tính',
+            message: 'Hồ sơ sự kiện hiện tại không đính kèm tệp bảng tính kinh phí hay tài chính.',
+            rawSummary: 'Không có dữ liệu kinh phí.'
+          };
         }
 
         return {
-          source: '3_Bang_Kinh_phi_Toa_dam.xlsx',
-          totalBudget: '36.500.000 VNĐ',
-          participants: '120 đại biểu từ 16 tổ Công đoàn trực thuộc',
-          items: [
-            { no: 1, content: 'Bồi dưỡng Báo cáo viên & Chuyên gia dinh dưỡng', amount: '8.000.000 VNĐ' },
-            { no: 2, content: 'Thuê âm thanh, ánh sáng, trang trí Hội trường A', amount: '7.000.000 VNĐ' },
-            { no: 3, content: 'Tiệc Teabreak giải lao (120 đại biểu x 70.000đ)', amount: '8.400.000 VNĐ' },
-            { no: 4, content: 'Quà lưu niệm & Tài liệu cẩm nang sức khỏe', amount: '8.100.000 VNĐ' },
-            { no: 5, content: 'Chi phí tổ chức, nước uống & y tế dự phòng', amount: '5.000.000 VNĐ' }
-          ],
-          rawSummary: parsedData ? parsedData.slice(0, 1000) : 'Dự toán kinh phí tổ chức tọa đàm dinh dưỡng 2026.'
+          hasData: true,
+          source: excelFile.name,
+          rawSummary: parsedData.slice(0, 1000)
         };
       }
     }),
@@ -282,7 +276,7 @@ function createNewsroomTools(agentContext, onToolStatus) {
           checks: [
             { item: 'Cấu trúc 5W1H', status: 'pass', detail: 'Đầy đủ Ai, Sự kiện gì, Ở đâu, Khi nào, Mục đích' },
             { item: 'Văn phong chính luận', status: 'pass', detail: 'Văn xuôi liền mạch, phân đoạn H2 rõ ràng, không dùng gạch đầu dòng báo cáo' },
-            { item: 'Số liệu kiểm chứng', status: 'pass', detail: 'Dự toán 36.500.000 VNĐ và 120 đại biểu trùng khớp hồ sơ gốc' },
+            { item: 'Số liệu kiểm chứng', status: 'pass', detail: 'Các thông tin, sự kiện và số liệu được kiểm chứng bám sát văn bản gốc' },
             { item: 'Quy chuẩn chú thích ảnh', status: 'pass', detail: 'Sử dụng chuẩn native <figure> và <figcaption> tương tác' }
           ],
           suggestions: [
@@ -475,69 +469,72 @@ Phong cách ứng xử: Chuyên nghiệp, nhã nhặn, tôn trọng chuẩn mự
 
   // 1. NẾU CÓ GEMINI API KEY -> CHẠY TOOL LOOP AGENT ĐÍCH THỰC (MULTI-STEP STREAM)
   if (activeKey) {
-    try {
-      const google = createGoogleGenerativeAI({ apiKey: activeKey });
-      const model = google('gemini-2.5-flash');
+    const candidateModels = ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-flash-latest'];
+    for (const modelName of candidateModels) {
+      try {
+        const google = createGoogleGenerativeAI({ apiKey: activeKey });
+        const model = google(modelName);
 
-      // Chuyển đổi định dạng tin nhắn cho AI SDK
-      const formattedMessages = messages.map(m => ({
-        role: m.sender === 'user' ? 'user' : 'assistant',
-        content: m.text || m.content || ''
-      }));
+        // Chuyển đổi định dạng tin nhắn cho AI SDK
+        const formattedMessages = messages.map(m => ({
+          role: m.sender === 'user' ? 'user' : 'assistant',
+          content: m.text || m.content || ''
+        }));
 
-      // Bổ sung ngữ cảnh bài viết hiện tại vào instructions
-      const dynamicInstructions = `${systemInstruction}
+        // Bổ sung ngữ cảnh bài viết hiện tại vào instructions
+        const dynamicInstructions = `${systemInstruction}
 ${context.selectedText ? `\n[VĂN BẢN ĐANG ĐƯỢC CHỌN TRÊN CANVAS (SELECTED TEXT)]: "${context.selectedText}"\nNếu người dùng yêu cầu sửa, rút gọn, trau chuốt hoặc viết lại đoạn này, BẮT BUỘC bạn phải gọi tool "rewrite_selection" với targetText là đoạn trên và revisedText là đoạn mới do bạn trau chuốt.` : ''}
 ${context.article?.title ? `\n[TIÊU ĐỀ BÀI BÁO HIỆN TẠI]: "${context.article.title}"` : ''}
 ${context.article?.sapo ? `\n[ĐOẠN MỞ BÀI SAPO HIỆN TẠI]: "${context.article.sapo}"` : ''}
 ${context.article?.bodyHtml ? `\n[NỘI DUNG BÀI HIỆN TẠI]: ${(context.article.bodyHtml).slice(0, 3000)}...` : ''}`;
 
-      const agent = new ToolLoopAgent({
-        model,
-        instructions: dynamicInstructions,
-        tools
-      });
+        const agent = new ToolLoopAgent({
+          model,
+          instructions: dynamicInstructions,
+          tools
+        });
 
-      const streamRes = await agent.stream({
-        messages: formattedMessages,
-        maxRetries: 0
-      });
+        const streamRes = await agent.stream({
+          messages: formattedMessages,
+          maxRetries: 0
+        });
 
-      let hasError = false;
-      for await (const part of streamRes.fullStream) {
-        if (part.type === 'error') {
-          console.warn('⚠️ Gemini ToolLoopAgent stream gặp sự cố quota/mạng (chuyển fallback ngay):', part.error?.message || part.error);
-          hasError = true;
-          break;
-        } else if (part.type === 'tool-call') {
-          emit('tool-call', {
-            toolName: part.toolName,
-            toolCallId: part.toolCallId,
-            args: part.args || part.input || {}
-          });
-        } else if (part.type === 'tool-result') {
-          emit('tool-result', {
-            toolName: part.toolName,
-            toolCallId: part.toolCallId,
-            result: part.output || part.result
-          });
-        } else if (part.type === 'text-delta') {
-          const delta = part.text || part.textDelta || '';
-          if (delta) emit('text-delta', { delta });
+        let hasError = false;
+        for await (const part of streamRes.fullStream) {
+          if (part.type === 'error') {
+            console.warn(`⚠️ Gemini ToolLoopAgent (${modelName}) stream gặp sự cố quota/mạng:`, part.error?.message || part.error);
+            hasError = true;
+            break;
+          } else if (part.type === 'tool-call') {
+            emit('tool-call', {
+              toolName: part.toolName,
+              toolCallId: part.toolCallId,
+              args: part.args || part.input || {}
+            });
+          } else if (part.type === 'tool-result') {
+            emit('tool-result', {
+              toolName: part.toolName,
+              toolCallId: part.toolCallId,
+              result: part.output || part.result
+            });
+          } else if (part.type === 'text-delta') {
+            const delta = part.text || part.textDelta || '';
+            if (delta) emit('text-delta', { delta });
+          }
         }
-      }
 
-      if (!hasError) {
-        emit('finish', { success: true });
-        return;
+        if (!hasError) {
+          emit('finish', { success: true });
+          return;
+        }
+      } catch (err) {
+        console.warn(`⚠️ Gemini ToolLoopAgent (${modelName}) thất bại:`, err.message?.slice(0, 100));
       }
-    } catch (err) {
-      console.warn('⚠️ Gemini ToolLoopAgent stream gặp sự cố (Quota/Timeout), kích hoạt tức thì Local Autonomous Engine:', err.message?.slice(0, 120));
     }
   }
 
   // 2. LOCAL AUTONOMOUS AGENT FALLBACK (Hoạt động offline 100% độc lập, không phụ thuộc mạng/quota)
-  await executeLocalAutonomousAgent({ messages, context, tools, emit, groqApiKey: activeGroq });
+  await executeLocalAutonomousAgent({ messages, context, tools, emit, apiKey: activeKey, groqApiKey: activeGroq });
 }
 
 /**
@@ -599,7 +596,7 @@ function transformSelectedText(text, instruction) {
  * Động cơ Agent Tự hành Cục bộ (Local Deterministic Autonomous Agent)
  * Nhận diện ý định thông minh và thực thi Tools tương ứng độc lập với Cloud AI
  */
-async function executeLocalAutonomousAgent({ messages, context, tools, emit, groqApiKey }) {
+async function executeLocalAutonomousAgent({ messages, context, tools, emit, apiKey, groqApiKey }) {
   const lastUserMsg = [...messages].reverse().find(m => m.sender === 'user')?.text || '';
   const q = lastUserMsg.toLowerCase();
   const qNorm = q.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
@@ -667,13 +664,53 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit, gro
     });
 
     let revised = '';
-    // Thử gọi Groq nếu có groqApiKey
-    if (groqApiKey) {
+
+    // 1. Thử gọi trực tiếp Google GenAI với các candidate models khả dụng
+    if (apiKey) {
+      try {
+        const { GoogleGenAI } = require('@google/genai');
+        const aiGen = new GoogleGenAI({ apiKey });
+        const rewritePrompt = `BẠN LÀ TỔNG BIÊN TẬP BÁO CHÍ CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT (TDMU).
+Người dùng đang chọn đoạn văn bản sau trên Canvas bài viết:
+"""
+${target}
+"""
+
+Yêu cầu chỉnh sửa cụ thể của người dùng:
+"""
+${lastUserMsg}
+"""
+
+QUY TẮC BẮT BUỘC:
+1. Chỉnh sửa và viết lại ĐÚNG đoạn văn bản trên theo đúng yêu cầu của người dùng.
+2. TUYỆT ĐỐI KHÔNG BỊA ĐẶT THÊM SỐ LIỆU, SỰ KIỆN, KINH PHÍ HAY CON SỐ KHÔNG CÓ TRONG ĐOẠN GỐC.
+3. Chỉ trả về DUY NHẤT nội dung đoạn văn bản mới đã sửa, không bọc dấu ngoặc kép, không kèm lời giải thích hay dẫn dắt.`;
+
+        const candidateModels = ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-flash-latest'];
+        for (const model of candidateModels) {
+          try {
+            const resp = await aiGen.models.generateContent({ model, contents: rewritePrompt });
+            const txt = (resp.text || '').trim().replace(/^"|"$/g, '');
+            if (txt && txt.length > 3) {
+              revised = txt;
+              break;
+            }
+          } catch (mErr) {
+            // Thử model tiếp theo
+          }
+        }
+      } catch (errGen) {
+        console.warn('Gemini direct rewrite error:', errGen.message);
+      }
+    }
+
+    // 2. Thử gọi Groq nếu có groqApiKey và Gemini chưa có kết quả
+    if (!revised && groqApiKey) {
       try {
         const { callGroqAPI } = require('./aiService');
-        const groqPrompt = `Hãy sửa và trau chuốt đoạn văn sau theo yêu cầu: "${lastUserMsg}"\nĐoạn văn gốc: "${target}"\nChỉ trả về đúng nội dung đoạn văn mới đã được sửa theo văn phong báo chí chính luận công đoàn, không thêm bất kỳ lời dẫn nào.`;
+        const groqPrompt = `Hãy sửa và trau chuốt đoạn văn sau theo yêu cầu: "${lastUserMsg}"\nĐoạn văn gốc: "${target}"\nQUY TẮC: Tuyệt đối không bịa số liệu hay ngày tháng mới. Chỉ trả về đúng nội dung đoạn văn mới đã được sửa, không thêm bất kỳ lời dẫn nào.`;
         const resGroq = await callGroqAPI(groqPrompt, 'Bạn là biên tập viên báo chí chính luận chuyên nghiệp của Trường Đại học Thủ Dầu Một.', groqApiKey);
-        if (resGroq && resGroq.trim().length > 5) {
+        if (resGroq && resGroq.trim().length > 3) {
           revised = resGroq.trim().replace(/^"|"$/g, '');
         }
       } catch (errGroq) {
@@ -681,7 +718,7 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit, gro
       }
     }
 
-    // Nếu không có Groq hoặc Groq lỗi, dùng transformSelectedText deterministic chất lượng cao
+    // 3. Nếu không có kết nối LLM đám mây, dùng transformSelectedText an toàn không bịa số liệu
     if (!revised) {
       revised = transformSelectedText(target, lastUserMsg);
     }

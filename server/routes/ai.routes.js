@@ -57,7 +57,7 @@ Hãy bóc tách các sự thật cốt lõi thành đối tượng JSON chuẩn:
 }`;
 
         const factRes = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-flash-lite-latest',
           contents: factPrompt,
           config: { responseMimeType: 'application/json' }
         });
@@ -150,7 +150,7 @@ QUY ĐỊNH ĐẦU RA (TRẢ VỀ DUY NHẤT 1 ĐỐI TƯỢNG JSON HỢP LỆ, 
     if (!activeGeminiKey) throw new Error("Chưa cấu hình Gemini API Key");
     const ai = new GoogleGenAI({ apiKey: activeGeminiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-lite-latest',
       contents: fullSystemPrompt,
       config: { responseMimeType: 'application/json' }
     });
@@ -242,7 +242,7 @@ TRẢ VỀ DUY NHẤT MỘT ĐỐI TƯỢNG JSON HỢP LỆ VỚI CẤU TRÚC:
     try {
       const ai = new GoogleGenAI({ apiKey: activeKey });
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-flash-lite-latest',
         contents: prompt,
         config: { responseMimeType: 'application/json' }
       });
@@ -299,7 +299,7 @@ Trả về DUY NHẤT một JSON:
     try {
       const ai = new GoogleGenAI({ apiKey: activeKey });
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-flash-lite-latest',
         contents: prompt,
         config: { responseMimeType: 'application/json' }
       });
@@ -349,7 +349,7 @@ Trả về DUY NHẤT một đối tượng JSON:
   ]
 }`;
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-flash-lite-latest',
         contents: prompt,
         config: { responseMimeType: 'application/json' }
       });
@@ -433,7 +433,7 @@ QUY TẮC SỐNG CÒN VỀ ĐỊNH VỊ VÀ LOGIC BÀI VIẾT:
     if (!activeGeminiKey) throw new Error("Chưa cấu hình Gemini API Key");
     const ai = new GoogleGenAI({ apiKey: activeGeminiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-lite-latest',
       contents: systemPrompt + "\n\nYÊU CẦU CỦA NGƯỜI DÙNG: " + message,
       config: { responseMimeType: 'application/json' }
     });
@@ -514,7 +514,7 @@ YÊU CẦU TỪ NGƯỜI DÙNG: ${message}`;
 
   try {
     const stream = await ai.models.generateContentStream({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-lite-latest',
       contents: systemPrompt
     });
 
@@ -555,7 +555,7 @@ router.post('/floating-command', async (req, res) => {
     else instruction = "Sửa triệt để các lỗi chính tả, dấu câu và ngữ pháp trong đoạn văn:";
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-lite-latest',
       contents: `${instruction}\n\n"${text}"\n\nChỉ trả về đoạn văn đã sửa, không thêm lời chào giải thích.`
     });
 
@@ -598,7 +598,7 @@ Nội dung:
 CHỈ TRẢ VỀ NỘI DUNG VĂN BẢN KẾT QUẢ ĐÃ CHUYỂN THỂ (không thêm lời giới thiệu ngoài lề).`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-lite-latest',
       contents: prompt
     });
 
@@ -676,7 +676,7 @@ Hãy viết MỘT BÀI BÁO WEBSITE DUY NHẤT. YÊU CẦU BẮT BUỘC:
 
     let webContent = "";
     const webStream = await ai.models.generateContentStream({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-lite-latest',
       contents: webPrompt
     });
 
@@ -697,17 +697,17 @@ Hãy viết MỘT BÀI BÁO WEBSITE DUY NHẤT. YÊU CẦU BẮT BUỘC:
     const infoPrompt = `Trích xuất đúng 4 gạch đầu dòng (số liệu, cốt lõi nhất) từ bài báo sau để làm Infographic:\n${webContent}`;
 
     const [fbRes, zaloRes, videoRes, infoRes] = await Promise.all([
-      ai.models.generateContent({ model: 'gemini-2.5-flash', contents: fbPrompt }),
-      ai.models.generateContent({ model: 'gemini-2.5-flash', contents: zaloPrompt }),
-      ai.models.generateContent({ model: 'gemini-2.5-flash', contents: videoPrompt }),
-      ai.models.generateContent({ model: 'gemini-2.5-flash', contents: infoPrompt })
+      ai.models.generateContent({ model: 'gemini-flash-lite-latest', contents: fbPrompt }),
+      ai.models.generateContent({ model: 'gemini-flash-lite-latest', contents: zaloPrompt }),
+      ai.models.generateContent({ model: 'gemini-flash-lite-latest', contents: videoPrompt }),
+      ai.models.generateContent({ model: 'gemini-flash-lite-latest', contents: infoPrompt })
     ]);
 
     res.write(`data: ${JSON.stringify({ step: 'social_done', facebook: fbRes.text, zalo: zaloRes.text, video: videoRes.text, infographic: infoRes.text })}\n\n`);
     
     res.write(`data: ${JSON.stringify({ step: 'status', message: 'Bước 3/3: Sinh Prompt Nhiếp ảnh...' })}\n\n`);
     const imgPrompt = `Viết DUY NHẤT 1 CÂU PROMPT TIẾNG ANH (dưới 30 từ) miêu tả hình ảnh chính của sự kiện trong bài báo trên để đưa cho AI vẽ ảnh (dùng từ khóa: modern photojournalism, realistic, 8k). KHÔNG GIẢI THÍCH.`;
-    const imgRes = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: imgPrompt });
+    const imgRes = await ai.models.generateContent({ model: 'gemini-flash-lite-latest', contents: imgPrompt });
     
     res.write(`data: ${JSON.stringify({ step: 'image_prompt', prompt: imgRes.text.trim() })}\n\n`);
     res.write(`data: ${JSON.stringify({ step: 'all_done', message: 'Hoàn tất xuất bản đa kênh!' })}\n\n`);
@@ -796,7 +796,7 @@ QUY ĐỊNH BẮT BUỘC:
 3. KHÔNG viết lời dẫn giải thích ("Dưới đây là...", "Đây là kết quả..."). KHÔNG bọc trong khối code markdown \`\`\` nếu không phải bảng mã.`;
 
     const aiRes = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-lite-latest',
       contents: prompt
     });
 
@@ -915,7 +915,7 @@ YÊU CẦU ĐẦU RA: Trả về DUY NHẤT 1 đối tượng JSON hợp lệ:
     if (!activeGeminiKey) throw new Error("Chưa cấu hình Gemini Key");
     const ai = new GoogleGenAI({ apiKey: activeGeminiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-lite-latest',
       contents: systemPrompt + "\n\n" + promptContent,
       config: { responseMimeType: 'application/json' }
     });
@@ -1125,7 +1125,7 @@ YÊU CẦU ĐẦU RA JSON DUY NHẤT:
   try {
     const ai = new GoogleGenAI({ apiKey: activeKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-lite-latest',
       contents: systemPrompt + "\n\n" + rawEvidence,
       config: { responseMimeType: 'application/json' }
     });
@@ -1229,7 +1229,7 @@ Dựa vào Bảng dữ liệu sự thật (Fact Sheet), hãy xây dựng KẾ HO
   try {
     const ai = new GoogleGenAI({ apiKey: activeKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-lite-latest',
       contents: systemPrompt + "\n\nFACT SHEET:\n" + JSON.stringify(fs, null, 2),
       config: { responseMimeType: 'application/json' }
     });
@@ -1844,7 +1844,7 @@ YÊU CẦU ĐẦU RA JSON DUY NHẤT (Không thêm text ngoài JSON):
   try {
     const ai = new GoogleGenAI({ apiKey: activeKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-lite-latest',
       contents: systemPrompt + "\n\n" + factEvidence,
       config: { responseMimeType: 'application/json' }
     });
@@ -1962,7 +1962,7 @@ TRẢ VỀ JSON DUY NHẤT:
   try {
     const ai = new GoogleGenAI({ apiKey: activeKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-lite-latest',
       contents: systemPrompt + "\n\n" + rawEvidence,
       config: { responseMimeType: 'application/json' }
     });
@@ -2126,54 +2126,59 @@ function resolveJournalisticPhotoCaption(photo, index = 0, eventTitle = '', genr
 
 function synthesizeLocalJournalism({ userPrompt, filesInfo, photos, genre, sourceText }) {
   const prompt = fixVietnameseFont((userPrompt || '').trim());
-  const fileTexts = (filesInfo || []).map(f => `--- ${f.name} ---\n${fixVietnameseFont(f.text || '')}`).join('\n\n');
+  const files = filesInfo || [];
+  const hasFiles = files.length > 0 && files.some(f => (f.text || '').trim().length > 20);
+  
+  // Trích xuất toàn bộ nội dung thật từ các file
+  const fileTexts = files.map(f => `--- ${f.name} ---\n${fixVietnameseFont(f.text || '')}`).join('\n\n');
   const allText = [prompt, fileTexts, sourceText].filter(Boolean).join('\n\n');
-  const allNames = (filesInfo || []).map(f => (f.name || '').toLowerCase()).join(' ');
   const allLower = allText.toLowerCase();
 
-  // 1. Autonomous Topic, Headline & Category Deduction
+  // 1. Xác định Tiêu đề & Thể loại báo chí bám sát tài liệu thực tế
   let title = '';
   let sapo = '';
   let genreName = 'Tin Hoạt Động';
-  let leadContext = '';
 
-  if (allLower.includes('tọa đàm') || allNames.includes('toa_dam') || allLower.includes('dinh dưỡng') || allNames.includes('dinh_duong')) {
-    title = "Công Đoàn Trường Đại Học Thủ Dầu Một Tổ Chức Tọa Đàm Chuyên Đề Sức Khỏe Và Dinh Dưỡng Gia Đình Năm 2026";
-    sapo = "Nhằm nâng cao nhận thức về chăm sóc sức khỏe toàn diện và thiết lập chế độ dinh dưỡng khoa học cho đội ngũ cán bộ, giảng viên, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một (TDMU) đã tổ chức thành công chương trình Tọa đàm chuyên đề 'Dinh dưỡng lành mạnh vì sức khỏe gia đình' với sự tham dự của hơn 120 đại biểu đại diện cho 16 Tổ Công đoàn bộ phận trong toàn trường.";
-    genreName = "Tọa Đàm Chuyên Đề";
-    leadContext = "Chương trình tọa đàm là diễn đàn học thuật và thực tiễn thiết thực, giúp cán bộ, giảng viên và người lao động tiếp cận những kiến thức y học dự phòng bổ ích, xây dựng lối sống lành mạnh và giải tỏa áp lực trong công tác giảng dạy, nghiên cứu khoa học.";
-  } else if (allLower.includes('hội thao') || allNames.includes('hoi_thao') || allLower.includes('thể thao') || allLower.includes('bóng đá') || allLower.includes('cầu lông')) {
-    title = "Sôi Nổi Hội Thao Viên Chức Và Người Lao Động Trường Đại Học Thủ Dầu Một Năm 2026";
-    sapo = "Hưởng ứng phong trào rèn luyện thân thể theo gương Bác Hồ vĩ đại, Công đoàn Trường Đại học Thủ Dầu Một đã tưng bừng tổ chức Hội thao truyền thống với sự tham gia tranh tài hào hứng của đông đảo vận động viên là cán bộ, giảng viên, người lao động đến từ 16 Tổ Công đoàn bộ phận.";
-    genreName = "Hội Thao Phong Trào";
-    leadContext = "Hội thao đã tạo sân chơi thể thao rèn luyện sức khỏe lành mạnh, thắt chặt tinh thần đoàn kết đồng nghiệp và lan tỏa khí thế thi đua sôi nổi trong năm học mới.";
-  } else if (allLower.includes('đại hội') || allNames.includes('dai_hoi')) {
-    title = "Đại Hội Đại Biểu Công Đoàn Trường Đại Học Thủ Dầu Một: Đổi Mới, Dân Chủ, Đoàn Kết Và Phát Triển";
-    sapo = "Đại hội Đại biểu Công đoàn Trường Đại học Thủ Dầu Một đã diễn ra trọng thể, đánh giá toàn diện kết quả thực hiện Nghị quyết nhiệm kỳ qua và biểu quyết thông qua phương hướng, nhiệm vụ trọng tâm công tác nhiệm kỳ mới với sự đồng thuận tuyệt đối của đại biểu.";
-    genreName = "Đại Hội & Hội Nghị";
-    leadContext = "Đại hội khẳng định vị thế và vai trò đại diện tin cậy của tổ chức Công đoàn trong việc chăm lo, bảo vệ quyền lợi hợp pháp, chính đáng của đoàn viên và người lao động.";
-  } else if (allLower.includes('chăm lo') || allLower.includes('tết') || allLower.includes('tháng công nhân') || allNames.includes('cham_lo')) {
-    title = "Ấm Áp Chuỗi Hoạt Động Chăm Lo Đời Sống Đoàn Viên Công Đoàn Trường Đại Học Thủ Dầu Một";
-    sapo = "Thực hiện phương châm luôn đồng hành và sẻ chia cùng người lao động, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một đã tổ chức chương trình trao quà, thăm hỏi và hỗ trợ thiết thực cho các đoàn viên có hoàn cảnh khó khăn và mắc bệnh hiểm nghèo.";
-    genreName = "Chăm Lo Đoàn Viên";
-    leadContext = "Đây là hoạt động thường niên mang đậm tính nhân văn sâu sắc, thể hiện tinh thần tương thân tương ái và nghĩa tình ấm áp của đại gia đình sư phạm TDMU.";
-  } else if (allLower.includes('nữ công') || allNames.includes('nu_cong') || allLower.includes('8/3') || allLower.includes('20/10')) {
-    title = "Công Đoàn TDMU Tôn Vinh Nữ Viên Chức Tiêu Biểu 'Giỏi Việc Trường - Đảm Việc Nhà'";
-    sapo = "Ban Nữ công Công đoàn Trường Đại học Thủ Dầu Một đã tổ chức buổi họp mặt kỷ niệm và biểu dương những đóng góp to lớn của đội ngũ nữ cán bộ, giảng viên trong sự nghiệp đào tạo, nghiên cứu khoa học và xây dựng tổ ấm hạnh phúc.";
-    genreName = "Công Tác Nữ Công";
-    leadContext = "Buổi gặp mặt là dịp tôn vinh và khích lệ các nữ nhà giáo tiếp tục phát huy tài năng, phẩm chất tốt đẹp và khẳng định bản lĩnh trong thời kỳ đổi mới giáo dục.";
-  } else {
-    if (prompt) {
-      title = prompt.trim().replace(/^[^a-zA-Z0-9\u00C0-\u1EF9]+/, '').replace(/[.!?:;]+$/, '');
-      if (!title.toLowerCase().includes('công đoàn') && !title.toLowerCase().includes('tdmu')) {
-        title = `Công Đoàn TDMU: ${title}`;
-      }
+  if (hasFiles) {
+    const firstFile = files[0];
+    const cleanRaw = fixVietnameseFont(firstFile.text || '').trim();
+    const firstLines = cleanRaw.split('\n').map(l => l.trim()).filter(l => l.length > 5 && !l.startsWith('---'));
+    
+    // Tìm dòng tiêu đề thực tế trong file
+    const potentialTitle = firstLines.find(l => /^#+\s+/.test(l) || l.toUpperCase() === l || l.length > 20);
+    if (potentialTitle) {
+      title = potentialTitle.replace(/^#+\s*/, '').replace(/^[0-9IVX]+[.\s]+/, '').slice(0, 150).trim();
+    } else if (prompt) {
+      title = prompt.replace(/^[^a-zA-Z0-9\u00C0-\u1EF9]+/, '').replace(/[.!?:;]+$/, '');
     } else {
-      title = "Hoạt Động Nổi Bật Của Công Đoàn Trường Đại Học Thủ Dầu Một Năm 2026";
+      title = firstFile.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim();
     }
-    sapo = "Nhằm phát huy vai trò đại diện và chăm lo đời sống đoàn viên, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một (TDMU) đã tích cực triển khai các chương trình trọng điểm, tạo động lực thi đua hoàn thành thắng lợi các nhiệm vụ năm học.";
-    leadContext = "Sự kiện thu hút sự tham gia tích cực và đồng thuận cao của tập thể viên chức, người lao động trong toàn trường.";
+
+    if (!title.toLowerCase().includes('công đoàn') && !title.toLowerCase().includes('tdmu') && !title.toLowerCase().includes('đại học')) {
+      title = `Công Đoàn TDMU: ${title}`;
+    }
+
+    // Sapo trích từ 1-2 câu đầu thực tế của văn bản
+    const sentences = cleanRaw.replace(/^#+.*$/gm, '').replace(/<[^>]*>/g, ' ').split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(s => s.length > 30);
+    sapo = sentences.slice(0, 2).join(' ') || `Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một công bố các nội dung trọng tâm liên quan đến ${title.toLowerCase()}.`;
+  } else if (prompt) {
+    title = prompt.replace(/^[^a-zA-Z0-9\u00C0-\u1EF9]+/, '').replace(/[.!?:;]+$/, '');
+    if (!title.toLowerCase().includes('công đoàn') && !title.toLowerCase().includes('tdmu')) {
+      title = `Công Đoàn TDMU: ${title}`;
+    }
+    sapo = `Nhằm đẩy mạnh các hoạt động thiết thực và đồng hành cùng sự phát triển của nhà trường, Công đoàn Trường Đại học Thủ Dầu Một tích cực triển khai chương trình "${title}".`;
+  } else {
+    title = "Hoạt Động Trọng Tâm Của Công Đoàn Trường Đại Học Thủ Dầu Một";
+    sapo = "Công đoàn Trường Đại học Thủ Dầu Một (TDMU) tích cực đẩy mạnh các hoạt động chăm lo đời sống, nâng cao chuyên môn và xây dựng môi trường sư phạm đoàn kết, hạnh phúc.";
   }
+
+  // Phân loại thể loại báo chí
+  if (allLower.includes('đại hội') || allLower.includes('hội nghị')) genreName = 'Đại Hội & Hội Nghị';
+  else if (allLower.includes('thể thao') || allLower.includes('hội thao')) genreName = 'Hội Thao Phong Trào';
+  else if (allLower.includes('tọa đàm') || allLower.includes('chuyên đề')) genreName = 'Tọa Đàm Chuyên Đề';
+  else if (allLower.includes('chăm lo') || allLower.includes('tết')) genreName = 'Chăm Lo Đoàn Viên';
+  else if (allLower.includes('nữ công')) genreName = 'Công Tác Nữ Công';
+  else if (allLower.includes('đồ án') || allLower.includes('nghiên cứu') || allLower.includes('báo cáo')) genreName = 'Tin Chuyên Môn & Đồ Án';
 
   // 2. Chuẩn hóa danh sách ảnh tư liệu kèm tiêu đề báo chí chuẩn mực
   const safePhotos = (photos || []).map((p, idx) => {
@@ -2198,107 +2203,92 @@ function synthesizeLocalJournalism({ userPrompt, filesInfo, photos, genre, sourc
     `<figure class="image"><img src="${p.url}" alt="${p.caption}" /><figcaption>${p.caption}</figcaption></figure>`
   ).join('\n');
 
-  // 3. Extract Excel facts & format tables
-  let excelSectionHtml = `
-<h2>Minh bạch Nguồn lực Tài chính và Công tác Tổ chức Chu đáo</h2>
-<p>Công tác hậu cần, dự toán ngân sách và phân bổ nguồn lực đã được Ban Tổ chức chuẩn bị chu đáo, minh bạch theo đúng quy định tài chính hiện hành của Tổng Liên đoàn Lao động Việt Nam và quy chế chi tiêu nội bộ của Công đoàn Trường Đại học Thủ Dầu Một. Từng khoản mục đều được cân đối hợp lý nhằm bảo đảm tối đa quyền lợi trực tiếp cho người tham gia.</p>
-<figure class="table">
-  <table>
-    <thead>
-      <tr>
-        <th>Hạng mục / Nội dung công việc</th>
-        <th>Đơn vị tính</th>
-        <th>Số lượng</th>
-        <th>Thành tiền (VNĐ)</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><strong>Hội trường &amp; Trang trí khánh tiết</strong></td><td>Gói</td><td>01</td><td>5.000.000</td></tr>
-      <tr><td><strong>Bồi dưỡng Chuyên gia Y tế &amp; Báo cáo viên</strong></td><td>Buổi</td><td>02</td><td>6.000.000</td></tr>
-      <tr><td><strong>Tài liệu chuyên đề &amp; Quà tặng đại biểu</strong></td><td>Phần</td><td>120</td><td>18.000.000</td></tr>
-      <tr><td><strong>Nước uống &amp; Teabreak dinh dưỡng giữa giờ</strong></td><td>Suất</td><td>120</td><td>7.500.000</td></tr>
-      <tr><td colspan="3"><strong>TỔNG KINH PHÍ DỰ TOÁN THỰC HIỆN:</strong></td><td><strong>36.500.000 VNĐ</strong></td></tr>
-    </tbody>
-  </table>
-</figure>
-<p>Ban Chấp hành Công đoàn trường nhấn mạnh việc quản lý và giải ngân kinh phí bảo đảm đúng mục đích, tiết kiệm, công khai và đem lại hiệu quả thụ hưởng thiết thực nhất cho cán bộ, đoàn viên tham gia.</p>`;
-
-  // 4. Triển khai bài báo hoàn chỉnh, chuyên sâu từ 1.100 - 1.400 từ
+  // 3. Xây dựng nội dung bài báo chuẩn mực, TUYỆT ĐỐI KHÔNG BỊA ĐẶT SỐ LIỆU HAY BẢNG KINH PHÍ ẢO
   let bodyHtml = '';
 
-  if (genreName === 'Tọa Đàm Chuyên Đề' || allLower.includes('dinh dưỡng') || allNames.includes('dinh_duong') || allNames.includes('toa_dam')) {
-    bodyHtml = normalizeArticleHtml(fixVietnameseFont(`
-<h1 class="article-title">${title}</h1>
-<p class="sapo"><strong>${sapo}</strong></p>
+  if (hasFiles) {
+    // Trích xuất các đoạn văn và tiêu đề thực từ tài liệu
+    const fullText = files.map(f => f.text || '').join('\n\n');
+    const rawBlocks = fullText.split(/\n{2,}/).map(b => b.trim()).filter(b => b.length > 20);
 
-<h2>Bối cảnh Cấp thiết và Ý nghĩa Chiến lược của Công tác Chăm sóc Sức khỏe Đoàn viên</h2>
-<p>Trong bối cảnh giáo dục đại học không ngừng đổi mới và hội nhập sâu rộng, đội ngũ cán bộ, giảng viên và người lao động tại Trường Đại học Thủ Dầu Một luôn nỗ lực cống hiến hết mình vì sự nghiệp nâng cao chất lượng đào tạo và nghiên cứu khoa học. Tuy nhiên, đặc thù công việc trí óc cường độ cao, thời gian ngồi làm việc liên tục trước máy vi tính cùng áp lực hoàn thành tiến độ giáo án, bài báo quốc tế đã đặt ra nhiều thách thức lớn đối với sức khỏe thể chất và tinh thần của người lao động.</p>
-<p>Nhận thức sâu sắc rằng sức khỏe và sự an tâm công tác của đoàn viên là nền tảng cốt lõi cho sự phát triển vững bền của Nhà trường, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một đã chủ động xây dựng kế hoạch và tổ chức chương trình Tọa đàm chuyên đề chuyên sâu. Đây là bước chuyển mình quan trọng từ tư duy chăm lo hỗ trợ thụ động sang mô hình chăm sóc sức khỏe chủ động, toàn diện cho người lao động ngay từ cơ sở.</p>
-<p>Chương trình là dịp quy tụ hơn 120 đại biểu ưu tú đại diện cho 16 Tổ Công đoàn bộ phận trong toàn trường. Sự hiện diện đầy đủ và nghiêm túc của các Thầy, Cô trong Ban Thường vụ, Tổ trưởng, Tổ phó Công đoàn và đông đảo đoàn viên đã tạo nên không gian sinh hoạt chính trị - xã hội ấm áp, thể hiện tinh thần trách nhiệm và nghĩa tình gắn bó keo sơn của ngôi nhà chung TDMU.</p>
+    const sections = [];
+    let currentSec = { heading: 'Tổng quan và Mục tiêu Triển khai', paragraphs: [] };
 
-${heroFigure}
+    for (const blk of rawBlocks) {
+      if (/^#{1,3}\s+/.test(blk)) {
+        if (currentSec.paragraphs.length > 0) sections.push(currentSec);
+        currentSec = {
+          heading: blk.replace(/^#{1,3}\s+/, '').replace(/^[0-9IVX]+[.\s]+/, '').trim(),
+          paragraphs: []
+        };
+      } else if (/^[0-9IVX]+[\.:\s]+[A-Z\u00C0-\u1EF9\s]{5,60}$/m.test(blk) && blk.length < 80) {
+        if (currentSec.paragraphs.length > 0) sections.push(currentSec);
+        currentSec = {
+          heading: blk.replace(/^[0-9IVX]+[\.:\s]+/, '').trim(),
+          paragraphs: []
+        };
+      } else {
+        // Tách các đoạn văn sạch
+        const cleanP = blk.replace(/^[-•*]\s+/gm, '').replace(/\s+/g, ' ').trim();
+        if (cleanP.length > 20) {
+          currentSec.paragraphs.push(cleanP);
+        }
+      }
+    }
+    if (currentSec.paragraphs.length > 0) sections.push(currentSec);
 
-<h2>Chuyên đề 1: Phân tích Thực trạng Sức khỏe Học đường và Phác đồ Dinh dưỡng Miễn dịch từ Chuyên gia</h2>
-<p>Tại phiên làm việc chuyên môn, các báo cáo viên chuyên ngành y học dự phòng và dinh dưỡng lâm sàng đã công bố hệ thống số liệu khảo sát đáng chú ý về thực trạng thể lực của giảng viên đại học. Đa số viên chức thường gặp phải các vấn đề về rối loạn chuyển hóa nhẹ, suy giảm thị lực, căng thẳng cơ bắp vùng cổ vai gáy và thiếu hụt các vi chất dinh dưỡng cần thiết do thói quen ăn uống nhanh qua bữa và lạm dụng đồ uống có chứa caffein để duy trì sự tỉnh táo.</p>
-<p>Trước thực trạng đó, chuyên gia đã phân tích tường tận cấu trúc Tháp dinh dưỡng chuẩn y khoa, làm rõ tỷ lệ vàng giữa các nhóm chất đa lượng: carbohydrate phức hợp chuyển hóa chậm, nguồn protein sinh học cao kết hợp hài hòa giữa đạm thực vật và động vật sạch, cùng hệ chất béo không bão hòa đơn và đa. Chuyên gia khuyến nghị việc phân bổ năng lượng đồng đều qua các bữa ăn trong ngày là yếu tố quyết định giúp duy trì sự minh mẫn và ổn định cảm xúc trong suốt giờ lên lớp.</p>
-<p>Đặc biệt, tọa đàm đã giới thiệu phác đồ "Dinh dưỡng miễn dịch ứng dụng" - một giải pháp y tế dự phòng tiên tiến giúp tăng cường sức đề kháng tế bào. Bằng cách bổ sung có chọn lọc các vi chất vàng như Kẽm, Selen, Vitamin D3, hệ Vitamin nhóm B và Omega-3 tinh khiết, cơ thể người lao động trí óc sẽ hình thành lá chắn tự nhiên chống lại hiện tượng stress oxy hóa và giảm thiểu tối đa hội chứng kiệt sức nghề nghiệp (Burnout).</p>
-<p>Đi đôi với lý thuyết khoa học, báo cáo viên đã tận tình hướng dẫn phương pháp thiết lập thực đơn tuần dinh dưỡng khoa học, kỹ thuật sơ chế giữ trọn hoạt chất tự nhiên và nguyên tắc lựa chọn nguồn thực phẩm an toàn, có nguồn gốc rõ ràng. Những kiến thức thực chứng, sinh động này đã giúp người tham dự tháo gỡ nhiều ngộ nhận phổ biến trong việc tự chăm sóc sức khỏe thường ngày.</p>
+    // Ghép thành bài báo HTML với ảnh đan xen
+    let articleParts = [
+      `<h1 class="article-title">${title}</h1>`,
+      `<p class="sapo"><strong>${sapo}</strong></p>`
+    ];
 
-<h2>Chuyên đề 2: Bữa cơm Gia đình Ấm áp và Nghệ thuật Tái tạo Năng lượng Sống</h2>
-<p>Tiếp nối chương trình, tọa đàm đã mở rộng thảo luận sang một chủ đề giàu cảm xúc và tính nhân văn: giá trị của bữa cơm gia đình trong việc nuôi dưỡng sức khỏe tinh thần. Trong nhịp sống số hóa hối hả, khoảnh khắc quây quần bên mâm cơm ấm áp sau một ngày làm việc bận rộn không đơn thuần là việc dung nạp dưỡng chất thể chất, mà chính là không gian thiêng liêng để các thành viên lắng nghe, sẻ chia và tiếp thêm điểm tựa tinh thần cho nhau.</p>
-<p>Nhiều giảng viên nữ công gia chánh đã nhiệt tình chia sẻ những kinh nghiệm thực tiễn quý báu về cách chế biến những bữa ăn thanh đạm, giảm lượng muối và đường tinh luyện nhưng vẫn bảo đảm hương vị hấp dẫn và tiết kiệm thời gian nội trợ. Sự cân bằng hài hòa giữa sức khỏe thể chất (Physical Health) và cảm giác an lạc trong tâm hồn (Mental Wellness) chính là ngọn nguồn nuôi dưỡng sự sáng tạo và ngọn lửa nhiệt huyết của người thầy trên bục giảng.</p>
-<p>Ban Nữ công Công đoàn trường cũng kêu gọi toàn thể cán bộ, viên chức xây dựng thói quen "bữa ăn không màn hình điện thoại", dành trọn sự quan tâm cho người thân, qua đó xây dựng nếp sống văn hóa gia đình hạnh phúc, lành mạnh và tiến bộ.</p>
+    if (heroFigure) articleParts.push(heroFigure);
 
-${photo2Figure}
+    sections.forEach((sec, idx) => {
+      articleParts.push(`<h2>${sec.heading}</h2>`);
+      sec.paragraphs.forEach(pText => {
+        articleParts.push(`<p>${pText}</p>`);
+      });
 
-<h2>Diễn đàn Trao đổi Cởi mở và Giải đáp Trực tiếp Các Trăn trở Sức khỏe Cơ sở</h2>
-<p>Không khí hội trường trở nên vô cùng hào hứng và sôi nổi trong phần thảo luận mở với hơn 15 lượt ý kiến chất vấn trực tiếp từ đại biểu các Khoa, Viện, Phòng ban trực thuộc. Các câu hỏi tập trung vào những vấn đề rất thiết thực như giải pháp dinh dưỡng kiểm soát chỉ số đường huyết và mỡ máu cho người lớn tuổi trong gia đình, thực đơn phát triển thể chất và trí não cho con em độ tuổi học sinh, cũng như các bài tập giãn cơ nhanh ngay tại văn phòng làm việc.</p>
-<p>Bằng tinh thần tận tâm và vốn kiến thức y khoa chuyên sâu, các chuyên gia đã giải đáp cặn kẽ từng trường hợp, phân tích nguyên nhân gốc rễ và đưa ra các lời khuyên y khoa chuẩn xác, dễ áp dụng. Sự cởi mở, chân tình trong phiên hỏi đáp đã giải tỏa nhiều âu lo, mang lại sự phấn khởi và gắn kết sâu sắc giữa các đồng nghiệp trong trường.</p>
+      if (idx === 0 && photo2Figure) {
+        articleParts.push(photo2Figure);
+      } else if (idx === 1 && remainingFigures) {
+        articleParts.push(remainingFigures);
+      }
+    });
 
-${remainingFigures}
+    // Kết luận
+    articleParts.push(`<h2>Định hướng Triển khai và Kế hoạch Tiếp theo</h2>`);
+    articleParts.push(`<p>Các nội dung trong tài liệu phản ánh nỗ lực chuẩn bị kỹ lưỡng và tinh thần trách nhiệm của đội ngũ thực hiện. Trong thời gian tới, các đơn vị liên quan sẽ tiếp tục bám sát tiến độ đề ra, phối hợp chặt chẽ để hiện thực hóa các mục tiêu đã được thống nhất.</p>`);
 
-${excelSectionHtml}
-
-<h2>Định hướng Triển khai và Quyết tâm Đồng hành Cùng Người Lao động</h2>
-<p>Phát biểu tổng kết buổi tọa đàm, đại diện Ban Thường vụ Công đoàn Trường Đại học Thủ Dầu Một nhiệt liệt biểu dương tinh thần tham gia trách nhiệm của toàn thể đại biểu; đồng thời gửi lời tri ân sâu sắc đến các chuyên gia y tế đã đồng hành cùng chương trình.</p>
-<p>Ban Thường vụ yêu cầu 16 Tổ Công đoàn bộ phận khẩn trương chuyển tải các tài liệu, cẩm nang dinh dưỡng đến tận tay từng đoàn viên tại đơn vị; đồng thời chủ động thành lập và duy trì các câu lạc bộ thể thao, rèn luyện thể chất phù hợp với điều kiện cơ sở. Công đoàn trường cam kết tiếp tục đồng hành, định kỳ tổ chức các chương trình tầm soát sức khỏe chuyên sâu và nâng cấp điều kiện làm việc nhằm mang lại sự hài lòng cao nhất cho người lao động.</p>
-<p>Buổi tọa đàm khép lại trong niềm tin tưởng và sự đồng thuận cao. Toàn thể cán bộ, giảng viên quyết tâm đoàn kết một lòng, nỗ lực thi đua Dạy tốt - Học tốt - Quản lý tốt, cùng nhau rèn luyện thân thể để cống hiến hết mình cho sự phát triển vững mạnh của Trường Đại học Thủ Dầu Một trong kỷ nguyên mới.</p>
-`.trim()));
+    bodyHtml = normalizeArticleHtml(fixVietnameseFont(articleParts.join('\n\n')));
   } else {
-    // General high-depth template for other genres
+    // Trường hợp viết bài theo Prompt không kèm file
     bodyHtml = normalizeArticleHtml(fixVietnameseFont(`
 <h1 class="article-title">${title}</h1>
 <p class="sapo"><strong>${sapo}</strong></p>
 
-<h2>Bối cảnh Cấp thiết và Ý nghĩa Chiến lược của Sự kiện</h2>
-<p>${leadContext}</p>
-<p>Nhận thức sâu sắc vai trò của tổ chức Công đoàn trong việc đại diện, chăm lo và bảo vệ quyền lợi hợp pháp, chính đáng của người lao động, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một luôn chú trọng đổi mới nội dung, phương thức hoạt động để ngày càng đi vào chiều sâu và thực chất. Sự kiện lần này là minh chứng rõ nét cho sự quan tâm sâu sắc của tổ chức đối với sự nghiệp phát triển con người toàn diện.</p>
-<p>Tham dự sự kiện có đại diện Ban Thường vụ Công đoàn trường, các đồng chí Tổ trưởng, Tổ phó cùng đông đảo cán bộ, giảng viên, nhân viên đại diện cho 16 Tổ Công đoàn bộ phận trực thuộc. Sự hiện diện đông đủ thể hiện tinh thần trách nhiệm cao đối với công tác chăm lo và phát triển bền vững của Nhà trường.</p>
+<h2>Bối cảnh và Ý nghĩa Trọng tâm của Hoạt động</h2>
+<p>Thực hiện chương trình công tác trọng tâm, Công đoàn Trường Đại học Thủ Dầu Một (TDMU) luôn chủ động đổi mới nội dung và phương thức hoạt động nhằm đáp ứng tốt nhất nguyện vọng chính đáng của cán bộ, giảng viên và người lao động.</p>
+<p>Sự kiện lần này thu hút sự quan tâm, hưởng ứng nhiệt tình của các Tổ Công đoàn trực thuộc, thể hiện tinh thần đoàn kết, trách nhiệm và cam kết đồng hành vì sự phát triển bền vững của Nhà trường.</p>
 
 ${heroFigure}
 
-<h2>Nội dung Báo cáo Chuyên đề và Trao đổi Học thuật Chuyên sâu</h2>
-<p>Tại phiên làm việc chính thức, các đại biểu đã lắng nghe các báo cáo viên chuyên gia trình bày hệ thống chuyên đề khoa học công phu với các luận điểm sắc bén, phân tích thấu đáo thực trạng cũng như giải pháp cụ thể cho đội ngũ viên chức, người lao động.</p>
-<p>Trước hết, báo cáo đã tập trung nhận diện những khó khăn, thách thức nghề nghiệp thường gặp đối với đội ngũ viên chức trong giai đoạn chuyển đổi số và nâng cao chất lượng giáo dục đại học. Đáng chú ý là sự cần thiết phải cân bằng giữa áp lực công việc trí óc và sức khỏe thể chất, tinh thần.</p>
-<p>Trên cơ sở đó, hội nghị đã giới thiệu các phác đồ và giải pháp ứng dụng thiết thực, hướng dẫn chi tiết các phương pháp làm việc khoa học, tăng cường tương tác đồng nghiệp và xây dựng nếp sống văn hóa công sở văn minh, hiện đại.</p>
+<h2>Nội dung Trọng tâm và Định hướng Triển khai</h2>
+<p>Tại buổi làm việc, các đại biểu và thành viên tham dự đã tập trung trao đổi, thảo luận sâu sắc về các giải pháp thiết thực, phương án tổ chức khoa học nhằm đạt hiệu quả cao nhất trong thực tiễn.</p>
+<p>Các ý kiến đóng góp từ cơ sở được ghi nhận đầy đủ, làm cơ sở để Ban Chấp hành Công đoàn hoàn thiện kế hoạch hành động, bảo đảm quyền lợi thiết thực cho toàn thể đoàn viên.</p>
 
 ${photo2Figure}
 
-<h2>Diễn đàn Thảo luận Thực tiễn và Ý kiến Đóng góp từ Cơ sở</h2>
-<p>Buổi làm việc đã ghi nhận nhiều đề xuất có giá trị thực tiễn cao gửi gắm đến Ban Chấp hành Công đoàn, trọng tâm là việc tiếp tục duy trì định kỳ các chương trình chăm lo đời sống toàn diện và mở rộng các phong trào thi đua tại cơ sở.</p>
-<p>Các ý kiến đóng góp từ các Tổ Công đoàn đã được lắng nghe, tổng hợp và giải đáp cặn kẽ trên tinh thần dân chủ, cởi mở và xây dựng, góp phần củng cố khối đại đoàn kết nội bộ trong toàn trường.</p>
-
 ${remainingFigures}
-
-${excelSectionHtml}
 
 <h2>Định hướng Triển khai và Quyết tâm Hành động</h2>
-<p>Phát biểu kết luận, đại diện Ban Thường vụ Công đoàn trường ghi nhận và đánh giá cao tinh thần trách nhiệm của toàn thể đoàn viên; đồng thời đề nghị các Tổ Công đoàn cơ sở tiếp tục phổ biến, quán triệt sâu rộng các nội dung đã thống nhất đến từng cán bộ, người lao động.</p>
-<p>Toàn thể cán bộ, giảng viên quyết tâm đoàn kết một lòng, nỗ lực thi đua Dạy tốt - Học tốt - Quản lý tốt, góp phần khẳng định uy tín và vị thế của Trường Đại học Thủ Dầu Một trong giai đoạn phát triển mới.</p>
+<p>Phát biểu kết luận, đại diện Công đoàn trường kêu gọi toàn thể cán bộ, giảng viên, nhân viên phát huy tinh thần trách nhiệm, chủ động sáng tạo trong công việc, chung tay hoàn thành xuất sắc các nhiệm vụ năm học.</p>
 `.trim()));
   }
 
-  const fbCaption = fixVietnameseFont(`🔔 [CÔNG ĐOÀN TDMU 2026]\n✨ ${title.toUpperCase()}\n\n📌 ${sapo}\n\n👉 Xem toàn văn bài viết và hình ảnh hoạt động tại Cổng thông tin Công đoàn TDMU!\n#CongDoanTDMU #TDMU2026 #HoatDongDoanVien #DaiHocThuDauMot`);
+  const fbCaption = fixVietnameseFont(`🔔 [CÔNG ĐOÀN TDMU 2026]\n✨ ${title.toUpperCase()}\n\n📌 ${sapo}\n\n👉 Chi tiết thông tin mời Quý Thầy/Cô và các bạn theo dõi tại Cổng thông tin Công đoàn TDMU!\n#CongDoanTDMU #TDMU2026 #HoatDongDoanVien #DaiHocThuDauMot`);
 
   const zaloMessage = fixVietnameseFont(`[CÔNG ĐOÀN TDMU] ${title}. ${sapo} Kính mời quý Thầy/Cô và Đoàn viên theo dõi chi tiết tại Cổng thông tin Công đoàn. Trân trọng!`);
 
@@ -2536,7 +2526,7 @@ ${sourceBlock}`;
 
     let webContent = '';
     const webStream = await ai.models.generateContentStream({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-lite-latest',
       contents: webSystemPrompt
     });
 
@@ -2589,7 +2579,7 @@ BÀI BÁO GỐC:
 ${cleanPlainText}`;
 
       const socialRes = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-flash-lite-latest',
         contents: socialPrompt,
         config: { responseMimeType: 'application/json' }
       });
