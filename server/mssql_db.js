@@ -63,9 +63,14 @@ async function getArticlesFromDb(category = 'all', status = 'all', search = '') 
             ELSE a.TrangThai
           END AS statusName,
           a.IsAiGenerated AS isAiGenerated,
+          a.FbPostId AS fbPostId,
+          a.ZaloMsgId AS zaloMsgId,
+          a.NoiDungFB AS noi_dung_fb,
+          a.NoiDungZalo AS noi_dung_zalo,
           a.LuotXem AS viewsCount,
           a.LuotThich AS likesCount,
           COALESCE(a.LuotVoTay, 0) AS clapsCount,
+          CONVERT(VARCHAR(19), a.NgayXuatBan, 120) AS publishedAt,
           CONVERT(VARCHAR(19), a.NgayTao, 120) AS createdAt,
           CONVERT(VARCHAR(19), COALESCE(a.NgayCapNhat, a.NgayTao), 120) AS updatedAt
         FROM dbo.ARTICLES a
