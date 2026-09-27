@@ -154,7 +154,14 @@ export default function AdminStudio() {
 
   // ── Schedule ──────────────────────────────────────────────────────────────────
   const [scheduledAt, setScheduledAt] = useState('');
-  const [scheduleChannels, setScheduleChannels] = useState({ web: true, fb: false, zalo: false });
+  const [scheduleChannels, setScheduleChannels] = useState({ web: true, fb: true, zalo: false });
+  const [schedulesList, setSchedulesList] = useState([]);
+
+  // ── Omnichannel Multi-channel Publishing ──────────────────────────────────────
+  const [omnichannelModalOpen, setOmnichannelModalOpen] = useState(false);
+  const [isPublishingNow, setIsPublishingNow] = useState(false);
+  const [publishResult, setPublishResult] = useState(null);
+  const [omniChannels, setOmniChannels] = useState({ web: true, fb: true, zalo: true });
 
   // ── Drafts drawer ─────────────────────────────────────────────────────────────
   const [draftsOpen, setDraftsOpen] = useState(true);
@@ -1129,14 +1136,206 @@ export default function AdminStudio() {
     finally { setIsSaving(false); }
   };
 
-  const publishLive = async () => {
-    if (!title.trim()) { alert('Vui lòng nhập tiêu đề!'); return; }
-    if (!window.confirm(`Xuất bản "${title}" lên Cổng thông tin Công đoàn?`)) return;
+  const fetchSchedulesList = useCallback(async () => {
     try {
-      const res = await fetch('/api/articles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, summary: sapo, content: editorRef.current?.innerHTML || bodyHtml, status: 'published', author: 'TS. Lê Thị Kim Út' }) }).then(r => r.json());
-      if (res.success) { alert('🎉 Đã Xuất Bản Live thành công!'); fetchDrafts(); }
-      else throw new Error(res.error);
-    } catch (err) { alert('Lỗi: ' + err.message); }
+      const res = await fetch('/api/publish/schedules').then(r => r.json());
+      if (res.success) setSchedulesList(res.data || []);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetchSchedulesList();
+  }, [fetchSchedulesList]);
+
+  const publishToFacebookDirect = async () => {
+    if (!title.trim() && !fbCaption.trim()) { alert('Vui lòng nhập tiêu đề hoặc caption Facebook!'); return; }
+    setIsPublishingNow(true);
+    try {
+      const res = await fetch('/api/publish/facebook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          caption: fbCaption || `${title}\n\n${sapo}\n\n#CongDoanTDMU #TDMU`,
+          imageUrl: fbSelectedPhotos[0] || (eventPhotos[0]?.url) || '',
+          articleTitle: title,
+          articleId: activeArticleId
+        })
+      }).then(r => r.json());
+
+      if (res.success) {
+        alert(`🎉 ${res.message}\n\nMã bài đăng: ${res.data?.postId || 'Thành công'}\nLink: ${res.data?.permalinkUrl || ''}`);
+      } else {
+        alert('Lỗi đăng Facebook: ' + (res.error || 'Không xác định'));
+      }
+    } catch (e) {
+      alert('Lỗi kết nối Facebook: ' + e.message);
+    } finally {
+      setIsPublishingNow(false);
+    }
+  };
+
+  const publishToZaloDirect = async () => {
+    if (!title.trim() && !zaloText.trim()) { alert('Vui lòng nhập nội dung bản tin Zalo OA!'); return; }
+    setIsPublishingNow(true);
+    try {
+      const res = await fetch('/api/publish/zalo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: zaloText || `[BẢN TIN CÔNG ĐOÀN TDMU]\n${title}\n\n${sapo}`,
+          title: title,
+          articleId: activeArticleId,
+          imageUrl: (eventPhotos[0]?.url) || ''
+        })
+      }).then(r => r.json());
+
+      if (res.success) {
+        alert(`🎉 ${res.message}\n\nMã tin nhắn Zalo OA: ${res.data?.messageId || 'Thành công'}`);
+      } else {
+        alert('Lỗi gửi Zalo OA: ' + (res.error || 'Không xác định'));
+      }
+    } catch (e) {
+      alert('Lỗi kết nối Zalo OA: ' + e.message);
+    } finally {
+      setIsPublishingNow(false);
+    }
+  };
+
+  const testChannelConnection = async (ch) => {
+    try {
+      const res = await fetch('/api/publish/test-connection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel: ch })
+      }).then(r => r.json());
+      alert(res.message || (res.error ? 'Lỗi: ' + res.error : 'Kết nối thành công!'));
+    } catch (e) {
+      alert('Lỗi kiểm tra kết nối: ' + e.message);
+    }
+  };
+
+  const handleConfirmSchedule = async () => {
+    if (!scheduledAt) { alert('Vui lòng chọn thời gian xuất bản!'); return; }
+    const chs = Object.entries(scheduleChannels).filter(([, v]) => v).map(([k]) => k === 'fb' ? 'facebook' : k);
+    if (!chs.length) { alert('Vui lòng chọn ít nhất một kênh để hẹn lịch!'); return; }
+
+    try {
+      let artId = activeArticleId;
+      if (!artId) {
+        const createRes = await fetch('/api/articles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: title.trim() || ('Bản thảo hẹn lịch ' + new Date().toLocaleDateString('vi-VN')),
+            summary: sapo,
+            content: editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || bodyHtml),
+            status: 'draft'
+          })
+        }).then(r => r.json());
+        if (createRes.success && createRes.data?.id) {
+          artId = createRes.data.id;
+          setActiveArticleId(artId);
+        }
+      }
+
+      const res = await fetch('/api/publish/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          articleId: artId,
+          channels: chs,
+          scheduledAt,
+          title: title || 'Bản tin hẹn lịch',
+          facebook: { caption: fbCaption },
+          zalo: { content: zaloText }
+        })
+      }).then(r => r.json());
+
+      if (res.success) {
+        alert(`✅ ${res.message}`);
+        fetchSchedulesList();
+      } else {
+        alert('Lỗi hẹn lịch: ' + res.error);
+      }
+    } catch (e) {
+      alert('Lỗi hẹn lịch: ' + e.message);
+    }
+  };
+
+  const handleCancelSchedule = async (id) => {
+    if (!window.confirm('Bạn có chắc muốn hủy lịch hẹn xuất bản này?')) return;
+    try {
+      const res = await fetch(`/api/publish/schedule/${id}`, { method: 'DELETE' }).then(r => r.json());
+      if (res.success) {
+        alert('✅ Đã hủy lịch hẹn thành công!');
+        fetchSchedulesList();
+      }
+    } catch (e) {
+      alert('Lỗi: ' + e.message);
+    }
+  };
+
+  const handleOmnichannelPublishNow = async () => {
+    const chs = [];
+    if (omniChannels.web) chs.push('web');
+    if (omniChannels.fb) chs.push('facebook');
+    if (omniChannels.zalo) chs.push('zalo');
+    if (!chs.length) { alert('Vui lòng chọn ít nhất 1 kênh để xuất bản!'); return; }
+
+    setIsPublishingNow(true);
+    setPublishResult(null);
+
+    try {
+      const currentHtml = editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || bodyHtml);
+      let artId = activeArticleId;
+
+      if (!artId) {
+        const createRes = await fetch('/api/articles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: title.trim() || 'Bản tin Công Đoàn TDMU',
+            summary: sapo,
+            content: currentHtml,
+            status: 'draft',
+            author: 'TS. Lê Thị Kim Út'
+          })
+        }).then(r => r.json());
+        if (createRes.success && createRes.data?.id) {
+          artId = createRes.data.id;
+          setActiveArticleId(artId);
+        }
+      }
+
+      const res = await fetch('/api/publish/now', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          articleId: artId,
+          channels: chs,
+          web: { title, summary: sapo, content: currentHtml, image: (eventPhotos[0]?.url) || 'images/banner.jpg' },
+          facebook: { caption: fbCaption || `${title}\n\n${sapo}\n\n#CongDoanTDMU #TDMU`, imageUrl: fbSelectedPhotos[0] || (eventPhotos[0]?.url) || '' },
+          zalo: { content: zaloText || `[BẢN TIN CÔNG ĐOÀN TDMU]\n${title}\n\n${sapo}` }
+        })
+      }).then(r => r.json());
+
+      if (res.success) {
+        setPublishResult(res.data);
+        fetchDrafts();
+      } else {
+        alert('Lỗi xuất bản: ' + res.error);
+      }
+    } catch (e) {
+      alert('Lỗi: ' + e.message);
+    } finally {
+      setIsPublishingNow(false);
+    }
+  };
+
+  const publishLive = () => {
+    if (!title.trim()) { alert('Vui lòng nhập tiêu đề bài viết!'); return; }
+    setPublishResult(null);
+    setOmnichannelModalOpen(true);
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1524,6 +1723,24 @@ export default function AdminStudio() {
                         </div>
                       </div>
                     )}
+                    {/* Direct Facebook Action Buttons */}
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                      <button 
+                        onClick={publishToFacebookDirect} 
+                        disabled={isPublishingNow}
+                        className="action-btn" 
+                        style={{ background: '#1877F2', color: 'white', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        <i className="fa-brands fa-facebook" /> {isPublishingNow ? 'Đang gửi...' : '🚀 Đăng Ngay Lên Fanpage Facebook'}
+                      </button>
+                      <button 
+                        onClick={() => testChannelConnection('facebook')} 
+                        className="action-btn" 
+                        style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', fontSize: '11.5px' }}
+                      >
+                        <i className="fa-solid fa-circle-check" /> Test Kết Nối Meta API
+                      </button>
+                    </div>
                   </div>
 
                   {/* Right: Facebook Preview Card */}
@@ -1589,7 +1806,26 @@ export default function AdminStudio() {
                       style={{ width: '100%', padding: '10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px', lineHeight: '1.65', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'vertical' }}
                     />
                     <div style={{ fontSize: '11.5px', color: zaloText.length > 1000 ? '#DC2626' : '#64748B', textAlign: 'right' }}>{zaloText.length} / 1000 ký tự</div>
-                    <button onClick={() => navigator.clipboard.writeText(zaloText).then(() => alert('📋 Đã copy nội dung Zalo OA!'))} className="action-btn" style={{ background: '#0068FF', color: 'white', alignSelf: 'flex-start' }}>📋 Copy Nội Dung</button>
+                    
+                    {/* Direct Zalo Action Buttons */}
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
+                      <button 
+                        onClick={publishToZaloDirect} 
+                        disabled={isPublishingNow}
+                        className="action-btn" 
+                        style={{ background: '#0068FF', color: 'white', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        <i className="fa-solid fa-comment-dots" /> {isPublishingNow ? 'Đang gửi...' : '🚀 Gửi Tin Lên Zalo OA Ngay'}
+                      </button>
+                      <button 
+                        onClick={() => testChannelConnection('zalo')} 
+                        className="action-btn" 
+                        style={{ background: '#F0F9FF', border: '1px solid #BAE6FD', color: '#0369A1', fontSize: '11.5px' }}
+                      >
+                        <i className="fa-solid fa-circle-check" /> Test Kết Nối Zalo OA
+                      </button>
+                      <button onClick={() => navigator.clipboard.writeText(zaloText).then(() => alert('📋 Đã copy nội dung Zalo OA!'))} className="action-btn" style={{ background: '#FFF', border: '1px solid #CBD5E1', color: '#475569' }}>📋 Copy Nội Dung</button>
+                    </div>
                   </div>
                   {/* Zalo Preview */}
                   <div>
@@ -1607,19 +1843,78 @@ export default function AdminStudio() {
 
             {/* ── SCHEDULE CHANNEL ────────────────────────────────────────── */}
             {activeChannel === 'schedule' && (
-              <div style={{ flex: 1, overflowY: 'auto', padding: '18px 24px', maxWidth: '500px' }}>
-                <div style={{ fontSize: '13px', fontWeight: '800', color: '#002855', marginBottom: '14px' }}>⏰ Hẹn lịch xuất bản đa kênh</div>
-                <div style={{ display: 'flex', gap: '14px', marginBottom: '14px' }}>
-                  {[['web','📰 Website'],['fb','📘 Facebook'],['zalo','💬 Zalo']].map(([ch, label]) => (
-                    <label key={ch} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={scheduleChannels[ch]} onChange={e => setScheduleChannels(p => ({...p, [ch]: e.target.checked}))} style={{ width: '16px', height: '16px' }} />
-                      {label}
-                    </label>
-                  ))}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '18px 24px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '24px' }}>
+                  {/* Left: Schedule Form */}
+                  <div style={{ background: '#FFF', padding: '20px', borderRadius: '10px', border: '1px solid #E2E8F0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div style={{ fontSize: '14px', fontWeight: '800', color: '#002855', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <i className="fa-solid fa-calendar-plus" style={{ color: '#8B5CF6' }} /> Hẹn Lịch Xuất Bản Tự Động
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#64748B' }}>Hệ thống Dispatcher sẽ tự động quét và phát hành đúng thời gian đã chọn:</div>
+                    
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: '700', color: '#002855', display: 'block', marginBottom: '6px' }}>Chọn các kênh đăng:</label>
+                      <div style={{ display: 'flex', gap: '12px' }}>
+                        {[['web','📰 Website'],['fb','📘 Facebook'],['zalo','💬 Zalo OA']].map(([ch, label]) => (
+                          <label key={ch} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: '600', cursor: 'pointer' }}>
+                            <input type="checkbox" checked={scheduleChannels[ch]} onChange={e => setScheduleChannels(p => ({...p, [ch]: e.target.checked}))} style={{ width: '15px', height: '15px' }} />
+                            {label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: '700', color: '#002855', display: 'block', marginBottom: '6px' }}>Thời gian xuất bản:</label>
+                      <input type="datetime-local" value={scheduledAt} onChange={e => setScheduledAt(e.target.value)} style={{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
+                    </div>
+
+                    <button onClick={handleConfirmSchedule} className="action-btn" style={{ background: 'linear-gradient(135deg,#7C3AED,#6D28D9)', color: 'white', justifyContent: 'center', fontWeight: '700', padding: '10px 16px', marginTop: '6px' }}>
+                      <i className="fa-solid fa-clock" /> Xác Nhận Lập Lịch Tự Động
+                    </button>
+                  </div>
+
+                  {/* Right: Scheduled Queue */}
+                  <div style={{ background: '#FFF', padding: '20px', borderRadius: '10px', border: '1px solid #E2E8F0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                      <div style={{ fontSize: '14px', fontWeight: '800', color: '#002855', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <i className="fa-solid fa-list-check" style={{ color: '#0284C7' }} /> Hàng Đợi Lập Lịch ({schedulesList.length})
+                      </div>
+                      <button onClick={fetchSchedulesList} style={{ background: 'none', border: 'none', color: '#0284C7', fontSize: '12px', cursor: 'pointer', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <i className="fa-solid fa-rotate-right" /> Làm mới
+                      </button>
+                    </div>
+
+                    {schedulesList.length === 0 ? (
+                      <div style={{ padding: '40px 10px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>
+                        <i className="fa-regular fa-calendar-xmark" style={{ fontSize: '28px', marginBottom: '8px', display: 'block', color: '#CBD5E1' }} />
+                        Chưa có lịch hẹn phát hành nào trong hàng đợi.
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '420px', overflowY: 'auto' }}>
+                        {schedulesList.map(sch => (
+                          <div key={sch.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '12.5px' }}>
+                            <div>
+                              <div style={{ fontWeight: '700', color: '#0F172A', marginBottom: '3px' }}>{sch.title || ('Bài viết ID #' + sch.articleId)}</div>
+                              <div style={{ color: '#64748B', fontSize: '11px', display: 'flex', gap: '12px' }}>
+                                <span>⏰ {new Date(sch.scheduledAt).toLocaleString('vi-VN')}</span>
+                                <span>📡 Kênh: {(sch.channels || [sch.channel]).join(', ').toUpperCase()}</span>
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '10.5px', fontWeight: '700', background: sch.status === 'done' ? '#DCFCE7' : sch.status === 'failed' ? '#FEE2E2' : '#FEF3C7', color: sch.status === 'done' ? '#166534' : sch.status === 'failed' ? '#991B1B' : '#92400E' }}>
+                                {sch.status === 'done' ? '✓ ĐÃ PHÁT HÀNH' : sch.status === 'failed' ? '⚠ LỖI' : '⏳ CHỜ ĐẾN GIỜ'}
+                              </span>
+                              {sch.status === 'pending' && (
+                                <button onClick={() => handleCancelSchedule(sch.id)} style={{ background: '#FEE2E2', border: 'none', color: '#DC2626', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', fontSize: '11px', fontWeight: '700' }} title="Hủy lịch hẹn">Hủy</button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <label style={{ fontSize: '12px', fontWeight: '800', color: '#002855', display: 'block', marginBottom: '6px' }}>Thời gian xuất bản:</label>
-                <input type="datetime-local" value={scheduledAt} onChange={e => setScheduledAt(e.target.value)} style={{ width: '100%', padding: '8px 10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px', outline: 'none', marginBottom: '12px', boxSizing: 'border-box' }} />
-                <button onClick={() => { if (!scheduledAt) { alert('Vui lòng chọn thời gian!'); return; } alert(`✅ Đã hẹn lịch xuất bản lúc ${new Date(scheduledAt).toLocaleString('vi-VN')} cho: ${Object.entries(scheduleChannels).filter(([,v]) => v).map(([k]) => k.toUpperCase()).join(', ')}`); }} className="action-btn" style={{ background: '#8B5CF6', color: 'white' }}>Xác Nhận Hẹn Lịch</button>
               </div>
             )}
 
@@ -2087,6 +2382,124 @@ export default function AdminStudio() {
                 <button onClick={() => setSettingsOpen(false)} style={{ padding: '8px 14px', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#475569', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>Hủy</button>
                 <button onClick={() => saveAiSettings(geminiKey, groqKey)} style={{ padding: '8px 18px', borderRadius: '6px', border: 'none', background: 'linear-gradient(135deg,#002855,#2563EB)', color: 'white', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>💾 Lưu Cấu Hình</button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── OMNICHANNEL MULTI-PUBLISH MODAL ───────────────────────────── */}
+      {omnichannelModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(5px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: '#FFFFFF', borderRadius: '14px', width: '100%', maxWidth: '620px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column' }}>
+            {/* Header */}
+            <div style={{ padding: '16px 22px', background: 'linear-gradient(135deg,#002855,#1E40AF)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px', fontWeight: '800' }}>
+                <i className="fa-solid fa-satellite-dish" style={{ color: '#38BDF8' }} />
+                <span>Xuất Bản Đa Kênh Tức Thì (Omnichannel Sync)</span>
+              </div>
+              <button onClick={() => setOmnichannelModalOpen(false)} style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: '20px', cursor: 'pointer', lineHeight: '1' }}>✕</button>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '70vh', overflowY: 'auto' }}>
+              {/* Article Preview Summary */}
+              <div style={{ background: '#F8FAFC', padding: '12px 14px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', color: '#64748B', fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>BÀI VIẾT PHÁT HÀNH:</div>
+                <div style={{ fontSize: '13.5px', fontWeight: '800', color: '#0F172A', lineHeight: '1.4' }}>{title || 'Bản tin Công Đoàn TDMU'}</div>
+                {sapo && <div style={{ fontSize: '12px', color: '#475569', marginTop: '4px', fontStyle: 'italic', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{sapo}</div>}
+              </div>
+
+              {/* Channels Selector */}
+              <div>
+                <label style={{ fontSize: '12.5px', fontWeight: '800', color: '#002855', display: 'block', marginBottom: '8px' }}>
+                  CHỌN CÁC KÊNH PHÁT HÀNH ĐỒNG LOẠT:
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {/* Website */}
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 14px', borderRadius: '8px', border: `1.5px solid ${omniChannels.web ? '#0284C7' : '#E2E8F0'}`, background: omniChannels.web ? '#F0F9FF' : '#FFF', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={omniChannels.web} onChange={e => setOmniChannels(p => ({ ...p, web: e.target.checked }))} style={{ marginTop: '3px', width: '16px', height: '16px' }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '13px', fontWeight: '800', color: '#002855', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>🌐 Cổng Website Công Đoàn (Website Gốc)</span>
+                        <span style={{ fontSize: '10px', background: '#DCFCE7', color: '#166534', padding: '1px 6px', borderRadius: '10px', fontWeight: '700' }}>MSSQL Live</span>
+                      </div>
+                      <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '2px' }}>Cập nhật trạng thái 'Đã Xuất Bản' trong CSDL và hiển thị ra trang chủ tin tức.</div>
+                    </div>
+                  </label>
+
+                  {/* Facebook */}
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 14px', borderRadius: '8px', border: `1.5px solid ${omniChannels.fb ? '#1877F2' : '#E2E8F0'}`, background: omniChannels.fb ? '#EFF6FF' : '#FFF', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={omniChannels.fb} onChange={e => setOmniChannels(p => ({ ...p, fb: e.target.checked }))} style={{ marginTop: '3px', width: '16px', height: '16px' }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '13px', fontWeight: '800', color: '#1877F2', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <i className="fa-brands fa-facebook" />
+                        <span>Fanpage Facebook Công Đoàn TDMU</span>
+                        <span style={{ fontSize: '10px', background: '#DBEAFE', color: '#1E40AF', padding: '1px 6px', borderRadius: '10px', fontWeight: '700' }}>Meta Graph API v20.0</span>
+                      </div>
+                      <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '2px' }}>Tự động đăng kèm caption tối ưu, ảnh bìa và link bài viết.</div>
+                    </div>
+                  </label>
+
+                  {/* Zalo OA */}
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 14px', borderRadius: '8px', border: `1.5px solid ${omniChannels.zalo ? '#0068FF' : '#E2E8F0'}`, background: omniChannels.zalo ? '#F0F9FF' : '#FFF', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={omniChannels.zalo} onChange={e => setOmniChannels(p => ({ ...p, zalo: e.target.checked }))} style={{ marginTop: '3px', width: '16px', height: '16px' }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '13px', fontWeight: '800', color: '#0068FF', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <i className="fa-solid fa-comment-dots" />
+                        <span>Zalo Official Account (OA) TDMU</span>
+                        <span style={{ fontSize: '10px', background: '#E0F2FE', color: '#0369A1', padding: '1px 6px', borderRadius: '10px', fontWeight: '700' }}>Open API v3.0</span>
+                      </div>
+                      <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '2px' }}>Gửi bản tin thông báo trực tiếp đến cán bộ, đoàn viên theo dõi OA.</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Execution Results View */}
+              {publishResult && (
+                <div style={{ background: '#F0FDF4', border: '1.5px solid #86EFAC', borderRadius: '8px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: '800', color: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <i className="fa-solid fa-circle-check" /> Kết Quả Phát Hành Đa Kênh:
+                  </div>
+                  {publishResult.results?.web && (
+                    <div style={{ fontSize: '12px', color: '#15803D' }}>
+                      🌐 <strong>Website:</strong> {publishResult.results.web.message} (<a href={publishResult.results.web.url} target="_blank" rel="noreferrer" style={{ color: '#0284C7', textDecoration: 'underline' }}>Xem bài viết</a>)
+                    </div>
+                  )}
+                  {publishResult.results?.facebook && (
+                    <div style={{ fontSize: '12px', color: '#1D4ED8' }}>
+                      📘 <strong>Facebook:</strong> {publishResult.results.facebook.message} (<a href={publishResult.results.facebook.permalinkUrl} target="_blank" rel="noreferrer" style={{ color: '#1877F2', textDecoration: 'underline' }}>Xem bài Fanpage</a>)
+                    </div>
+                  )}
+                  {publishResult.results?.zalo && (
+                    <div style={{ fontSize: '12px', color: '#0369A1' }}>
+                      💬 <strong>Zalo OA:</strong> {publishResult.results.zalo.message} (Mã tin: {publishResult.results.zalo.messageId})
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '14px 22px', background: '#F8FAFC', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button onClick={() => setOmnichannelModalOpen(false)} style={{ padding: '9px 16px', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFF', color: '#475569', fontSize: '12.5px', fontWeight: '700', cursor: 'pointer' }}>
+                {publishResult ? 'Hoàn Tất' : 'Hủy'}
+              </button>
+              <button 
+                onClick={handleOmnichannelPublishNow} 
+                disabled={isPublishingNow}
+                style={{ padding: '9px 20px', borderRadius: '6px', border: 'none', background: 'linear-gradient(135deg,#002855,#2563EB)', color: 'white', fontSize: '12.5px', fontWeight: '800', cursor: isPublishingNow ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 12px rgba(37,99,235,0.3)' }}
+              >
+                {isPublishingNow ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin" /> Đang phát hành đa kênh...
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-paper-plane" /> 🚀 Phát Hành Đa Kênh Ngay
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

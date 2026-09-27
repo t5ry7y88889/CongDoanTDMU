@@ -123,46 +123,14 @@ setInterval(() => {
     }
   });
 
-  // 3. Auto-Publish Schedules — Facebook & Zalo channels
-  (db.schedules || []).forEach(schedule => {
-    if (schedule.status === 'pending') {
-      const scheduledTime = new Date(schedule.scheduledAt);
-      if (scheduledTime <= now) {
-        console.log(`[Cron] Executing scheduled publish for article #${schedule.articleId} on ${schedule.channel}`);
-        schedule.status = 'done';
-        schedule.executedAt = now.toISOString();
-
-        // If web channel — also update article status
-        if (schedule.channel === 'web') {
-          const article = (db.articles || []).find(a => a.id == schedule.articleId);
-          if (article) {
-            article.status = 'published';
-            article.statusName = 'Đã Xuất Bản';
-            article.publishedAt = now.toISOString();
-          }
-        }
-
-        // Log the publish event
-        db.publish_logs = db.publish_logs || [];
-        const maxId = db.publish_logs.length ? Math.max(...db.publish_logs.map(l => l.id || 0)) + 1 : 1;
-        db.publish_logs.push({
-          id: maxId,
-          scheduleId: schedule.id,
-          articleId: schedule.articleId,
-          channel: schedule.channel,
-          action: 'auto_published',
-          executedAt: now.toISOString(),
-          createdAt: now.toISOString()
-        });
-        changed = true;
-      }
-    }
-  });
-
   if (changed) {
     saveDB(db);
   }
-}, 30000); // Check every 30 seconds for precision
+}, 30000);
+
+// 3. Khởi động bộ lập lịch phát hành đa kênh tự động (Omnichannel Dispatcher)
+const { startScheduleWorker } = require('./services/multiChannelService');
+startScheduleWorker();
 
 
 // Clean URL routes for portal pages without .html extension

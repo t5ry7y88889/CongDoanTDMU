@@ -206,6 +206,10 @@ async function updateArticleInDb(id, data) {
       req.input('content', sql.NVarChar, data.content || null);
       req.input('image', sql.VarChar, safeUpdateImage);
       req.input('status', sql.VarChar, data.status || null);
+      req.input('fbPostId', sql.VarChar, data.fbPostId || null);
+      req.input('zaloMsgId', sql.VarChar, data.zaloMsgId || null);
+      req.input('noiDungFb', sql.NVarChar, data.noi_dung_fb || null);
+      req.input('noiDungZalo', sql.NVarChar, data.noi_dung_zalo || null);
 
       const updateRes = await req.query(`
         UPDATE dbo.ARTICLES
@@ -214,6 +218,11 @@ async function updateArticleInDb(id, data) {
             NoiDung = COALESCE(@content, NoiDung),
             HinhAnhDaiDien = COALESCE(@image, HinhAnhDaiDien),
             TrangThai = COALESCE(@status, TrangThai),
+            FbPostId = COALESCE(@fbPostId, FbPostId),
+            ZaloMsgId = COALESCE(@zaloMsgId, ZaloMsgId),
+            NoiDungFB = COALESCE(@noiDungFb, NoiDungFB),
+            NoiDungZalo = COALESCE(@noiDungZalo, NoiDungZalo),
+            NgayXuatBan = CASE WHEN @status = 'published' AND NgayXuatBan IS NULL THEN SYSDATETIME() ELSE NgayXuatBan END,
             NgayCapNhat = SYSDATETIME()
         WHERE ArticleId = @id
       `);
