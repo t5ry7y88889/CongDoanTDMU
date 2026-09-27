@@ -468,14 +468,17 @@ NGUYÊN TẮC HOẠT ĐỘNG TỰ HÀNH (AUTONOMOUS REACT):
 Phong cách ứng xử: Chuyên nghiệp, nhã nhặn, tôn trọng chuẩn mực đạo đức báo chí Công đoàn Việt Nam.`;
 
   // ── ƯU TIÊN TUYỆT ĐỐI SỐ 1: BÔI ĐEN CHỈNH SỬA ĐOẠN VĂN (SELECTION REWRITE) ──
-  // Nếu có selectedText HOẶC yêu cầu sửa/rút gọn văn bản -> ĐẨY THẲNG VÀO LOCAL AI ENGINE (0.3s, 100% Offline, GPU Vulkan)
+  // Nếu có selectedText HOẶC yêu cầu sửa/xóa/đổi/rút gọn văn bản -> ĐẨY THẲNG VÀO LOCAL AI ENGINE (0.3s, 100% Offline, GPU Vulkan)
   const lastUserMsg = [...messages].reverse().find(m => m.sender === 'user')?.text || '';
   const qNorm = (lastUserMsg || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
 
   const isSelectionRewrite = Boolean(context.selectedText) || 
     qNorm.includes('rut gon') || qNorm.includes('viet lai') || qNorm.includes('sua doan') || 
     qNorm.includes('trang trong') || qNorm.includes('trau chuot') || qNorm.includes('sua cau') ||
-    qNorm.includes('chinh sua') || qNorm.includes('nhan manh');
+    qNorm.includes('chinh sua') || qNorm.includes('nhan manh') || qNorm.includes('xoa') ||
+    qNorm.includes('thay') || qNorm.includes('doi') || qNorm.includes('bo') ||
+    qNorm.includes('de lai') || qNorm.includes('doan nay') || qNorm.includes('cau nay') ||
+    qNorm.includes('tu nay') || qNorm.includes('chu nay');
 
   if (isSelectionRewrite) {
     await executeLocalAutonomousAgent({ messages, context, tools, emit, apiKey: activeKey, groqApiKey: activeGroq });
@@ -484,7 +487,7 @@ Phong cách ứng xử: Chuyên nghiệp, nhã nhặn, tôn trọng chuẩn mự
 
   // 1. NẾU CÓ GEMINI API KEY VÀ KHÔNG PHẢI TÁC VỤ SỬA ĐOẠN -> CHẠY TOOL LOOP AGENT ĐÍCH THỰC (MULTI-STEP STREAM)
   if (activeKey) {
-    const candidateModels = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+    const candidateModels = ['gemini-2.0-flash', 'gemini-2.5-flash'];
     for (const modelName of candidateModels) {
       try {
         const google = createGoogleGenerativeAI({ apiKey: activeKey });
@@ -665,7 +668,7 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit, api
   }
 
   // TH 3: Viết lại đoạn văn bôi đen / sửa đoạn (Ưu tiên cao nhất khi có selectedText)
-  if (context.selectedText || qNorm.includes('sua') || qNorm.includes('viet lai') || qNorm.includes('rut gon') || qNorm.includes('trang trong') || qNorm.includes('trau chuot') || qNorm.includes('nhan manh') || qNorm.includes('chinh sua') || qNorm.includes('chinh ta')) {
+  if (context.selectedText || qNorm.includes('sua') || qNorm.includes('viet lai') || qNorm.includes('rut gon') || qNorm.includes('trang trong') || qNorm.includes('trau chuot') || qNorm.includes('nhan manh') || qNorm.includes('chinh sua') || qNorm.includes('chinh ta') || qNorm.includes('xoa') || qNorm.includes('thay') || qNorm.includes('doi') || qNorm.includes('bo') || qNorm.includes('de lai') || qNorm.includes('doan nay') || qNorm.includes('cau nay') || qNorm.includes('tu nay') || qNorm.includes('chu nay')) {
     let target = context.selectedText;
     if (!target && context.article?.bodyHtml) {
       const cleanBody = context.article.bodyHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();

@@ -560,9 +560,13 @@ export default function AdminStudio() {
     setTimeout(() => setRollbackNotification(''), 3000);
   };
 
-  const streamAgentResponse = async ({ prompt, assistantMsgId, historyMessages = [], baseContextHtml }) => {
+  const streamAgentResponse = async ({ prompt, assistantMsgId, historyMessages = [], baseContextHtml, overrideSelectedText }) => {
     try {
       const currentHtml = baseContextHtml !== undefined ? baseContextHtml : (editorRef.current?.getData ? editorRef.current.getData() : bodyHtml);
+      const activeSelectedText = overrideSelectedText !== undefined 
+        ? overrideSelectedText 
+        : (selectedText || editorRef.current?.getSelectedText?.() || '');
+
       const res = await fetch('/api/ai/agent-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -575,7 +579,7 @@ export default function AdminStudio() {
             article: { title, sapo, bodyHtml: currentHtml },
             attachedFiles,
             eventPhotos,
-            selectedText
+            selectedText: activeSelectedText
           },
           apiKey: localStorage.getItem('gemini_api_key') || '',
           groqApiKey: localStorage.getItem('groq_api_key') || ''
@@ -758,7 +762,8 @@ export default function AdminStudio() {
     }
 
     setAiLoading(true);
-    const isSelection = !!selectedText;
+    const capturedSelected = selectedText || editorRef.current?.getSelectedText?.() || '';
+    const isSelection = Boolean(capturedSelected);
     const userMsgId = Date.now();
     const assistantMsgId = userMsgId + 1;
     const currentHtml = editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || bodyHtml);
@@ -767,12 +772,14 @@ export default function AdminStudio() {
       id: userMsgId,
       sender: 'user',
       text: prompt,
-      scope: isSelection ? `Đoạn (${selectedText.length} ký tự)` : 'Toàn bài',
+      scope: isSelection ? `Đoạn (${capturedSelected.length} ký tự)` : 'Toàn bài',
+      selectedText: capturedSelected,
       ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       canvasSnapshot: currentHtml,
       versions: [
         {
           text: prompt,
+          selectedText: capturedSelected,
           ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           canvasSnapshot: currentHtml,
           subsequentMessages: []
@@ -789,6 +796,7 @@ export default function AdminStudio() {
       ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       promptUserMsgId: userMsgId,
       initialCanvasSnapshot: currentHtml,
+      selectedText: capturedSelected,
       versions: [],
       versionIndex: 0
     };
@@ -800,7 +808,8 @@ export default function AdminStudio() {
       prompt,
       assistantMsgId,
       historyMessages,
-      baseContextHtml: currentHtml
+      baseContextHtml: currentHtml,
+      overrideSelectedText: capturedSelected
     });
   };
 
@@ -837,8 +846,10 @@ export default function AdminStudio() {
       canvasSnapshot: currentHtml
     };
 
+    const activeSelectedText = userMsg.selectedText || selectedText || editorRef.current?.getSelectedText?.() || '';
     const newVersion = {
       text: newPrompt,
+      selectedText: activeSelectedText,
       ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       canvasSnapshot: userMsg.canvasSnapshot || currentHtml,
       subsequentMessages: []
@@ -862,6 +873,7 @@ export default function AdminStudio() {
       ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       promptUserMsgId: userMsg.id,
       initialCanvasSnapshot: restoreCanvas,
+      selectedText: activeSelectedText,
       versions: [],
       versionIndex: 0
     };
@@ -869,6 +881,7 @@ export default function AdminStudio() {
     const updatedUserMsg = {
       ...userMsg,
       text: newPrompt,
+      selectedText: activeSelectedText,
       versions: updatedVersions,
       versionIndex: newVerIdx
     };
@@ -884,7 +897,8 @@ export default function AdminStudio() {
       prompt: newPrompt,
       assistantMsgId,
       historyMessages,
-      baseContextHtml: restoreCanvas
+      baseContextHtml: restoreCanvas,
+      overrideSelectedText: activeSelectedText
     });
   };
 
@@ -952,6 +966,8 @@ export default function AdminStudio() {
       if (editorRef.current?.setData) editorRef.current.setData(baseCanvas);
     }
 
+    const activeSelectedText = aiMsg.selectedText || prevUserMsg.selectedText || selectedText || editorRef.current?.getSelectedText?.() || '';
+
     // Lưu câu trả lời hiện tại vào versions nếu chưa có
     const curVer = {
       text: aiMsg.text,
@@ -968,6 +984,7 @@ export default function AdminStudio() {
       ...m,
       text: '',
       toolCalls: [],
+      selectedText: activeSelectedText,
       versions: existingVersions,
       versionIndex: existingVersions.length
     } : m));
@@ -980,7 +997,8 @@ export default function AdminStudio() {
       prompt: prevUserMsg.text,
       assistantMsgId: aiMsgId,
       historyMessages,
-      baseContextHtml: baseCanvas
+      baseContextHtml: baseCanvas,
+      overrideSelectedText: activeSelectedText
     });
   };
 
