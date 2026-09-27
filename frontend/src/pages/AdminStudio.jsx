@@ -650,12 +650,27 @@ export default function AdminStudio() {
               if (ev.result) {
                 if (ev.result.action === 'replace_selection' && ev.result.revisedText) {
                   let applied = false;
+                  let cleanText = (ev.result.revisedText || '').trim();
+
+                  // Vệ sinh & phòng thủ: Nếu phản hồi dính tiền tố xin lỗi hoặc prompt markers
+                  if (/^(tôi xin lỗi|xin lỗi|dưới đây là|kết quả:)/i.test(cleanText) || cleanText.includes('YÊU CẦU CHỈNH SỬA') || cleanText.includes('ĐOẠN VĂN MỚI ĐÃ SỬA')) {
+                    const quotedMatch = cleanText.match(/["'“]([^"'“”]{2,})["'”]$/);
+                    if (quotedMatch && quotedMatch[1]) {
+                      cleanText = quotedMatch[1].trim();
+                    } else {
+                      console.warn('[AdminStudio] Bỏ qua kết quả AI lỗi hoặc dính lời xin lỗi:', cleanText);
+                      cleanText = '';
+                    }
+                  }
+
+                  if (!cleanText) return;
+
                   // 1. Thử thay thế trực tiếp qua CKEditor model selection/range
                   if (editorRef.current?.replaceSelection) {
                     try {
-                      editorRef.current.replaceSelection(ev.result.revisedText);
+                      editorRef.current.replaceSelection(cleanText);
                       const checkData = editorRef.current.getData?.() || '';
-                      if (checkData.includes(ev.result.revisedText)) applied = true;
+                      if (checkData.includes(cleanText)) applied = true;
                     } catch {}
                   }
 
@@ -664,7 +679,7 @@ export default function AdminStudio() {
                   const targetStr = ev.result.targetText || selectedText;
                   if (!applied && targetStr && curData) {
                     if (curData.includes(targetStr)) {
-                      const nextHtml = curData.replace(targetStr, ev.result.revisedText);
+                      const nextHtml = curData.replace(targetStr, cleanText);
                       if (editorRef.current?.setData) editorRef.current.setData(nextHtml);
                       setBodyHtml(nextHtml);
                       applied = true;
@@ -673,7 +688,7 @@ export default function AdminStudio() {
                         const escaped = targetStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
                         const reg = new RegExp(escaped, 'i');
                         if (reg.test(curData)) {
-                          const nextHtml = curData.replace(reg, ev.result.revisedText);
+                          const nextHtml = curData.replace(reg, cleanText);
                           if (editorRef.current?.setData) editorRef.current.setData(nextHtml);
                           setBodyHtml(nextHtml);
                           applied = true;
@@ -683,8 +698,8 @@ export default function AdminStudio() {
                   }
 
                   // 3. Fallback: Nếu không tìm thấy vị trí do cấu trúc thẻ lồng nhau, bổ sung vào cuối
-                  if (!applied && ev.result.revisedText) {
-                    const nextHtml = curData ? `${curData}\n<p>${ev.result.revisedText}</p>` : `<p>${ev.result.revisedText}</p>`;
+                  if (!applied && cleanText) {
+                    const nextHtml = curData ? `${curData}\n<p>${cleanText}</p>` : `<p>${cleanText}</p>`;
                     if (editorRef.current?.setData) editorRef.current.setData(nextHtml);
                     setBodyHtml(nextHtml);
                   } else {
