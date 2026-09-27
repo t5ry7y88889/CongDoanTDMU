@@ -183,6 +183,11 @@ export default function AdminStudio() {
   const [selectionRange, setSelectionRange] = useState(null);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+
+  // ── Rollback & Branching Tree State ──────────────────────────────────────────
+  const [editingMsgId, setEditingMsgId] = useState(null);
+  const [editPromptText, setEditPromptText] = useState('');
+  const [rollbackNotification, setRollbackNotification] = useState('');
   const [activeDiff, setActiveDiff] = useState(null);
   const [chatMessages, setChatMessages] = useState([{
     id: 1, sender: 'ai',
@@ -550,49 +555,20 @@ export default function AdminStudio() {
     }
   };
 
-  const runAi = async (overridePrompt = null) => {
-    const prompt = (overridePrompt || aiPrompt).trim();
-    if (!prompt) return;
-    setAiPrompt('');
+  const showRollbackToast = (text) => {
+    setRollbackNotification(text);
+    setTimeout(() => setRollbackNotification(''), 3000);
+  };
 
-    // Nhận diện intent: Nếu là lệnh viết toàn bài tự động -> chuyển sang runAutopilot
-    const isWritingCommand = /^(viết\s*(đi|bài|báo|tin)?|lập\s*(bài|báo)?|tạo\s*bài|bắt\s*đầu\s*viết|chấp\s*bút|generate|write)/i.test(prompt);
-    if (isWritingCommand && !selectedText) {
-      runAutopilot(prompt);
-      return;
-    }
-
-    setAiLoading(true);
-    const isSelection = !!selectedText;
-    const userMsgId = Date.now();
-    const assistantMsgId = userMsgId + 1;
-
-    setChatMessages(p => [
-      ...p,
-      {
-        id: userMsgId,
-        sender: 'user',
-        text: prompt,
-        scope: isSelection ? `Đoạn (${selectedText.length} ký tự)` : 'Toàn bài',
-        ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      },
-      {
-        id: assistantMsgId,
-        sender: 'ai',
-        text: '',
-        toolCalls: [],
-        ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }
-    ]);
-
+  const streamAgentResponse = async ({ prompt, assistantMsgId, historyMessages = [], baseContextHtml }) => {
     try {
-      const currentHtml = editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || bodyHtml);
+      const currentHtml = baseContextHtml !== undefined ? baseContextHtml : (editorRef.current?.getData ? editorRef.current.getData() : bodyHtml);
       const res = await fetch('/api/ai/agent-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [
-            ...chatMessages.filter(m => (m.sender === 'user' || m.sender === 'ai') && m.text).map(m => ({ sender: m.sender, text: m.text })),
+            ...historyMessages.filter(m => (m.sender === 'user' || m.sender === 'ai') && m.text).map(m => ({ sender: m.sender, text: m.text })),
             { sender: 'user', text: prompt }
           ],
           context: {
@@ -733,6 +709,27 @@ export default function AdminStudio() {
                   setLastSaveTime('Đã lưu ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
                 }
               }
+            } else if (ev.type === 'finish') {
+              // Lưu snapshot phiên bản câu trả lời của AI
+              setChatMessages(prev => prev.map(m => {
+                if (m.id === assistantMsgId) {
+                  const finalHtml = editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || bodyHtml);
+                  const newVer = {
+                    text: m.text,
+                    toolCalls: m.toolCalls || [],
+                    ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    canvasSnapshot: finalHtml
+                  };
+                  const currentVers = m.versions || [];
+                  const updatedVers = [...currentVers, newVer];
+                  return {
+                    ...m,
+                    versions: updatedVers,
+                    versionIndex: updatedVers.length - 1
+                  };
+                }
+                return m;
+              }));
             }
           } catch {}
         }
@@ -746,6 +743,293 @@ export default function AdminStudio() {
       setAiLoading(false);
       chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const runAi = async (overridePrompt = null) => {
+    const prompt = (overridePrompt || aiPrompt).trim();
+    if (!prompt) return;
+    setAiPrompt('');
+
+    // Nhận diện intent: Nếu là lệnh viết toàn bài tự động -> chuyển sang runAutopilot
+    const isWritingCommand = /^(viết\s*(đi|bài|báo|tin)?|lập\s*(bài|báo)?|tạo\s*bài|bắt\s*đầu\s*viết|chấp\s*bút|generate|write)/i.test(prompt);
+    if (isWritingCommand && !selectedText) {
+      runAutopilot(prompt);
+      return;
+    }
+
+    setAiLoading(true);
+    const isSelection = !!selectedText;
+    const userMsgId = Date.now();
+    const assistantMsgId = userMsgId + 1;
+    const currentHtml = editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || bodyHtml);
+
+    const newUserMsg = {
+      id: userMsgId,
+      sender: 'user',
+      text: prompt,
+      scope: isSelection ? `Đoạn (${selectedText.length} ký tự)` : 'Toàn bài',
+      ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      canvasSnapshot: currentHtml,
+      versions: [
+        {
+          text: prompt,
+          ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          canvasSnapshot: currentHtml,
+          subsequentMessages: []
+        }
+      ],
+      versionIndex: 0
+    };
+
+    const newAssistantMsg = {
+      id: assistantMsgId,
+      sender: 'ai',
+      text: '',
+      toolCalls: [],
+      ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      promptUserMsgId: userMsgId,
+      initialCanvasSnapshot: currentHtml,
+      versions: [],
+      versionIndex: 0
+    };
+
+    const historyMessages = [...chatMessages];
+    setChatMessages(p => [...p, newUserMsg, newAssistantMsg]);
+
+    await streamAgentResponse({
+      prompt,
+      assistantMsgId,
+      historyMessages,
+      baseContextHtml: currentHtml
+    });
+  };
+
+  // 1. Chỉnh sửa lệnh của User (Edit Prompt)
+  const startEditUserPrompt = (msg) => {
+    setEditingMsgId(msg.id);
+    setEditPromptText(msg.text || '');
+  };
+
+  const cancelEditUserPrompt = () => {
+    setEditingMsgId(null);
+    setEditPromptText('');
+  };
+
+  const submitEditUserPrompt = async (msgId) => {
+    const newPrompt = editPromptText.trim();
+    if (!newPrompt) return;
+
+    const msgIdx = chatMessages.findIndex(m => m.id === msgId);
+    if (msgIdx === -1) return;
+
+    const userMsg = chatMessages[msgIdx];
+    const currentHtml = editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || bodyHtml);
+
+    // Snapshot nhánh hiện tại vào phiên bản hiện tại trước khi rẽ nhánh mới
+    const currentVerIdx = userMsg.versionIndex || 0;
+    const existingVersions = userMsg.versions && userMsg.versions.length > 0 
+      ? [...userMsg.versions]
+      : [{ text: userMsg.text, ts: userMsg.ts, canvasSnapshot: userMsg.canvasSnapshot || currentHtml, subsequentMessages: chatMessages.slice(msgIdx + 1) }];
+
+    existingVersions[currentVerIdx] = {
+      ...existingVersions[currentVerIdx],
+      subsequentMessages: chatMessages.slice(msgIdx + 1),
+      canvasSnapshot: currentHtml
+    };
+
+    const newVersion = {
+      text: newPrompt,
+      ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      canvasSnapshot: userMsg.canvasSnapshot || currentHtml,
+      subsequentMessages: []
+    };
+    const updatedVersions = [...existingVersions, newVersion];
+    const newVerIdx = updatedVersions.length - 1;
+
+    // Khôi phục canvas về trạng thái trước khi chạy các lệnh sau
+    const restoreCanvas = userMsg.canvasSnapshot || currentHtml;
+    if (restoreCanvas) {
+      setBodyHtml(restoreCanvas);
+      if (editorRef.current?.setData) editorRef.current.setData(restoreCanvas);
+    }
+
+    const assistantMsgId = Date.now() + 1;
+    const newAssistantMsg = {
+      id: assistantMsgId,
+      sender: 'ai',
+      text: '',
+      toolCalls: [],
+      ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      promptUserMsgId: userMsg.id,
+      initialCanvasSnapshot: restoreCanvas,
+      versions: [],
+      versionIndex: 0
+    };
+
+    const updatedUserMsg = {
+      ...userMsg,
+      text: newPrompt,
+      versions: updatedVersions,
+      versionIndex: newVerIdx
+    };
+
+    const historyMessages = chatMessages.slice(0, msgIdx);
+    setChatMessages([...historyMessages, updatedUserMsg, newAssistantMsg]);
+    setEditingMsgId(null);
+    setEditPromptText('');
+    setAiLoading(true);
+
+    showRollbackToast(`Đã tạo nhánh phiên bản lệnh mới (${newVerIdx + 1}/${updatedVersions.length})`);
+    await streamAgentResponse({
+      prompt: newPrompt,
+      assistantMsgId,
+      historyMessages,
+      baseContextHtml: restoreCanvas
+    });
+  };
+
+  // 2. Chuyển đổi giữa các phiên bản lệnh của User (< 1 / 3 >)
+  const navigateUserPromptVersion = (msgId, direction) => {
+    const msgIdx = chatMessages.findIndex(m => m.id === msgId);
+    if (msgIdx === -1) return;
+
+    const userMsg = chatMessages[msgIdx];
+    if (!userMsg.versions || userMsg.versions.length <= 1) return;
+
+    const curIdx = userMsg.versionIndex || 0;
+    const targetIdx = curIdx + direction;
+    if (targetIdx < 0 || targetIdx >= userMsg.versions.length) return;
+
+    const currentHtml = editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || bodyHtml);
+
+    // Lưu snapshot nhánh hiện tại
+    const updatedVersions = [...userMsg.versions];
+    updatedVersions[curIdx] = {
+      ...updatedVersions[curIdx],
+      subsequentMessages: chatMessages.slice(msgIdx + 1),
+      canvasSnapshot: currentHtml
+    };
+
+    const targetVer = updatedVersions[targetIdx];
+    const restoredUserMsg = {
+      ...userMsg,
+      text: targetVer.text,
+      versionIndex: targetIdx,
+      versions: updatedVersions
+    };
+
+    // Khôi phục canvas
+    if (targetVer.canvasSnapshot) {
+      setBodyHtml(targetVer.canvasSnapshot);
+      if (editorRef.current?.setData) editorRef.current.setData(targetVer.canvasSnapshot);
+    }
+
+    // Khôi phục chat branch
+    setChatMessages([
+      ...chatMessages.slice(0, msgIdx),
+      restoredUserMsg,
+      ...(targetVer.subsequentMessages || [])
+    ]);
+
+    showRollbackToast(`Đã chuyển sang phiên bản lệnh ${targetIdx + 1}/${updatedVersions.length}`);
+  };
+
+  // 3. Tạo lại câu trả lời AI (Regenerate Response)
+  const regenerateAiResponse = async (aiMsgId) => {
+    const aiIdx = chatMessages.findIndex(m => m.id === aiMsgId);
+    if (aiIdx === -1) return;
+
+    const aiMsg = chatMessages[aiIdx];
+    const prevUserMsg = chatMessages.slice(0, aiIdx).reverse().find(m => m.sender === 'user');
+    if (!prevUserMsg) return;
+
+    const currentHtml = editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || bodyHtml);
+
+    // Khôi phục canvas về trước khi AI này can thiệp
+    const baseCanvas = aiMsg.initialCanvasSnapshot || prevUserMsg.canvasSnapshot || currentHtml;
+    if (baseCanvas) {
+      setBodyHtml(baseCanvas);
+      if (editorRef.current?.setData) editorRef.current.setData(baseCanvas);
+    }
+
+    // Lưu câu trả lời hiện tại vào versions nếu chưa có
+    const curVer = {
+      text: aiMsg.text,
+      toolCalls: aiMsg.toolCalls || [],
+      ts: aiMsg.ts,
+      canvasSnapshot: currentHtml
+    };
+    const existingVersions = aiMsg.versions && aiMsg.versions.length > 0
+      ? [...aiMsg.versions]
+      : [curVer];
+
+    // Reset nội dung đang hiển thị để chuẩn bị stream lượt mới
+    setChatMessages(prev => prev.map(m => m.id === aiMsgId ? {
+      ...m,
+      text: '',
+      toolCalls: [],
+      versions: existingVersions,
+      versionIndex: existingVersions.length
+    } : m));
+
+    setAiLoading(true);
+    showRollbackToast('Đang tạo lại phương án trả lời mới...');
+
+    const historyMessages = chatMessages.slice(0, aiIdx - 1);
+    await streamAgentResponse({
+      prompt: prevUserMsg.text,
+      assistantMsgId: aiMsgId,
+      historyMessages,
+      baseContextHtml: baseCanvas
+    });
+  };
+
+  // 4. Chuyển đổi giữa các câu trả lời của AI (< 1 / 2 >)
+  const navigateAiResponseVersion = (aiMsgId, direction) => {
+    const aiMsg = chatMessages.find(m => m.id === aiMsgId);
+    if (!aiMsg || !aiMsg.versions || aiMsg.versions.length <= 1) return;
+
+    const curIdx = aiMsg.versionIndex || 0;
+    const targetIdx = curIdx + direction;
+    if (targetIdx < 0 || targetIdx >= aiMsg.versions.length) return;
+
+    const targetVer = aiMsg.versions[targetIdx];
+    setChatMessages(prev => prev.map(m => m.id === aiMsgId ? {
+      ...m,
+      text: targetVer.text,
+      toolCalls: targetVer.toolCalls || [],
+      versionIndex: targetIdx
+    } : m));
+
+    if (targetVer.canvasSnapshot) {
+      setBodyHtml(targetVer.canvasSnapshot);
+      if (editorRef.current?.setData) editorRef.current.setData(targetVer.canvasSnapshot);
+    }
+
+    showRollbackToast(`Đã chuyển sang câu trả lời ${targetIdx + 1}/${aiMsg.versions.length}`);
+  };
+
+  // 5. Rollback nhiều lượt quay lại thời điểm này
+  const rollbackToTurn = (msgId) => {
+    const msgIdx = chatMessages.findIndex(m => m.id === msgId);
+    if (msgIdx === -1) return;
+
+    const msg = chatMessages[msgIdx];
+    const snap = msg.canvasSnapshot || msg.initialCanvasSnapshot;
+
+    if (snap) {
+      setBodyHtml(snap);
+      if (editorRef.current?.setData) editorRef.current.setData(snap);
+    }
+
+    // Cắt toàn bộ tin nhắn phía sau
+    setChatMessages(chatMessages.slice(0, msgIdx + 1));
+
+    if (msg.sender === 'user') {
+      setAiPrompt(msg.text || '');
+    }
+
+    showRollbackToast('↩️ Đã rollback cuộc trò chuyện và bài viết về thời điểm này!');
   };
 
   const acceptDiff = (targetDiff = null) => {
@@ -2087,6 +2371,11 @@ export default function AdminStudio() {
 
                 {/* Chat messages */}
                 <div style={{ flex: 1, overflowY: 'auto', padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {rollbackNotification && (
+                    <div style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', borderRadius: '6px', padding: '6px 10px', fontSize: '11px', fontWeight: '700', textAlign: 'center', boxShadow: '0 2px 6px rgba(37,99,235,0.08)' }}>
+                      {rollbackNotification}
+                    </div>
+                  )}
                   {chatMessages.map(msg => {
                     // 1. Thẻ Hồ Sơ Tư Liệu
                     if (msg.type === 'dossier') {
@@ -2240,11 +2529,74 @@ export default function AdminStudio() {
                       );
                     }
 
-                    // 4. Tin nhắn hội thoại thông thường (User & AI)
+                    // 4. Tin nhắn của User
+                    if (msg.sender === 'user') {
+                      if (editingMsgId === msg.id) {
+                        return (
+                          <div key={msg.id} style={{ alignSelf: 'flex-end', width: '94%', background: '#F0F9FF', border: '1.5px solid #0284C7', borderRadius: '10px', padding: '10px 12px', boxShadow: '0 4px 12px rgba(2,132,199,0.15)' }}>
+                            <div style={{ fontSize: '10.5px', fontWeight: '800', color: '#0369A1', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <i className="fa-solid fa-pen-to-square" />
+                                <span>Chỉnh sửa câu lệnh</span>
+                              </div>
+                              <span style={{ fontSize: '9px', color: '#64748B' }}>Nhánh mới sẽ được tạo</span>
+                            </div>
+                            <textarea
+                              value={editPromptText}
+                              onChange={e => setEditPromptText(e.target.value)}
+                              rows={3}
+                              style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #BAE6FD', borderRadius: '6px', padding: '8px', fontSize: '12px', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
+                              autoFocus
+                            />
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px', marginTop: '8px' }}>
+                              <button onClick={cancelEditUserPrompt} style={{ background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '4px', padding: '4px 10px', fontSize: '11px', color: '#64748B', cursor: 'pointer', fontWeight: '600' }}>Hủy</button>
+                              <button onClick={() => submitEditUserPrompt(msg.id)} style={{ background: '#0284C7', border: 'none', borderRadius: '4px', padding: '4px 12px', fontSize: '11px', color: '#FFF', cursor: 'pointer', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <i className="fa-solid fa-paper-plane" /> Lưu & Chạy lại
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div key={msg.id} style={{ alignSelf: 'flex-end', maxWidth: '92%', background: '#002855', color: '#FFF', padding: '9px 12px', borderRadius: '12px 12px 2px 12px', fontSize: '11.5px', lineHeight: '1.5', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', gap: '8px' }}>
+                            {msg.scope ? <div style={{ fontSize: '9.5px', color: '#93C5FD' }}>📍 {msg.scope}</div> : <div />}
+                            
+                            {/* Version Navigator < 1 / 3 > */}
+                            {msg.versions && msg.versions.length > 1 && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.18)', borderRadius: '10px', padding: '1px 6px', fontSize: '9px' }}>
+                                <button onClick={() => navigateUserPromptVersion(msg.id, -1)} disabled={(msg.versionIndex || 0) === 0} style={{ background: 'none', border: 'none', color: '#FFF', opacity: (msg.versionIndex || 0) === 0 ? 0.3 : 1, cursor: (msg.versionIndex || 0) === 0 ? 'default' : 'pointer', padding: '0 2px' }} title="Phiên bản lệnh trước">
+                                  <i className="fa-solid fa-chevron-left" />
+                                </button>
+                                <span style={{ fontWeight: '700' }}>{(msg.versionIndex || 0) + 1} / {msg.versions.length}</span>
+                                <button onClick={() => navigateUserPromptVersion(msg.id, 1)} disabled={(msg.versionIndex || 0) === msg.versions.length - 1} style={{ background: 'none', border: 'none', color: '#FFF', opacity: (msg.versionIndex || 0) === msg.versions.length - 1 ? 0.3 : 1, cursor: (msg.versionIndex || 0) === msg.versions.length - 1 ? 'default' : 'pointer', padding: '0 2px' }} title="Phiên bản lệnh sau">
+                                  <i className="fa-solid fa-chevron-right" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          <div style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px', paddingTop: '4px', borderTop: '1px solid rgba(255,255,255,0.12)', fontSize: '9.5px', color: '#93C5FD' }}>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <button onClick={() => startEditUserPrompt(msg)} style={{ background: 'none', border: 'none', color: '#93C5FD', cursor: 'pointer', padding: 0, fontSize: '10px', display: 'flex', alignItems: 'center', gap: '3px' }} title="Chỉnh sửa lệnh này">
+                                <i className="fa-solid fa-pen" /> Sửa
+                              </button>
+                              <button onClick={() => rollbackToTurn(msg.id)} style={{ background: 'none', border: 'none', color: '#93C5FD', cursor: 'pointer', padding: 0, fontSize: '10px', display: 'flex', alignItems: 'center', gap: '3px' }} title="Rollback cuộc trò chuyện và Canvas về lượt này">
+                                <i className="fa-solid fa-clock-rotate-left" /> Rollback
+                              </button>
+                            </div>
+                            <div>{msg.ts}</div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // 5. Tin nhắn của AI Assistant
                     return (
-                      <div key={msg.id} style={{ alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start', maxWidth: '92%', background: msg.sender === 'user' ? '#002855' : '#F1F5F9', color: msg.sender === 'user' ? '#FFF' : '#0F172A', padding: '9px 12px', borderRadius: msg.sender === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', fontSize: '11.5px', lineHeight: '1.5', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                        {msg.scope && <div style={{ fontSize: '9.5px', color: msg.sender === 'user' ? '#93C5FD' : '#64748B', marginBottom: '3px' }}>📍 {msg.scope}</div>}
-                        
+                      <div key={msg.id} style={{ alignSelf: 'flex-start', maxWidth: '92%', background: '#F1F5F9', color: '#0F172A', padding: '9px 12px', borderRadius: '12px 12px 12px 2px', fontSize: '11.5px', lineHeight: '1.5', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
                         {/* Hiển thị Thẻ Tool Tác Nghiệp Tự Hành */}
                         {msg.toolCalls && msg.toolCalls.length > 0 && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '8px' }}>
@@ -2271,7 +2623,39 @@ export default function AdminStudio() {
                         )}
 
                         <div style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</div>
-                        <div style={{ fontSize: '9.5px', color: msg.sender === 'user' ? '#93C5FD' : '#94A3B8', marginTop: '4px', textAlign: 'right' }}>{msg.ts}</div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px', paddingTop: '4px', borderTop: '1px solid #E2E8F0', fontSize: '9.5px', color: '#64748B' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {/* Version Navigator < 1 / 2 > */}
+                            {msg.versions && msg.versions.length > 1 && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '3px', background: '#E2E8F0', borderRadius: '10px', padding: '1px 5px', fontSize: '8.5px', color: '#334155' }}>
+                                <button onClick={() => navigateAiResponseVersion(msg.id, -1)} disabled={(msg.versionIndex || 0) === 0} style={{ background: 'none', border: 'none', color: '#334155', opacity: (msg.versionIndex || 0) === 0 ? 0.3 : 1, cursor: (msg.versionIndex || 0) === 0 ? 'default' : 'pointer', padding: '0 2px' }} title="Câu trả lời trước">
+                                  <i className="fa-solid fa-chevron-left" />
+                                </button>
+                                <span style={{ fontWeight: '700' }}>{(msg.versionIndex || 0) + 1} / {msg.versions.length}</span>
+                                <button onClick={() => navigateAiResponseVersion(msg.id, 1)} disabled={(msg.versionIndex || 0) === msg.versions.length - 1} style={{ background: 'none', border: 'none', color: '#334155', opacity: (msg.versionIndex || 0) === msg.versions.length - 1 ? 0.3 : 1, cursor: (msg.versionIndex || 0) === msg.versions.length - 1 ? 'default' : 'pointer', padding: '0 2px' }} title="Câu trả lời sau">
+                                  <i className="fa-solid fa-chevron-right" />
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Nút Tạo lại (Regenerate) */}
+                            <button onClick={() => regenerateAiResponse(msg.id)} disabled={aiLoading} style={{ background: 'none', border: 'none', color: '#2563EB', cursor: 'pointer', padding: 0, fontSize: '10px', display: 'flex', alignItems: 'center', gap: '3px' }} title="Tạo lại câu trả lời khác cho lệnh này">
+                              <i className="fa-solid fa-rotate-right" /> Tạo lại
+                            </button>
+
+                            {/* Nút Sao chép */}
+                            <button onClick={() => { navigator.clipboard.writeText(msg.text); showRollbackToast('Đã sao chép nội dung!'); }} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: 0, fontSize: '10px', display: 'flex', alignItems: 'center', gap: '3px' }} title="Sao chép nội dung">
+                              <i className="fa-regular fa-copy" />
+                            </button>
+
+                            {/* Nút Rollback về lượt AI này */}
+                            <button onClick={() => rollbackToTurn(msg.id)} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: 0, fontSize: '10px', display: 'flex', alignItems: 'center', gap: '3px' }} title="Rollback Canvas và hội thoại về sau câu trả lời này">
+                              <i className="fa-solid fa-clock-rotate-left" /> Rollback
+                            </button>
+                          </div>
+                          <div>{msg.ts}</div>
+                        </div>
                       </div>
                     );
                   })}
