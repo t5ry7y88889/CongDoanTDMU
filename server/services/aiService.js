@@ -140,14 +140,11 @@ async function callGroqAPI(promptContent, systemPrompt, groqApiKey) {
     console.warn("[Groq Model List Warning]:", e.message);
   }
 
-  // 2. Priority order: Reliable compound/chat models first
+  // 2. Priority order: Official Groq production models
   const preferredModels = [
-    'groq/compound-mini',
-    'groq/compound',
-    'openai/gpt-oss-120b',
-    'openai/gpt-oss-20b',
-    'qwen/qwen3.6-27b',
-    'allam-2-7b'
+    'llama-3.3-70b-versatile',
+    'llama-3.1-8b-instant',
+    'gemma2-9b-it'
   ];
 
   let modelsToTry = [];

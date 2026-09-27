@@ -467,9 +467,24 @@ NGUYÊN TẮC HOẠT ĐỘNG TỰ HÀNH (AUTONOMOUS REACT):
 
 Phong cách ứng xử: Chuyên nghiệp, nhã nhặn, tôn trọng chuẩn mực đạo đức báo chí Công đoàn Việt Nam.`;
 
-  // 1. NẾU CÓ GEMINI API KEY -> CHẠY TOOL LOOP AGENT ĐÍCH THỰC (MULTI-STEP STREAM)
+  // ── ƯU TIÊN TUYỆT ĐỐI SỐ 1: BÔI ĐEN CHỈNH SỬA ĐOẠN VĂN (SELECTION REWRITE) ──
+  // Nếu có selectedText HOẶC yêu cầu sửa/rút gọn văn bản -> ĐẨY THẲNG VÀO LOCAL AI ENGINE (0.3s, 100% Offline, GPU Vulkan)
+  const lastUserMsg = [...messages].reverse().find(m => m.sender === 'user')?.text || '';
+  const qNorm = (lastUserMsg || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+
+  const isSelectionRewrite = Boolean(context.selectedText) || 
+    qNorm.includes('rut gon') || qNorm.includes('viet lai') || qNorm.includes('sua doan') || 
+    qNorm.includes('trang trong') || qNorm.includes('trau chuot') || qNorm.includes('sua cau') ||
+    qNorm.includes('chinh sua') || qNorm.includes('nhan manh');
+
+  if (isSelectionRewrite) {
+    await executeLocalAutonomousAgent({ messages, context, tools, emit, apiKey: activeKey, groqApiKey: activeGroq });
+    return;
+  }
+
+  // 1. NẾU CÓ GEMINI API KEY VÀ KHÔNG PHẢI TÁC VỤ SỬA ĐOẠN -> CHẠY TOOL LOOP AGENT ĐÍCH THỰC (MULTI-STEP STREAM)
   if (activeKey) {
-    const candidateModels = ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-flash-latest'];
+    const candidateModels = ['gemini-2.0-flash', 'gemini-1.5-flash'];
     for (const modelName of candidateModels) {
       try {
         const google = createGoogleGenerativeAI({ apiKey: activeKey });
@@ -494,10 +509,16 @@ ${context.article?.bodyHtml ? `\n[NỘI DUNG BÀI HIỆN TẠI]: ${(context.arti
           tools
         });
 
-        const streamRes = await agent.stream({
+        // Áp dụng Timeout 6 giây để không bao giờ treo client nếu mạng chập chờn
+        const streamPromise = agent.stream({
           messages: formattedMessages,
           maxRetries: 0
         });
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Gemini API connection timeout (6s)')), 6000)
+        );
+
+        const streamRes = await Promise.race([streamPromise, timeoutPromise]);
 
         let hasError = false;
         for await (const part of streamRes.fullStream) {
@@ -528,7 +549,8 @@ ${context.article?.bodyHtml ? `\n[NỘI DUNG BÀI HIỆN TẠI]: ${(context.arti
           return;
         }
       } catch (err) {
-        console.warn(`⚠️ Gemini ToolLoopAgent (${modelName}) thất bại:`, err.message?.slice(0, 100));
+        console.warn(`⚠️ Gemini ToolLoopAgent (${modelName}) thất bại hoặc timeout:`, err.message?.slice(0, 100));
+        break; // Lỗi mạng hoặc timeout thì không thử lại tiếp để tránh treo
       }
     }
   }
@@ -696,7 +718,7 @@ QUY TẮC BẮT BUỘC:
 2. TUYỆT ĐỐI KHÔNG BỊA ĐẶT THÊM SỐ LIỆU, SỰ KIỆN, KINH PHÍ HAY CON SỐ KHÔNG CÓ TRONG ĐOẠN GỐC.
 3. Chỉ trả về DUY NHẤT nội dung đoạn văn bản mới đã sửa, không bọc dấu ngoặc kép, không kèm lời giải thích hay dẫn dắt.`;
 
-        const candidateModels = ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-flash-latest'];
+        const candidateModels = ['gemini-2.0-flash', 'gemini-1.5-flash'];
         for (const model of candidateModels) {
           try {
             const resp = await aiGen.models.generateContent({ model, contents: rewritePrompt });

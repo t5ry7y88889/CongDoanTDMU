@@ -188,19 +188,26 @@ async function updateArticleInDb(id, data) {
     const transaction = new sql.Transaction(mssqlPool);
     try {
       await transaction.begin();
-      const req = new sql.Request(transaction);
-      req.input('id', sql.Int, id);
-      req.input('title', sql.NVarChar, data.title || null);
-      req.input('summary', sql.NVarChar, data.summary || null);
-      req.input('content', sql.NVarChar, data.content || null);
+      const numericId = parseInt(id);
+      if (!numericId || isNaN(numericId)) {
+        await transaction.rollback();
+        return false;
+      }
+
       let safeUpdateImage = data.image || null;
       if (typeof safeUpdateImage === 'string' && (safeUpdateImage.startsWith('data:image/') || safeUpdateImage.length > 490)) {
         safeUpdateImage = safeUpdateImage.startsWith('data:image/') ? 'images/banner.jpg' : safeUpdateImage.slice(0, 490);
       }
+
+      const req = new sql.Request(transaction);
+      req.input('id', sql.Int, numericId);
+      req.input('title', sql.NVarChar, data.title || null);
+      req.input('summary', sql.NVarChar, data.summary || null);
+      req.input('content', sql.NVarChar, data.content || null);
       req.input('image', sql.VarChar, safeUpdateImage);
       req.input('status', sql.VarChar, data.status || null);
 
-      await req.query(`
+      const updateRes = await req.query(`
         UPDATE dbo.ARTICLES
         SET TieuDe = COALESCE(@title, TieuDe),
             TomTat = COALESCE(@summary, TomTat),
@@ -211,11 +218,36 @@ async function updateArticleInDb(id, data) {
         WHERE ArticleId = @id
       `);
 
+      // Nếu bài viết chưa có trong MSSQL (do tạo từ JSON DB trước đó), tự động UPSERT vào dbo.ARTICLES
+      if (updateRes.rowsAffected[0] === 0) {
+        const insertReq = new sql.Request(transaction);
+        const slug = ((data.title || 'bai-viet').toLowerCase().replace(/[^a-z0-9]+/g, '-')) + '-' + numericId;
+        insertReq.input('id', sql.Int, numericId);
+        insertReq.input('title', sql.NVarChar, data.title || ('Bản thảo #' + numericId));
+        insertReq.input('slug', sql.VarChar, slug.slice(0, 100));
+        insertReq.input('categoryId', sql.Int, data.categoryId || 1);
+        insertReq.input('authorId', sql.Int, data.authorId || 1);
+        insertReq.input('summary', sql.NVarChar, data.summary || data.title || '');
+        insertReq.input('content', sql.NVarChar, data.content || '');
+        insertReq.input('image', sql.VarChar, safeUpdateImage || 'images/banner.jpg');
+        insertReq.input('status', sql.VarChar, data.status || 'draft');
+        insertReq.input('isAiGenerated', sql.Bit, data.isAiGenerated ? 1 : 0);
+        insertReq.input('aiPrompt', sql.NVarChar, data.aiPrompt || null);
+
+        await insertReq.query(`
+          SET IDENTITY_INSERT dbo.ARTICLES ON;
+          INSERT INTO dbo.ARTICLES (ArticleId, TieuDe, Slug, CategoryId, MaTacGia, TomTat, NoiDung, HinhAnhDaiDien, TrangThai, IsAiGenerated, AiPrompt, NgayTao, NgayCapNhat)
+          VALUES (@id, @title, @slug, @categoryId, @authorId, @summary, @content, @image, @status, @isAiGenerated, @aiPrompt, SYSDATETIME(), SYSDATETIME());
+          SET IDENTITY_INSERT dbo.ARTICLES OFF;
+        `);
+      }
+
+      // Đảm bảo ArticleId đã tồn tại an toàn trong dbo.ARTICLES, tránh lỗi FK_Audits_Articles
       const reqA = new sql.Request(transaction);
-      reqA.input('articleId', sql.Int, id);
+      reqA.input('articleId', sql.Int, numericId);
       reqA.input('userId', sql.Int, data.authorId || 1);
       reqA.input('hanhDong', sql.VarChar, data.status === 'published' ? 'published' : 'updated');
-      reqA.input('ghiChu', sql.NVarChar, `Cập nhật bài viết ID #${id}`);
+      reqA.input('ghiChu', sql.NVarChar, `Cập nhật bài viết ID #${numericId}`);
 
       await reqA.query(`
         INSERT INTO dbo.ARTICLE_AUDITS (ArticleId, UserId, HanhDong, GhiChu, NgayThucHien)
