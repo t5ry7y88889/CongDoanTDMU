@@ -576,10 +576,20 @@ export default function AdminStudio() {
             { sender: 'user', text: prompt }
           ],
           context: {
-            article: { title, sapo, bodyHtml: currentHtml },
+            platform: activeChannel,
+            article: { 
+              id: activeArticleId, 
+              title, 
+              sapo, 
+              bodyHtml: currentHtml 
+            },
             attachedFiles,
             eventPhotos,
-            selectedText: activeSelectedText
+            selectedText: activeSelectedText,
+            channelContent: {
+              fbCaption,
+              zaloText
+            }
           },
           apiKey: localStorage.getItem('gemini_api_key') || '',
           groqApiKey: localStorage.getItem('groq_api_key') || ''
@@ -706,6 +716,14 @@ export default function AdminStudio() {
                   setFbCaption(ev.result.content);
                 } else if (ev.result.action === 'update_zalo' && ev.result.content) {
                   setZaloText(ev.result.content);
+                } else if (ev.result.action === 'insert_channel_links') {
+                  if (activeChannel === 'fb' && ev.result.facebookSnippet) {
+                    setFbCaption(prev => prev ? prev.trim() + '\n\n' + ev.result.facebookSnippet : ev.result.facebookSnippet);
+                    showRollbackToast('Đã chèn liên kết vào Facebook!');
+                  } else if (activeChannel === 'zalo' && ev.result.zaloSnippet) {
+                    setZaloText(prev => prev ? prev.trim() + '\n\n' + ev.result.zaloSnippet : ev.result.zaloSnippet);
+                    showRollbackToast('Đã chèn liên kết vào Zalo OA!');
+                  }
                 } else if (ev.result.action === 'insert_photo') {
                   insertPhoto(ev.result.imageUrl, ev.result.caption);
                 } else if (ev.result.action === 'draft_saved') {
@@ -756,7 +774,7 @@ export default function AdminStudio() {
 
     // Nhận diện intent: Nếu là lệnh viết toàn bài tự động -> chuyển sang runAutopilot
     const isWritingCommand = /^(viết\s*(đi|bài|báo|tin)?|lập\s*(bài|báo)?|tạo\s*bài|bắt\s*đầu\s*viết|chấp\s*bút|generate|write)/i.test(prompt);
-    if (isWritingCommand && !selectedText) {
+    if (isWritingCommand && !selectedText && activeChannel === 'web') {
       runAutopilot(prompt);
       return;
     }
@@ -1408,13 +1426,129 @@ export default function AdminStudio() {
   const insertFbHashtag = (tag) => {
     setFbCaption(prev => prev.includes(tag) ? prev : prev.trim() + '\n\n' + tag);
   };
-  const syncFbFromWeb = () => {
-    if (!title) { alert('Chưa có tiêu đề!'); return; }
-    setFbCaption(`${title.toUpperCase()}\n\n✨ ${sapo}\n\n👉 Kính mời quý Thầy/Cô theo dõi trên Cổng thông tin Công đoàn TDMU!\n\n#CongDoanTDMU #TDMU2026 #HoatDongDoanVien`);
+  // Helper sinh URL bài viết công khai
+  const getPublicArticleUrl = () => {
+    const origin = window.location.origin;
+    return activeArticleId ? `${origin}/bai-viet.html?id=${activeArticleId}` : `${origin}/bai-viet.html`;
   };
+
+  // Helper chèn link bài báo 1-click
+  const insertArticleLinkToChannel = (target) => {
+    const url = getPublicArticleUrl();
+    const snippet = target === 'fb' 
+      ? `\n\n👉 Đọc toàn văn bài viết tại: ${url}` 
+      : `\n\n🔗 *Đọc toàn văn bài viết tại:*\n${url}`;
+    
+    if (target === 'fb') {
+      setFbCaption(prev => prev ? prev.trim() + snippet : snippet.trim());
+      showRollbackToast('Đã chèn link bài báo vào Facebook!');
+    } else {
+      setZaloText(prev => prev ? prev.trim() + snippet : snippet.trim());
+      showRollbackToast('Đã chèn link bài báo vào Zalo OA!');
+    }
+  };
+
+  // Helper chèn link tài liệu 1-click
+  const insertDocLinksToChannel = (target) => {
+    const docs = (attachedFiles || []).filter(f => f.type !== 'image');
+    if (docs.length === 0) {
+      alert('Chưa có tệp tài liệu nào trong hồ sơ! Hãy nạp tệp Word, Excel hoặc PDF trước.');
+      return;
+    }
+    const origin = window.location.origin;
+    const links = docs.map(f => {
+      const fileUrl = f.url || `/api/documents/download/${f.id || encodeURIComponent(f.name)}`;
+      const fullUrl = fileUrl.startsWith('http') ? fileUrl : `${origin}${fileUrl.startsWith('/') ? '' : '/'}${fileUrl}`;
+      return `• ${f.name}: ${fullUrl}`;
+    }).join('\n');
+
+    const snippet = target === 'fb'
+      ? `\n\n📥 TÀI LIỆU / VĂN BẢN ĐÍNH KÈM:\n${links}`
+      : `\n\n📥 *TÀI LIỆU HƯỚNG DẪN / BIỂU MẪU ĐÍNH KÈM:*\n${links}`;
+
+    if (target === 'fb') {
+      setFbCaption(prev => prev ? prev.trim() + snippet : snippet.trim());
+      showRollbackToast(`Đã chèn link ${docs.length} tài liệu vào Facebook!`);
+    } else {
+      setZaloText(prev => prev ? prev.trim() + snippet : snippet.trim());
+      showRollbackToast(`Đã chèn link ${docs.length} tài liệu vào Zalo OA!`);
+    }
+  };
+
+  // Helper chèn link ảnh sự kiện
+  const insertPhotoLinksToChannel = () => {
+    if (!eventPhotos || eventPhotos.length === 0) {
+      alert('Chưa có ảnh sự kiện nào trong hồ sơ!');
+      return;
+    }
+    const origin = window.location.origin;
+    const links = eventPhotos.slice(0, 5).map((p, i) => {
+      const fullUrl = p.url.startsWith('http') ? p.url : `${origin}${p.url.startsWith('/') ? '' : '/'}${p.url}`;
+      return `📸 Ảnh ${i + 1}${p.caption ? ` (${p.caption})` : ''}: ${fullUrl}`;
+    }).join('\n');
+
+    const snippet = `\n\n🖼️ ALBUM HÌNH ẢNH SỰ KIỆN:\n${links}`;
+    setFbCaption(prev => prev ? prev.trim() + snippet : snippet.trim());
+    showRollbackToast(`Đã chèn link ${Math.min(eventPhotos.length, 5)} ảnh vào Facebook!`);
+  };
+
+  // Đồng bộ nhanh từ bài Web (Deterministic instant sync với link bài và tài liệu)
+  const syncFbFromWeb = () => {
+    if (!title && !sapo && !bodyHtml) { alert('Chưa có nội dung bài viết trên Canvas để đồng bộ!'); return; }
+    const cleanTitle = (title || 'Bản Tin Hoạt Động Công Đoàn TDMU').toUpperCase();
+    let summary = sapo ? sapo.trim() : '';
+    if (!summary && bodyHtml) {
+      summary = bodyHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 240);
+    }
+    const articleUrl = getPublicArticleUrl();
+    const docFiles = (attachedFiles || []).filter(f => f.type !== 'image');
+    let docSection = '';
+    if (docFiles.length > 0) {
+      const origin = window.location.origin;
+      docSection = '\n\n📥 TÀI LIỆU ĐÍNH KÈM:\n' + docFiles.map(f => {
+        const fileUrl = f.url || `/api/documents/download/${f.id || encodeURIComponent(f.name)}`;
+        const fullUrl = fileUrl.startsWith('http') ? fileUrl : `${origin}${fileUrl.startsWith('/') ? '' : '/'}${fileUrl}`;
+        return `• ${f.name}: ${fullUrl}`;
+      }).join('\n');
+    }
+    let photoNotice = eventPhotos.length > 0 ? `\n\n📸 (Xem trọn bộ album ${Math.min(eventPhotos.length, 4)} ảnh hoạt động bên dưới 👇)` : '';
+
+    setFbCaption(`📢 [TIN HOẠT ĐỘNG CÔNG ĐOÀN TDMU]\n\n🔥 ${cleanTitle}\n\n✨ ${summary}\n\n👉 Kính mời quý Thầy/Cô và Đoàn viên xem toàn văn tại:\n${articleUrl}${docSection}${photoNotice}\n\n#CongDoanTDMU #TDMU2026 #HoatDongDoanVien #ChamLoDoanVien`);
+    showRollbackToast('Đã đồng bộ nội dung bài báo lên Facebook!');
+  };
+
   const syncZaloFromWeb = () => {
-    if (!title) { alert('Chưa có tiêu đề!'); return; }
-    setZaloText(`*THÔNG BÁO CÔNG ĐOÀN TDMU*\n\n*${title}*\n\n${sapo}\n\nTrân trọng kính mời quý Thầy/Cô xem bài đầy đủ trên Website Công đoàn.`);
+    if (!title && !sapo && !bodyHtml) { alert('Chưa có nội dung bài viết trên Canvas để đồng bộ!'); return; }
+    const cleanTitle = title || 'Thông Báo Hoạt Động Công Đoàn';
+    let summary = sapo ? sapo.trim() : '';
+    if (!summary && bodyHtml) {
+      summary = bodyHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
+    }
+    const articleUrl = getPublicArticleUrl();
+    const docFiles = (attachedFiles || []).filter(f => f.type !== 'image');
+    let docSection = '';
+    if (docFiles.length > 0) {
+      const origin = window.location.origin;
+      docSection = '\n\n📥 *TÀI LIỆU HƯỚNG DẪN / BIỂU MẪU:*\n' + docFiles.map(f => {
+        const fileUrl = f.url || `/api/documents/download/${f.id || encodeURIComponent(f.name)}`;
+        const fullUrl = fileUrl.startsWith('http') ? fileUrl : `${origin}${fileUrl.startsWith('/') ? '' : '/'}${fileUrl}`;
+        return `• ${f.name}: ${fullUrl}`;
+      }).join('\n');
+    }
+
+    setZaloText(`*THÔNG BÁO TỪ CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT*\n\n📌 Về việc: *${cleanTitle}*\n\n${summary}\n\n🔗 *Đọc toàn văn bài viết tại Cổng thông tin:*\n${articleUrl}${docSection}\n\nTrân trọng kính thông báo!\n— BAN THƯỜNG VỤ CÔNG ĐOÀN TRƯỜNG`);
+    showRollbackToast('Đã đồng bộ nội dung bài báo lên Zalo OA!');
+  };
+
+  // Đồng bộ bằng AI chuyên biệt (AI-powered Smart Sync)
+  const generateFbWithAi = () => {
+    setActiveChannel('fb');
+    runAi('Soạn thảo nội dung bài đăng Facebook hấp dẫn, chuẩn viral từ bài báo mới nhất, tự động trích xuất link bài báo và toàn bộ tài liệu đính kèm.');
+  };
+
+  const generateZaloWithAi = () => {
+    setActiveChannel('zalo');
+    runAi('Soạn thảo thông báo phát thanh Zalo OA trang trọng, súc tích từ bài báo mới nhất, tóm tắt ý chính và đính kèm đầy đủ link tài liệu cùng link bài báo.');
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1989,13 +2123,44 @@ export default function AdminStudio() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '20px' }}>
                   {/* Left: Editor */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {/* Sync + tools */}
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                      <button onClick={syncFbFromWeb} className="action-btn" style={{ background: '#1877F2', color: 'white' }}>🔄 Đồng bộ từ bài Web</button>
-                      <span style={{ fontSize: '11.5px', color: '#64748B', fontWeight: '600' }}>Tỷ lệ ảnh:</span>
-                      {['1:1 Vuông','4:5 Dọc','16:9 Ngang','Album 4'].map(r => (
-                        <button key={r} onClick={() => setFbRatio(r)} className="fbpill" style={{ background: fbRatio === r ? '#1877F2' : '#EFF6FF', color: fbRatio === r ? 'white' : '#1D4ED8', border: fbRatio === r ? 'none' : '1px solid #BFDBFE' }}>{r}</button>
-                      ))}
+                    {/* Source Article Live Indicator */}
+                    <div style={{ padding: '8px 12px', background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                        <span style={{ background: '#0284C7', color: 'white', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '4px' }}>BÀI BÁO GỐC</span>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: '#0369A1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {title || 'Chưa đặt tiêu đề bài báo'}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '11px', color: '#64748B', whiteSpace: 'nowrap' }}>
+                        🔗 {activeArticleId ? `ID: #${activeArticleId}` : 'Chưa lưu (Bản nháp)'}
+                      </span>
+                    </div>
+
+                    {/* Sync + Link Tools Action Bar */}
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <button onClick={generateFbWithAi} className="action-btn" style={{ background: 'linear-gradient(135deg, #1877F2, #0284C7)', color: 'white', fontWeight: '800', boxShadow: '0 2px 6px rgba(24,119,242,0.25)' }} title="AI tự động phân tích bài báo và viết caption Facebook chuẩn tương tác, tự đính kèm đầy đủ link bài và file">
+                        ⚡ Cập nhật & Tối ưu AI
+                      </button>
+                      <button onClick={syncFbFromWeb} className="action-btn" style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', fontWeight: '700' }} title="Đồng bộ tức thì tiêu đề, sapo, link bài và danh sách file vào caption">
+                        🔄 Đồng bộ nhanh
+                      </button>
+                      <button onClick={() => insertArticleLinkToChannel('fb')} className="action-btn" style={{ background: '#FFF', color: '#0284C7', border: '1px solid #BAE6FD', fontWeight: '700', fontSize: '11.5px' }} title="Chèn nhanh link công khai của bài báo vào caption">
+                        🔗 Chèn Link Bài
+                      </button>
+                      <button onClick={() => insertDocLinksToChannel('fb')} className="action-btn" style={{ background: '#FFF', color: '#059669', border: '1px solid #A7F3D0', fontWeight: '700', fontSize: '11.5px' }} title="Chèn link tải toàn bộ tài liệu đính kèm vào caption">
+                        📎 Chèn Link File ({attachedFiles.filter(f => f.type !== 'image').length})
+                      </button>
+                      {eventPhotos.length > 0 && (
+                        <button onClick={insertPhotoLinksToChannel} className="action-btn" style={{ background: '#FFF', color: '#D97706', border: '1px solid #FDE68A', fontWeight: '700', fontSize: '11.5px' }} title="Chèn link album ảnh vào caption">
+                          🖼️ Link Ảnh ({eventPhotos.length})
+                        </button>
+                      )}
+                      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '11px', color: '#64748B', fontWeight: '600' }}>Tỷ lệ:</span>
+                        {['1:1 Vuông','4:5 Dọc','16:9 Ngang'].map(r => (
+                          <button key={r} onClick={() => setFbRatio(r)} className="fbpill" style={{ background: fbRatio === r ? '#1877F2' : '#EFF6FF', color: fbRatio === r ? 'white' : '#1D4ED8', border: fbRatio === r ? 'none' : '1px solid #BFDBFE' }}>{r}</button>
+                        ))}
+                      </div>
                     </div>
 
                     {/* Hashtag chips */}
@@ -2102,8 +2267,33 @@ export default function AdminStudio() {
               <div style={{ flex: 1, overflowY: 'auto', padding: '18px 24px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '20px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      <button onClick={syncZaloFromWeb} className="action-btn" style={{ background: '#0068FF', color: 'white' }}>🔄 Đồng bộ từ bài Web</button>
+                    {/* Source Article Live Indicator */}
+                    <div style={{ padding: '8px 12px', background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                        <span style={{ background: '#0068FF', color: 'white', fontSize: '9px', fontWeight: '800', padding: '2px 6px', borderRadius: '4px' }}>BÀI BÁO GỐC</span>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: '#0369A1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {title || 'Chưa đặt tiêu đề bài báo'}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '11px', color: '#64748B', whiteSpace: 'nowrap' }}>
+                        🔗 {activeArticleId ? `ID: #${activeArticleId}` : 'Chưa lưu (Bản nháp)'}
+                      </span>
+                    </div>
+
+                    {/* Sync + Link Tools Action Bar */}
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <button onClick={generateZaloWithAi} className="action-btn" style={{ background: 'linear-gradient(135deg, #0068FF, #0284C7)', color: 'white', fontWeight: '800', boxShadow: '0 2px 6px rgba(0,104,255,0.25)' }} title="AI tự động phân tích bài báo và soạn thông báo Zalo OA chuẩn công vụ, tóm tắt ý chính và gắn kèm link">
+                        ⚡ Cập nhật & Tối ưu AI
+                      </button>
+                      <button onClick={syncZaloFromWeb} className="action-btn" style={{ background: '#EFF6FF', color: '#0068FF', border: '1px solid #BFDBFE', fontWeight: '700' }} title="Đồng bộ tức thì tiêu đề, sapo, link bài và danh sách file vào tin nhắn Zalo">
+                        🔄 Đồng bộ nhanh
+                      </button>
+                      <button onClick={() => insertArticleLinkToChannel('zalo')} className="action-btn" style={{ background: '#FFF', color: '#0284C7', border: '1px solid #BAE6FD', fontWeight: '700', fontSize: '11.5px' }} title="Chèn nhanh link công khai của bài báo vào tin nhắn Zalo">
+                        🔗 Chèn Link Bài
+                      </button>
+                      <button onClick={() => insertDocLinksToChannel('zalo')} className="action-btn" style={{ background: '#FFF', color: '#059669', border: '1px solid #A7F3D0', fontWeight: '700', fontSize: '11.5px' }} title="Chèn link tải toàn bộ tài liệu đính kèm vào tin nhắn Zalo">
+                        📎 Chèn Link File ({attachedFiles.filter(f => f.type !== 'image').length})
+                      </button>
                     </div>
                     {/* Quick templates */}
                     <div>
@@ -2260,27 +2450,69 @@ export default function AdminStudio() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: `${Math.max(280, rightWidth)}px` }}>
-                {/* Header */}
-                <div style={{ padding: '10px 14px', borderBottom: '1px solid #E2E8F0', background: 'linear-gradient(135deg,#002855,#001A38)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <i className="fa-solid fa-wand-magic-sparkles" style={{ color: '#F59E0B', fontSize: '13px' }} />
-                    <div>
-                      <div style={{ fontSize: '12.5px', fontWeight: '800', letterSpacing: '0.2px' }}>Trợ Lý Biên Tập AI</div>
-                      <div style={{ fontSize: '9px', color: '#38BDF8', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: autopilotLoading || aiLoading ? '#F59E0B' : '#10B981', display: 'inline-block' }} />
-                        <span>{autopilotLoading ? 'Đang viết bài...' : aiLoading ? 'Đang phân tích...' : 'Sẵn sàng trợ lý'}</span>
+                {/* Header Sub-Agent Profiles */}
+                {(() => {
+                  const agentProfiles = {
+                    web: {
+                      name: 'Tổng Biên Tập AI',
+                      badge: 'Web Newsroom',
+                      sub: 'Chuẩn 5W1H · Báo chí chính luận · Xuất bản Word/PDF',
+                      icon: 'fa-solid fa-newspaper',
+                      iconColor: '#F59E0B',
+                      gradient: 'linear-gradient(135deg,#002855,#001A38)'
+                    },
+                    fb: {
+                      name: 'Trợ Lý Facebook Fanpage AI',
+                      badge: 'Social Media',
+                      sub: 'Viral Hooks · Hashtags · Tự động gắn Link',
+                      icon: 'fa-brands fa-facebook',
+                      iconColor: '#60A5FA',
+                      gradient: 'linear-gradient(135deg,#1877F2,#0F172A)'
+                    },
+                    zalo: {
+                      name: 'Trợ Lý Zalo OA AI',
+                      badge: 'Official Broadcast',
+                      sub: 'Phát thanh công vụ · Tóm tắt ý chính · Đính kèm file',
+                      icon: 'fa-solid fa-comment-dots',
+                      iconColor: '#38BDF8',
+                      gradient: 'linear-gradient(135deg,#0068FF,#0369A1)'
+                    },
+                    schedule: {
+                      name: 'Điều Phối Viên Lập Lịch AI',
+                      badge: 'Dispatcher',
+                      sub: 'Lập lịch phát hành đa kênh tự động',
+                      icon: 'fa-solid fa-calendar-check',
+                      iconColor: '#34D399',
+                      gradient: 'linear-gradient(135deg,#047857,#064E3B)'
+                    }
+                  };
+                  const currentAgent = agentProfiles[activeChannel] || agentProfiles.web;
+                  return (
+                    <div style={{ padding: '10px 14px', borderBottom: '1px solid #E2E8F0', background: currentAgent.gradient, color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <i className={currentAgent.icon} style={{ color: currentAgent.iconColor, fontSize: '15px' }} />
+                        <div>
+                          <div style={{ fontSize: '12px', fontWeight: '800', letterSpacing: '0.2px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <span>{currentAgent.name}</span>
+                            <span style={{ fontSize: '8.5px', background: 'rgba(255,255,255,0.2)', padding: '1px 5px', borderRadius: '3px', fontWeight: '700' }}>{currentAgent.badge}</span>
+                          </div>
+                          <div style={{ fontSize: '9px', color: '#93C5FD', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: autopilotLoading || aiLoading ? '#F59E0B' : '#10B981', display: 'inline-block' }} />
+                            <span>{autopilotLoading ? 'Đang viết bài...' : aiLoading ? 'Đang phân tích...' : currentAgent.sub}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <button onClick={() => setChatMessages([{ id: Date.now(), sender: 'ai', text: `Trợ lý AI (${currentAgent.name}) sẵn sàng hỗ trợ bạn tác nghiệp kênh ${currentAgent.badge}!`, ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#94A3B8', borderRadius: '4px', padding: '3px 6px', fontSize: '10px', cursor: 'pointer' }} title="Làm mới đoạn chat">
+                          <i className="fa-solid fa-arrow-rotate-right" />
+                        </button>
+                        <button onClick={() => setRightPinned(!rightPinned)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: rightPinned ? '#38BDF8' : '#94A3B8', borderRadius: '4px', padding: '3px 6px', cursor: 'pointer', fontSize: '11px' }} title={rightPinned ? 'Bỏ ghim' : 'Ghim thanh công cụ'}>
+                          <i className="fa-solid fa-thumbtack" />
+                        </button>
                       </div>
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <button onClick={() => setChatMessages([{ id: Date.now(), sender: 'ai', text: 'Trợ lý AI sẵn sàng hỗ trợ. Hãy nạp hồ sơ hoặc chọn đoạn văn để biên tập!', ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#94A3B8', borderRadius: '4px', padding: '3px 6px', fontSize: '10px', cursor: 'pointer' }} title="Làm mới đoạn chat">
-                      <i className="fa-solid fa-arrow-rotate-right" />
-                    </button>
-                    <button onClick={() => setRightPinned(!rightPinned)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: rightPinned ? '#38BDF8' : '#94A3B8', borderRadius: '4px', padding: '3px 6px', cursor: 'pointer', fontSize: '11px' }} title={rightPinned ? 'Bỏ ghim' : 'Ghim thanh công cụ'}>
-                      <i className="fa-solid fa-thumbtack" />
-                    </button>
-                  </div>
-                </div>
+                  );
+                })()}
 
                 {/* Quick Action Command Bar */}
                 <div style={{ padding: '10px 12px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0 }}>
@@ -2700,7 +2932,7 @@ export default function AdminStudio() {
                   )}
 
                   {/* Fast Prompt Suggestions for Selection */}
-                  {selectedText && (
+                  {selectedText ? (
                     <div style={{ padding: '5px 8px', background: '#F8FAFC', display: 'flex', gap: '4px', overflowX: 'auto', borderBottom: '1px solid #F1F5F9' }}>
                       {[
                         { label: '✨ Rút gọn', prompt: 'Hãy rút gọn đoạn này thật súc tích, giữ nguyên ý chính.' },
@@ -2709,6 +2941,37 @@ export default function AdminStudio() {
                         { label: '📢 Nhấn mạnh', prompt: 'Diễn đạt lại đoạn này nhấn mạnh tinh thần nhiệt huyết và đoàn kết.' }
                       ].map(chip => (
                         <button key={chip.label} onClick={() => runAi(chip.prompt)} style={{ background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '12px', padding: '2px 8px', fontSize: '10px', color: '#334155', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: '600' }}>{chip.label}</button>
+                      ))}
+                    </div>
+                  ) : (
+                    /* Dynamic Sub-Agent Fast Action Chips per Channel */
+                    <div style={{ padding: '5px 8px', background: '#F8FAFC', display: 'flex', gap: '4px', overflowX: 'auto', borderBottom: '1px solid #F1F5F9' }}>
+                      {activeChannel === 'fb' && [
+                        { label: '✨ Soạn Caption Viral', action: () => generateFbWithAi() },
+                        { label: '🔗 Chèn Link Bài', action: () => insertArticleLinkToChannel('fb') },
+                        { label: '📎 Link Tài Liệu', action: () => insertDocLinksToChannel('fb') },
+                        { label: '🏷️ Thêm Hashtags', action: () => runAi('Thêm các hashtag nhận diện thương hiệu Công đoàn TDMU') },
+                        { label: '🖼️ Link Album Ảnh', action: () => insertPhotoLinksToChannel() }
+                      ].map(chip => (
+                        <button key={chip.label} onClick={chip.action} style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '12px', padding: '2px 8px', fontSize: '10px', color: '#1D4ED8', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: '600' }}>{chip.label}</button>
+                      ))}
+
+                      {activeChannel === 'zalo' && [
+                        { label: '📢 Soạn Thông Báo OA', action: () => generateZaloWithAi() },
+                        { label: '📋 Tóm tắt 3 Ý Chính', action: () => runAi('Tóm tắt 3 ý chính súc tích nhất từ bài báo cho Zalo OA') },
+                        { label: '📎 Chèn Link Tài Liệu', action: () => insertDocLinksToChannel('zalo') },
+                        { label: '🔗 Chèn Link Bài', action: () => insertArticleLinkToChannel('zalo') }
+                      ].map(chip => (
+                        <button key={chip.label} onClick={chip.action} style={{ background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: '12px', padding: '2px 8px', fontSize: '10px', color: '#0369A1', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: '600' }}>{chip.label}</button>
+                      ))}
+
+                      {(activeChannel === 'web' || activeChannel === 'schedule') && [
+                        { label: '⚡ Chuẩn 5W1H', action: () => runAi('Rà soát chuẩn mực báo chí 5W1H và chính tả toàn bài') },
+                        { label: '📄 Xuất Word', action: () => runAi('Xuất bài ra file Word (.docx)') },
+                        { label: '📑 Xuất PDF', action: () => runAi('Xuất bài ra file PDF') },
+                        { label: '📊 Đọc kinh phí Excel', action: () => runAi('Đọc file Excel dự toán kinh phí') }
+                      ].map(chip => (
+                        <button key={chip.label} onClick={chip.action} style={{ background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '12px', padding: '2px 8px', fontSize: '10px', color: '#334155', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: '600' }}>{chip.label}</button>
                       ))}
                     </div>
                   )}
@@ -2721,7 +2984,15 @@ export default function AdminStudio() {
                       value={aiPrompt}
                       onChange={e => setAiPrompt(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') runAi(); }}
-                      placeholder={selectedText ? 'Hỏi AI hoặc yêu cầu sửa đoạn đang chọn...' : 'Hỏi AI, ra lệnh viết hoặc chỉnh sửa bài...'}
+                      placeholder={
+                        selectedText 
+                          ? 'Hỏi AI hoặc yêu cầu sửa đoạn đang chọn...' 
+                          : activeChannel === 'fb' 
+                            ? 'Yêu cầu Trợ lý Facebook viết hook, thêm emoji, hashtag hoặc chèn link...'
+                            : activeChannel === 'zalo'
+                              ? 'Yêu cầu Trợ lý Zalo OA soạn tin phát thanh, tóm tắt ý chính hoặc gửi tài liệu...'
+                              : 'Hỏi Tổng Biên Tập, ra lệnh viết hoặc chọn đoạn văn để sửa...'
+                      }
                       style={{ flex: 1, padding: '7px 10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '11.5px', outline: 'none', background: 'white' }}
                     />
                     <button id="ai-send-btn" onClick={() => runAi()} disabled={aiLoading} style={{ background: 'linear-gradient(135deg,#002855,#2563EB)', color: 'white', border: 'none', borderRadius: '6px', padding: '0 12px', fontSize: '13px', fontWeight: '800', cursor: aiLoading ? 'not-allowed' : 'pointer' }} title="Gửi yêu cầu">➔</button>

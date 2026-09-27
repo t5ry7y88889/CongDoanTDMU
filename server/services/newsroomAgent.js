@@ -288,34 +288,128 @@ function createNewsroomTools(agentContext, onToolStatus) {
 
     // ── 12. Soạn bài đăng Facebook ─────────────────────────────────────────────
     generate_facebook: tool({
-      description: 'Soạn thảo nội dung bài đăng Facebook (300-500 ký tự) kèm hashtag và emoji.',
+      description: 'Soạn thảo nội dung bài đăng Facebook (300-500 ký tự) chuẩn tương tác viral, tự động trích xuất và gắn link bài báo công khai và tệp tài liệu đính kèm.',
       parameters: z.object({
         keyMessage: z.string().optional().describe('Thông điệp cốt lõi nhấn mạnh')
       }),
       execute: async ({ keyMessage }) => {
         if (onToolStatus) onToolStatus('generate_facebook', 'Đang soạn thảo nội dung truyền thông Facebook...');
         const title = article.title || 'Tọa đàm chuyên đề Dinh dưỡng hợp lý - Công đoàn TDMU';
-        const fbContent = `📢 [TIN HOẠT ĐỘNG CÔNG ĐOÀN TDMU]\n\n✨ ${title}\n\nSáng nay, Công đoàn Trường Đại học Thủ Dầu Một đã tổ chức thành công chương trình tọa đàm chuyên đề về dinh dưỡng và sức khỏe cho toàn thể cán bộ, giảng viên, người lao động. ${keyMessage || 'Chương trình là hoạt động ý nghĩa nhằm chăm lo thiết thực đến đời sống viên chức.'}\n\n👉 Chi tiết hoạt động và cẩm nang dinh dưỡng mời Quý Thầy/Cô xem tại Cổng thông tin Công đoàn!\n\n#CongDoanTDMU #HoatDongDoanVien #TDMU2026 #ChamLoDoanVien`;
+        let summary = article.sapo ? article.sapo.trim() : '';
+        if (!summary && article.bodyHtml) {
+          summary = article.bodyHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 240);
+        }
+        if (!summary) {
+          summary = 'Công đoàn Trường Đại học Thủ Dầu Một tiếp tục đẩy mạnh các phong trào chăm lo, nâng cao đời sống cho cán bộ, giảng viên và người lao động.';
+        }
+
+        const articleUrl = article.id 
+          ? `http://localhost:3000/bai-viet.html?id=${article.id}` 
+          : 'http://localhost:3000/bai-viet.html';
+
+        const docFiles = (attachedFiles || []).filter(f => f.type !== 'image');
+        let docText = '';
+        if (docFiles.length > 0) {
+          docText = '\n\n📥 TÀI LIỆU / VĂN BẢN ĐÍNH KÈM:\n' + docFiles.map(f => {
+            const url = f.url || `/api/documents/download/${f.id || encodeURIComponent(f.name)}`;
+            const fullUrl = url.startsWith('http') ? url : `http://localhost:3000${url.startsWith('/') ? '' : '/'}${url}`;
+            return `• ${f.name}: ${fullUrl}`;
+          }).join('\n');
+        }
+
+        let photoNotice = '';
+        if ((eventPhotos || []).length > 0) {
+          photoNotice = `\n\n📸 (Xem trọn bộ album ${Math.min(eventPhotos.length, 6)} hình ảnh hoạt động bên dưới 👇)`;
+        }
+
+        const fbContent = `📢 [TIN HOẠT ĐỘNG CÔNG ĐOÀN TDMU]\n\n🔥 ${title.toUpperCase()}\n\n✨ ${summary}\n\n${keyMessage ? `💡 ${keyMessage}\n\n` : ''}👉 Xem chi tiết toàn văn bài viết tại:\n${articleUrl}${docText}${photoNotice}\n\n#CongDoanTDMU #HoatDongDoanVien #TDMU2026 #DaiHocThuDauMot #ChamLoDoanVien`;
         
         return {
           action: 'update_facebook',
           content: fbContent,
-          characterCount: fbContent.length
+          characterCount: fbContent.length,
+          articleUrl,
+          docCount: docFiles.length
         };
       }
     }),
 
     // ── 13. Soạn thông báo Zalo OA ─────────────────────────────────────────────
     generate_zalo: tool({
-      description: 'Soạn thảo thông báo trang trọng gửi qua kênh Zalo Official Account.',
-      parameters: z.object({}),
-      execute: async () => {
+      description: 'Soạn thảo thông báo trang trọng gửi qua kênh Zalo Official Account, tóm tắt các điểm then chốt và tự động đính kèm link bài viết cùng link tài liệu.',
+      parameters: z.object({
+        keyMessage: z.string().optional().describe('Nội dung cần nhấn mạnh thêm')
+      }),
+      execute: async ({ keyMessage }) => {
         if (onToolStatus) onToolStatus('generate_zalo', 'Đang soạn thảo thông báo Zalo OA...');
-        const zaloContent = `*THÔNG BÁO TỪ CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT*\n\nKính gửi Quý Thầy/Cô Đoàn viên,\n\nCông đoàn Trường trân trọng thông báo về kết quả tổ chức ${article.title || 'Tọa đàm chuyên đề Dinh dưỡng hợp lý'}. Mọi tài liệu hội thảo và cẩm nang hướng dẫn đã được cập nhật đầy đủ.\n\nTrân trọng kính thông báo!\n— Ban Thường Vụ Công Đoàn Trường`;
+        const title = article.title || 'Thông báo hoạt động Công đoàn';
+        let summary = article.sapo ? article.sapo.trim() : '';
+        if (!summary && article.bodyHtml) {
+          summary = article.bodyHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 220);
+        }
+        if (!summary) {
+          summary = 'Công đoàn Trường Đại học Thủ Dầu Một trân trọng gửi đến Quý Thầy/Cô thông tin chương trình công tác và phong trào đoàn viên.';
+        }
+
+        const articleUrl = article.id 
+          ? `http://localhost:3000/bai-viet.html?id=${article.id}` 
+          : 'http://localhost:3000/bai-viet.html';
+
+        const docFiles = (attachedFiles || []).filter(f => f.type !== 'image');
+        let docText = '';
+        if (docFiles.length > 0) {
+          docText = '\n\n📥 *TÀI LIỆU HƯỚNG DẪN / BIỂU MẪU ĐÍNH KÈM:*\n' + docFiles.map(f => {
+            const url = f.url || `/api/documents/download/${f.id || encodeURIComponent(f.name)}`;
+            const fullUrl = url.startsWith('http') ? url : `http://localhost:3000${url.startsWith('/') ? '' : '/'}${url}`;
+            return `• ${f.name}: ${fullUrl}`;
+          }).join('\n');
+        }
+
+        const zaloContent = `*THÔNG BÁO TỪ CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT*\n\n📌 Về việc: *${title}*\n\n${summary}\n\n${keyMessage ? `🔹 *LƯU Ý TRỌNG TÂM:*\n• ${keyMessage}\n\n` : ''}🔗 *Đọc toàn văn bài viết tại Cổng thông tin:*\n${articleUrl}${docText}\n\nTrân trọng thông báo!\n— BAN THƯỜNG VỤ CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT`;
         
         return {
           action: 'update_zalo',
-          content: zaloContent
+          content: zaloContent,
+          articleUrl,
+          docCount: docFiles.length
+        };
+      }
+    }),
+
+    // ── 13b. Trích xuất liên kết đa kênh ────────────────────────────────────────
+    insert_channel_links: tool({
+      description: 'Trích xuất và định dạng liên kết bài báo và tất cả tệp tài liệu đính kèm để chèn nhanh vào kênh truyền thông Facebook hoặc Zalo OA.',
+      parameters: z.object({
+        channel: z.enum(['facebook', 'zalo', 'web']).optional().describe('Kênh cần lấy định dạng link')
+      }),
+      execute: async ({ channel = 'facebook' }) => {
+        if (onToolStatus) onToolStatus('insert_channel_links', 'Đang trích xuất liên kết bài viết & tài liệu...');
+        const articleUrl = article.id 
+          ? `http://localhost:3000/bai-viet.html?id=${article.id}` 
+          : 'http://localhost:3000/bai-viet.html';
+
+        const docFiles = (attachedFiles || []).filter(f => f.type !== 'image');
+        const docLinks = docFiles.map(f => {
+          const url = f.url || `/api/documents/download/${f.id || encodeURIComponent(f.name)}`;
+          return {
+            name: f.name,
+            url: url.startsWith('http') ? url : `http://localhost:3000${url.startsWith('/') ? '' : '/'}${url}`
+          };
+        });
+
+        const fbSnippet = `👉 Đọc toàn văn bài viết tại: ${articleUrl}` + 
+          (docLinks.length > 0 ? `\n📎 Tài liệu đính kèm:\n` + docLinks.map(d => `• ${d.name}: ${d.url}`).join('\n') : '');
+
+        const zaloSnippet = `🔗 Xem bài đầy đủ: ${articleUrl}` + 
+          (docLinks.length > 0 ? `\n📥 Tải văn bản/tài liệu:\n` + docLinks.map(d => `• ${d.name}: ${d.url}`).join('\n') : '');
+
+        return {
+          action: 'insert_channel_links',
+          articleUrl,
+          docLinks,
+          docCount: docLinks.length,
+          facebookSnippet: fbSnippet,
+          zaloSnippet: zaloSnippet
         };
       }
     }),
@@ -455,7 +549,22 @@ async function executeNewsroomAgent({
     emit('tool-status', { toolName, statusText });
   });
 
-  const systemInstruction = `BẠN LÀ TỔNG BIÊN TẬP VIÊN AI TỰ HÀNH CỦA CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT (TDMU).
+  const platform = context.platform || 'web';
+  let systemInstruction = '';
+  if (platform === 'fb' || platform === 'facebook') {
+    systemInstruction = `BẠN LÀ TRỢ LÝ TRUYỀN THÔNG MẠNG XÃ HỘI (FACEBOOK FANPAGE AGENT) CỦA CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT (TDMU).
+Bạn chuyên trách sáng tạo caption Facebook viral, lôi cuốn, truyền cảm hứng, dùng emoji sinh động và hashtag nhận diện (#CongDoanTDMU, #TDMU, #HoatDongDoanVien).
+QUY TẮC BẮT BUỘC:
+1. Luôn tự động trích xuất Link bài báo trên Cổng thông tin (http://localhost:3000/bai-viet.html?id=...) và Link tài liệu đính kèm (Word, Excel, PDF) để đưa vào bài đăng.
+2. Khi người dùng yêu cầu soạn bài, viết hook, thêm hashtag hay chèn link: Hãy lập tức gọi tool "generate_facebook" hoặc "insert_channel_links".`;
+  } else if (platform === 'zalo') {
+    systemInstruction = `BẠN LÀ TRỢ LÝ PHÁT THANH CÔNG VỤ (ZALO OFFICIAL ACCOUNT AGENT) CỦA CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT (TDMU).
+Bạn chuyên trách soạn thảo thông báo Zalo OA chính thức, súc tích, trang trọng, tóm tắt các điểm then chốt bằng gạch đầu dòng ngắn gọn.
+QUY TẮC BẮT BUỘC:
+1. Luôn tự động trích xuất Link bài báo trên Cổng thông tin và Link tải tài liệu trực tiếp.
+2. Khi người dùng yêu cầu soạn tin, tóm tắt hoặc đính kèm tài liệu: Hãy lập tức gọi tool "generate_zalo" hoặc "insert_channel_links".`;
+  } else {
+    systemInstruction = `BẠN LÀ TỔNG BIÊN TẬP VIÊN AI TỰ HÀNH CỦA CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT (TDMU).
 Bạn không chỉ trả lời bằng lời nói, mà BẠN CÓ ĐẦY ĐỦ CÁC CÔNG CỤ (TOOLS) ĐỂ TRỰC TIẾP HÀNH ĐỘNG.
 
 NGUYÊN TẮC HOẠT ĐỘNG TỰ HÀNH (AUTONOMOUS REACT):
@@ -466,8 +575,16 @@ NGUYÊN TẮC HOẠT ĐỘNG TỰ HÀNH (AUTONOMOUS REACT):
 5. Sau khi công cụ hoàn tất hành động, hãy giải thích ngắn gọn, trang trọng kết quả cho người dùng.
 
 Phong cách ứng xử: Chuyên nghiệp, nhã nhặn, tôn trọng chuẩn mực đạo đức báo chí Công đoàn Việt Nam.`;
+  }
 
-  // ── ƯU TIÊN TUYỆT ĐỐI SỐ 1: BÔI ĐEN CHỈNH SỬA ĐOẠN VĂN (SELECTION REWRITE) ──
+  // ── ƯU TIÊN SỐ 1: NẾU ĐANG Ở KÊNH FB HOẶC ZALO VÀ KHÔNG CHỌN ĐOẠN -> SUB-AGENT CHUYÊN BIỆT ──
+  const isFbOrZalo = platform === 'fb' || platform === 'facebook' || platform === 'zalo';
+  if (isFbOrZalo && !context.selectedText) {
+    await executeLocalAutonomousAgent({ messages, context, tools, emit, apiKey: activeKey, groqApiKey: activeGroq });
+    return;
+  }
+
+  // ── ƯU TIÊN SỐ 2: BÔI ĐEN CHỈNH SỬA ĐOẠN VĂN (SELECTION REWRITE) ──
   // Nếu có selectedText HOẶC yêu cầu sửa/xóa/đổi/rút gọn văn bản -> ĐẨY THẲNG VÀO LOCAL AI ENGINE (0.3s, 100% Offline, GPU Vulkan)
   const lastUserMsg = [...messages].reverse().find(m => m.sender === 'user')?.text || '';
   const qNorm = (lastUserMsg || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
@@ -622,10 +739,64 @@ function transformSelectedText(text, instruction) {
  * Nhận diện ý định thông minh và thực thi Tools tương ứng độc lập với Cloud AI
  */
 async function executeLocalAutonomousAgent({ messages, context, tools, emit, apiKey, groqApiKey }) {
+  const platform = context.platform || 'web';
   const lastUserMsg = [...messages].reverse().find(m => m.sender === 'user')?.text || '';
   const q = lastUserMsg.toLowerCase();
   const qNorm = q.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // KÊNH 1: TRỢ LÝ FACEBOOK FANPAGE AI (SOCIAL MEDIA SUB-AGENT)
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (platform === 'fb' || platform === 'facebook') {
+    emit('text-delta', { delta: '🌐 **Trợ lý Facebook Fanpage AI** đang phân tích bài báo và tối ưu nội dung mạng xã hội...\n\n' });
+
+    // A. Yêu cầu chèn link bài báo hoặc tài liệu
+    if (qNorm.includes('link') || qNorm.includes('tai lieu') || qNorm.includes('dinh kem') || qNorm.includes('tep')) {
+      emit('tool-call', { toolName: 'insert_channel_links', args: { channel: 'facebook' } });
+      const res = await tools.insert_channel_links.execute({ channel: 'facebook' });
+      emit('tool-result', { toolName: 'insert_channel_links', result: res });
+      emit('text-delta', { delta: `Tôi đã trích xuất danh sách liên kết chuẩn xác để chia sẻ lên Facebook:\n\n🔗 **Link bài viết Cổng thông tin:** ${res.articleUrl}\n${res.docCount > 0 ? `📁 **Tài liệu đính kèm (${res.docCount} tệp):**\n` + res.docLinks.map(d => `• [${d.name}](${d.url})`).join('\n') : '📁 *Không có tài liệu nào đính kèm.*'}\n\n👉 Bạn có thể bấm nút **"Chèn Link Bài Báo"** hoặc **"Chèn Link File"** trên thanh công cụ để bổ sung ngay vào bài viết!` });
+      emit('finish', { success: true });
+      return;
+    }
+
+    // B. Mặc định / Soạn bài đăng Facebook / Đồng bộ từ bài báo
+    emit('tool-call', { toolName: 'generate_facebook', args: { keyMessage: lastUserMsg } });
+    const res = await tools.generate_facebook.execute({ keyMessage: lastUserMsg });
+    emit('tool-result', { toolName: 'generate_facebook', result: res });
+    emit('text-delta', { delta: `Tôi đã đồng bộ nội dung mới nhất từ bài báo và soạn xong bài đăng Facebook chuẩn tương tác (${res.characterCount} ký tự):\n\n\`\`\`\n${res.content}\n\`\`\`\n\n✅ **Đã tự động đính kèm:**\n• Link bài báo Cổng thông tin: ${res.articleUrl}\n• ${res.docCount} tệp tài liệu đính kèm\n• Bộ Hashtag & Emoji tương tác cao.\n\n*Nội dung đã được cập nhật trực tiếp vào ô soạn thảo Facebook!*` });
+    emit('finish', { success: true });
+    return;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // KÊNH 2: TRỢ LÝ ZALO OA AI (OFFICIAL BROADCAST SUB-AGENT)
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (platform === 'zalo') {
+    emit('text-delta', { delta: '💬 **Trợ lý Zalo OA AI** đang biên tập bản tin thông báo công vụ phát thanh qua Zalo...\n\n' });
+
+    // A. Yêu cầu chèn link bài báo hoặc tài liệu
+    if (qNorm.includes('link') || qNorm.includes('tai lieu') || qNorm.includes('dinh kem') || qNorm.includes('tep')) {
+      emit('tool-call', { toolName: 'insert_channel_links', args: { channel: 'zalo' } });
+      const res = await tools.insert_channel_links.execute({ channel: 'zalo' });
+      emit('tool-result', { toolName: 'insert_channel_links', result: res });
+      emit('text-delta', { delta: `Tôi đã trích xuất danh sách liên kết cho Zalo OA:\n\n🔗 **Link toàn văn bài viết:** ${res.articleUrl}\n${res.docCount > 0 ? `📥 **Tài liệu tải về (${res.docCount} tệp):**\n` + res.docLinks.map(d => `• [${d.name}](${d.url})`).join('\n') : '📥 *Không có tệp tài liệu đính kèm.*'}\n\n👉 Bạn có thể bấm nút **"Chèn Link Bài Báo"** hoặc **"Chèn Link File"** trên thanh công cụ để bổ sung ngay vào tin nhắn Zalo!` });
+      emit('finish', { success: true });
+      return;
+    }
+
+    // B. Mặc định / Soạn tin Zalo OA / Tóm tắt
+    emit('tool-call', { toolName: 'generate_zalo', args: { keyMessage: lastUserMsg } });
+    const res = await tools.generate_zalo.execute({ keyMessage: lastUserMsg });
+    emit('tool-result', { toolName: 'generate_zalo', result: res });
+    emit('text-delta', { delta: `Tôi đã đồng bộ từ bài báo và biên tập thông báo Zalo OA trang trọng, súc tích:\n\n\`\`\`\n${res.content}\n\`\`\`\n\n✅ **Đã tự động đính kèm:**\n• Link đọc toàn văn bài viết: ${res.articleUrl}\n• ${res.docCount} link tải tài liệu, kế hoạch trực tiếp\n\n*Nội dung đã được cập nhật trực tiếp vào ô soạn thảo Zalo OA!*` });
+    emit('finish', { success: true });
+    return;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // KÊNH 3: TỔNG BIÊN TẬP BÁO ĐIỆN TỬ (WEB NEWSROOM LEAD EDITOR)
+  // ═══════════════════════════════════════════════════════════════════════════
   emit('text-delta', { delta: 'Trợ lý Tổng biên tập AI đang phân tích yêu cầu tác nghiệp...\n\n' });
 
   // TH 0: Yêu cầu thông tin về tool / agent / hướng dẫn
