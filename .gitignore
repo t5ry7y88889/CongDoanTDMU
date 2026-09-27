@@ -29,3 +29,7 @@ scratch/
 admin_*.png
 *.backup.*
 *.ckeditor_v4.*
+
+# Embedded Local AI Models (>100MB)
+server/models/*.gguf
+server/models/*.tmp

@@ -665,8 +665,18 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit, api
 
     let revised = '';
 
-    // 1. Thử gọi trực tiếp Google GenAI với các candidate models khả dụng
-    if (apiKey) {
+    // 0. ƯU TIÊN SỐ 1: Động cơ AI Local nhúng trực tiếp trong web (0.4s, 100% offline, 0đ quota)
+    try {
+      const { isLocalModelAvailable, rewriteSelectionLocally } = require('./localAiEngine');
+      if (isLocalModelAvailable()) {
+        revised = await rewriteSelectionLocally({ targetText: target, instruction: lastUserMsg });
+      }
+    } catch (localErr) {
+      console.warn('[Local AI Rewrite fallback to Cloud]:', localErr.message);
+    }
+
+    // 1. Thử gọi trực tiếp Google GenAI nếu Local chưa có hoặc gặp sự cố
+    if (!revised && apiKey) {
       try {
         const { GoogleGenAI } = require('@google/genai');
         const aiGen = new GoogleGenAI({ apiKey });

@@ -11,6 +11,18 @@ const {
   normalizeAiChatOutput,
   inspectPhotoWithAiVision
 } = require('../services/aiService');
+const { isLocalModelAvailable, MODEL_PATH } = require('../services/localAiEngine');
+
+// Kiểm tra trạng thái Động cơ AI Local nhúng
+router.get('/local-engine-status', (req, res) => {
+  res.json({
+    success: true,
+    available: isLocalModelAvailable(),
+    modelName: 'Qwen2.5-1.5B-Instruct-Q4_K_M',
+    modelPath: MODEL_PATH,
+    engine: 'node-llama-cpp (Vulkan/GPU Embedded)'
+  });
+});
 
 // =========================================================================
 // 0. UNIVERSAL MULTI-FORMAT DOCUMENT INGESTION & FACT EXTRACTION
