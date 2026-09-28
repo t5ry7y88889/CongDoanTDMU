@@ -1,40 +1,43 @@
 @echo off
-title Website Cong Doan TDMU - Automatic Server Launcher
+chcp 65001 >nul
+title Website Cong Doan TDMU - He Thong Khoi Chay Tu Dong
 color 0A
 
-:: Lay chinh xac duong dan cua thu muc chua file .bat nay
+REM Chuyen thu muc hien tai den dung thu muc chua file bat nay
 cd /d "%~dp0"
 
 echo =================================================================
-echo 🚀 DANG KHOI CHAY SERVER CONG DOAN TDMU REAL SAAS ENGINE...
+echo    HE THONG TRUYEN THONG CONG DOAN TDMU - LOCAL SERVER
 echo =================================================================
 
-:: 1. Kiem tra va giai phong port 3000 neu co tien trinh node cu bi treo
+REM 1. Giai phong cong 3000 neu dang bi chiem boi tien trinh cu
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3000" ^| findstr "LISTENING"') do (
-    echo [Notice] Phat hien cong 3000 dang bi chiem boi PID %%a, dang giai phong...
+    echo [He thong] Dang giai phong cong 3000 tu PID %%a...
     taskkill /F /PID %%a >nul 2>&1
 )
 
-:: 2. Kiem tra tinh trang mo hinh Local AI (Qwen2.5-1.5B GGUF)
+REM 2. Kiem tra mo hinh Local AI
 if exist "server\models\qwen2.5-1.5b-instruct-q4_k_m.gguf" (
-    echo [Local AI] ✅ Phat hien mo hinh Qwen2.5-1.5B GGUF (1.1GB) - Che do Offline 100% da san sang!
+    echo [Local AI] Mo hinh Qwen2.5-1.5B GGUF 1.1GB da san sang che do Offline 100%%
 ) else (
-    echo [Local AI] ⚠️ Chua phat hien file mo hinh server\models\qwen2.5-1.5b-instruct-q4_k_m.gguf
-    echo [Local AI] 💡 Chay "npm run download-model" neu muon su dung Local AI offline.
+    echo [Local AI] Chua co mo hinh offline. Ban co the chay: npm run download-model
 )
 
-:: 3. Mo trinh duyet truc tiep vao Toa Soan AI Studio sau 1 giay
-start cmd /c "timeout /t 1 /nobreak >nul & start http://localhost:3000/admin.html#ai-creator"
+REM 3. Tu dong bat trinh duyet vao Admin Studio sau 2 giay
+start "" cmd /c "timeout /t 2 /nobreak >nul & start http://localhost:3000/admin.html#ai-creator"
 
 echo.
 echo =================================================================
-echo 🟢 Server dang chay thoi gian thuc tren cong 3000...
-echo 🌐 Dia chi: http://localhost:3000/admin.html#ai-creator
-echo 🤖 Local AI: Hoat dong nhung truc tiep trong Server (Offline, 0.3s)
-echo (De cua so nay de duy tri web, tat cua so de dung server)
+echo  May chu dang hoat dong tai: http://localhost:3000/admin.html
+echo  De nguyen cua so nay de duy tri web. Dong cua so de tat.
 echo =================================================================
 echo.
 
-:: 4. Khoi chay Node.js Server
+REM 4. Khoi chay server
 node server/server.js
+if %errorlevel% neq 0 (
+    echo.
+    echo [Loi] May chu bi tat voi ma loi %errorlevel%
+    pause
+)
 pause
