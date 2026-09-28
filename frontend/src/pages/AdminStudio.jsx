@@ -700,7 +700,14 @@ export default function AdminStudio() {
                   clearSelection();
                 } else if (ev.result.action === 'replace_block' && ev.result.newBlockHtml) {
                   const curData = editorRef.current?.getData ? editorRef.current.getData() : bodyHtml;
-                  const nextHtml = curData + '\n' + ev.result.newBlockHtml;
+                  let nextHtml = curData;
+                  if (ev.result.isFullReplace) {
+                    nextHtml = ev.result.newBlockHtml;
+                  } else if (ev.result.headingTarget && curData.includes(ev.result.headingTarget)) {
+                    nextHtml = curData.replace(ev.result.headingTarget, ev.result.newBlockHtml);
+                  } else {
+                    nextHtml = curData ? `${curData}\n${ev.result.newBlockHtml}` : ev.result.newBlockHtml;
+                  }
                   if (editorRef.current?.setData) editorRef.current.setData(nextHtml);
                   setBodyHtml(nextHtml);
                 } else if (ev.result.action === 'insert_block' && ev.result.contentHtml) {
@@ -710,8 +717,10 @@ export default function AdminStudio() {
                   setBodyHtml(nextHtml);
                 } else if (ev.result.action === 'update_headline' && ev.result.headline) {
                   setTitle(ev.result.headline);
+                  if (titleRef.current) titleRef.current.value = ev.result.headline;
                 } else if (ev.result.action === 'update_sapo' && ev.result.sapo) {
                   setSapo(ev.result.sapo);
+                  if (sapoRef.current) sapoRef.current.value = ev.result.sapo;
                 } else if (ev.result.action === 'update_facebook' && ev.result.content) {
                   setFbCaption(ev.result.content);
                 } else if (ev.result.action === 'update_zalo' && ev.result.content) {
@@ -732,20 +741,30 @@ export default function AdminStudio() {
                 }
               }
             } else if (ev.type === 'finish') {
-              // Lưu snapshot phiên bản câu trả lời của AI
+              // Lưu snapshot phiên bản câu trả lời của AI bao gồm đầy đủ Tiêu đề, Sapo, Canvas và Đa kênh
               setChatMessages(prev => prev.map(m => {
                 if (m.id === assistantMsgId) {
                   const finalHtml = editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || bodyHtml);
+                  const finalSnap = {
+                    title: titleRef.current?.value !== undefined ? titleRef.current.value : (title || ''),
+                    sapo: sapoRef.current?.value !== undefined ? sapoRef.current.value : (sapo || ''),
+                    bodyHtml: finalHtml,
+                    fbCaption: fbCaption || '',
+                    zaloText: zaloText || ''
+                  };
                   const newVer = {
                     text: m.text,
                     toolCalls: m.toolCalls || [],
                     ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    canvasSnapshot: finalHtml
+                    canvasSnapshot: finalHtml,
+                    articleSnapshot: finalSnap
                   };
                   const currentVers = m.versions || [];
                   const updatedVers = [...currentVers, newVer];
                   return {
                     ...m,
+                    canvasSnapshot: finalHtml,
+                    articleSnapshot: finalSnap,
                     versions: updatedVers,
                     versionIndex: updatedVers.length - 1
                   };
@@ -767,6 +786,39 @@ export default function AdminStudio() {
     }
   };
 
+  // ── Article Snapshot Helpers (Title, Sapo, Canvas, Facebook, Zalo) ───────────
+  const captureArticleSnapshot = () => ({
+    title: titleRef.current?.value !== undefined ? titleRef.current.value : (title || ''),
+    sapo: sapoRef.current?.value !== undefined ? sapoRef.current.value : (sapo || ''),
+    bodyHtml: editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || bodyHtml || ''),
+    fbCaption: fbCaption || '',
+    zaloText: zaloText || ''
+  });
+
+  const restoreArticleSnapshot = (snap) => {
+    if (!snap) return;
+    if (typeof snap === 'string') {
+      setBodyHtml(snap);
+      if (editorRef.current?.setData) editorRef.current.setData(snap);
+      return;
+    }
+    if (snap.title !== undefined) {
+      setTitle(snap.title);
+      if (titleRef.current) titleRef.current.value = snap.title;
+    }
+    if (snap.sapo !== undefined) {
+      setSapo(snap.sapo);
+      if (sapoRef.current) sapoRef.current.value = snap.sapo;
+    }
+    const body = snap.bodyHtml !== undefined ? snap.bodyHtml : null;
+    if (body !== null && body !== undefined) {
+      setBodyHtml(body);
+      if (editorRef.current?.setData) editorRef.current.setData(body);
+    }
+    if (snap.fbCaption !== undefined) setFbCaption(snap.fbCaption);
+    if (snap.zaloText !== undefined) setZaloText(snap.zaloText);
+  };
+
   const runAi = async (overridePrompt = null) => {
     const prompt = (overridePrompt || aiPrompt).trim();
     if (!prompt) return;
@@ -785,6 +837,7 @@ export default function AdminStudio() {
     const userMsgId = Date.now();
     const assistantMsgId = userMsgId + 1;
     const currentHtml = editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || bodyHtml);
+    const currentSnap = captureArticleSnapshot();
 
     const newUserMsg = {
       id: userMsgId,
@@ -794,12 +847,14 @@ export default function AdminStudio() {
       selectedText: capturedSelected,
       ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       canvasSnapshot: currentHtml,
+      articleSnapshot: currentSnap,
       versions: [
         {
           text: prompt,
           selectedText: capturedSelected,
           ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           canvasSnapshot: currentHtml,
+          articleSnapshot: currentSnap,
           subsequentMessages: []
         }
       ],
@@ -814,6 +869,7 @@ export default function AdminStudio() {
       ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       promptUserMsgId: userMsgId,
       initialCanvasSnapshot: currentHtml,
+      initialArticleSnapshot: currentSnap,
       selectedText: capturedSelected,
       versions: [],
       versionIndex: 0
@@ -851,36 +907,38 @@ export default function AdminStudio() {
 
     const userMsg = chatMessages[msgIdx];
     const currentHtml = editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || bodyHtml);
+    const currentSnap = captureArticleSnapshot();
 
     // Snapshot nhánh hiện tại vào phiên bản hiện tại trước khi rẽ nhánh mới
     const currentVerIdx = userMsg.versionIndex || 0;
     const existingVersions = userMsg.versions && userMsg.versions.length > 0 
       ? [...userMsg.versions]
-      : [{ text: userMsg.text, ts: userMsg.ts, canvasSnapshot: userMsg.canvasSnapshot || currentHtml, subsequentMessages: chatMessages.slice(msgIdx + 1) }];
+      : [{ text: userMsg.text, ts: userMsg.ts, canvasSnapshot: userMsg.canvasSnapshot || currentHtml, articleSnapshot: userMsg.articleSnapshot || currentSnap, subsequentMessages: chatMessages.slice(msgIdx + 1) }];
 
     existingVersions[currentVerIdx] = {
       ...existingVersions[currentVerIdx],
       subsequentMessages: chatMessages.slice(msgIdx + 1),
-      canvasSnapshot: currentHtml
+      canvasSnapshot: currentHtml,
+      articleSnapshot: currentSnap
     };
 
     const activeSelectedText = userMsg.selectedText || selectedText || editorRef.current?.getSelectedText?.() || '';
+    const restoreSnap = userMsg.articleSnapshot || userMsg.canvasSnapshot || currentSnap;
+    const restoreCanvas = restoreSnap?.bodyHtml || (typeof restoreSnap === 'string' ? restoreSnap : currentHtml);
+
     const newVersion = {
       text: newPrompt,
       selectedText: activeSelectedText,
       ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      canvasSnapshot: userMsg.canvasSnapshot || currentHtml,
+      canvasSnapshot: restoreCanvas,
+      articleSnapshot: restoreSnap,
       subsequentMessages: []
     };
     const updatedVersions = [...existingVersions, newVersion];
     const newVerIdx = updatedVersions.length - 1;
 
-    // Khôi phục canvas về trạng thái trước khi chạy các lệnh sau
-    const restoreCanvas = userMsg.canvasSnapshot || currentHtml;
-    if (restoreCanvas) {
-      setBodyHtml(restoreCanvas);
-      if (editorRef.current?.setData) editorRef.current.setData(restoreCanvas);
-    }
+    // Khôi phục canvas & toàn bộ bài viết về trạng thái trước khi chạy các lệnh sau
+    restoreArticleSnapshot(restoreSnap);
 
     const assistantMsgId = Date.now() + 1;
     const newAssistantMsg = {
@@ -891,6 +949,7 @@ export default function AdminStudio() {
       ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       promptUserMsgId: userMsg.id,
       initialCanvasSnapshot: restoreCanvas,
+      initialArticleSnapshot: restoreSnap,
       selectedText: activeSelectedText,
       versions: [],
       versionIndex: 0
@@ -900,6 +959,8 @@ export default function AdminStudio() {
       ...userMsg,
       text: newPrompt,
       selectedText: activeSelectedText,
+      articleSnapshot: restoreSnap,
+      canvasSnapshot: restoreCanvas,
       versions: updatedVersions,
       versionIndex: newVerIdx
     };
@@ -933,13 +994,15 @@ export default function AdminStudio() {
     if (targetIdx < 0 || targetIdx >= userMsg.versions.length) return;
 
     const currentHtml = editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || bodyHtml);
+    const currentSnap = captureArticleSnapshot();
 
     // Lưu snapshot nhánh hiện tại
     const updatedVersions = [...userMsg.versions];
     updatedVersions[curIdx] = {
       ...updatedVersions[curIdx],
       subsequentMessages: chatMessages.slice(msgIdx + 1),
-      canvasSnapshot: currentHtml
+      canvasSnapshot: currentHtml,
+      articleSnapshot: currentSnap
     };
 
     const targetVer = updatedVersions[targetIdx];
@@ -950,11 +1013,8 @@ export default function AdminStudio() {
       versions: updatedVersions
     };
 
-    // Khôi phục canvas
-    if (targetVer.canvasSnapshot) {
-      setBodyHtml(targetVer.canvasSnapshot);
-      if (editorRef.current?.setData) editorRef.current.setData(targetVer.canvasSnapshot);
-    }
+    // Khôi phục toàn bộ bài viết (Title, Sapo, Canvas, FB, Zalo)
+    restoreArticleSnapshot(targetVer.articleSnapshot || targetVer.canvasSnapshot);
 
     // Khôi phục chat branch
     setChatMessages([
@@ -976,14 +1036,13 @@ export default function AdminStudio() {
     if (!prevUserMsg) return;
 
     const currentHtml = editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || bodyHtml);
+    const currentSnap = captureArticleSnapshot();
 
-    // Khôi phục canvas về trước khi AI này can thiệp
-    const baseCanvas = aiMsg.initialCanvasSnapshot || prevUserMsg.canvasSnapshot || currentHtml;
-    if (baseCanvas) {
-      setBodyHtml(baseCanvas);
-      if (editorRef.current?.setData) editorRef.current.setData(baseCanvas);
-    }
+    // Khôi phục canvas & bài viết về trước khi AI này can thiệp
+    const baseSnap = aiMsg.initialArticleSnapshot || prevUserMsg.articleSnapshot || aiMsg.initialCanvasSnapshot || prevUserMsg.canvasSnapshot || currentSnap;
+    restoreArticleSnapshot(baseSnap);
 
+    const baseCanvas = baseSnap?.bodyHtml || (typeof baseSnap === 'string' ? baseSnap : currentHtml);
     const activeSelectedText = aiMsg.selectedText || prevUserMsg.selectedText || selectedText || editorRef.current?.getSelectedText?.() || '';
 
     // Lưu câu trả lời hiện tại vào versions nếu chưa có
@@ -991,7 +1050,8 @@ export default function AdminStudio() {
       text: aiMsg.text,
       toolCalls: aiMsg.toolCalls || [],
       ts: aiMsg.ts,
-      canvasSnapshot: currentHtml
+      canvasSnapshot: currentHtml,
+      articleSnapshot: currentSnap
     };
     const existingVersions = aiMsg.versions && aiMsg.versions.length > 0
       ? [...aiMsg.versions]
@@ -1037,10 +1097,7 @@ export default function AdminStudio() {
       versionIndex: targetIdx
     } : m));
 
-    if (targetVer.canvasSnapshot) {
-      setBodyHtml(targetVer.canvasSnapshot);
-      if (editorRef.current?.setData) editorRef.current.setData(targetVer.canvasSnapshot);
-    }
+    restoreArticleSnapshot(targetVer.articleSnapshot || targetVer.canvasSnapshot);
 
     showRollbackToast(`Đã chuyển sang câu trả lời ${targetIdx + 1}/${aiMsg.versions.length}`);
   };
@@ -1051,11 +1108,10 @@ export default function AdminStudio() {
     if (msgIdx === -1) return;
 
     const msg = chatMessages[msgIdx];
-    const snap = msg.canvasSnapshot || msg.initialCanvasSnapshot;
+    const snap = msg.articleSnapshot || msg.initialArticleSnapshot || msg.canvasSnapshot || msg.initialCanvasSnapshot;
 
     if (snap) {
-      setBodyHtml(snap);
-      if (editorRef.current?.setData) editorRef.current.setData(snap);
+      restoreArticleSnapshot(snap);
     }
 
     // Cắt toàn bộ tin nhắn phía sau
@@ -1065,7 +1121,7 @@ export default function AdminStudio() {
       setAiPrompt(msg.text || '');
     }
 
-    showRollbackToast('↩️ Đã rollback cuộc trò chuyện và bài viết về thời điểm này!');
+    showRollbackToast('↩️ Đã rollback cuộc trò chuyện và toàn bộ bài viết về thời điểm này!');
   };
 
   const acceptDiff = (targetDiff = null) => {

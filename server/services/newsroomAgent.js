@@ -589,13 +589,16 @@ Phong cách ứng xử: Chuyên nghiệp, nhã nhặn, tôn trọng chuẩn mự
   const lastUserMsg = [...messages].reverse().find(m => m.sender === 'user')?.text || '';
   const qNorm = (lastUserMsg || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
 
-  const isSelectionRewrite = Boolean(context.selectedText) || 
+  const isTitleIntent = qNorm.includes('tieu de') || qNorm.includes('headline') || qNorm.includes('ten bai');
+  const isSapoIntent = qNorm.includes('sapo') || qNorm.includes('mo bai') || qNorm.includes('mo dau') || qNorm.includes('doan dau') || qNorm.includes('doan mo dau');
+
+  const isSelectionRewrite = Boolean(context.selectedText) || isTitleIntent || isSapoIntent ||
     qNorm.includes('rut gon') || qNorm.includes('viet lai') || qNorm.includes('sua doan') || 
     qNorm.includes('trang trong') || qNorm.includes('trau chuot') || qNorm.includes('sua cau') ||
     qNorm.includes('chinh sua') || qNorm.includes('nhan manh') || qNorm.includes('xoa') ||
     qNorm.includes('thay') || qNorm.includes('doi') || qNorm.includes('bo') ||
     qNorm.includes('de lai') || qNorm.includes('doan nay') || qNorm.includes('cau nay') ||
-    qNorm.includes('tu nay') || qNorm.includes('chu nay');
+    qNorm.includes('tu nay') || qNorm.includes('chu nay') || qNorm.includes('tao lai');
 
   if (isSelectionRewrite) {
     await executeLocalAutonomousAgent({ messages, context, tools, emit, apiKey: activeKey, groqApiKey: activeGroq });
@@ -838,9 +841,218 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit, api
     return;
   }
 
-  // TH 3: Viết lại đoạn văn bôi đen / sửa đoạn (Ưu tiên cao nhất khi có selectedText)
-  if (context.selectedText || qNorm.includes('sua') || qNorm.includes('viet lai') || qNorm.includes('rut gon') || qNorm.includes('trang trong') || qNorm.includes('trau chuot') || qNorm.includes('nhan manh') || qNorm.includes('chinh sua') || qNorm.includes('chinh ta') || qNorm.includes('xoa') || qNorm.includes('thay') || qNorm.includes('doi') || qNorm.includes('bo') || qNorm.includes('de lai') || qNorm.includes('doan nay') || qNorm.includes('cau nay') || qNorm.includes('tu nay') || qNorm.includes('chu nay')) {
+  // ── ƯU TIÊN SỐ 1: CẬP NHẬT / VIẾT LẠI TIÊU ĐỀ (HEADLINE) ──
+  const isTitleIntent = qNorm.includes('tieu de') || qNorm.includes('headline') || qNorm.includes('ten bai');
+  if (isTitleIntent) {
+    let curTitle = (context.article?.title || 'Hoạt động Công đoàn')
+      .replace(/(?:PHÁT HUY TINH THẦN ĐOÀN KẾT VÀ CHĂM LO TOÀN DIỆN CHO ĐOÀN VIÊN:\s*)+/gi, '')
+      .replace(/^[:\s-]+/g, '')
+      .trim();
+
+    let newHeadline = '';
+
+    // A. Người dùng chỉ định tiêu đề mới trong ngoặc kép
+    const quoteMatch = lastUserMsg.match(/["“'«]([^"”'»]+)["”'»]/);
+    if (quoteMatch && quoteMatch[1].trim().length > 3) {
+      newHeadline = quoteMatch[1].trim();
+    } else {
+      // B. Người dùng chỉ định sau các từ "thành", "là", "đặt là", "đổi là"
+      const explicitMatch = lastUserMsg.match(/(?:thành|là|đặt là|đổi là|tên là)\s*[:"“']?([^"”'\n\r.?!;]{3,120})/i);
+      if (explicitMatch && explicitMatch[1].trim()) {
+        const candidate = explicitMatch[1].trim();
+        if (/^\d{4}$/.test(candidate)) {
+          // Chỉ thay thế năm (ví dụ "để tiêu đề là 2025")
+          if (/\b20\d\d\b/.test(curTitle)) {
+            newHeadline = curTitle.replace(/\b20\d\d\b/g, candidate);
+          } else {
+            newHeadline = `${curTitle} ${candidate}`;
+          }
+        } else if (candidate.length > 5) {
+          newHeadline = candidate;
+        }
+      }
+    }
+
+    // C. Người dùng yêu cầu đổi năm nhưng không theo cú pháp trên (ví dụ "tiêu đề 2025", "thay 2026 bằng 2025")
+    if (!newHeadline) {
+      const yearInPrompt = lastUserMsg.match(/\b(202\d|203\d)\b/);
+      if (yearInPrompt) {
+        const targetYear = yearInPrompt[1];
+        if (/\b20\d\d\b/.test(curTitle)) {
+          newHeadline = curTitle.replace(/\b20\d\d\b/g, targetYear);
+        } else {
+          newHeadline = `${curTitle} - NĂM ${targetYear}`;
+        }
+      }
+    }
+
+    // D. Ưu tiên số 1: Gọi Local AI Engine viết lại tiêu đề chuẩn báo chí
+    if (!newHeadline) {
+      try {
+        const { isLocalModelAvailable, rewriteSelectionLocally } = require('./localAiEngine');
+        if (isLocalModelAvailable()) {
+          newHeadline = await rewriteSelectionLocally({
+            targetText: curTitle,
+            instruction: `Yêu cầu của người dùng: "${lastUserMsg}". Hãy viết lại tiêu đề bài báo theo đúng yêu cầu, trang trọng, chuẩn mực báo chí chính luận. Chỉ trả về DUY NHẤT một dòng tiêu đề mới, tuyệt đối không kèm ngoặc kép hay lời giải thích.`
+          });
+          if (newHeadline) {
+            newHeadline = newHeadline.replace(/^["“']|["”']$/g, '').trim();
+          }
+        }
+      } catch (errLocal) {
+        console.warn('[Local AI Title Rewrite error]:', errLocal.message);
+      }
+    }
+
+    // E. Thử gọi Cloud AI nếu Local chưa có
+    if (!newHeadline && apiKey) {
+      try {
+        const { GoogleGenAI } = require('@google/genai');
+        const aiGen = new GoogleGenAI({ apiKey });
+        const resp = await aiGen.models.generateContent({
+          model: 'gemini-2.0-flash',
+          contents: `Người dùng yêu cầu sửa tiêu đề bài viết: "${lastUserMsg}"\nTiêu đề hiện tại: "${curTitle}"\nHãy viết lại tiêu đề theo đúng yêu cầu, chuẩn báo chí công đoàn. Chỉ trả về duy nhất một dòng tiêu đề mới, không kèm ngoặc kép.`
+        });
+        const txt = (resp.text || '').trim().replace(/^["“']|["”']$/g, '');
+        if (txt && txt.length > 5) newHeadline = txt;
+      } catch {}
+    }
+
+    // F. Fallback: Nếu không có gì thay đổi, giữ lại tiêu đề sạch
+    if (!newHeadline) {
+      newHeadline = curTitle;
+    }
+
+    emit('tool-call', { toolName: 'update_headline', args: { newHeadline } });
+    const res = await tools.update_headline.execute({ newHeadline });
+    emit('tool-result', { toolName: 'update_headline', result: res });
+    emit('text-delta', { delta: `Tôi đã cập nhật tiêu đề bài viết theo đúng yêu cầu của bạn:\n\n### 📰 "${newHeadline}"\n\nTiêu đề mới đã được tự động đồng bộ vào bài viết.` });
+
+    // Nếu người dùng yêu cầu sửa năm (ví dụ 2025), tự động đồng bộ sang Sapo và nội dung bài viết
+    const yearMatch = lastUserMsg.match(/\b(202\d|203\d)\b/);
+    if (yearMatch && context.article?.bodyHtml) {
+      const newYear = yearMatch[1];
+      const oldYear = newYear === '2025' ? '2026' : (newYear === '2026' ? '2025' : null);
+      if (oldYear && context.article.bodyHtml.includes(oldYear)) {
+        const updatedBody = context.article.bodyHtml.replace(new RegExp(`\\b${oldYear}\\b`, 'g'), newYear);
+        emit('tool-call', { toolName: 'replace_block', args: { headingTarget: oldYear, newBlockHtml: updatedBody, isFullReplace: true } });
+        emit('text-delta', { delta: `\n\nĐồng thời, tôi đã tự động cập nhật mốc thời gian từ **${oldYear}** sang **${newYear}** trên toàn bộ nội dung bài viết.` });
+      }
+      if (oldYear && context.article?.sapo && context.article.sapo.includes(oldYear)) {
+        const updatedSapo = context.article.sapo.replace(new RegExp(`\\b${oldYear}\\b`, 'g'), newYear);
+        emit('tool-call', { toolName: 'update_sapo', args: { newSapo: updatedSapo } });
+      }
+    }
+
+    emit('finish', { success: true });
+    return;
+  }
+
+  // ── ƯU TIÊN SỐ 2: CẬP NHẬT / VIẾT LẠI SAPO (ĐOẠN MỞ BÀI) ──
+  const isSapoIntent = qNorm.includes('sapo') || qNorm.includes('mo bai') || qNorm.includes('mo dau') || qNorm.includes('doan dau') || qNorm.includes('doan mo dau');
+  if (isSapoIntent) {
+    let curSapo = context.article?.sapo || '';
+    let newSapo = '';
+
+    try {
+      const { isLocalModelAvailable, rewriteSelectionLocally } = require('./localAiEngine');
+      if (isLocalModelAvailable()) {
+        newSapo = await rewriteSelectionLocally({
+          targetText: curSapo || context.article?.title || 'Hoạt động Công đoàn TDMU',
+          instruction: `Yêu cầu người dùng: "${lastUserMsg}". Hãy viết lại đoạn mở bài Sapo chuẩn 5W1H báo chí chính luận, trang trọng. Chỉ trả về DUY NHẤT nội dung Sapo mới.`
+        });
+      }
+    } catch {}
+
+    if (!newSapo && apiKey) {
+      try {
+        const { GoogleGenAI } = require('@google/genai');
+        const aiGen = new GoogleGenAI({ apiKey });
+        const resp = await aiGen.models.generateContent({
+          model: 'gemini-2.0-flash',
+          contents: `Người dùng yêu cầu viết lại đoạn mở bài Sapo: "${lastUserMsg}"\nSapo hiện tại: "${curSapo}"\nChỉ trả về duy nhất nội dung Sapo mới.`
+        });
+        const txt = (resp.text || '').trim().replace(/^["“']|["”']$/g, '');
+        if (txt && txt.length > 10) newSapo = txt;
+      } catch {}
+    }
+
+    if (!newSapo) {
+      newSapo = curSapo || `(TDMU) - Nhằm phát huy vai trò đồng hành và chăm lo toàn diện cho đội ngũ người lao động, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một đã triển khai chuỗi hoạt động trọng điểm với sự tham gia của đông đảo đoàn viên, tạo động lực mạnh mẽ cho tiến trình phát triển bền vững của nhà trường.`;
+    }
+
+    emit('tool-call', { toolName: 'update_sapo', args: { newSapo } });
+    const res = await tools.update_sapo.execute({ newSapo });
+    emit('tool-result', { toolName: 'update_sapo', result: res });
+    emit('text-delta', { delta: `Tôi đã biên tập lại đoạn mở đầu Sapo 5W1H đĩnh đạc:\n\n> "${newSapo}"\n\nĐoạn Sapo mới đã được đồng bộ trực tiếp lên bài viết.` });
+    emit('finish', { success: true });
+    return;
+  }
+
+  // ── ƯU TIÊN SỐ 3: THAY THẾ TỪ KHÓA / NĂM TRÊN TOÀN BÀI KHI KHÔNG BÔI ĐEN ──
+  const replaceMatch = lastUserMsg.match(/(?:thay|đổi|sửa|chuyển)\s+["“']?([^"”'\s,]+)["”']?\s+(?:thành|bằng|sang)\s+["“']?([^"”'\s,]+)["”']?/i);
+  if (!context.selectedText && replaceMatch) {
+    const findWord = replaceMatch[1].trim();
+    const repWord = replaceMatch[2].trim();
+
+    if (findWord && repWord && findWord.toLowerCase() !== repWord.toLowerCase()) {
+      let changedParts = [];
+      const reg = new RegExp(findWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+
+      // 1. Kiểm tra tiêu đề
+      if (context.article?.title && reg.test(context.article.title)) {
+        const nextTitle = context.article.title.replace(reg, repWord);
+        emit('tool-call', { toolName: 'update_headline', args: { newHeadline: nextTitle } });
+        await tools.update_headline.execute({ newHeadline: nextTitle });
+        changedParts.push(`Tiêu đề: **"${nextTitle}"**`);
+      }
+
+      // 2. Kiểm tra Sapo
+      if (context.article?.sapo && reg.test(context.article.sapo)) {
+        const nextSapo = context.article.sapo.replace(reg, repWord);
+        emit('tool-call', { toolName: 'update_sapo', args: { newSapo: nextSapo } });
+        await tools.update_sapo.execute({ newSapo: nextSapo });
+        changedParts.push('Đoạn mở bài Sapo');
+      }
+
+      // 3. Kiểm tra Thân bài
+      if (context.article?.bodyHtml && reg.test(context.article.bodyHtml)) {
+        const nextBody = context.article.bodyHtml.replace(reg, repWord);
+        emit('tool-call', { toolName: 'replace_block', args: { headingTarget: findWord, newBlockHtml: nextBody, isFullReplace: true } });
+        await tools.replace_block.execute({ headingTarget: findWord, newBlockHtml: nextBody });
+        changedParts.push('Nội dung chi tiết trên Canvas');
+      }
+
+      if (changedParts.length > 0) {
+        emit('text-delta', { delta: `Tôi đã tự động tìm và thay thế **"${findWord}"** thành **"${repWord}"** tại:\n` + changedParts.map(p => `• ${p}`).join('\n') + `\n\nTất cả thay đổi đã được áp dụng trực tiếp lên bài viết!` });
+        emit('finish', { success: true });
+        return;
+      }
+    }
+  }
+
+  // ── ƯU TIÊN SỐ 4: VIẾT LẠI ĐOẠN VĂN (KHI BÔI ĐEN HOẶC TOÀN BÀI) ──
+  const isEditingIntent = context.selectedText || 
+    qNorm.includes('sua') || qNorm.includes('viet lai') || qNorm.includes('rut gon') || 
+    qNorm.includes('trang trong') || qNorm.includes('trau chuot') || qNorm.includes('nhan manh') || 
+    qNorm.includes('chinh sua') || qNorm.includes('chinh ta') || qNorm.includes('xoa') || 
+    qNorm.includes('thay') || qNorm.includes('doi') || qNorm.includes('bo') || 
+    qNorm.includes('de lai') || qNorm.includes('doan nay') || qNorm.includes('cau nay') || 
+    qNorm.includes('tu nay') || qNorm.includes('chu nay') || qNorm.includes('tao lai');
+
+  if (isEditingIntent) {
     let target = context.selectedText;
+    let isFullBody = false;
+
+    // Nếu không bôi đen mà yêu cầu viết lại toàn bài / tạo lại bài
+    if (!target && (qNorm.includes('toan bo') || qNorm.includes('ca bai') || qNorm.includes('tao lai') || qNorm.includes('viet lai bai'))) {
+      if (context.article?.bodyHtml) {
+        target = context.article.bodyHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+        isFullBody = true;
+      }
+    }
+
+    // Nếu không bôi đen, tìm đoạn văn phù hợp trong bài
     if (!target && context.article?.bodyHtml) {
       const cleanBody = context.article.bodyHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
       if (cleanBody.length > 5) {
@@ -929,6 +1141,14 @@ QUY TẮC BẮT BUỘC:
       revised = transformSelectedText(target, lastUserMsg);
     }
 
+    if (isFullBody) {
+      const cleanHtml = revised.split('\n\n').filter(p => p.trim()).map(p => `<p>${p.trim()}</p>`).join('');
+      emit('tool-call', { toolName: 'replace_block', args: { headingTarget: '', newBlockHtml: cleanHtml, isFullReplace: true } });
+      emit('text-delta', { delta: `Tôi đã viết lại và trau chuốt toàn bộ nội dung bài viết theo đúng định hướng:\n\n> "${revised.slice(0, 200)}..."\n\nNội dung mới đã được cập nhật toàn bộ lên Canvas.` });
+      emit('finish', { success: true });
+      return;
+    }
+
     const res = await tools.rewrite_selection.execute({
       targetText: target,
       revisedText: revised,
@@ -940,35 +1160,12 @@ QUY TẮC BẮT BUỘC:
     return;
   }
 
-  // TH 4: Rà soát chuẩn tắc báo chí toàn bài / 5W1H (Khi không chọn đoạn)
+  // ── ƯU TIÊN SỐ 5: RÀ SOÁT CHUẨN TẮC BÁO CHÍ TOÀN BÀI / 5W1H ──
   if (!context.selectedText && (qNorm.includes('kiem tra') || qNorm.includes('chuan tac') || qNorm.includes('5w1h') || qNorm.includes('soat') || qNorm.includes('ra soat') || qNorm.includes('danh gia'))) {
     emit('tool-call', { toolName: 'audit_journalism_compliance', args: {} });
     const res = await tools.audit_journalism_compliance.execute({});
     emit('tool-result', { toolName: 'audit_journalism_compliance', result: res });
     emit('text-delta', { delta: `Kết quả rà soát chuẩn tắc báo chí Công đoàn:\n\n⭐ **Điểm đánh giá:** ${res.score}/100 - **${res.verdict}**\n\n` + res.checks.map(c => `• **${c.item}:** ${c.detail}`).join('\n') + `\n\n💡 **Khuyến nghị biên tập:** ${res.suggestions[0]}` });
-    emit('finish', { success: true });
-    return;
-  }
-
-  // TH 5: Cập nhật tiêu đề bài viết
-  if (qNorm.includes('tieu de') || qNorm.includes('headline')) {
-    const curTitle = context.article?.title || 'Hoạt động Công đoàn';
-    const newHeadline = `PHÁT HUY TINH THẦN ĐOÀN KẾT VÀ CHĂM LO TOÀN DIỆN CHO ĐOÀN VIÊN: ${curTitle.toUpperCase()}`;
-    emit('tool-call', { toolName: 'update_headline', args: { newHeadline } });
-    const res = await tools.update_headline.execute({ newHeadline });
-    emit('tool-result', { toolName: 'update_headline', result: res });
-    emit('text-delta', { delta: `Tôi đã nâng cấp tiêu đề bài viết theo phong cách báo chí chính luận:\n\n### 📰 "${newHeadline}"\n\nTiêu đề mới đã được tự động đồng bộ vào trường Headline.` });
-    emit('finish', { success: true });
-    return;
-  }
-
-  // TH 6: Cập nhật đoạn Sapo
-  if (qNorm.includes('sapo') || qNorm.includes('mo bai') || qNorm.includes('tom tat')) {
-    const newSapo = `(TDMU) - Nhằm phát huy vai trò đồng hành và chăm lo toàn diện cho đội ngũ người lao động, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một đã triển khai chuỗi hoạt động trọng điểm với sự tham gia của đông đảo đoàn viên, tạo động lực mạnh mẽ cho tiến trình phát triển bền vững của nhà trường.`;
-    emit('tool-call', { toolName: 'update_sapo', args: { newSapo } });
-    const res = await tools.update_sapo.execute({ newSapo });
-    emit('tool-result', { toolName: 'update_sapo', result: res });
-    emit('text-delta', { delta: `Tôi đã biên tập lại đoạn mở đầu Sapo 5W1H đĩnh đạc:\n\n> "${newSapo}"\n\nĐoạn Sapo mới đã được đồng bộ trực tiếp lên bài viết.` });
     emit('finish', { success: true });
     return;
   }
