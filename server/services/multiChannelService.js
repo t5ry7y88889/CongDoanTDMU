@@ -3,6 +3,54 @@ const path = require('path');
 const { loadDB, saveDB } = require('../db');
 
 /**
+ * Danh sách tài khoản mặc định và mẫu thử nghiệm cho từng kênh
+ */
+const DEFAULT_ACCOUNTS = {
+  zalo: [
+    {
+      id: 'zalo-default',
+      name: 'Công Đoàn TDMU (OA Mặc định)',
+      type: 'oa',
+      oaId: process.env.ZALO_OA_ID || '2456789101112',
+      accessToken: process.env.ZALO_ACCESS_TOKEN || '',
+      oaName: process.env.ZALO_OA_NAME || 'Công Đoàn TDMU Official Account',
+      recipientPhone: '',
+      recipientUserId: '',
+      isDefault: true
+    },
+    {
+      id: 'zalo-my-account',
+      name: 'Zalo của tôi (Tài khoản cá nhân / Tester)',
+      type: 'personal',
+      oaId: '',
+      accessToken: '',
+      oaName: 'Zalo Cá Nhân Của Tôi',
+      recipientPhone: '',
+      recipientUserId: '',
+      isDefault: false
+    }
+  ],
+  facebook: [
+    {
+      id: 'fb-default',
+      name: 'Fanpage Công Đoàn TDMU (Mặc định)',
+      pageId: process.env.FACEBOOK_PAGE_ID || '102938475610293',
+      accessToken: process.env.FACEBOOK_PAGE_ACCESS_TOKEN || '',
+      pageName: process.env.FACEBOOK_PAGE_NAME || 'Công Đoàn Trường Đại học Thủ Dầu Một',
+      isDefault: true
+    },
+    {
+      id: 'fb-my-account',
+      name: 'Trang cá nhân / Fanpage của tôi',
+      pageId: '',
+      accessToken: '',
+      pageName: 'Trang Facebook của tôi',
+      isDefault: false
+    }
+  ]
+};
+
+/**
  * Lấy cấu hình các kênh truyền thông từ biến môi trường hoặc file cấu hình cục bộ
  */
 function getChannelCredentials() {
@@ -40,6 +88,92 @@ function getChannelCredentials() {
 }
 
 /**
+ * Lấy danh sách toàn bộ các tài khoản của Zalo và Facebook
+ */
+function getChannelAccounts() {
+  const dataDir = path.join(__dirname, '..', '..', 'data');
+  const cfgFile = path.join(dataDir, 'channel_config.json');
+  if (fs.existsSync(cfgFile)) {
+    try {
+      const saved = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
+      return {
+        zalo: (saved.zaloAccounts && saved.zaloAccounts.length > 0) ? saved.zaloAccounts : DEFAULT_ACCOUNTS.zalo,
+        facebook: (saved.facebookAccounts && saved.facebookAccounts.length > 0) ? saved.facebookAccounts : DEFAULT_ACCOUNTS.facebook
+      };
+    } catch {}
+  }
+  return DEFAULT_ACCOUNTS;
+}
+
+/**
+ * Lưu hoặc cập nhật một tài khoản gửi (Zalo hoặc Facebook)
+ */
+function saveChannelAccount({ channel, account }) {
+  const dataDir = path.join(__dirname, '..', '..', 'data');
+  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+  const cfgFile = path.join(dataDir, 'channel_config.json');
+
+  let currentConfig = {};
+  if (fs.existsSync(cfgFile)) {
+    try {
+      currentConfig = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
+    } catch {}
+  }
+
+  const chKey = channel === 'facebook' ? 'facebookAccounts' : 'zaloAccounts';
+  const defaultList = channel === 'facebook' ? DEFAULT_ACCOUNTS.facebook : DEFAULT_ACCOUNTS.zalo;
+  let list = currentConfig[chKey] || [...defaultList];
+
+  const targetId = account.id || `${channel}-${Date.now()}`;
+  const idx = list.findIndex(a => a.id === targetId);
+  const accountWithId = { ...account, id: targetId };
+
+  if (account.isDefault) {
+    list = list.map(a => ({ ...a, isDefault: false }));
+  }
+
+  if (idx >= 0) {
+    list[idx] = { ...list[idx], ...accountWithId };
+  } else {
+    list.push(accountWithId);
+  }
+
+  currentConfig[chKey] = list;
+  fs.writeFileSync(cfgFile, JSON.stringify(currentConfig, null, 2), 'utf8');
+  return list;
+}
+
+/**
+ * Xóa một tài khoản gửi
+ */
+function deleteChannelAccount({ channel, accountId }) {
+  const dataDir = path.join(__dirname, '..', '..', 'data');
+  const cfgFile = path.join(dataDir, 'channel_config.json');
+  if (!fs.existsSync(cfgFile)) return [];
+
+  let currentConfig = {};
+  try {
+    currentConfig = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
+  } catch { return []; }
+
+  const chKey = channel === 'facebook' ? 'facebookAccounts' : 'zaloAccounts';
+  const list = currentConfig[chKey] || [];
+  currentConfig[chKey] = list.filter(a => a.id !== accountId);
+  fs.writeFileSync(cfgFile, JSON.stringify(currentConfig, null, 2), 'utf8');
+  return currentConfig[chKey];
+}
+
+/**
+ * Tìm tài khoản theo ID
+ */
+function getAccountById(channel, accountId) {
+  const accounts = getChannelAccounts();
+  const list = channel === 'facebook' ? accounts.facebook : accounts.zalo;
+  if (!accountId) return list.find(a => a.isDefault) || list[0] || {};
+  return list.find(a => a.id === accountId) || list.find(a => a.isDefault) || list[0] || {};
+}
+
+/**
  * Lưu cấu hình kênh truyền thông
  */
 function saveChannelCredentials(newConfig) {
@@ -48,6 +182,7 @@ function saveChannelCredentials(newConfig) {
   const cfgFile = path.join(dataDir, 'channel_config.json');
   const current = getChannelCredentials();
   const merged = {
+    ...current,
     facebook: { ...current.facebook, ...(newConfig.facebook || {}) },
     zalo: { ...current.zalo, ...(newConfig.zalo || {}) },
     web: { ...current.web, ...(newConfig.web || {}) }
@@ -59,8 +194,15 @@ function saveChannelCredentials(newConfig) {
 /**
  * 1. ĐĂNG TIN LÊN FACEBOOK FANPAGE QUA META GRAPH API V20.0
  */
-async function publishToFacebook({ caption, link, imageUrl, articleTitle, articleId }) {
-  const creds = getChannelCredentials().facebook;
+async function publishToFacebook({ caption, link, imageUrl, articleTitle, articleId, accountId, accountConfig }) {
+  const account = accountConfig || getAccountById('facebook', accountId);
+  const globalCreds = getChannelCredentials().facebook;
+  const creds = {
+    pageId: account.pageId || globalCreds.pageId,
+    accessToken: account.accessToken || globalCreds.accessToken,
+    pageName: account.pageName || account.name || globalCreds.pageName
+  };
+
   const cleanCaption = (caption || articleTitle || 'Thông tin từ Công Đoàn TDMU').trim();
   const postUrl = link || `${getChannelCredentials().web.domain}/baiviet?id=${articleId || ''}`;
 
@@ -86,7 +228,7 @@ async function publishToFacebook({ caption, link, imageUrl, articleTitle, articl
         };
       }
 
-      console.log(`[Meta Graph API v20.0] Đang gửi bài viết tới Fanpage ID: ${creds.pageId}...`);
+      console.log(`[Meta Graph API v20.0] Đang gửi bài viết tới Fanpage ID: ${creds.pageId} (Tài khoản: "${account.name || creds.pageName}")...`);
       const fbRes = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -105,13 +247,13 @@ async function publishToFacebook({ caption, link, imageUrl, articleTitle, articl
         mode: 'live_meta_api',
         postId: realPostId,
         pageName: creds.pageName,
+        accountName: account.name || creds.pageName,
         permalinkUrl: `https://facebook.com/${realPostId}`,
-        message: `Đã đăng thành công lên Fanpage "${creds.pageName}" qua Meta Graph API v20.0!`,
+        message: `Đã đăng thành công lên "${creds.pageName}" qua Meta Graph API v20.0!`,
         publishedAt: new Date().toISOString()
       };
     } catch (err) {
       console.warn('[Meta Graph API Error]:', err.message);
-      // Fallback về sandbox simulation nếu token hết hạn/lỗi quyền
       return {
         success: true,
         channel: 'facebook',
@@ -119,8 +261,9 @@ async function publishToFacebook({ caption, link, imageUrl, articleTitle, articl
         warning: `Graph API thật báo: ${err.message}. Đã chuyển sang Sandbox kiểm thử đồ án.`,
         postId: `FB_DEV_${Date.now()}_${Math.floor(Math.random() * 9000 + 1000)}`,
         pageName: creds.pageName,
+        accountName: account.name || creds.pageName,
         permalinkUrl: `https://facebook.com/tdmu.edu.vn/posts/${Date.now()}`,
-        message: `Đã phát hành bản tin Facebook chuẩn cấu trúc Graph API v20.0 (Môi trường Sandbox)`,
+        message: `Đã phát hành bản tin Facebook qua tài khoản "${account.name || creds.pageName}" (Môi trường Sandbox)`,
         publishedAt: new Date().toISOString()
       };
     }
@@ -134,8 +277,9 @@ async function publishToFacebook({ caption, link, imageUrl, articleTitle, articl
     mode: 'sandbox_simulation',
     postId: mockPostId,
     pageName: creds.pageName,
+    accountName: account.name || creds.pageName,
     permalinkUrl: `https://facebook.com/tdmu.edu.vn/posts/${mockPostId}`,
-    message: `Đã xác thực và phát hành bài viết lên Fanpage Facebook qua giao thức Meta Graph API v20.0 (Chế độ Sandbox/Demo)`,
+    message: `Đã xác thực và phát hành bài viết lên Fanpage Facebook qua tài khoản "${account.name || creds.pageName}" (Chế độ Sandbox/Demo)`,
     details: {
       captionLength: cleanCaption.length,
       attachedLink: postUrl,
@@ -146,20 +290,38 @@ async function publishToFacebook({ caption, link, imageUrl, articleTitle, articl
 }
 
 /**
- * 2. GỬI TIN BẢN TIN LÊN ZALO OFFICIAL ACCOUNT QUA ZALO OPEN API V3.0
+ * 2. GỬI TIN BẢN TIN LÊN ZALO OFFICIAL ACCOUNT / ZALO CÁ NHÂN TEST QUA ZALO OPEN API V3.0
  */
-async function publishToZaloOA({ content, title, articleId, imageUrl }) {
-  const creds = getChannelCredentials().zalo;
+async function publishToZaloOA({ content, title, articleId, imageUrl, accountId, accountConfig, recipientUserId, recipientPhone }) {
+  const account = accountConfig || getAccountById('zalo', accountId);
+  const globalCreds = getChannelCredentials().zalo;
+  const creds = {
+    oaId: account.oaId || globalCreds.oaId,
+    accessToken: account.accessToken || globalCreds.accessToken,
+    oaName: account.oaName || account.name || globalCreds.oaName
+  };
+
+  const targetPhone = (recipientPhone || account.recipientPhone || '').trim();
+  const targetUserId = (recipientUserId || account.recipientUserId || '').trim();
   const cleanContent = (content || title || 'Thông báo từ Công Đoàn TDMU').trim();
   const targetUrl = `${getChannelCredentials().web.domain}/baiviet?id=${articleId || ''}`;
 
+  // Tạo liên kết chia sẻ trực tiếp 1-click vào Zalo Web / App của cá nhân người dùng
+  const shareUrls = {
+    zaloShare: `https://zalo.me/share?url=${encodeURIComponent(targetUrl)}&title=${encodeURIComponent(title || cleanContent.slice(0, 100))}`,
+    zaloChatMe: targetPhone ? `https://chat.zalo.me/?phone=${encodeURIComponent(targetPhone)}` : `https://chat.zalo.me`,
+    zaloDirectLink: targetPhone ? `https://zalo.me/${encodeURIComponent(targetPhone.replace(/^0/, '84'))}` : null
+  };
+
+  // Kiểm tra nếu có token thật của Zalo OA
   if (creds.oaId && creds.accessToken && !creds.accessToken.includes('YOUR_')) {
     try {
       const fetch = (await import('node-fetch')).default || globalThis.fetch;
-      console.log(`[Zalo Open API v3.0] Đang phát hành tin nhắn OA ID: ${creds.oaId}...`);
+      console.log(`[Zalo Open API v3.0] Đang phát hành tin nhắn qua tài khoản "${account.name}" (OA ID: ${creds.oaId})...`);
 
-      const payload = {
-        recipient: { target: { all: true } },
+      let endpoint = 'https://openapi.zalo.me/v3.0/oa/message/transaction';
+      let payload = {
+        recipient: targetUserId ? { user_id: targetUserId } : { target: { all: true } },
         message: {
           text: cleanContent.slice(0, 1000),
           attachment: {
@@ -175,7 +337,17 @@ async function publishToZaloOA({ content, title, articleId, imageUrl }) {
         }
       };
 
-      const zaloRes = await fetch('https://openapi.zalo.me/v3.0/oa/message/transaction', {
+      if (targetUserId) {
+        endpoint = 'https://openapi.zalo.me/v3.0/oa/message/cs';
+        payload = {
+          recipient: { user_id: targetUserId },
+          message: {
+            text: `${cleanContent}\n\n🔗 Xem chi tiết: ${targetUrl}`
+          }
+        };
+      }
+
+      const zaloRes = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'access_token': creds.accessToken,
@@ -185,7 +357,7 @@ async function publishToZaloOA({ content, title, articleId, imageUrl }) {
       });
 
       const zaloData = await zaloRes.json();
-      if (!zaloRes.ok || zaloData.error !== 0) {
+      if (!zaloRes.ok || (zaloData.error !== undefined && zaloData.error !== 0)) {
         throw new Error(zaloData.message || `Lỗi Zalo Open API code ${zaloData.error}`);
       }
 
@@ -195,7 +367,11 @@ async function publishToZaloOA({ content, title, articleId, imageUrl }) {
         mode: 'live_zalo_api',
         messageId: zaloData.data?.message_id || `ZALO_${Date.now()}`,
         oaName: creds.oaName,
-        message: `Đã gửi bản tin thành công qua Zalo Official Account (${creds.oaName})!`,
+        accountName: account.name,
+        recipientPhone: targetPhone,
+        recipientUserId: targetUserId,
+        shareUrls,
+        message: `Đã gửi bản tin thành công qua tài khoản "${account.name}"!`,
         publishedAt: new Date().toISOString()
       };
     } catch (err) {
@@ -204,10 +380,14 @@ async function publishToZaloOA({ content, title, articleId, imageUrl }) {
         success: true,
         channel: 'zalo',
         mode: 'sandbox_simulation',
-        warning: `Zalo API thật báo: ${err.message}. Đã chuyển sang Sandbox kiểm thử.`,
+        warning: `Zalo API thật báo: ${err.message}. Đã chuyển sang Sandbox kiểm thử đồ án.`,
         messageId: `ZALO_DEV_${Date.now()}`,
         oaName: creds.oaName,
-        message: `Đã phát hành tin Zalo OA chuẩn Zalo Open API v3.0 (Chế độ Sandbox)`,
+        accountName: account.name,
+        recipientPhone: targetPhone,
+        recipientUserId: targetUserId,
+        shareUrls,
+        message: `Đã phát hành tin qua tài khoản "${account.name}" (Môi trường Sandbox / Kiểm thử đồ án). Bạn có thể bấm mở Zalo để gửi trực tiếp!`,
         publishedAt: new Date().toISOString()
       };
     }
@@ -221,10 +401,16 @@ async function publishToZaloOA({ content, title, articleId, imageUrl }) {
     mode: 'sandbox_simulation',
     messageId: mockMsgId,
     oaName: creds.oaName,
-    message: `Đã xác thực và phát thông báo qua Zalo Official Account Open API v3.0 (Chế độ Sandbox/Demo)`,
+    accountName: account.name,
+    recipientPhone: targetPhone,
+    recipientUserId: targetUserId,
+    shareUrls,
+    message: `Đã phát hành tin qua tài khoản "${account.name}" (Môi trường Sandbox / Kiểm thử đồ án). Bạn có thể bấm mở Zalo để gửi trực tiếp!`,
     details: {
       contentLength: cleanContent.length,
-      targetUrl
+      targetUrl,
+      targetPhone,
+      targetUserId
     },
     publishedAt: new Date().toISOString()
   };
@@ -238,7 +424,9 @@ async function publishOmnichannel({
   channels = ['web'], // ['web', 'facebook', 'zalo']
   facebookData = {},
   zaloData = {},
-  webData = {}
+  webData = {},
+  facebookAccountId,
+  zaloAccountId
 }) {
   const results = {};
   const now = new Date().toISOString();
@@ -285,7 +473,8 @@ async function publishOmnichannel({
       link: `${getChannelCredentials().web.domain}/baiviet?id=${numericId}`,
       imageUrl: facebookData.imageUrl || image,
       articleTitle: title,
-      articleId: numericId
+      articleId: numericId,
+      accountId: facebookAccountId
     });
     results.facebook = fbRes;
 
@@ -308,7 +497,8 @@ async function publishOmnichannel({
       content: zaloMsg,
       title,
       articleId: numericId,
-      imageUrl: image
+      imageUrl: image,
+      accountId: zaloAccountId
     });
     results.zalo = zaloRes;
 
@@ -446,6 +636,10 @@ function startScheduleWorker() {
 module.exports = {
   getChannelCredentials,
   saveChannelCredentials,
+  getChannelAccounts,
+  saveChannelAccount,
+  deleteChannelAccount,
+  getAccountById,
   publishToFacebook,
   publishToZaloOA,
   publishOmnichannel,

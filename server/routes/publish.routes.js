@@ -4,6 +4,10 @@ const { loadDB, saveDB } = require('../db');
 const {
   getChannelCredentials,
   saveChannelCredentials,
+  getChannelAccounts,
+  saveChannelAccount,
+  deleteChannelAccount,
+  getAccountById,
   publishToFacebook,
   publishToZaloOA,
   publishOmnichannel,
@@ -11,8 +15,31 @@ const {
 } = require('../services/multiChannelService');
 
 // =========================================================================
-// 1. CẤU HÌNH & KIỂM TRA KẾT NỐI API CÁC KÊNH (SETTINGS & TEST CONNECTIVITY)
+// 1. CẤU HÌNH & TÀI KHOẢN CÁC KÊNH (ACCOUNTS & TEST CONNECTIVITY)
 // =========================================================================
+
+// GET /api/publish/accounts - Lấy danh sách tài khoản gửi các kênh
+router.get('/accounts', (req, res) => {
+  const accounts = getChannelAccounts();
+  res.json({ success: true, data: accounts });
+});
+
+// POST /api/publish/accounts - Thêm hoặc cập nhật tài khoản gửi
+router.post('/accounts', (req, res) => {
+  const { channel, account } = req.body;
+  if (!channel || !account) {
+    return res.status(400).json({ success: false, error: 'Thiếu channel hoặc thông tin account' });
+  }
+  const updatedList = saveChannelAccount({ channel, account });
+  res.json({ success: true, message: `Đã lưu tài khoản "${account.name || 'Mới'}" thành công!`, data: updatedList });
+});
+
+// DELETE /api/publish/accounts/:channel/:id - Xóa tài khoản
+router.delete('/accounts/:channel/:id', (req, res) => {
+  const { channel, id } = req.params;
+  const updatedList = deleteChannelAccount({ channel, accountId: id });
+  res.json({ success: true, message: 'Đã xóa tài khoản', data: updatedList });
+});
 
 // GET /api/publish/channel-settings
 router.get('/channel-settings', (req, res) => {
@@ -46,21 +73,25 @@ router.post('/channel-settings', (req, res) => {
 
 // POST /api/publish/test-connection
 router.post('/test-connection', async (req, res) => {
-  const { channel } = req.body;
+  const { channel, accountId } = req.body;
+  const account = getAccountById(channel, accountId);
   const creds = getChannelCredentials();
 
   if (channel === 'facebook') {
-    if (!creds.facebook.accessToken || !creds.facebook.pageId) {
+    const pageId = account.pageId || creds.facebook.pageId;
+    const accessToken = account.accessToken || creds.facebook.accessToken;
+    if (!accessToken || !pageId) {
       return res.json({
         success: true,
         mode: 'sandbox',
         status: 'ready_sandbox',
-        message: 'Chưa cấu hình Token thật. Hệ thống đang chạy ở chế độ Graph API Sandbox (Mô phỏng hợp lệ v20.0).'
+        accountName: account.name,
+        message: `Tài khoản "${account.name}": Đang ở chế độ Sandbox mô phỏng hợp lệ v20.0 (chưa nhập Token thật).`
       });
     }
     try {
       const fetch = (await import('node-fetch')).default || globalThis.fetch;
-      const testRes = await fetch(`https://graph.facebook.com/v20.0/${creds.facebook.pageId}?fields=id,name,link&access_token=${creds.facebook.accessToken}`);
+      const testRes = await fetch(`https://graph.facebook.com/v20.0/${pageId}?fields=id,name,link&access_token=${accessToken}`);
       const testData = await testRes.json();
       if (!testRes.ok || testData.error) {
         throw new Error(testData.error?.message || 'Token không hợp lệ hoặc thiếu quyền Pages Read/Manage');
@@ -69,9 +100,10 @@ router.post('/test-connection', async (req, res) => {
         success: true,
         mode: 'live_meta_api',
         pageName: testData.name,
+        accountName: account.name,
         pageId: testData.id,
         link: testData.link,
-        message: `Kết nối thành công tới Meta Graph API v20.0 Fanpage: "${testData.name}"`
+        message: `Kết nối thành công tới Meta Graph API Fanpage: "${testData.name}" qua tài khoản "${account.name}"!`
       });
     } catch (e) {
       return res.json({
@@ -82,19 +114,27 @@ router.post('/test-connection', async (req, res) => {
   }
 
   if (channel === 'zalo') {
-    if (!creds.zalo.accessToken || !creds.zalo.oaId) {
+    const oaId = account.oaId || creds.zalo.oaId;
+    const accessToken = account.accessToken || creds.zalo.accessToken;
+    const targetPhone = account.recipientPhone || '';
+
+    if (!accessToken || !oaId) {
       return res.json({
         success: true,
         mode: 'sandbox',
         status: 'ready_sandbox',
-        message: 'Chưa cấu hình Token thật. Hệ thống đang chạy ở chế độ Zalo OA Sandbox (Mô phỏng chuẩn v3.0).'
+        accountName: account.name,
+        recipientPhone: targetPhone,
+        message: `Tài khoản "${account.name}": Đang hoạt động ở chế độ Zalo Sandbox / Thử nghiệm.${targetPhone ? ` Số điện thoại nhận tin: ${targetPhone}` : ''}`
       });
     }
     return res.json({
       success: true,
       mode: 'live_zalo_api',
-      oaName: creds.zalo.oaName,
-      message: `Zalo Official Account (${creds.zalo.oaName}) đã sẵn sàng nhận tin!`
+      oaName: account.oaName || account.name,
+      accountName: account.name,
+      recipientPhone: targetPhone,
+      message: `Tài khoản Zalo "${account.name}" đã sẵn sàng gửi tin nhắn!`
     });
   }
 
@@ -107,9 +147,9 @@ router.post('/test-connection', async (req, res) => {
 
 // POST /api/publish/facebook
 router.post('/facebook', async (req, res) => {
-  const { caption, link, imageUrl, articleTitle, articleId } = req.body;
+  const { caption, link, imageUrl, articleTitle, articleId, accountId, accountConfig } = req.body;
   try {
-    const result = await publishToFacebook({ caption, link, imageUrl, articleTitle, articleId });
+    const result = await publishToFacebook({ caption, link, imageUrl, articleTitle, articleId, accountId, accountConfig });
     res.json({ success: true, message: result.message, data: result });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -118,9 +158,9 @@ router.post('/facebook', async (req, res) => {
 
 // POST /api/publish/zalo
 router.post('/zalo', async (req, res) => {
-  const { content, title, articleId, imageUrl } = req.body;
+  const { content, title, articleId, imageUrl, accountId, accountConfig, recipientPhone, recipientUserId } = req.body;
   try {
-    const result = await publishToZaloOA({ content, title, articleId, imageUrl });
+    const result = await publishToZaloOA({ content, title, articleId, imageUrl, accountId, accountConfig, recipientPhone, recipientUserId });
     res.json({ success: true, message: result.message, data: result });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -139,7 +179,9 @@ router.post('/now', async (req, res) => {
     channels,        // ['web', 'facebook', 'zalo']
     facebook,        // { caption, imageUrl }
     zalo,            // { content }
-    web              // { title, summary, content, image }
+    web,             // { title, summary, content, image }
+    facebookAccountId,
+    zaloAccountId
   } = req.body;
 
   if (!articleId) {
@@ -161,7 +203,9 @@ router.post('/now', async (req, res) => {
       channels: targetChannels,
       facebookData: facebook || {},
       zaloData: zalo || {},
-      webData: web || {}
+      webData: web || {},
+      facebookAccountId,
+      zaloAccountId
     });
 
     res.json({

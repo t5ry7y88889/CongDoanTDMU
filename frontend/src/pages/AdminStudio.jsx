@@ -163,6 +163,26 @@ export default function AdminStudio() {
   const [publishResult, setPublishResult] = useState(null);
   const [omniChannels, setOmniChannels] = useState({ web: true, fb: true, zalo: true });
 
+  // ── Multi-Account Selection State (Zalo & Facebook) ─────────────────────────
+  const [channelAccounts, setChannelAccounts] = useState({ zalo: [], facebook: [] });
+  const [selectedZaloAccId, setSelectedZaloAccId] = useState('zalo-default');
+  const [selectedFbAccId, setSelectedFbAccId] = useState('fb-default');
+  const [accountModalOpen, setAccountModalOpen] = useState(false);
+  const [editingChannel, setEditingChannel] = useState('zalo');
+  const [editingAccountData, setEditingAccountData] = useState({
+    id: '',
+    name: '',
+    type: 'personal',
+    oaId: '',
+    accessToken: '',
+    pageId: '',
+    pageName: '',
+    oaName: '',
+    recipientPhone: '',
+    recipientUserId: '',
+    isDefault: false
+  });
+
   // ── Drafts drawer ─────────────────────────────────────────────────────────────
   const [draftsOpen, setDraftsOpen] = useState(true);
   const [draftsList, setDraftsList] = useState([]);
@@ -1650,14 +1670,155 @@ export default function AdminStudio() {
     } catch {}
   }, []);
 
+  const fetchChannelAccounts = useCallback(async () => {
+    try {
+      const res = await fetch('/api/publish/accounts').then(r => r.json());
+      if (res.success && res.data) {
+        setChannelAccounts(res.data);
+        const defaultZalo = res.data.zalo?.find(a => a.isDefault)?.id || res.data.zalo?.[0]?.id || 'zalo-default';
+        const defaultFb = res.data.facebook?.find(a => a.isDefault)?.id || res.data.facebook?.[0]?.id || 'fb-default';
+        setSelectedZaloAccId(prev => (res.data.zalo?.some(a => a.id === prev) ? prev : defaultZalo));
+        setSelectedFbAccId(prev => (res.data.facebook?.some(a => a.id === prev) ? prev : defaultFb));
+      }
+    } catch {}
+  }, []);
+
   useEffect(() => {
     fetchSchedulesList();
-  }, [fetchSchedulesList]);
+    fetchChannelAccounts();
+  }, [fetchSchedulesList, fetchChannelAccounts]);
+
+  const openNewAccountModal = (channel) => {
+    setEditingChannel(channel);
+    setEditingAccountData({
+      id: '',
+      name: channel === 'zalo' ? 'Zalo của tôi (Cá nhân/Tester)' : 'Trang Facebook của tôi',
+      type: channel === 'zalo' ? 'personal' : 'fanpage',
+      oaId: '',
+      accessToken: '',
+      pageId: '',
+      pageName: '',
+      oaName: '',
+      recipientPhone: '',
+      recipientUserId: '',
+      isDefault: false
+    });
+    setAccountModalOpen(true);
+  };
+
+  const openEditAccountModal = (channel, accId) => {
+    const list = channel === 'facebook' ? channelAccounts.facebook : channelAccounts.zalo;
+    const found = list?.find(a => a.id === accId) || {};
+    setEditingChannel(channel);
+    setEditingAccountData({
+      id: found.id || '',
+      name: found.name || (channel === 'zalo' ? 'Zalo của tôi' : 'Trang của tôi'),
+      type: found.type || 'personal',
+      oaId: found.oaId || '',
+      accessToken: found.accessToken || '',
+      pageId: found.pageId || '',
+      pageName: found.pageName || '',
+      oaName: found.oaName || '',
+      recipientPhone: found.recipientPhone || '',
+      recipientUserId: found.recipientUserId || '',
+      isDefault: Boolean(found.isDefault)
+    });
+    setAccountModalOpen(true);
+  };
+
+  const handleSaveAccount = async () => {
+    if (!editingAccountData.name.trim()) {
+      alert('Vui lòng nhập tên tài khoản hiển thị!');
+      return;
+    }
+    try {
+      const res = await fetch('/api/publish/accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channel: editingChannel,
+          account: editingAccountData
+        })
+      }).then(r => r.json());
+
+      if (res.success) {
+        showRollbackToast(`✅ ${res.message}`);
+        await fetchChannelAccounts();
+        setAccountModalOpen(false);
+      } else {
+        alert('Lỗi lưu tài khoản: ' + res.error);
+      }
+    } catch (e) {
+      alert('Lỗi: ' + e.message);
+    }
+  };
+
+  const handleDeleteAccount = async (channel, accId) => {
+    if (!window.confirm('Bạn có chắc muốn xóa tài khoản này khỏi danh sách?')) return;
+    try {
+      const res = await fetch(`/api/publish/accounts/${channel}/${accId}`, { method: 'DELETE' }).then(r => r.json());
+      if (res.success) {
+        showRollbackToast('Đã xóa tài khoản');
+        await fetchChannelAccounts();
+        setAccountModalOpen(false);
+      }
+    } catch (e) {
+      alert('Lỗi xóa: ' + e.message);
+    }
+  };
+
+  const testSendToMyZalo = async (accId) => {
+    const currentAcc = channelAccounts.zalo?.find(a => a.id === accId) || {};
+    setIsPublishingNow(true);
+    try {
+      const res = await fetch('/api/publish/zalo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: zaloText || `[TEST TIN NHẮN TỪ CÔNG ĐOÀN TDMU]\n${title || 'Bản tin thử nghiệm'}\n\n${sapo || 'Nội dung thông báo thử nghiệm.'}`,
+          title: title || 'Bản tin thử nghiệm',
+          articleId: activeArticleId || 1,
+          accountId: accId,
+          recipientPhone: currentAcc.recipientPhone || '',
+          recipientUserId: currentAcc.recipientUserId || ''
+        })
+      }).then(r => r.json());
+
+      if (res.success) {
+        let msg = `🎉 ${res.message}\n\n• Tài khoản: ${res.data?.accountName || currentAcc.name}`;
+        if (res.data?.recipientPhone) msg += `\n• Số điện thoại nhận: ${res.data.recipientPhone}`;
+        if (res.data?.mode === 'sandbox_simulation') {
+          msg += `\n\n💡 Bạn có thể bấm nút "Mở Zalo Gửi 1-Click" để gửi trực tiếp nội dung sang Zalo của bạn ngay!`;
+        }
+        alert(msg);
+      } else {
+        alert('Lỗi gửi tin: ' + (res.error || 'Không xác định'));
+      }
+    } catch (e) {
+      alert('Lỗi kết nối: ' + e.message);
+    } finally {
+      setIsPublishingNow(false);
+    }
+  };
+
+  const openDirectZaloShare = () => {
+    const targetUrl = activeArticleId ? `http://localhost:3000/baiviet?id=${activeArticleId}` : 'http://localhost:3000';
+    const currentAcc = channelAccounts.zalo?.find(a => a.id === selectedZaloAccId);
+    
+    // Nếu có số điện thoại cá nhân, mở chat Zalo trực tiếp tới số đó
+    if (currentAcc?.recipientPhone) {
+      const phoneClean = currentAcc.recipientPhone.replace(/^0/, '84');
+      window.open(`https://zalo.me/${phoneClean}`, '_blank');
+    } else {
+      window.open(`https://zalo.me/share?url=${encodeURIComponent(targetUrl)}&title=${encodeURIComponent(title || 'Bản tin Công đoàn TDMU')}`, '_blank');
+    }
+  };
 
   const publishToFacebookDirect = async () => {
     if (!title.trim() && !fbCaption.trim()) { alert('Vui lòng nhập tiêu đề hoặc caption Facebook!'); return; }
     setIsPublishingNow(true);
     try {
+      const currentAcc = channelAccounts.facebook?.find(a => a.id === selectedFbAccId) || {};
       const res = await fetch('/api/publish/facebook', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1665,12 +1826,13 @@ export default function AdminStudio() {
           caption: fbCaption || `${title}\n\n${sapo}\n\n#CongDoanTDMU #TDMU`,
           imageUrl: fbSelectedPhotos[0] || (eventPhotos[0]?.url) || '',
           articleTitle: title,
-          articleId: activeArticleId
+          articleId: activeArticleId,
+          accountId: selectedFbAccId
         })
       }).then(r => r.json());
 
       if (res.success) {
-        alert(`🎉 ${res.message}\n\nMã bài đăng: ${res.data?.postId || 'Thành công'}\nLink: ${res.data?.permalinkUrl || ''}`);
+        alert(`🎉 ${res.message}\n\nTài khoản: ${res.data?.accountName || currentAcc.name}\nMã bài đăng: ${res.data?.postId || 'Thành công'}\nLink: ${res.data?.permalinkUrl || ''}`);
       } else {
         alert('Lỗi đăng Facebook: ' + (res.error || 'Không xác định'));
       }
@@ -1685,6 +1847,7 @@ export default function AdminStudio() {
     if (!title.trim() && !zaloText.trim()) { alert('Vui lòng nhập nội dung bản tin Zalo OA!'); return; }
     setIsPublishingNow(true);
     try {
+      const currentAcc = channelAccounts.zalo?.find(a => a.id === selectedZaloAccId) || {};
       const res = await fetch('/api/publish/zalo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1692,17 +1855,20 @@ export default function AdminStudio() {
           content: zaloText || `[BẢN TIN CÔNG ĐOÀN TDMU]\n${title}\n\n${sapo}`,
           title: title,
           articleId: activeArticleId,
-          imageUrl: (eventPhotos[0]?.url) || ''
+          imageUrl: (eventPhotos[0]?.url) || '',
+          accountId: selectedZaloAccId,
+          recipientPhone: currentAcc.recipientPhone || '',
+          recipientUserId: currentAcc.recipientUserId || ''
         })
       }).then(r => r.json());
 
       if (res.success) {
-        alert(`🎉 ${res.message}\n\nMã tin nhắn Zalo OA: ${res.data?.messageId || 'Thành công'}`);
+        alert(`🎉 ${res.message}\n\nTài khoản: ${res.data?.accountName || currentAcc.name}\nMã tin nhắn Zalo: ${res.data?.messageId || 'Thành công'}`);
       } else {
-        alert('Lỗi gửi Zalo OA: ' + (res.error || 'Không xác định'));
+        alert('Lỗi gửi Zalo: ' + (res.error || 'Không xác định'));
       }
     } catch (e) {
-      alert('Lỗi kết nối Zalo OA: ' + e.message);
+      alert('Lỗi kết nối Zalo: ' + e.message);
     } finally {
       setIsPublishingNow(false);
     }
@@ -1710,10 +1876,11 @@ export default function AdminStudio() {
 
   const testChannelConnection = async (ch) => {
     try {
+      const accId = ch === 'facebook' ? selectedFbAccId : selectedZaloAccId;
       const res = await fetch('/api/publish/test-connection', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ channel: ch })
+        body: JSON.stringify({ channel: ch, accountId: accId })
       }).then(r => r.json());
       alert(res.message || (res.error ? 'Lỗi: ' + res.error : 'Kết nối thành công!'));
     } catch (e) {
@@ -1822,7 +1989,9 @@ export default function AdminStudio() {
           channels: chs,
           web: { title, summary: sapo, content: currentHtml, image: (eventPhotos[0]?.url) || 'images/banner.jpg' },
           facebook: { caption: fbCaption || `${title}\n\n${sapo}\n\n#CongDoanTDMU #TDMU`, imageUrl: fbSelectedPhotos[0] || (eventPhotos[0]?.url) || '' },
-          zalo: { content: zaloText || `[BẢN TIN CÔNG ĐOÀN TDMU]\n${title}\n\n${sapo}` }
+          zalo: { content: zaloText || `[BẢN TIN CÔNG ĐOÀN TDMU]\n${title}\n\n${sapo}` },
+          facebookAccountId: selectedFbAccId,
+          zaloAccountId: selectedZaloAccId
         })
       }).then(r => r.json());
 
@@ -2219,6 +2388,43 @@ export default function AdminStudio() {
                       </div>
                     </div>
 
+                    {/* Facebook Account Selector Toolbar */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: '#EFF6FF', borderRadius: '8px', border: '1px solid #BFDBFE', flexWrap: 'wrap', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '240px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '800', color: '#1E40AF', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <i className="fa-brands fa-facebook" style={{ color: '#1877F2', fontSize: '15px' }} />
+                          Tài khoản gửi:
+                        </span>
+                        <select
+                          value={selectedFbAccId}
+                          onChange={e => setSelectedFbAccId(e.target.value)}
+                          style={{ flex: 1, padding: '5px 8px', borderRadius: '6px', border: '1px solid #93C5FD', fontSize: '12px', fontWeight: '600', color: '#1E293B', background: '#FFF', outline: 'none' }}
+                        >
+                          {(channelAccounts.facebook || []).map(acc => (
+                            <option key={acc.id} value={acc.id}>
+                              {acc.name} {acc.isDefault ? '(Mặc định)' : ''} {acc.pageName ? `[${acc.pageName}]` : ''}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          onClick={() => openEditAccountModal('facebook', selectedFbAccId)}
+                          style={{ padding: '5px 10px', borderRadius: '6px', border: '1px solid #93C5FD', background: '#FFF', color: '#1D4ED8', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          title="Cấu hình Access Token, Page ID của tài khoản này"
+                        >
+                          ⚙️ Cài đặt
+                        </button>
+                        <button
+                          onClick={() => openNewAccountModal('facebook')}
+                          style={{ padding: '5px 10px', borderRadius: '6px', border: 'none', background: '#1877F2', color: 'white', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          title="Thêm tài khoản hoặc Fanpage Facebook mới để test"
+                        >
+                          + Thêm mới
+                        </button>
+                      </div>
+                    </div>
+
                     {/* Hashtag chips */}
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                       {FB_HASHTAGS.map(tag => (
@@ -2336,6 +2542,58 @@ export default function AdminStudio() {
                       </span>
                     </div>
 
+                    {/* Zalo Account Selector Toolbar */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#F0F9FF', borderRadius: '8px', border: '1.5px solid #BAE6FD', flexWrap: 'wrap', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '260px' }}>
+                        <span style={{ fontSize: '12.5px', fontWeight: '800', color: '#0369A1', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <i className="fa-solid fa-user-gear" style={{ color: '#0068FF', fontSize: '15px' }} />
+                          Tài khoản gửi:
+                        </span>
+                        <select
+                          value={selectedZaloAccId}
+                          onChange={e => setSelectedZaloAccId(e.target.value)}
+                          style={{ flex: 1, padding: '6px 10px', borderRadius: '6px', border: '1.5px solid #7DD3FC', fontSize: '12px', fontWeight: '700', color: '#0F172A', background: '#FFF', outline: 'none' }}
+                        >
+                          {(channelAccounts.zalo || []).map(acc => (
+                            <option key={acc.id} value={acc.id}>
+                              {acc.name} {acc.recipientPhone ? `(${acc.recipientPhone})` : ''} {acc.type === 'personal' ? '👤 Cá nhân/Tester' : '🏢 Zalo OA'}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => openEditAccountModal('zalo', selectedZaloAccId)}
+                          style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #7DD3FC', background: '#FFF', color: '#0369A1', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          title="Chỉnh sửa số điện thoại, OA ID, token để test gửi tin"
+                        >
+                          ⚙️ Cài đặt
+                        </button>
+                        <button
+                          onClick={() => openNewAccountModal('zalo')}
+                          style={{ padding: '6px 10px', borderRadius: '6px', border: 'none', background: '#0284C7', color: 'white', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          title="Thêm tài khoản Zalo cá nhân của bạn để nhận tin test"
+                        >
+                          + Thêm mới
+                        </button>
+                        <button
+                          onClick={() => testSendToMyZalo(selectedZaloAccId)}
+                          disabled={isPublishingNow}
+                          style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: 'linear-gradient(135deg,#0068FF,#0284C7)', color: 'white', fontSize: '11.5px', fontWeight: '800', cursor: isPublishingNow ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '5px', boxShadow: '0 2px 6px rgba(0,104,255,0.25)' }}
+                          title="Thử nghiệm gửi tin nhắn ngay tới tài khoản Zalo đã chọn"
+                        >
+                          📲 Test gửi vào Zalo
+                        </button>
+                        <button
+                          onClick={openDirectZaloShare}
+                          style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #0068FF', background: '#EFF6FF', color: '#0068FF', fontSize: '11.5px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          title="Mở Zalo trên máy/web gửi 1-click trực tiếp không qua API"
+                        >
+                          🔗 Mở Zalo 1-Click
+                        </button>
+                      </div>
+                    </div>
+
                     {/* Sync + Link Tools Action Bar */}
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                       <button onClick={generateZaloWithAi} className="action-btn" style={{ background: 'linear-gradient(135deg, #0068FF, #0284C7)', color: 'white', fontWeight: '800', boxShadow: '0 2px 6px rgba(0,104,255,0.25)' }} title="AI tự động phân tích bài báo và soạn thông báo Zalo OA chuẩn công vụ, tóm tắt ý chính và gắn kèm link">
@@ -2379,6 +2637,15 @@ export default function AdminStudio() {
                         style={{ background: '#0068FF', color: 'white', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}
                       >
                         <i className="fa-solid fa-comment-dots" /> {isPublishingNow ? 'Đang gửi...' : '🚀 Gửi Tin Lên Zalo OA Ngay'}
+                      </button>
+                      <button 
+                        onClick={() => testSendToMyZalo(selectedZaloAccId)} 
+                        disabled={isPublishingNow}
+                        className="action-btn" 
+                        style={{ background: '#EFF6FF', border: '1.5px solid #0068FF', color: '#0068FF', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        title="Gửi tin nhắn mẫu thử nghiệm vào Zalo cá nhân của bạn"
+                      >
+                        <i className="fa-solid fa-paper-plane" /> 📲 Test Gửi Tin Zalo
                       </button>
                       <button 
                         onClick={() => testChannelConnection('zalo')} 
@@ -3172,30 +3439,62 @@ export default function AdminStudio() {
                   </label>
 
                   {/* Facebook */}
-                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 14px', borderRadius: '8px', border: `1.5px solid ${omniChannels.fb ? '#1877F2' : '#E2E8F0'}`, background: omniChannels.fb ? '#EFF6FF' : '#FFF', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={omniChannels.fb} onChange={e => setOmniChannels(p => ({ ...p, fb: e.target.checked }))} style={{ marginTop: '3px', width: '16px', height: '16px' }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '13px', fontWeight: '800', color: '#1877F2', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <i className="fa-brands fa-facebook" />
-                        <span>Fanpage Facebook Công Đoàn TDMU</span>
-                        <span style={{ fontSize: '10px', background: '#DBEAFE', color: '#1E40AF', padding: '1px 6px', borderRadius: '10px', fontWeight: '700' }}>Meta Graph API v20.0</span>
+                  <div style={{ borderRadius: '8px', border: `1.5px solid ${omniChannels.fb ? '#1877F2' : '#E2E8F0'}`, background: omniChannels.fb ? '#EFF6FF' : '#FFF', padding: '10px 14px' }}>
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={omniChannels.fb} onChange={e => setOmniChannels(p => ({ ...p, fb: e.target.checked }))} style={{ marginTop: '3px', width: '16px', height: '16px' }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '13px', fontWeight: '800', color: '#1877F2', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <i className="fa-brands fa-facebook" />
+                          <span>Fanpage Facebook Công Đoàn TDMU</span>
+                          <span style={{ fontSize: '10px', background: '#DBEAFE', color: '#1E40AF', padding: '1px 6px', borderRadius: '10px', fontWeight: '700' }}>Meta Graph API v20.0</span>
+                        </div>
+                        <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '2px' }}>Tự động đăng kèm caption tối ưu, ảnh bìa và link bài viết.</div>
                       </div>
-                      <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '2px' }}>Tự động đăng kèm caption tối ưu, ảnh bìa và link bài viết.</div>
-                    </div>
-                  </label>
+                    </label>
+                    {omniChannels.fb && (
+                      <div style={{ marginTop: '8px', paddingLeft: '28px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '11.5px', fontWeight: '700', color: '#1E40AF' }}>Tài khoản:</span>
+                        <select
+                          value={selectedFbAccId}
+                          onChange={e => setSelectedFbAccId(e.target.value)}
+                          style={{ flex: 1, padding: '4px 8px', borderRadius: '5px', border: '1px solid #93C5FD', fontSize: '11.5px', fontWeight: '600', color: '#1E293B', background: '#FFF' }}
+                        >
+                          {(channelAccounts.facebook || []).map(acc => (
+                            <option key={acc.id} value={acc.id}>{acc.name} {acc.isDefault ? '(Mặc định)' : ''}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Zalo OA */}
-                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 14px', borderRadius: '8px', border: `1.5px solid ${omniChannels.zalo ? '#0068FF' : '#E2E8F0'}`, background: omniChannels.zalo ? '#F0F9FF' : '#FFF', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={omniChannels.zalo} onChange={e => setOmniChannels(p => ({ ...p, zalo: e.target.checked }))} style={{ marginTop: '3px', width: '16px', height: '16px' }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '13px', fontWeight: '800', color: '#0068FF', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <i className="fa-solid fa-comment-dots" />
-                        <span>Zalo Official Account (OA) TDMU</span>
-                        <span style={{ fontSize: '10px', background: '#E0F2FE', color: '#0369A1', padding: '1px 6px', borderRadius: '10px', fontWeight: '700' }}>Open API v3.0</span>
+                  <div style={{ borderRadius: '8px', border: `1.5px solid ${omniChannels.zalo ? '#0068FF' : '#E2E8F0'}`, background: omniChannels.zalo ? '#F0F9FF' : '#FFF', padding: '10px 14px' }}>
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={omniChannels.zalo} onChange={e => setOmniChannels(p => ({ ...p, zalo: e.target.checked }))} style={{ marginTop: '3px', width: '16px', height: '16px' }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '13px', fontWeight: '800', color: '#0068FF', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <i className="fa-solid fa-comment-dots" />
+                          <span>Zalo Official Account (OA) TDMU</span>
+                          <span style={{ fontSize: '10px', background: '#E0F2FE', color: '#0369A1', padding: '1px 6px', borderRadius: '10px', fontWeight: '700' }}>Open API v3.0</span>
+                        </div>
+                        <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '2px' }}>Gửi bản tin thông báo trực tiếp đến cán bộ, đoàn viên theo dõi OA hoặc Tester.</div>
                       </div>
-                      <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '2px' }}>Gửi bản tin thông báo trực tiếp đến cán bộ, đoàn viên theo dõi OA.</div>
-                    </div>
-                  </label>
+                    </label>
+                    {omniChannels.zalo && (
+                      <div style={{ marginTop: '8px', paddingLeft: '28px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '11.5px', fontWeight: '700', color: '#0369A1' }}>Tài khoản:</span>
+                        <select
+                          value={selectedZaloAccId}
+                          onChange={e => setSelectedZaloAccId(e.target.value)}
+                          style={{ flex: 1, padding: '4px 8px', borderRadius: '5px', border: '1.5px solid #7DD3FC', fontSize: '11.5px', fontWeight: '700', color: '#0F172A', background: '#FFF' }}
+                        >
+                          {(channelAccounts.zalo || []).map(acc => (
+                            <option key={acc.id} value={acc.id}>{acc.name} {acc.recipientPhone ? `(${acc.recipientPhone})` : ''}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -3244,6 +3543,206 @@ export default function AdminStudio() {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── CHANNEL ACCOUNT CONFIGURATION MODAL ─────────────────────── */}
+      {accountModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(5px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: '#FFFFFF', borderRadius: '14px', width: '100%', maxWidth: '540px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column' }}>
+            {/* Header */}
+            <div style={{ padding: '16px 20px', background: editingChannel === 'facebook' ? 'linear-gradient(135deg,#1877F2,#1E40AF)' : 'linear-gradient(135deg,#0068FF,#0284C7)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: '800' }}>
+                <i className={editingChannel === 'facebook' ? "fa-brands fa-facebook" : "fa-solid fa-comment-dots"} />
+                <span>Cấu Hình Tài Khoản {editingChannel === 'facebook' ? 'Facebook Fanpage' : 'Zalo Gửi Tin'}</span>
+              </div>
+              <button onClick={() => setAccountModalOpen(false)} style={{ background: 'none', border: 'none', color: '#E2E8F0', fontSize: '20px', cursor: 'pointer', lineHeight: '1' }}>✕</button>
+            </div>
+
+            {/* Form Fields */}
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '72vh', overflowY: 'auto' }}>
+              {/* Account Name */}
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: '800', color: '#002855', display: 'block', marginBottom: '4px' }}>
+                  TÊN TÀI KHOẢN HIỂN THỊ: *
+                </label>
+                <input
+                  type="text"
+                  value={editingAccountData.name || ''}
+                  onChange={e => setEditingAccountData(p => ({ ...p, name: e.target.value }))}
+                  placeholder={editingChannel === 'zalo' ? "VD: Zalo của tôi (Tester), Ban Truyền Thông CĐ..." : "VD: Fanpage Công Đoàn TDMU, Trang Tester..."}
+                  style={{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              {/* Account Type */}
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: '800', color: '#002855', display: 'block', marginBottom: '4px' }}>
+                  LOẠI HÌNH TÀI KHOẢN:
+                </label>
+                <select
+                  value={editingAccountData.type || 'personal'}
+                  onChange={e => setEditingAccountData(p => ({ ...p, type: e.target.value }))}
+                  style={{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box', background: '#FFF' }}
+                >
+                  {editingChannel === 'zalo' ? (
+                    <>
+                      <option value="personal">👤 Tài khoản cá nhân / Số điện thoại Tester (Khuyên dùng để test ngay)</option>
+                      <option value="oa">🏢 Zalo Official Account Doanh nghiệp (Cần Access Token)</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="fanpage">🏢 Fanpage Doanh nghiệp / Đơn vị (Graph API)</option>
+                      <option value="personal">👤 Trang cá nhân / Tester Sandbox</option>
+                    </>
+                  )}
+                </select>
+              </div>
+
+              {/* Zalo-specific fields */}
+              {editingChannel === 'zalo' && (
+                <>
+                  <div style={{ background: '#F0F9FF', border: '1px solid #BAE6FD', padding: '12px 14px', borderRadius: '8px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: '800', color: '#0369A1', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                      <i className="fa-solid fa-mobile-screen" /> SỐ ĐIỆN THOẠI ZALO CỦA BẠN (ĐỂ NHẬN TEST):
+                    </label>
+                    <input
+                      type="text"
+                      value={editingAccountData.recipientPhone || ''}
+                      onChange={e => setEditingAccountData(p => ({ ...p, recipientPhone: e.target.value }))}
+                      placeholder="VD: 0901234567 hoặc 84901234567"
+                      style={{ width: '100%', padding: '9px 12px', border: '1px solid #7DD3FC', borderRadius: '6px', fontSize: '13px', outline: 'none', boxSizing: 'border-box', fontWeight: '600' }}
+                    />
+                    <div style={{ fontSize: '11px', color: '#0284C7', marginTop: '5px' }}>
+                      💡 Khi nhập số điện thoại của bạn, bạn có thể bấm "📲 Test gửi vào Zalo" hoặc "🔗 Mở Zalo 1-Click" để hệ thống tự động soạn sẵn tin và gửi trực tiếp vào Zalo cá nhân của bạn để kiểm tra thực tế!
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: '800', color: '#002855', display: 'block', marginBottom: '4px' }}>
+                      ZALO OA ID (Nếu dùng chế độ OA Doanh nghiệp):
+                    </label>
+                    <input
+                      type="text"
+                      value={editingAccountData.oaId || ''}
+                      onChange={e => setEditingAccountData(p => ({ ...p, oaId: e.target.value }))}
+                      placeholder="VD: 448899123456789"
+                      style={{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: '800', color: '#002855', display: 'block', marginBottom: '4px' }}>
+                      ACCESS TOKEN ZALO OA:
+                    </label>
+                    <input
+                      type="password"
+                      value={editingAccountData.accessToken || ''}
+                      onChange={e => setEditingAccountData(p => ({ ...p, accessToken: e.target.value }))}
+                      placeholder="Nhập Access Token Zalo OA (để trống nếu dùng chế độ giả lập test)"
+                      style={{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: '800', color: '#002855', display: 'block', marginBottom: '4px' }}>
+                      ZALO USER ID NGƯỜI NHẬN (Optional - Dùng cho API CS/Transaction):
+                    </label>
+                    <input
+                      type="text"
+                      value={editingAccountData.recipientUserId || ''}
+                      onChange={e => setEditingAccountData(p => ({ ...p, recipientUserId: e.target.value }))}
+                      placeholder="ID người dùng đã quan tâm Zalo OA"
+                      style={{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Facebook-specific fields */}
+              {editingChannel === 'facebook' && (
+                <>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: '800', color: '#002855', display: 'block', marginBottom: '4px' }}>
+                      FACEBOOK PAGE ID:
+                    </label>
+                    <input
+                      type="text"
+                      value={editingAccountData.pageId || ''}
+                      onChange={e => setEditingAccountData(p => ({ ...p, pageId: e.target.value }))}
+                      placeholder="VD: 100098765432100"
+                      style={{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: '800', color: '#002855', display: 'block', marginBottom: '4px' }}>
+                      TÊN FANPAGE HIỂN THỊ:
+                    </label>
+                    <input
+                      type="text"
+                      value={editingAccountData.pageName || ''}
+                      onChange={e => setEditingAccountData(p => ({ ...p, pageName: e.target.value }))}
+                      placeholder="VD: Công Đoàn Trường ĐH Thủ Dầu Một"
+                      style={{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: '800', color: '#002855', display: 'block', marginBottom: '4px' }}>
+                      PAGE ACCESS TOKEN (Vĩnh viễn hoặc dài hạn):
+                    </label>
+                    <input
+                      type="password"
+                      value={editingAccountData.accessToken || ''}
+                      onChange={e => setEditingAccountData(p => ({ ...p, accessToken: e.target.value }))}
+                      placeholder="EAA..."
+                      style={{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Set as default checkbox */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '4px' }}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(editingAccountData.isDefault)}
+                  onChange={e => setEditingAccountData(p => ({ ...p, isDefault: e.target.checked }))}
+                  style={{ width: '16px', height: '16px' }}
+                />
+                <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#1E293B' }}>Đặt làm tài khoản mặc định cho kênh này</span>
+              </label>
+            </div>
+
+            {/* Footer Buttons */}
+            <div style={{ padding: '14px 20px', background: '#F8FAFC', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                {!editingAccountData.isDefault && editingAccountData.id && (
+                  <button
+                    onClick={() => handleDeleteAccount(editingChannel, editingAccountData.id)}
+                    style={{ padding: '8px 14px', borderRadius: '6px', border: '1px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                  >
+                    🗑️ Xóa
+                  </button>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => setAccountModalOpen(false)}
+                  style={{ padding: '8px 14px', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFF', color: '#475569', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleSaveAccount}
+                  style={{ padding: '8px 18px', borderRadius: '6px', border: 'none', background: 'linear-gradient(135deg,#002855,#2563EB)', color: 'white', fontSize: '12px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 2px 8px rgba(37,99,235,0.25)' }}
+                >
+                  💾 Lưu Cấu Hình
+                </button>
+              </div>
             </div>
           </div>
         </div>
