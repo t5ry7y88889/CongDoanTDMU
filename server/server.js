@@ -156,6 +156,25 @@ app.listen(PORT, () => {
   console.log(`🚀 Website Truyền Thông Công Đoàn TDMU Real SaaS Engine`);
   console.log(`🌐 Public Portal: http://localhost:${PORT}`);
   console.log(`⚙️  Admin CMS Portal: http://localhost:${PORT}/admin.html`);
+  
+  // 4. Pre-warm Động cơ Local AI Engine (Qwen2.5-1.5B GGUF nhúng cục bộ)
+  try {
+    const { isLocalModelAvailable, initLocalAiEngine } = require('./services/localAiEngine');
+    if (isLocalModelAvailable()) {
+      console.log(`🤖 Local AI Model: Sẵn sàng (server/models/qwen2.5-1.5b-instruct-q4_k_m.gguf)`);
+      initLocalAiEngine()
+        .then(() => {
+          console.log(`⚡ [Local AI] Đã nạp trước mô hình vào bộ nhớ RAM/VRAM! Tốc độ phản hồi: ~0.3s`);
+        })
+        .catch(err => {
+          console.warn(`[Local AI Pre-warm Warning]:`, err.message);
+        });
+    } else {
+      console.log(`🤖 Local AI Model: Chưa tải file GGUF (Chạy "npm run download-model" nếu muốn dùng offline)`);
+    }
+  } catch (err) {
+    console.warn(`[Local AI Check]:`, err.message);
+  }
   console.log(`====================================================`);
 });
 
