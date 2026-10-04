@@ -686,7 +686,7 @@ export default function AdminStudio() {
 
                   // 2. Thử thay thế chuỗi trên HTML nội dung
                   const curData = editorRef.current?.getData ? editorRef.current.getData() : bodyHtml;
-                  const targetStr = ev.result.targetText || selectedText;
+                  const targetStr = (ev.result.targetText || selectedText || '').trim();
                   if (!applied && targetStr && curData) {
                     if (curData.includes(targetStr)) {
                       const nextHtml = curData.replace(targetStr, cleanText);
@@ -694,27 +694,24 @@ export default function AdminStudio() {
                       setBodyHtml(nextHtml);
                       applied = true;
                     } else {
-                      try {
-                        const escaped = targetStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
-                        const reg = new RegExp(escaped, 'i');
-                        if (reg.test(curData)) {
-                          const nextHtml = curData.replace(reg, cleanText);
-                          if (editorRef.current?.setData) editorRef.current.setData(nextHtml);
-                          setBodyHtml(nextHtml);
-                          applied = true;
-                        }
-                      } catch {}
+                      // Tìm đoạn paragraph tương đồng nhất trong HTML và thay thế
+                      const targetSnippet = targetStr.slice(0, 50).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                      const pReg = new RegExp(`<p\\b[^>]*>[^<]*${targetSnippet}[^<]*<\\/p>`, 'i');
+                      if (pReg.test(curData)) {
+                        const nextHtml = curData.replace(pReg, `<p>${cleanText}</p>`);
+                        if (editorRef.current?.setData) editorRef.current.setData(nextHtml);
+                        setBodyHtml(nextHtml);
+                        applied = true;
+                      }
                     }
                   }
 
-                  // 3. Fallback: Nếu không tìm thấy vị trí do cấu trúc thẻ lồng nhau, bổ sung vào cuối
-                  if (!applied && cleanText) {
-                    const nextHtml = curData ? `${curData}\n<p>${cleanText}</p>` : `<p>${cleanText}</p>`;
-                    if (editorRef.current?.setData) editorRef.current.setData(nextHtml);
-                    setBodyHtml(nextHtml);
-                  } else {
+                  if (applied) {
                     const updated = editorRef.current?.getData ? editorRef.current.getData() : (editorRef.current?.innerHTML || '');
                     setBodyHtml(updated);
+                    showRollbackToast('✨ Đã sửa đoạn văn bản trực tiếp trên Canvas!');
+                  } else {
+                    console.warn('[AdminStudio] Không tìm thấy vị trí targetText để tự thay thế, không tự ý chèn xuống cuối bài.');
                   }
 
                   clearSelection();
@@ -730,6 +727,7 @@ export default function AdminStudio() {
                   }
                   if (editorRef.current?.setData) editorRef.current.setData(nextHtml);
                   setBodyHtml(nextHtml);
+                  showRollbackToast(ev.result.isFullReplace ? '📰 Đã cập nhật toàn bộ nội dung bài viết!' : '📝 Đã thay thế phân đoạn trên Canvas!');
                 } else if (ev.result.action === 'insert_block' && ev.result.contentHtml) {
                   const curData = editorRef.current?.getData ? editorRef.current.getData() : bodyHtml;
                   const nextHtml = ev.result.position === 'top' ? (ev.result.contentHtml + '\n' + curData) : (curData + '\n' + ev.result.contentHtml);
@@ -737,10 +735,20 @@ export default function AdminStudio() {
                   setBodyHtml(nextHtml);
                 } else if (ev.result.action === 'update_headline' && ev.result.headline) {
                   setTitle(ev.result.headline);
-                  if (titleRef.current) titleRef.current.value = ev.result.headline;
+                  if (titleRef.current) {
+                    titleRef.current.value = ev.result.headline;
+                    titleRef.current.style.height = 'auto';
+                    titleRef.current.style.height = `${Math.max(54, titleRef.current.scrollHeight)}px`;
+                  }
+                  showRollbackToast(`📰 Đã cập nhật tiêu đề mới: "${ev.result.headline.slice(0, 35)}..."`);
                 } else if (ev.result.action === 'update_sapo' && ev.result.sapo) {
                   setSapo(ev.result.sapo);
-                  if (sapoRef.current) sapoRef.current.value = ev.result.sapo;
+                  if (sapoRef.current) {
+                    sapoRef.current.value = ev.result.sapo;
+                    sapoRef.current.style.height = 'auto';
+                    sapoRef.current.style.height = `${Math.max(68, sapoRef.current.scrollHeight)}px`;
+                  }
+                  showRollbackToast(`📝 Đã cập nhật đoạn mở đầu Sapo 5W1H!`);
                 } else if (ev.result.action === 'update_facebook' && ev.result.content) {
                   setFbCaption(ev.result.content);
                 } else if (ev.result.action === 'update_zalo' && ev.result.content) {
@@ -824,11 +832,19 @@ export default function AdminStudio() {
     }
     if (snap.title !== undefined) {
       setTitle(snap.title);
-      if (titleRef.current) titleRef.current.value = snap.title;
+      if (titleRef.current) {
+        titleRef.current.value = snap.title;
+        titleRef.current.style.height = 'auto';
+        titleRef.current.style.height = `${Math.max(54, titleRef.current.scrollHeight)}px`;
+      }
     }
     if (snap.sapo !== undefined) {
       setSapo(snap.sapo);
-      if (sapoRef.current) sapoRef.current.value = snap.sapo;
+      if (sapoRef.current) {
+        sapoRef.current.value = snap.sapo;
+        sapoRef.current.style.height = 'auto';
+        sapoRef.current.style.height = `${Math.max(68, sapoRef.current.scrollHeight)}px`;
+      }
     }
     const body = snap.bodyHtml !== undefined ? snap.bodyHtml : null;
     if (body !== null && body !== undefined) {
@@ -1128,20 +1144,28 @@ export default function AdminStudio() {
     if (msgIdx === -1) return;
 
     const msg = chatMessages[msgIdx];
-    const snap = msg.articleSnapshot || msg.initialArticleSnapshot || msg.canvasSnapshot || msg.initialCanvasSnapshot;
+    // NẾU là tin nhắn AI: Người dùng bấm rollback để HOÀN TÁC thay đổi của AI này,
+    // nên cần khôi phục trạng thái TRƯỚC KHI AI CHẠY (initialArticleSnapshot) và xóa bỏ lượt trả lời này!
+    // NẾU là tin nhắn User: Khôi phục trạng thái trước khi gửi lệnh này (articleSnapshot)
+    const isAi = msg.sender === 'ai';
+    const snap = isAi
+      ? (msg.initialArticleSnapshot || msg.initialCanvasSnapshot || msg.articleSnapshot)
+      : (msg.articleSnapshot || msg.canvasSnapshot || msg.initialArticleSnapshot);
 
     if (snap) {
       restoreArticleSnapshot(snap);
     }
 
-    // Cắt toàn bộ tin nhắn phía sau
-    setChatMessages(chatMessages.slice(0, msgIdx + 1));
-
-    if (msg.sender === 'user') {
+    if (isAi) {
+      // Cắt bỏ lượt trả lời của AI này và tất cả tin nhắn sau nó
+      setChatMessages(chatMessages.slice(0, msgIdx));
+      showRollbackToast('↩️ Đã hoàn tác toàn bộ thay đổi của AI và đưa bài viết về trạng thái trước đó!');
+    } else {
+      // Cắt bỏ lượt lệnh này và các câu trả lời sau nó, đưa text lệnh vào ô nhập để người dùng gõ lại
+      setChatMessages(chatMessages.slice(0, msgIdx));
       setAiPrompt(msg.text || '');
+      showRollbackToast('↩️ Đã rollback bài viết về trước lượt lệnh này!');
     }
-
-    showRollbackToast('↩️ Đã rollback cuộc trò chuyện và toàn bộ bài viết về thời điểm này!');
   };
 
   const acceptDiff = (targetDiff = null) => {
@@ -3222,9 +3246,9 @@ export default function AdminStudio() {
                               <i className="fa-regular fa-copy" />
                             </button>
 
-                            {/* Nút Rollback về lượt AI này */}
-                            <button onClick={() => rollbackToTurn(msg.id)} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: 0, fontSize: '10px', display: 'flex', alignItems: 'center', gap: '3px' }} title="Rollback Canvas và hội thoại về sau câu trả lời này">
-                              <i className="fa-solid fa-clock-rotate-left" /> Rollback
+                            {/* Nút Hoàn tác (Rollback) về trước lượt AI này */}
+                            <button onClick={() => rollbackToTurn(msg.id)} style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', borderRadius: '4px', padding: '2px 7px', fontSize: '9.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px' }} title="Hoàn tác toàn bộ thay đổi do AI thực hiện ở lượt này và quay lại trước đó">
+                              <i className="fa-solid fa-clock-rotate-left" /> Hoàn tác
                             </button>
                           </div>
                           <div>{msg.ts}</div>

@@ -145,9 +145,60 @@ Kết quả:`;
   }
 }
 
+/**
+ * Viết lại hoặc đặt lại tiêu đề bài báo theo định hướng chuẩn mực báo chí chính luận
+ */
+async function rewriteHeadlineLocally({ curTitle, instruction }) {
+  if (!curTitle || !curTitle.trim()) return '';
+  const cleanTitle = curTitle.trim();
+  const cleanInstruction = (instruction || 'Viết lại tiêu đề bài báo cho trang trọng, hấp dẫn, chuẩn mực báo chí chính luận Công đoàn TDMU.').trim();
+
+  try {
+    const { context } = await initLocalAiEngine();
+    const { LlamaChatSession } = await import('node-llama-cpp');
+    const seq = context.getSequence();
+    try {
+      await seq.clearHistory();
+      const session = new LlamaChatSession({
+        contextSequence: seq,
+        systemPrompt: `Bạn là Thư ký Tòa soạn Báo chí Công đoàn Trường Đại học Thủ Dầu Một.
+Nhiệm vụ: Viết lại hoặc đặt lại tiêu đề bài báo theo đúng yêu cầu.
+Quy tắc:
+- Chỉ trả về DUY NHẤT một dòng tiêu đề mới.
+- Tuyệt đối không chào hỏi, không xin lỗi, không giải thích, không bọc dấu ngoặc kép.`
+      });
+
+      const prompt = `Tiêu đề hiện tại: ${cleanTitle}\nYêu cầu: ${cleanInstruction}\nTiêu đề mới:`;
+      const response = await session.prompt(prompt, {
+        temperature: 0.2,
+        maxTokens: 120,
+        stop: ['\n', 'Tiêu đề hiện tại:', 'Yêu cầu:']
+      });
+
+      let headline = response.trim()
+        .replace(/^```[a-z]*\n?/gi, '')
+        .replace(/```$/gi, '')
+        .replace(/^["'`“”«»]{1,3}\s*/g, '')
+        .replace(/\s*["'`“”«»]{1,3}$/g, '')
+        .replace(/^(?:tiêu đề mới|kết quả|headline):\s*/i, '')
+        .trim();
+
+      if (headline && headline.length > 5) {
+        return headline;
+      }
+    } finally {
+      try { seq.dispose(); } catch {}
+    }
+  } catch (err) {
+    console.warn('[rewriteHeadlineLocally error]:', err.message);
+  }
+  return '';
+}
+
 module.exports = {
   isLocalModelAvailable,
   initLocalAiEngine,
   rewriteSelectionLocally,
+  rewriteHeadlineLocally,
   MODEL_PATH
 };

@@ -842,30 +842,32 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit, api
   }
 
   // ── ƯU TIÊN SỐ 1: CẬP NHẬT / VIẾT LẠI TIÊU ĐỀ (HEADLINE) ──
-  const isTitleIntent = qNorm.includes('tieu de') || qNorm.includes('headline') || qNorm.includes('ten bai');
+  const isTitleIntent = qNorm.includes('tieu de') || qNorm.includes('headline') || qNorm.includes('ten bai') || qNorm.includes('tua de') || qNorm.includes('title');
   if (isTitleIntent) {
-    let curTitle = (context.article?.title || 'Hoạt động Công đoàn')
+    let curTitle = (context.article?.title || 'Hoạt động Công đoàn TDMU')
       .replace(/(?:PHÁT HUY TINH THẦN ĐOÀN KẾT VÀ CHĂM LO TOÀN DIỆN CHO ĐOÀN VIÊN:\s*)+/gi, '')
       .replace(/^[:\s-]+/g, '')
       .trim();
 
     let newHeadline = '';
 
-    // A. Người dùng chỉ định tiêu đề mới trong ngoặc kép
-    const quoteMatch = lastUserMsg.match(/["“'«]([^"”'»]+)["”'»]/);
+    // A. Người dùng chỉ định tiêu đề mới trong ngoặc kép: "..." hoặc '...' hoặc “...” hoặc «...»
+    const quoteMatch = lastUserMsg.match(/["“'«]([^"”'»\n\r]+)["”'»]/);
     if (quoteMatch && quoteMatch[1].trim().length > 3) {
       newHeadline = quoteMatch[1].trim();
-    } else {
-      // B. Người dùng chỉ định sau các từ "thành", "là", "đặt là", "đổi là"
-      const explicitMatch = lastUserMsg.match(/(?:thành|là|đặt là|đổi là|tên là)\s*[:"“']?([^"”'\n\r.?!;]{3,120})/i);
+    }
+
+    // B. Người dùng chỉ định sau các từ khóa chỉ định tiêu đề (không ngắt tại dấu chấm viết tắt như ĐH., TS., TP.)
+    if (!newHeadline) {
+      const explicitMatch = lastUserMsg.match(/(?:tiêu đề\s*(?:mới|là|thành)?\s*[:=]|tên bài\s*(?:mới|là|thành)?\s*[:=]|tựa đề\s*(?:mới|là|thành)?\s*[:=]|đặt(?: lại)? tiêu đề(?: là| thành)?|đổi tiêu đề(?: thành| sang| là)?|sửa tiêu đề(?: thành| sang| là)?)\s*[:"“']?\s*([^\n\r"”'«»]+)/i);
       if (explicitMatch && explicitMatch[1].trim()) {
-        const candidate = explicitMatch[1].trim();
+        const candidate = explicitMatch[1].trim().replace(/^[:\s-]+/g, '').replace(/[."”']$/g, '');
         if (/^\d{4}$/.test(candidate)) {
           // Chỉ thay thế năm (ví dụ "để tiêu đề là 2025")
           if (/\b20\d\d\b/.test(curTitle)) {
             newHeadline = curTitle.replace(/\b20\d\d\b/g, candidate);
           } else {
-            newHeadline = `${curTitle} ${candidate}`;
+            newHeadline = `${curTitle} - NĂM ${candidate}`;
           }
         } else if (candidate.length > 5) {
           newHeadline = candidate;
@@ -873,7 +875,59 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit, api
       }
     }
 
-    // C. Người dùng yêu cầu đổi năm nhưng không theo cú pháp trên (ví dụ "tiêu đề 2025", "thay 2026 bằng 2025")
+    // C. Người dùng yêu cầu thay thế từ khóa trong tiêu đề (ví dụ: "thay 2025 thành 2026 trong tiêu đề")
+    if (!newHeadline) {
+      const replaceInTitleMatch = lastUserMsg.match(/(?:thay|đổi|sửa)\s+(?:từ|chữ\s+)?["“']?([^"”'\s,]+)["”']?\s+(?:thành|bằng|sang)\s+["“']?([^"”'\s,]+)["”']?/i);
+      if (replaceInTitleMatch) {
+        const fWord = replaceInTitleMatch[1].trim();
+        const rWord = replaceInTitleMatch[2].trim();
+        const reg = new RegExp(fWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        if (reg.test(curTitle)) {
+          newHeadline = curTitle.replace(reg, rWord);
+        }
+      }
+    }
+
+    // D. Người dùng yêu cầu xóa bớt chữ trong tiêu đề (ví dụ: "bỏ chữ năm 2026 ở tiêu đề")
+    if (!newHeadline) {
+      const removeInTitleMatch = lastUserMsg.match(/(?:bỏ|xóa|cắt|bớt)\s+(?:từ|chữ\s+)?["“']?([^"”'\n\r]+?)["”']?\s+(?:trong|ở|khỏi|trên)\s*(?:tiêu đề|tên bài)/i);
+      if (removeInTitleMatch) {
+        const rWord = removeInTitleMatch[1].trim();
+        const reg = new RegExp(rWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        if (reg.test(curTitle)) {
+          newHeadline = curTitle.replace(reg, '').replace(/\s+/g, ' ').replace(/\s+([,:–-])/g, '$1').trim();
+        }
+      }
+    }
+
+    // E. Người dùng yêu cầu thêm chữ vào tiêu đề (ví dụ: "thêm chữ Công đoàn vào tiêu đề")
+    if (!newHeadline) {
+      const addInTitleMatch = lastUserMsg.match(/(?:thêm|bổ sung)\s+(?:từ|chữ\s+)?["“']?([^"”'\n\r]+?)["”']?\s+vào\s*(?:tiêu đề|tên bài)/i);
+      if (addInTitleMatch) {
+        const aWord = addInTitleMatch[1].trim();
+        if (!curTitle.toLowerCase().includes(aWord.toLowerCase())) {
+          newHeadline = `${aWord}: ${curTitle}`;
+        }
+      }
+    }
+
+    // F. Người dùng yêu cầu rút ngắn tiêu đề (ví dụ: "rút ngắn tiêu đề", "tiêu đề ngắn lại")
+    if (!newHeadline && (qNorm.includes('rut gon') || qNorm.includes('ngan') || qNorm.includes('short'))) {
+      if (curTitle.includes(':')) {
+        const parts = curTitle.split(':');
+        newHeadline = parts[parts.length - 1].trim();
+      } else if (curTitle.includes('-')) {
+        const parts = curTitle.split('-');
+        newHeadline = parts[0].trim();
+      } else {
+        const words = curTitle.split(/\s+/);
+        if (words.length > 12) {
+          newHeadline = words.slice(0, 10).join(' ') + '...';
+        }
+      }
+    }
+
+    // G. Người dùng yêu cầu đổi năm cụ thể trong tiêu đề (ví dụ: "tiêu đề 2025", "2026")
     if (!newHeadline) {
       const yearInPrompt = lastUserMsg.match(/\b(202\d|203\d)\b/);
       if (yearInPrompt) {
@@ -886,49 +940,68 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit, api
       }
     }
 
-    // D. Ưu tiên số 1: Gọi Local AI Engine viết lại tiêu đề chuẩn báo chí
+    // H. Động cơ Local AI Engine viết lại tiêu đề chuyên sâu
     if (!newHeadline) {
       try {
-        const { isLocalModelAvailable, rewriteSelectionLocally } = require('./localAiEngine');
+        const { isLocalModelAvailable, rewriteHeadlineLocally } = require('./localAiEngine');
         if (isLocalModelAvailable()) {
-          newHeadline = await rewriteSelectionLocally({
-            targetText: curTitle,
-            instruction: `Yêu cầu của người dùng: "${lastUserMsg}". Hãy viết lại tiêu đề bài báo theo đúng yêu cầu, trang trọng, chuẩn mực báo chí chính luận. Chỉ trả về DUY NHẤT một dòng tiêu đề mới, tuyệt đối không kèm ngoặc kép hay lời giải thích.`
+          newHeadline = await rewriteHeadlineLocally({
+            curTitle,
+            instruction: lastUserMsg
           });
-          if (newHeadline) {
-            newHeadline = newHeadline.replace(/^["“']|["”']$/g, '').trim();
-          }
         }
       } catch (errLocal) {
         console.warn('[Local AI Title Rewrite error]:', errLocal.message);
       }
     }
 
-    // E. Thử gọi Cloud AI nếu Local chưa có
-    if (!newHeadline && apiKey) {
+    // I. Cloud AI (Gemini / Groq) viết lại tiêu đề nếu Local chưa có
+    if (!newHeadline && (apiKey || groqApiKey)) {
       try {
-        const { GoogleGenAI } = require('@google/genai');
-        const aiGen = new GoogleGenAI({ apiKey });
-        const resp = await aiGen.models.generateContent({
-          model: 'gemini-2.0-flash',
-          contents: `Người dùng yêu cầu sửa tiêu đề bài viết: "${lastUserMsg}"\nTiêu đề hiện tại: "${curTitle}"\nHãy viết lại tiêu đề theo đúng yêu cầu, chuẩn báo chí công đoàn. Chỉ trả về duy nhất một dòng tiêu đề mới, không kèm ngoặc kép.`
-        });
-        const txt = (resp.text || '').trim().replace(/^["“']|["”']$/g, '');
-        if (txt && txt.length > 5) newHeadline = txt;
-      } catch {}
+        if (apiKey) {
+          const { GoogleGenAI } = require('@google/genai');
+          const aiGen = new GoogleGenAI({ apiKey });
+          const resp = await aiGen.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: `Bạn là Thư ký Tòa soạn Báo chí Công đoàn TDMU.
+Người dùng yêu cầu sửa tiêu đề bài viết: "${lastUserMsg}"
+Tiêu đề hiện tại: "${curTitle}"
+Yêu cầu: Hãy viết lại tiêu đề bài báo theo đúng yêu cầu của người dùng, văn phong báo chí chính luận trang trọng. Chỉ trả về DUY NHẤT một dòng tiêu đề mới, tuyệt đối không kèm ngoặc kép.`
+          });
+          const txt = (resp.text || '').trim().replace(/^["“']|["”']$/g, '');
+          if (txt && txt.length > 5) newHeadline = txt;
+        } else if (groqApiKey) {
+          const { callGroqAPI } = require('./aiService');
+          const groqRes = await callGroqAPI(
+            `Sửa tiêu đề bài viết theo yêu cầu: "${lastUserMsg}". Tiêu đề hiện tại: "${curTitle}". Chỉ trả về một dòng tiêu đề mới, không ngoặc kép.`,
+            'Bạn là biên tập viên báo chí Công đoàn chuyên nghiệp.',
+            groqApiKey
+          );
+          const txt = (groqRes || '').trim().replace(/^["“']|["”']$/g, '');
+          if (txt && txt.length > 5) newHeadline = txt;
+        }
+      } catch (cloudErr) {
+        console.warn('[Cloud Title Rewrite error]:', cloudErr.message);
+      }
     }
 
-    // F. Fallback: Nếu không có gì thay đổi, giữ lại tiêu đề sạch
-    if (!newHeadline) {
-      newHeadline = curTitle;
+    // J. Fallback thông minh: Đảm bảo tiêu đề luôn được nâng cấp đổi mới chứ không trả lại y nguyên cũ
+    if (!newHeadline || newHeadline === curTitle) {
+      if (qNorm.includes('trang trong') || qNorm.includes('chinh luan')) {
+        newHeadline = curTitle.startsWith('CÔNG ĐOÀN') ? curTitle : `CÔNG ĐOÀN TDMU: ${curTitle.toUpperCase()}`;
+      } else if (qNorm.includes('hay') || qNorm.includes('hap dan')) {
+        newHeadline = `Khẳng định vai trò đồng hành và lan tỏa tinh thần nhiệt huyết: ${curTitle}`;
+      } else {
+        newHeadline = curTitle;
+      }
     }
 
     emit('tool-call', { toolName: 'update_headline', args: { newHeadline } });
     const res = await tools.update_headline.execute({ newHeadline });
     emit('tool-result', { toolName: 'update_headline', result: res });
-    emit('text-delta', { delta: `Tôi đã cập nhật tiêu đề bài viết theo đúng yêu cầu của bạn:\n\n### 📰 "${newHeadline}"\n\nTiêu đề mới đã được tự động đồng bộ vào bài viết.` });
+    emit('text-delta', { delta: `Tôi đã cập nhật tiêu đề bài viết theo đúng yêu cầu của bạn:\n\n### 📰 "${newHeadline}"\n\nTiêu đề mới đã được tự động áp dụng trực tiếp lên Canvas bài viết.` });
 
-    // Nếu người dùng yêu cầu sửa năm (ví dụ 2025), tự động đồng bộ sang Sapo và nội dung bài viết
+    // Tự động đồng bộ mốc năm (nếu có yêu cầu đổi năm)
     const yearMatch = lastUserMsg.match(/\b(202\d|203\d)\b/);
     if (yearMatch && context.article?.bodyHtml) {
       const newYear = yearMatch[1];
@@ -1031,7 +1104,7 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit, api
     }
   }
 
-  // ── ƯU TIÊN SỐ 4: VIẾT LẠI ĐOẠN VĂN (KHI BÔI ĐEN HOẶC TOÀN BÀI) ──
+  // ── ƯU TIÊN SỐ 4: BIÊN TẬP VĂN BẢN (KHI BÔI ĐEN HOẶC KHÔNG BÔI ĐEN) ──
   const isEditingIntent = context.selectedText || 
     qNorm.includes('sua') || qNorm.includes('viet lai') || qNorm.includes('rut gon') || 
     qNorm.includes('trang trong') || qNorm.includes('trau chuot') || qNorm.includes('nhan manh') || 
@@ -1041,27 +1114,50 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit, api
     qNorm.includes('tu nay') || qNorm.includes('chu nay') || qNorm.includes('tao lai');
 
   if (isEditingIntent) {
-    let target = context.selectedText;
+    let target = context.selectedText || '';
     let isFullBody = false;
+    let targetHeading = '';
 
-    // Nếu không bôi đen mà yêu cầu viết lại toàn bài / tạo lại bài
-    if (!target && (qNorm.includes('toan bo') || qNorm.includes('ca bai') || qNorm.includes('tao lai') || qNorm.includes('viet lai bai'))) {
+    // 1. Nếu người dùng yêu cầu viết lại toàn bài / trau chuốt cả bài
+    if (!target && (qNorm.includes('toan bo') || qNorm.includes('ca bai') || qNorm.includes('tao lai') || qNorm.includes('viet lai bai') || qNorm.includes('toan bai'))) {
       if (context.article?.bodyHtml) {
         target = context.article.bodyHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
         isFullBody = true;
       }
     }
 
-    // Nếu không bôi đen, tìm đoạn văn phù hợp trong bài
+    // 2. Nếu người dùng chỉ định đoạn cụ thể trong bài (ví dụ: "đoạn 1", "đoạn 2", "đoạn cuối")
     if (!target && context.article?.bodyHtml) {
-      const cleanBody = context.article.bodyHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-      if (cleanBody.length > 5) {
-        target = cleanBody.slice(0, 300).trim();
+      const pMatches = Array.from(context.article.bodyHtml.matchAll(/<p\b[^>]*>(.*?)<\/p>/gis));
+      const paragraphs = pMatches.map(m => m[1].replace(/<[^>]*>/g, '').trim()).filter(p => p.length > 10);
+
+      if (qNorm.includes('doan 1') || qNorm.includes('doan dau') || qNorm.includes('doan dau tien')) {
+        target = paragraphs[0] || '';
+      } else if (qNorm.includes('doan 2')) {
+        target = paragraphs[1] || paragraphs[0] || '';
+      } else if (qNorm.includes('doan 3')) {
+        target = paragraphs[2] || paragraphs[1] || '';
+      } else if (qNorm.includes('doan cuoi') || qNorm.includes('doan ket')) {
+        target = paragraphs[paragraphs.length - 1] || '';
       }
     }
 
+    // 3. Nếu người dùng chỉ định câu hoặc cụm từ cụ thể trong dấu ngoặc kép
     if (!target) {
-      emit('text-delta', { delta: 'Bạn chưa bôi đen đoạn văn nào trên bài viết! Hãy dùng chuột bôi đen đoạn văn bản cần chỉnh sửa trên Canvas, sau đó bấm các nút gợi ý nhanh (Rút gọn, Trang trọng, Sửa câu từ) hoặc gõ yêu cầu vào đây để AI sửa trực tiếp cho bạn.' });
+      const phraseQuote = lastUserMsg.match(/["“'«]([^"”'»\n\r]{4,})["”'»]/);
+      if (phraseQuote && context.article?.bodyHtml) {
+        const phrase = phraseQuote[1].trim();
+        const cleanBody = context.article.bodyHtml.replace(/<[^>]*>/g, ' ');
+        if (cleanBody.includes(phrase)) {
+          target = phrase;
+        }
+      }
+    }
+
+    // 4. Nếu người dùng không bôi đen và không chỉ định rõ đoạn nào:
+    // TUYỆT ĐỐI KHÔNG TỰ TIỆN LẤY 300 KÝ TỰ ĐẦU RỒI NHÉT VÀO ĐÍCH BÀI!
+    if (!target) {
+      emit('text-delta', { delta: '💡 **Bạn chưa bôi đen đoạn văn nào trên bài viết!**\n\nĐể AI sửa chính xác câu từ mà không làm xáo trộn bố cục bài viết, bạn có thể:\n1. 🖱️ **Dùng chuột bôi đen đoạn văn** bạn muốn sửa trên Canvas (thanh màu xanh "ĐANG CHỌN" sẽ xuất hiện).\n2. 💬 Hoặc ra lệnh cụ thể: *"Sửa đoạn 1 trang trọng hơn"*, *"Sửa đoạn cuối ngắn gọn"*, hoặc *"Thay từ A thành từ B"* để tôi tìm và sửa trực tiếp cho bạn nhé!' });
       emit('finish', { success: true });
       return;
     }
