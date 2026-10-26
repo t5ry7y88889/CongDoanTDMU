@@ -45,20 +45,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// 2. Điều hướng trang Quản trị Studio (Hỗ trợ cả React SPA và Standalone Portal)
-app.get(['/admin', '/admin.html', '/admin/studio'], (req, res) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  const spaHtml = path.join(__dirname, '../frontend/dist/index.html');
-  if (require('fs').existsSync(spaHtml)) {
-    return res.sendFile(spaHtml);
-  }
-  res.sendFile(path.join(__dirname, '../public/admin.html'));
-});
-
-// Route chuyên dụng cho cổng quản trị tích hợp
-app.get(['/admin-portal', '/admin-portal.html'], (req, res) => {
+// 2. Điều hướng trang Quản trị Studio (Phục vụ trực tiếp Cổng Quản Trị Studio chuẩn)
+app.get(['/admin', '/admin.html', '/admin-portal', '/admin-portal.html', '/admin/studio'], (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
