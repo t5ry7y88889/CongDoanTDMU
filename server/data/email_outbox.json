@@ -1,5 +1,32 @@
 [
   {
+    "id": 1793032610445,
+    "recipientEmail": "utltk@tdmu.edu.vn",
+    "recipientName": "Ban Thường Vụ Công Đoàn",
+    "subject": "[Công Đoàn TDMU] Phản hồi ý kiến: \"123\"",
+    "content": "321",
+    "sentAt": "2026-10-26T16:36:50.445Z",
+    "status": "sent"
+  },
+  {
+    "id": 1793032112745,
+    "recipientEmail": "haunv@tdmu.edu.vn",
+    "recipientName": "TS. Nguyễn Văn Hậu",
+    "subject": "[Công Đoàn TDMU] Phản hồi ý kiến: \"Đề xuất số hóa 100% hồ sơ đoàn viên và quy trình trợ cấp\"",
+    "content": "Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một trân trọng cảm ơn ý kiến đóng góp của đồng chí. Hệ thống cổng thông tin và phòng biên tập số đã chính thức đưa vào vận hành phân hệ Quỹ chăm lo & xét duyệt hồ sơ trợ cấp trực tuyến!",
+    "sentAt": "2026-10-26T16:28:32.745Z",
+    "status": "sent"
+  },
+  {
+    "id": 1793032077321,
+    "recipientEmail": "haunv@tdmu.edu.vn",
+    "recipientName": "TS. Nguyễn Văn Hậu",
+    "subject": "[Công Đoàn TDMU] Phản hồi ý kiến: \"Đề xuất số hóa 100% hồ sơ đoàn viên và quy trình trợ cấp\"",
+    "content": "Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một trân trọng cảm ơn ý kiến đóng góp của đồng chí. Hệ thống cổng thông tin và phòng biên tập số đã chính thức đưa vào vận hành phân hệ Quỹ chăm lo & xét duyệt hồ sơ trợ cấp trực tuyến!",
+    "sentAt": "2026-10-26T16:27:57.321Z",
+    "status": "sent"
+  },
+  {
     "id": 1793009838378,
     "recipientEmail": "haunv@tdmu.edu.vn",
     "recipientName": "TS. Nguyễn Văn Hậu",

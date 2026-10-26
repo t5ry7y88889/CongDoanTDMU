@@ -1500,6 +1500,21 @@
   ],
   "inbox_feedback": [
     {
+      "sender_name": "Ban Thường Vụ Công Đoàn",
+      "email": "utltk@tdmu.edu.vn",
+      "phone": "0918.370.363",
+      "unit": "Phòng Quản lý Khoa học",
+      "category": "Góp ý chung",
+      "title": "123",
+      "content": "123",
+      "submitted_at": "2026-10-26T16:36:27.522Z",
+      "status": "resolved",
+      "response": "321",
+      "resolved_by": "Ban Thường Vụ Công Đoàn",
+      "resolved_at": "2026-10-26T16:36:50.411Z",
+      "id": 6
+    },
+    {
       "sender_name": "TS. Nguyễn Văn Hậu",
       "email": "haunv@tdmu.edu.vn",
       "phone": "0912345678",
@@ -1508,10 +1523,10 @@
       "title": "Đề xuất số hóa 100% hồ sơ đoàn viên và quy trình trợ cấp",
       "content": "Kính gửi Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một, tôi xin góp ý bổ sung tính năng nộp hồ sơ trợ cấp trực tuyến.",
       "submitted_at": "2026-10-26T10:17:18.194Z",
-      "status": "responded",
+      "status": "resolved",
       "response": "Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một trân trọng cảm ơn ý kiến đóng góp của đồng chí. Hệ thống cổng thông tin và phòng biên tập số đã chính thức đưa vào vận hành phân hệ Quỹ chăm lo & xét duyệt hồ sơ trợ cấp trực tuyến!",
       "resolved_by": "Ban Thường Vụ Công Đoàn",
-      "resolved_at": null,
+      "resolved_at": "2026-10-26T16:28:32.723Z",
       "id": 5
     },
     {

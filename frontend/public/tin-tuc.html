@@ -360,6 +360,22 @@
           }
 
           renderMagazineGrid();
+
+          // Tự động kích hoạt chuyên mục nếu được điều hướng từ Menu động (URL query: ?category=...)
+          const urlParams = new URLSearchParams(window.location.search);
+          const catParam = urlParams.get('category') || urlParams.get('cat');
+          if (catParam) {
+            const btns = Array.from(document.querySelectorAll('#articleCategoryFilter button'));
+            const matchedBtn = btns.find(b => {
+              const txt = b.innerText.toLowerCase();
+              const c = catParam.toLowerCase().replace(/-/g, ' ');
+              return txt.includes(c) || (b.getAttribute('onclick') && b.getAttribute('onclick').toLowerCase().includes(catParam.toLowerCase()));
+            });
+            if (matchedBtn) {
+              const argMatch = matchedBtn.getAttribute('onclick').match(/'([^']+)'/);
+              filterArticles(argMatch ? argMatch[1] : catParam, matchedBtn);
+            }
+          }
         } else if (container) {
           container.innerHTML = '<div class="col-12 text-center p-5 text-muted"><i class="fa-solid fa-inbox fa-3x mb-3 text-secondary"></i><p>Chưa có bài viết nào được xuất bản.</p></div>';
         }

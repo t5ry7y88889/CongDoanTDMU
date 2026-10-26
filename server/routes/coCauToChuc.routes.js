@@ -11,6 +11,105 @@ const {
 } = require('../mssql_db');
 
 // =========================================================================
+// DYNAMIC NAVIGATION MENU API (ÁNH XẠ TRỰC TIẾP TỪ CSDL MSSQL LÊN MENU)
+// =========================================================================
+router.get(['/navigation-menu', '/menu-tree', '/nav-menu'], async (req, res) => {
+  try {
+    const org = await getOrgDataFromDb();
+    const categories = await getCategoriesFromDb();
+    
+    // 1. Ánh xạ dbo.ORGANIZATIONS -> Dropdown "Cơ Cấu Tổ Chức"
+    const orgChildren = (org.boards || []).map(b => {
+      let slug = 'ban-thuong-vu';
+      const name = b.name || '';
+      if (name.includes('Thường vụ')) slug = 'ban-thuong-vu';
+      else if (name.includes('Chấp hành')) slug = 'ban-chap-hanh';
+      else if (name.includes('Kiểm tra')) slug = 'uy-ban-kiem-tra';
+      else if (name.includes('Nữ công')) slug = 'ban-nu-cong';
+      else if (name.includes('Tuyên giáo')) slug = 'ban-tuyen-giao';
+      return {
+        id: b.id,
+        title: b.name,
+        slug: slug,
+        url: `co-cau-to-chuc.html?tab=${slug}`,
+        badge: b.tenure || 'Nhiệm kỳ 2023 - 2028',
+        sourceTable: 'dbo.ORGANIZATIONS'
+      };
+    });
+
+    // Bổ sung mục 16 Tổ công đoàn cơ sở (từ dbo.UNION_BRANCHES)
+    const totalUnits = (org.units || []).length || 16;
+    orgChildren.push({
+      id: 'units',
+      title: `${totalUnits} Tổ công đoàn cơ sở`,
+      slug: '16-to-cong-doan',
+      url: 'co-cau-to-chuc.html?tab=16-to-cong-doan',
+      badge: `${totalUnits} Tổ`,
+      sourceTable: 'dbo.UNION_BRANCHES'
+    });
+
+    // 2. Ánh xạ dbo.CATEGORIES -> Dropdown "Tin Tức"
+    const newsChildren = [
+      { id: 0, title: 'Tất cả tin tức', url: 'tin-tuc.html', slug: 'all', sourceTable: 'dbo.ARTICLES' },
+      ...(categories || []).map(c => ({
+        id: c.id,
+        title: c.name,
+        slug: c.slug,
+        url: `tin-tuc.html?category=${encodeURIComponent(c.slug || c.name)}`,
+        sourceTable: 'dbo.CATEGORIES'
+      }))
+    ];
+
+    // 3. Toàn bộ cây menu phân cấp động
+    const menuTree = [
+      { id: 'home', title: 'Trang Chủ', url: 'index.html', hasChildren: false },
+      { id: 'gioi-thieu', title: 'Giới Thiệu', url: 'gioi-thieu.html', hasChildren: false },
+      { 
+        id: 'co-cau-to-chuc', 
+        title: 'Cơ Cấu Tổ Chức', 
+        url: 'co-cau-to-chuc.html', 
+        hasChildren: true,
+        sourceTable: 'dbo.ORGANIZATIONS & dbo.UNION_BRANCHES',
+        children: orgChildren
+      },
+      { 
+        id: 'tin-tuc', 
+        title: 'Tin Tức', 
+        url: 'tin-tuc.html', 
+        hasChildren: true,
+        sourceTable: 'dbo.CATEGORIES',
+        children: newsChildren
+      },
+      { id: 'phuc-loi', title: 'Phúc Lợi Đoàn Viên', url: 'phuc-loi-doan-vien.html', hasChildren: false, sourceTable: 'dbo.WELFARE_PROGRAMS' },
+      { 
+        id: 'van-ban', 
+        title: 'Văn Bản', 
+        url: 'van-ban.html', 
+        hasChildren: true,
+        sourceTable: 'dbo.DOCUMENTS',
+        children: [
+          { title: 'Công văn tuyên truyền', url: 'van-ban.html#tuyen-truyen' },
+          { title: 'Kế hoạch hoạt động', url: 'van-ban.html#ke-hoach' },
+          { title: 'Văn bản luật', url: 'van-ban.html#luat' },
+          { title: 'Quyết định', url: 'van-ban.html#quyet-dinh' }
+        ]
+      },
+      { id: 'bieu-mau', title: 'Biểu Mẫu', url: 'bieu-mau.html', hasChildren: false, sourceTable: 'dbo.TEMPLATES' },
+      { id: 'lien-he', title: 'Liên Hệ', url: 'lien-he.html', hasChildren: false, sourceTable: 'dbo.INBOX_FEEDBACK' }
+    ];
+
+    res.json({
+      success: true,
+      message: 'Nạp danh mục Menu động từ CSDL MSSQL thành công',
+      database: 'TDMU_TradeUnion_DB',
+      data: menuTree
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Lỗi nạp menu động: ' + err.message });
+  }
+});
+
+// =========================================================================
 // ORGANIZATION, CADRES, CATEGORIES & USERS API (MSSQL 3NF + FALLBACK)
 // =========================================================================
 router.get('/org-full-tree', async (req, res) => {

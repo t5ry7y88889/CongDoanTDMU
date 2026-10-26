@@ -6,6 +6,7 @@
   <title>Cơ Cấu Tổ Chức - Công Đoàn Trường Đại Học Thủ Dầu Một</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="libs/tui-pagination/tui-pagination.min.css">
   <link rel="stylesheet" href="css/portal.css?v=1788279874799">
   <style>
     /* =========================================================================
@@ -297,9 +298,25 @@
               </div>
               <p class="text-muted small mb-3">Mạng lưới 16 Tổ công đoàn cơ sở bám sát các khối đào tạo và phòng ban nghiệp vụ. <em>(Bấm vào tổ để xem báo cáo nhân sự &amp; bộ môn trực thuộc)</em></p>
 
+              <!-- THANH TÌM KIẾM TỔ CÔNG ĐOÀN -->
+              <div class="row mb-3 align-items-center">
+                <div class="col-md-6">
+                  <div class="position-relative">
+                    <i class="fa-solid fa-magnifying-glass position-absolute text-muted" style="left: 14px; top: 11px;"></i>
+                    <input type="text" id="unitSearchInput" class="form-control" style="border-radius: 20px; padding-left: 38px; font-size: 13px;" placeholder="Tìm kiếm Tổ công đoàn, tổ trưởng..." oninput="handleSearchUnits()">
+                  </div>
+                </div>
+                <div class="col-md-6 text-md-end text-muted small mt-2 mt-md-0" id="unitsCountSummary">
+                  <i class="fa-solid fa-sitemap text-primary me-1"></i> Hiển thị dữ liệu 16 Tổ công đoàn cơ sở
+                </div>
+              </div>
+
               <div id="unitsListContainer">
                 <!-- 16 Units rendered dynamically in unified style -->
               </div>
+
+              <!-- PHÂN TRANG CHO 16 TỔ CÔNG ĐOÀN -->
+              <div id="units_pagination" class="mt-4"></div>
             </div>
           </div>
 
@@ -476,6 +493,10 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="libs/tui-pagination/tui-pagination.min.js"></script>
+  <script src="js/pagination.js?v=2026"></script>
+  <script src="js/bookmarks.js?v=2026"></script>
+
   <script>
     // 100% REAL DATA AND PHOTOS SCRAPED FROM CONGDOAN.TDMU.EDU.VN
     let bchMembers = [
@@ -563,9 +584,54 @@
       `).join('');
     }
 
-    function renderUnitsCards() {
+    let unitsPager = null;
+    let filteredUnits = [];
+
+    function handleSearchUnits() {
+      const q = (document.getElementById('unitSearchInput')?.value || '').toLowerCase().trim();
+      filteredUnits = unionUnits.filter(u => 
+        (u.name && u.name.toLowerCase().includes(q)) || 
+        (u.lead && u.lead.toLowerCase().includes(q)) || 
+        (u.desc && u.desc.toLowerCase().includes(q)) ||
+        (u.email && u.email.toLowerCase().includes(q))
+      );
+      if (unitsPager) {
+        unitsPager.setTotalItems(filteredUnits.length, true);
+      }
+      displayUnitsCards();
+    }
+
+    function renderUnitsCards(resetPage = false) {
+      filteredUnits = unionUnits;
+      if (!unitsPager && typeof TDMUPagination !== 'undefined') {
+        unitsPager = new TDMUPagination({
+          container: '#units_pagination',
+          totalItems: filteredUnits.length,
+          pageSize: 8,
+          pageSizeOptions: [8, 16],
+          itemLabel: 'tổ công đoàn',
+          onPageChange: () => displayUnitsCards()
+        });
+      } else if (unitsPager) {
+        unitsPager.setTotalItems(filteredUnits.length, resetPage);
+      }
+      displayUnitsCards();
+    }
+
+    function displayUnitsCards() {
       const c = document.getElementById('unitsListContainer');
-      c.innerHTML = unionUnits.map(u => `
+      if (!c) return;
+
+      const displayList = unitsPager && typeof TDMUPagination !== 'undefined'
+        ? TDMUPagination.paginate(filteredUnits, unitsPager.currentPage, unitsPager.pageSize).pagedItems
+        : filteredUnits;
+
+      if (displayList.length === 0) {
+        c.innerHTML = '<div class="text-center p-4 text-muted"><i class="fa-solid fa-inbox fa-2x mb-2 text-secondary"></i><p>Không tìm thấy Tổ công đoàn nào phù hợp.</p></div>';
+        return;
+      }
+
+      c.innerHTML = displayList.map(u => `
         <div class="cadre-card-item" onclick="openUnitModal(${u.id})" title="Bấm xem thông tin chi tiết và nhân sự của ${u.name}">
           <div class="d-flex align-items-center gap-3">
             <img src="${u.photo}" class="cadre-real-avatar" alt="${u.lead}" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'">

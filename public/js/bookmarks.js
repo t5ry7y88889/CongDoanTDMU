@@ -101,6 +101,61 @@ const BookmarkEngine = {
   }
 };
 
+// =========================================================================
+// DYNAMIC NAVIGATION MENU SYNCHRONIZER (ĐỒNG BỘ MENU TỰ ĐỘNG TỪ CSDL MSSQL)
+// =========================================================================
+async function syncDynamicNavbarFromDb() {
+  const navContainer = document.querySelector('#tdmuNavbar .navbar-nav');
+  if (!navContainer) return;
+
+  try {
+    const res = await fetch('/api/navigation-menu');
+    const json = await res.json();
+    if (!json.success || !Array.isArray(json.data) || json.data.length === 0) return;
+
+    const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+
+    const html = json.data.map(item => {
+      const isCurrent = currentPath === item.url || (item.url !== 'index.html' && currentPath.includes(item.url.replace('.html', '')));
+      
+      if (item.hasChildren && Array.isArray(item.children) && item.children.length > 0) {
+        const subItems = item.children.map(sub => `
+          <li>
+            <a class="dropdown-item" href="${sub.url}">
+              <i class="fa-solid fa-caret-right me-1 text-primary"></i> ${sub.title}
+              ${sub.badge ? `<span class="badge bg-light text-secondary ms-1 small" style="font-size: 10px;">${sub.badge}</span>` : ''}
+            </a>
+          </li>
+        `).join('');
+
+        return `
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle ${isCurrent ? 'active' : ''}" href="${item.url}" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+              ${item.title}
+            </a>
+            <ul class="dropdown-menu shadow-sm">
+              ${subItems}
+            </ul>
+          </li>
+        `;
+      } else {
+        return `
+          <li class="nav-item">
+            <a class="nav-link ${isCurrent ? 'active' : ''}" href="${item.url}">
+              ${item.title}
+            </a>
+          </li>
+        `;
+      }
+    }).join('');
+
+    navContainer.innerHTML = html;
+  } catch (err) {
+    console.warn('Navbar dynamic sync fallback:', err.message);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   BookmarkEngine.syncWithServer();
+  syncDynamicNavbarFromDb();
 });
