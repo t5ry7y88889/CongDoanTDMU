@@ -134,7 +134,7 @@
             <div class="panel-heading-tdmu"><i class="fa-solid fa-chart-simple me-2 text-warning"></i>Thống kê truy cập</div>
             <div class="p-3" style="font-size: 13px;">
               <p class="mb-2"><i class="fa-solid fa-users text-primary me-2"></i> Đang trực tuyến: <strong>12</strong></p>
-              <p class="mb-0"><i class="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong>811,221</strong></p>
+              <p class="mb-0"><i class="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong id="stat_views">0</strong></p>
             </div>
           </div>
         </div>
@@ -193,7 +193,7 @@
                 <div class="fw-bold text-uppercase" style="font-size: 13px;">TM. BAN THƯỜNG VỤ</div>
                 <div class="fw-semibold text-primary mt-1" style="font-size: 12px;">CHỦ TỊCH</div>
                 <div style="height: 50px;"></div>
-                <div class="fw-bold" id="docModalSigner" style="color: #002855;">Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một</div>
+                <div class="fw-bold" id="docModalSigner" style="color: #002855;">Ban Thường Vụ Công Đoàn</div>
               </div>
             </div>
           </div>
@@ -416,7 +416,7 @@
         const title = d.tieu_de || d.TieuDe || 'Văn bản chỉ đạo';
         const coQuan = d.co_quan_ban_hanh || d.CoQuanBanHanh || 'BAN THƯỜNG VỤ CÔNG ĐOÀN TDMU';
         const ngay = d.ngay_ban_hanh || d.NgayBanHanh || '2026-08-15';
-        const nguoiKy = d.nguoi_ky || d.NguoiKy || 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một';
+        const nguoiKy = d.nguoi_ky || d.NguoiKy || 'Ban Thường Vụ Công Đoàn';
         const moTa = d.mo_ta || d.MoTa || 'Văn bản chỉ đạo và điều hành của Công đoàn cơ sở Trường Đại học Thủ Dầu Một ban hành và triển khai đến các cấp công đoàn bộ phận.';
         const fileUrl = d.file_url || d.FileUrl || '#';
 

@@ -7,7 +7,7 @@ const BookmarkEngine = {
   },
 
   getUserName: function() {
-    return localStorage.getItem('tdmu_user_name') || 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một';
+    return localStorage.getItem('tdmu_user_name') || 'Ban Thường Vụ Công Đoàn';
   },
 
   getLocalBookmarks: function() {

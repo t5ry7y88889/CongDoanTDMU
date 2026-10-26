@@ -40,8 +40,13 @@ router.get('/drafts', async (req, res) => {
 });
 
 router.get('/:id', async (req, res) => {
+  const articleId = parseInt(req.params.id);
+  try {
+    await incrementArticleReactionInDb(articleId, 'view');
+  } catch (e) {}
+
   const list = await getArticlesFromDb('all', 'all');
-  const art = list.find(a => a.id == req.params.id);
+  const art = list.find(a => a.id == articleId);
   if (!art) return res.status(404).json({ success: false, error: 'Không tìm thấy bài viết' });
   res.json({ success: true, data: art });
 });
@@ -189,7 +194,18 @@ router.post('/:id/reactions', async (req, res) => {
 
   db.article_reactions.push(newReaction);
   saveDB(db);
-  res.json({ success: true, action: 'added', reaction_type });
+
+  // Return real-time counts from MSSQL
+  const arts = await getArticlesFromDb('all', 'all');
+  const target = arts.find(a => a.id == articleId);
+
+  res.json({ 
+    success: true, 
+    action: 'added', 
+    reaction_type,
+    likesCount: target ? (target.likesCount || 0) : 0,
+    clapsCount: target ? (target.clapsCount || 0) : 0
+  });
 });
 
 // =========================================================================

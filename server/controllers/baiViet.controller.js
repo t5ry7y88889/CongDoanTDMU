@@ -51,8 +51,13 @@ async function getDrafts(req, res) {
  */
 async function getArticleById(req, res) {
   try {
+    const articleId = parseInt(req.params.id);
+    try {
+      await incrementArticleReactionInDb(articleId, 'view');
+    } catch (e) {}
+
     const list = await getArticlesFromDb('all', 'all');
-    const item = list.find(a => String(a.id) === String(req.params.id));
+    const item = list.find(a => String(a.id) === String(articleId));
     if (!item) return res.status(404).json({ success: false, message: 'Không tìm thấy bài viết' });
     res.json({ success: true, data: item });
   } catch (err) {
@@ -131,9 +136,20 @@ async function deleteArticle(req, res) {
 async function reactArticle(req, res) {
   try {
     const { id } = req.params;
-    const { type } = req.body;
-    const updated = await incrementArticleReactionInDb(id, type);
-    res.json({ success: true, data: updated });
+    const { type, reaction_type } = req.body;
+    const reactType = reaction_type || type || 'like';
+    await incrementArticleReactionInDb(id, reactType);
+
+    const list = await getArticlesFromDb('all', 'all');
+    const target = list.find(a => String(a.id) === String(id));
+
+    res.json({
+      success: true,
+      action: 'added',
+      reaction_type: reactType,
+      likesCount: target ? (target.likesCount || 0) : 0,
+      clapsCount: target ? (target.clapsCount || 0) : 0
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

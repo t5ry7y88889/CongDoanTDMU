@@ -68,8 +68,8 @@ async function getArticlesFromDb(category = 'all', status = 'all', search = '') 
           a.ZaloMsgId AS zaloMsgId,
           a.NoiDungFB AS noi_dung_fb,
           a.NoiDungZalo AS noi_dung_zalo,
-          a.LuotXem AS viewsCount,
-          a.LuotThich AS likesCount,
+          COALESCE(a.LuotXem, 0) AS viewsCount,
+          COALESCE(a.LuotThich, 0) AS likesCount,
           COALESCE(a.LuotVoTay, 0) AS clapsCount,
           CONVERT(VARCHAR(19), a.NgayXuatBan, 120) AS publishedAt,
           CONVERT(VARCHAR(19), a.NgayTao, 120) AS createdAt,
@@ -1032,6 +1032,8 @@ async function incrementArticleReactionInDb(id, type) {
         await req.query("UPDATE dbo.ARTICLES SET LuotVoTay = COALESCE(LuotVoTay, 0) + 1 WHERE ArticleId = @id");
       } else if (type === 'like') {
         await req.query("UPDATE dbo.ARTICLES SET LuotThich = COALESCE(LuotThich, 0) + 1 WHERE ArticleId = @id");
+      } else if (type === 'view') {
+        await req.query("UPDATE dbo.ARTICLES SET LuotXem = COALESCE(LuotXem, 0) + 1 WHERE ArticleId = @id");
       }
       return true;
     } catch (err) {
@@ -1334,7 +1336,31 @@ async function disburseWelfareFundInDb({ amount, recipient_name, decision_no, no
   return newTrans;
 }
 
+
+async function getArticleStatsFromDb() {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const res = await mssqlPool.request().query(`
+        SELECT 
+          COUNT(*) AS totalArticles,
+          COALESCE(SUM(CAST(COALESCE(LuotXem, 0) AS BIGINT)), 0) AS totalViews,
+          COALESCE(SUM(CAST(COALESCE(LuotThich, 0) AS BIGINT)), 0) AS totalLikes,
+          COALESCE(SUM(CAST(COALESCE(LuotVoTay, 0) AS BIGINT)), 0) AS totalClaps,
+          COUNT(CASE WHEN TrangThai = 'published' THEN 1 END) AS publishedCount,
+          COUNT(CASE WHEN TrangThai = 'draft' THEN 1 END) AS draftCount,
+          COUNT(CASE WHEN TrangThai = 'pending' THEN 1 END) AS pendingCount
+        FROM dbo.ARTICLES
+      `);
+      return res.recordset[0];
+    } catch (err) {
+      console.error('MSSQL Stats Query Error:', err.message);
+    }
+  }
+  return null;
+}
+
 module.exports = {
+  getArticleStatsFromDb,
   sqlConfig,
   isMssqlConnected: () => isMssqlConnected,
   getArticlesFromDb,

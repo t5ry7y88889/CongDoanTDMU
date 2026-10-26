@@ -139,7 +139,7 @@ function openAddDocumentModal() {
   document.getElementById('doc_tieu_de_input').value = '';
   document.getElementById('doc_loai_select').value = 'tuyentruyen';
   document.getElementById('doc_co_quan_input').value = 'Ban Thường Vụ Công Đoàn TDMU';
-  document.getElementById('doc_nguoi_ky_input').value = 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một';
+  document.getElementById('doc_nguoi_ky_input').value = 'Ban Thường Vụ Công Đoàn';
   document.getElementById('doc_ngay_input').value = new Date().toISOString().split('T')[0];
   document.getElementById('doc_hieu_luc_select').value = 'con_hieu_luc';
   document.getElementById('doc_file_input').value = '';
@@ -156,7 +156,7 @@ function openEditDocumentModal(id) {
   document.getElementById('doc_tieu_de_input').value = doc.tieu_de || doc.TenVanBan || '';
   document.getElementById('doc_loai_select').value = doc.loai_van_ban || doc.LoaiVanBan || 'tuyentruyen';
   document.getElementById('doc_co_quan_input').value = doc.co_quan_ban_hanh || doc.CoQuanBanHanh || 'Ban Thường Vụ Công Đoàn TDMU';
-  document.getElementById('doc_nguoi_ky_input').value = doc.nguoi_ky || doc.NguoiKy || 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một';
+  document.getElementById('doc_nguoi_ky_input').value = doc.nguoi_ky || doc.NguoiKy || 'Ban Thường Vụ Công Đoàn';
   document.getElementById('doc_ngay_input').value = doc.ngay_ban_hanh || doc.NgayBanHanh || new Date().toISOString().split('T')[0];
   document.getElementById('doc_hieu_luc_select').value = doc.hieu_luc || 'con_hieu_luc';
   document.getElementById('doc_file_input').value = '';

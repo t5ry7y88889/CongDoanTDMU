@@ -220,7 +220,7 @@
               </div>
               <div class="d-flex align-items-center gap-3">
                 <span><i class="fa-regular fa-clock me-1 text-warning"></i> <span id="artReadingTime">3 phút đọc</span></span>
-                <span><i class="fa-regular fa-eye me-1 text-success"></i> <span id="artViews">162</span> lượt xem</span>
+                <span><i class="fa-regular fa-eye me-1 text-success"></i> <span id="artViews">0</span> lượt xem</span>
               </div>
             </div>
 
@@ -249,10 +249,10 @@
             <div class="border-top border-bottom py-3 my-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
               <div class="d-flex gap-2">
                 <button class="reaction-pill" id="btnLikeArt" onclick="toggleArtReaction('like')">
-                  <i class="fa-solid fa-heart text-danger"></i> <span id="artLikeCount">128</span> Thích
+                  <i class="fa-solid fa-heart text-danger"></i> <span id="artLikeCount">0</span> Thích
                 </button>
                 <button class="reaction-pill" id="btnClapArt" onclick="toggleArtReaction('clap')">
-                  <i class="fa-solid fa-hands-clapping text-warning"></i> <span id="artClapCount">64</span> Vỗ tay
+                  <i class="fa-solid fa-hands-clapping text-warning"></i> <span id="artClapCount">0</span> Vỗ tay
                 </button>
                 <button class="reaction-pill" id="btnBookmarkArt" onclick="toggleArticleBookmark(currentArticle ? currentArticle.id : 1)">
                   <i class="fa-regular fa-bookmark text-primary"></i> Lưu đọc sau
@@ -422,7 +422,11 @@
           const timeEl = document.getElementById('artReadingTime');
           if (timeEl) timeEl.innerText = (a.readingTime || '3 phút') + ' đọc';
           const viewsEl = document.getElementById('artViews');
-          if (viewsEl) viewsEl.innerText = a.viewsCount || a.LuotXem || 162;
+          if (viewsEl) viewsEl.innerText = ((a.viewsCount !== undefined && a.viewsCount !== null) ? a.viewsCount : (a.LuotXem || 0)).toLocaleString('vi-VN');
+          const likeEl = document.getElementById('artLikeCount');
+          if (likeEl) likeEl.innerText = ((a.likesCount !== undefined && a.likesCount !== null) ? a.likesCount : (a.LuotThich || 0)).toLocaleString('vi-VN');
+          const clapEl = document.getElementById('artClapCount');
+          if (clapEl) clapEl.innerText = ((a.clapsCount !== undefined && a.clapsCount !== null) ? a.clapsCount : (a.LuotVoTay || 0)).toLocaleString('vi-VN');
           const commentsEl = document.getElementById('artCommentsCount');
           if (commentsEl) commentsEl.innerText = a.commentsCount || 0;
 
@@ -530,15 +534,29 @@
       }
     }
 
-    function toggleArtReaction(type) {
-      if (type === 'like') {
-        const btn = document.getElementById('btnLikeArt');
-        const count = document.getElementById('artLikeCount');
-        btn.classList.toggle('liked');
-        count.innerText = parseInt(count.innerText) + (btn.classList.contains('liked') ? 1 : -1);
-      } else if (type === 'clap') {
-        const count = document.getElementById('artClapCount');
-        count.innerText = parseInt(count.innerText) + 1;
+    async function toggleArtReaction(type) {
+      if (!currentArticle || !currentArticle.id) return;
+      try {
+        const res = await fetch(`/api/articles/${currentArticle.id}/react`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reaction_type: type })
+        }).then(r => r.json());
+
+        if (res.success) {
+          if (type === 'like') {
+            const btn = document.getElementById('btnLikeArt');
+            const count = document.getElementById('artLikeCount');
+            if (btn) btn.classList.toggle('liked');
+            if (count && res.likesCount !== undefined) count.innerText = res.likesCount.toLocaleString('vi-VN');
+          } else if (type === 'clap') {
+            const count = document.getElementById('artClapCount');
+            if (count && res.clapsCount !== undefined) count.innerText = res.clapsCount.toLocaleString('vi-VN');
+          }
+          if (typeof syncGlobalStats === 'function') syncGlobalStats();
+        }
+      } catch (err) {
+        console.warn('Lỗi gửi tương tác:', err);
       }
     }
 

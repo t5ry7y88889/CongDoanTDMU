@@ -216,3 +216,46 @@ const API = {
 };
 
 window.API = API;
+
+
+// =============================================================================
+// GLOBAL INTERACTION STATS SYNCHRONIZER (Không hardcode, nạp trực tiếp từ CSDL)
+// =============================================================================
+async function syncGlobalStats() {
+  try {
+    const res = await fetch('/api/stats');
+    const data = await res.json();
+    if (data && (data.success || data.totalViews !== undefined)) {
+      const views = data.totalViews !== undefined ? data.totalViews : ((data.data && data.data.tong_luot_xem) || 0);
+      const likes = data.totalLikes !== undefined ? data.totalLikes : ((data.data && data.data.tong_luot_thich) || 0);
+      const online = data.online || 1;
+
+      // Cập nhật tất cả các phần tử tổng lượt xem trên mọi trang
+      document.querySelectorAll('#stat_views, .stat-total-views').forEach(el => {
+        el.innerText = views.toLocaleString('vi-VN');
+      });
+
+      // Cập nhật tất cả các phần tử tổng lượt thích / thả tim
+      document.querySelectorAll('#stat_likes, .stat-total-likes').forEach(el => {
+        el.innerText = likes.toLocaleString('vi-VN');
+      });
+
+      // Cập nhật tất cả các phần tử trực tuyến
+      document.querySelectorAll('#stat_online, .stat-online').forEach(el => {
+        el.innerText = online.toLocaleString('vi-VN');
+      });
+    }
+  } catch (e) {
+    console.debug('Lỗi đồng bộ thống kê tương tác:', e);
+  }
+}
+
+window.syncGlobalStats = syncGlobalStats;
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', syncGlobalStats);
+  } else {
+    syncGlobalStats();
+  }
+}

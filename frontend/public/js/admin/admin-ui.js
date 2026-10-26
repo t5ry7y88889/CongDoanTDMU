@@ -74,7 +74,7 @@ function switchUserRole(role) {
   currentUserRole = role;
   const nameEl = document.getElementById('current_user_name');
   if (nameEl) {
-    if (role === 'admin') nameEl.innerText = "Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một";
+    if (role === 'admin') nameEl.innerText = "Ban Thường Vụ Công Đoàn";
     else if (role === 'editor') nameEl.innerText = "Đ/c Trần Thị B";
     else nameEl.innerText = "Đ/c Nguyễn Văn C";
   }
@@ -86,7 +86,7 @@ function showAdminTab(rawTabName, subFilter = null) {
   if (['writer', 'studio', 'composer', 'editor', 'tinbaiviet', 'tab_writer'].includes(rawTabName) || ['writer', 'studio', 'composer', 'editor', 'tinbaiviet'].includes(tabName)) {
     tabName = 'ai-creator';
   }
-  const tabs = ['dashboard', 'articles', 'ai-creator', 'welfare', 'feedback', 'templates', 'documents', 'schedule', 'users', 'audits'];
+  const tabs = ['dashboard', 'articles', 'ai-creator', 'organization', 'welfare', 'feedback', 'templates', 'documents', 'schedule', 'users', 'audits'];
   if (!tabs.includes(tabName)) {
     tabName = 'ai-creator';
   }
@@ -105,6 +105,7 @@ function showAdminTab(rawTabName, subFilter = null) {
     'articles': 'Quản Lý Tin Tức & Bài Viết',
     'ai-creator': 'Soạn Thảo & Biên Tập Tin Bài',
     'feedback': 'Hòm Thư Góp Ý & Nguyện Vọng Đoàn Viên',
+    'organization': 'Quản Lý Cơ Cấu Tổ Chức & Cán Bộ',
     'welfare': 'Quản Lý & Xét Duyệt Đơn Trợ Cấp Khó Khăn',
     'templates': 'Kho Biểu Mẫu Nghiệp Vụ Công Đoàn',
     'documents': 'Kho Văn Bản Chỉ Đạo & Điều Hành',
@@ -136,6 +137,7 @@ function showAdminTab(rawTabName, subFilter = null) {
   if (tabName === 'articles') loadAdminArticles(subFilter || 'all');
   if (tabName === 'documents') loadAdminDocuments();
   if (tabName === 'templates') loadAdminTemplates();
+  if (tabName === 'organization' && typeof loadAdminOrganization === 'function') loadAdminOrganization();
   if (tabName === 'welfare' && typeof loadAdminWelfare === 'function') loadAdminWelfare();
   if (tabName === 'feedback') loadAdminFeedback();
   if (tabName === 'schedule') loadScheduleTable();

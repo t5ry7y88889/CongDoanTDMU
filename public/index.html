@@ -164,8 +164,8 @@
           <div class="panel-tdmu">
             <div class="panel-heading-tdmu"><i class="fa-solid fa-chart-simple me-2 text-warning"></i>Thống kê truy cập</div>
             <div class="p-3" style="font-size: 13px;">
-              <p class="mb-2"><i class="fa-solid fa-users text-primary me-2"></i> Đang trực tuyến: <strong id="stat_online">12</strong></p>
-              <p class="mb-0"><i class="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong id="stat_views">811,221</strong></p>
+              <p class="mb-2"><i class="fa-solid fa-users text-primary me-2"></i> Đang trực tuyến: <strong id="stat_online">1</strong></p>
+              <p class="mb-0"><i class="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong id="stat_views">0</strong></p>
             </div>
           </div>
         </div>
@@ -406,7 +406,7 @@
           const elOnline = document.getElementById('stat_online');
           const elViews = document.getElementById('stat_views');
           if (elOnline) elOnline.innerText = (data.online || 28).toLocaleString('vi-VN');
-          const totalViews = data.totalViews || (data.data && data.data.tong_luot_xem) || 811221;
+          const totalViews = data.totalViews || (data.data && data.data.tong_luot_xem) || 0;
           if (elViews) elViews.innerText = totalViews.toLocaleString('vi-VN');
         }
       } catch (e) {}

@@ -212,7 +212,7 @@
                 <div class="hero-img-wrap">
                   <img src="/images/banner.jpg" class="hero-img" id="hero_img" alt="Tiêu điểm">
                   <div class="live-reader-badge">
-                    <span class="live-dot"></span> <span id="hero_live_readers">24 cán bộ đang đọc</span>
+                    <span class="live-dot"></span> <span id="hero_live_readers">1 cán bộ đang đọc</span>
                   </div>
                 </div>
               </div>
@@ -236,7 +236,7 @@
                   <div class="d-flex justify-content-between align-items-center text-muted small mb-3 border-top pt-2">
                     <div class="d-flex align-items-center gap-3">
                       <span><i class="fa-regular fa-calendar me-1 text-primary"></i> <span id="hero_date">2026-09-25</span></span>
-                      <span><i class="fa-regular fa-eye text-success me-1"></i> <strong id="hero_views">450</strong> lượt xem</span>
+                      <span><i class="fa-regular fa-eye text-success me-1"></i> <strong id="hero_views">0</strong> lượt xem</span>
                     </div>
                     <span class="text-primary fw-bold" id="hero_author">Công đoàn TDMU</span>
                   </div>
@@ -285,8 +285,8 @@
           <div class="panel-tdmu">
             <div class="panel-heading-tdmu"><i class="fa-solid fa-chart-simple me-2 text-warning"></i>Thống kê tương tác</div>
             <div class="p-3" style="font-size: 13px;">
-              <p class="mb-2"><i class="fa-solid fa-heart text-danger me-2"></i> Lượt thả tim: <strong>3,890</strong></p>
-              <p class="mb-0"><i class="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong>811,221</strong></p>
+              <p class="mb-2"><i class="fa-solid fa-heart text-danger me-2"></i> Lượt thả tim: <strong id="stat_likes">0</strong></p>
+              <p class="mb-0"><i class="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong id="stat_views">0</strong></p>
             </div>
           </div>
         </div>
@@ -347,7 +347,7 @@
             const heroDate = document.getElementById('hero_date');
             if (heroDate) heroDate.innerText = (hero.publishedAt || hero.createdAt || '2026-09-25').split(' ')[0].split('T')[0];
             const heroViews = document.getElementById('hero_views');
-            if (heroViews) heroViews.innerText = (hero.viewsCount || hero.views || 450).toLocaleString('vi-VN');
+            if (heroViews) heroViews.innerText = ((hero.viewsCount !== undefined && hero.viewsCount !== null) ? hero.viewsCount : (hero.views || 0)).toLocaleString('vi-VN');
             const heroAuthor = document.getElementById('hero_author');
             if (heroAuthor) heroAuthor.innerText = hero.author || 'Công đoàn TDMU';
 
@@ -456,7 +456,7 @@
               <div class="d-flex justify-content-between align-items-center text-muted small border-top pt-2 mt-auto">
                 <div class="d-flex align-items-center gap-3">
                   <span title="Ngày đăng"><i class="fa-regular fa-calendar text-primary me-1"></i> ${(a.publishedAt || a.createdAt || '2026-09-25').split(' ')[0].split('T')[0]}</span>
-                  <span title="Lượt xem"><i class="fa-regular fa-eye text-success me-1"></i> ${(a.viewsCount || a.views || 160).toLocaleString('vi-VN')} lượt xem</span>
+                  <span title="Lượt xem"><i class="fa-regular fa-eye text-success me-1"></i> ${((a.viewsCount !== undefined && a.viewsCount !== null) ? a.viewsCount : (a.views || 0)).toLocaleString('vi-VN')} lượt xem</span>
                 </div>
                 <span class="text-primary fw-bold" style="font-size: 12px;">
                   ${a.author || a.TacGia || 'Công đoàn TDMU'}

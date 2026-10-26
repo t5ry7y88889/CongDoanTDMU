@@ -158,7 +158,7 @@ async function submitFeedbackResponse() {
       body: JSON.stringify({
         status,
         response,
-        resolved_by: 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một (Ban Thường Vụ)'
+        resolved_by: 'Ban Thường Vụ Công Đoàn'
       })
     }).then(r => r.json());
 

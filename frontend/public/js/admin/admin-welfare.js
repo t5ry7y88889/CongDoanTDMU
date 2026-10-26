@@ -365,7 +365,7 @@ async function submitDepositFund() {
   const source_name = document.getElementById('deposit_fund_source').value.trim();
   const decision_no = document.getElementById('deposit_fund_decision_no').value.trim();
   const note = document.getElementById('deposit_fund_note').value.trim();
-  const created_by = document.getElementById('deposit_fund_created_by')?.value.trim() || 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một (Ban Thường Vụ)';
+  const created_by = document.getElementById('deposit_fund_created_by')?.value.trim() || 'Ban Thường Vụ Công Đoàn';
 
   if (amount <= 0) {
     alert('⚠️ Vui lòng nhập số tiền nạp quỹ hợp lệ lớn hơn 0 đồng!');
@@ -476,7 +476,7 @@ async function submitWelfareReview() {
         status,
         amount_approved,
         decision_note,
-        approved_by: 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một (Ban Thường Vụ)'
+        approved_by: 'Ban Thường Vụ Công Đoàn'
       })
     }).then(r => r.json());
 

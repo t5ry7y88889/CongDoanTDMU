@@ -219,7 +219,7 @@ function renderAdminArticleRows(list) {
   }
 
   tbody.innerHTML = list.map(a => {
-    const s = (a.status || (a.id === 6 ? 'draft' : (a.id === 5 ? 'pending' : 'published'))).toLowerCase();
+    const s = (a.status || 'published').toLowerCase();
     let statusLabel = 'Đã Xuất Bản';
     let badgeClass = 'badge-success';
     if (s.includes('pend') || s.includes('chờ')) {
@@ -657,7 +657,7 @@ function renderAuditsPage() {
   tbody.innerHTML = displayList.map(log => `
     <tr style="border-bottom: 1px solid var(--border-color);">
       <td style="padding: 12px; font-weight: 600; font-size: 13px;">${log.timestamp || log.created_at || '2026-09-01'}</td>
-      <td style="padding: 12px; font-weight: 700; color: #003865;">${log.userName || log.user_name || 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một'}</td>
+      <td style="padding: 12px; font-weight: 700; color: #003865;">${log.userName || log.user_name || 'Ban Thường Vụ Công Đoàn'}</td>
       <td style="padding: 12px;"><span class="badge badge-gold" style="font-size: 11px;">${log.action || 'TÁC NGHIỆP'}</span></td>
       <td style="padding: 12px; font-size: 13px; color: #334155;">${log.details || log.note || log.action}</td>
     </tr>

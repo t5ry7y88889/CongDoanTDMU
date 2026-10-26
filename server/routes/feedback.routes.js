@@ -264,23 +264,60 @@ router.get('/media', (req, res) => res.json({ success: true, data: loadDB().medi
 // =========================================================================
 // 4. STATS & ANALYTICS DASHBOARD
 // =========================================================================
-const getDashboardStats = (req, res) => {
+const getDashboardStats = async (req, res) => {
+  try {
+    const { getArticleStatsFromDb } = require('../mssql_db');
+    const mssqlStats = await getArticleStatsFromDb();
+    if (mssqlStats) {
+      const views = parseInt(mssqlStats.totalViews) || 0;
+      const likes = parseInt(mssqlStats.totalLikes) || 0;
+      const claps = parseInt(mssqlStats.totalClaps) || 0;
+      const total = parseInt(mssqlStats.totalArticles) || 0;
+      const published = parseInt(mssqlStats.publishedCount) || 0;
+      const draft = parseInt(mssqlStats.draftCount) || 0;
+      const pending = parseInt(mssqlStats.pendingCount) || 0;
+
+      return res.json({
+        success: true,
+        totalArticles: total,
+        totalViews: views,
+        totalLikes: likes,
+        totalClaps: claps,
+        publishedCount: published,
+        online: 1,
+        data: {
+          tong_bai: total,
+          da_xuat_ban: published,
+          cho_duyet: pending,
+          ban_nhap: draft,
+          tong_luot_xem: views,
+          tong_luot_thich: likes
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Lỗi nạp thống kê MSSQL:', err.message);
+  }
+
   const db = loadDB();
   const arts = db.articles || [];
+  const totalViews = arts.reduce((acc, a) => acc + (a.viewsCount || a.LuotXem || 0), 0);
+  const totalLikes = arts.reduce((acc, a) => acc + (a.likesCount || a.LuotThich || 0), 0);
   res.json({
     success: true,
     totalArticles: arts.length,
-    totalViews: arts.reduce((acc, a) => acc + (a.viewsCount || a.LuotXem || 0), 0),
-    totalLikes: arts.reduce((acc, a) => acc + (a.likesCount || a.LuotThich || 0), 0),
-    totalShares: arts.reduce((acc, a) => acc + (a.sharesCount || 0), 0),
-    aiArticlesCount: arts.filter(a => a.isAiGenerated || a.is_ai_generated).length,
+    totalViews,
+    totalLikes,
+    totalShares: 0,
     publishedCount: arts.filter(a => a.status === 'published' || a.TrangThai === 'Published').length,
+    online: 1,
     data: {
       tong_bai: arts.length,
       da_xuat_ban: arts.filter(a => a.status === 'published' || a.TrangThai === 'Published').length,
       cho_duyet: arts.filter(a => a.status === 'pending' || a.TrangThai === 'Pending').length,
       ban_nhap: arts.filter(a => a.status === 'draft' || a.TrangThai === 'Draft').length,
-      bai_gan_day: arts.slice(0, 5)
+      tong_luot_xem: totalViews,
+      tong_luot_thich: totalLikes
     }
   });
 };
