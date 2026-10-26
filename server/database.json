@@ -487,7 +487,12 @@
       },
       "photos": [],
       "id": 132,
-      "createdAt": "2026-10-26 03:44"
+      "createdAt": "2026-10-26 03:44",
+      "viewsCount": 0,
+      "likesCount": 0,
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 125,
@@ -499,11 +504,15 @@
       "content": "<p>Giải bóng đá truyền thống cán bộ giảng viên lần thứ X khép lại thành công rực rỡ, gắn kết tinh thần đoàn kết toàn trường.</p>",
       "image": "/images/hoi_thao_bong_da.jpg",
       "status": "pending",
-      "viewsCount": 185,
+      "viewsCount": 0,
       "readingTime": "3 phút",
       "createdAt": "2026-10-05 14:30:00",
       "updatedAt": "2026-10-05 14:30:00",
-      "comments": []
+      "comments": [],
+      "likesCount": 0,
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 4,
@@ -519,14 +528,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 364,
-      "likesCount": 67,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2026-09-25 21:47:00",
       "publishedAt": "2026-09-25 21:47:00",
       "scheduledAt": "2026-09-25 21:47:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/tet-trung-thu-vui-hoi-trang-ram-danh-cho-con-can-bo-vien-chuc-giang-vien",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 6,
@@ -542,14 +554,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 542,
-      "likesCount": 46,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2026-06-26 12:56:00",
       "publishedAt": "2026-06-26 12:56:00",
       "scheduledAt": "2026-06-26 12:56:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/toa-dam-dinh-duong-lanh-manh-vi-suc-khoe-gia-dinh-lan-toa-gia-tri-xay-dung-mai-am-hanh-phuc",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 2,
@@ -565,14 +580,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 595,
-      "likesCount": 36,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2026-06-01 21:06:00",
       "publishedAt": "2026-06-01 21:06:00",
       "scheduledAt": "2026-06-01 21:06:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/chao-mung-dai-hoi-xiv-cong-doan-viet-nam-nhiem-ky-2026-2031",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 3,
@@ -588,14 +606,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 714,
-      "likesCount": 88,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2026-05-08 21:41:00",
       "publishedAt": "2026-05-08 21:41:00",
       "scheduledAt": "2026-05-08 21:41:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/dai-hoc-thu-dau-mot-duoc-tuyen-duong-dien-hinh-tien-tien-trong-hoc-tap-va-lam-theo-tu-tuong-dao-duc-phong-cach-ho-chi-minh",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 1,
@@ -611,8 +632,8 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 1305,
-      "likesCount": 25,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2026-01-30 11:56:00",
       "publishedAt": "2026-01-30 11:56:00",
       "scheduledAt": "2026-01-30 11:56:00",
@@ -620,7 +641,10 @@
       "commentsCount": 0,
       "comments": [],
       "fbPostId": "1417956021396650_122114344845500981",
-      "noi_dung_fb": "📢 [TDMU NEWS] Thử nghiệm bài viết 1\n\nTóm tắt bài viết 1\n\n👉 Chi tiết xem tại Website Công đoàn TDMU!\n#CongDoanTDMU #TDMU2026 #ChuyenDoiSo"
+      "noi_dung_fb": "📢 [TDMU NEWS] Thử nghiệm bài viết 1\n\nTóm tắt bài viết 1\n\n👉 Chi tiết xem tại Website Công đoàn TDMU!\n#CongDoanTDMU #TDMU2026 #ChuyenDoiSo",
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 5,
@@ -636,14 +660,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 1621,
-      "likesCount": 78,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2026-01-16 06:02:00",
       "publishedAt": "2026-01-16 06:02:00",
       "scheduledAt": "2026-01-16 06:02:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/hoi-nghi-dai-bieu-can-bo-vien-chuc-nguoi-lao-dong-nam-2025",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 7,
@@ -659,14 +686,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 1828,
-      "likesCount": 87,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2025-11-18 22:34:00",
       "publishedAt": "2025-11-18 22:34:00",
       "scheduledAt": "2025-11-18 22:34:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/chung-ket-hoi-thi-tdmu-say-hi-noi-toa-sang-tai-nang-gan-ket-can-bo-giang-vien-tdmu",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 15,
@@ -682,14 +712,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 1726,
-      "likesCount": 52,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2025-10-20 17:30:00",
       "publishedAt": "2025-10-20 17:30:00",
       "scheduledAt": "2025-10-20 17:30:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/truong-dai-hoc-thu-dau-mot-to-chuc-nhieu-hoat-dong-y-nghia-ky-niem-ngay-phu-nu-viet-nam-20-10",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 17,
@@ -705,14 +738,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 1783,
-      "likesCount": 21,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2025-10-07 06:04:00",
       "publishedAt": "2025-10-07 06:04:00",
       "scheduledAt": "2025-10-07 06:04:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/ron-rang-dem-hoi-trang-ram-cua-con-em-can-bo-giang-vien-truong-dai-hoc-thu-dau-mot",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 8,
@@ -728,14 +764,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 1637,
-      "likesCount": 62,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2025-09-06 16:41:00",
       "publishedAt": "2025-09-06 16:41:00",
       "scheduledAt": "2025-09-06 16:41:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/tap-huan-chuyen-de-dot-quy-dau-hieu-nhan-biet-va-thuc-hanh-xu-tri-ban-dau",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 9,
@@ -751,14 +790,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 1683,
-      "likesCount": 45,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2025-08-23 07:20:00",
       "publishedAt": "2025-08-23 07:20:00",
       "scheduledAt": "2025-08-23 07:20:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/cong-doan-dh-thu-dau-mot-quyen-gop-ung-ho-dong-bao-mien-nui-phia-bac-va-nhan-dan-cuba",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 10,
@@ -774,14 +816,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 1678,
-      "likesCount": 39,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2025-08-15 12:36:00",
       "publishedAt": "2025-08-15 12:36:00",
       "scheduledAt": "2025-08-15 12:36:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/cong-doan-truong-dai-hoc-thu-dau-mot-gioi-thieu-nhieu-san-pham-moi-tai-ngay-hoi-lao-dong-sang-tao-2025",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 11,
@@ -797,14 +842,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 1767,
-      "likesCount": 79,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2025-06-22 13:39:00",
       "publishedAt": "2025-06-22 13:39:00",
       "scheduledAt": "2025-06-22 13:39:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/be-mac-giai-bong-da-truyen-thong-cong-doan-truong-dai-hoc-thu-dau-mot-lan-thu-x",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 12,
@@ -820,14 +868,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 1968,
-      "likesCount": 16,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2025-06-07 12:03:00",
       "publishedAt": "2025-06-07 12:03:00",
       "scheduledAt": "2025-06-07 12:03:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/khai-mac-giai-bong-da-cong-doan-truong-dai-hoc-thu-dau-mot-lan-thu-x",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 13,
@@ -843,14 +894,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 1940,
-      "likesCount": 33,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2025-05-18 21:54:00",
       "publishedAt": "2025-05-18 21:54:00",
       "scheduledAt": "2025-05-18 21:54:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/huong-ung-giai-chay-chung-tay-xoa-nha-tam-nha-dot-nat-tren-dia-ban-tinh-binh-duong-nam-2025",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 20,
@@ -866,14 +920,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 1915,
-      "likesCount": 12,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2025-03-07 19:56:00",
       "publishedAt": "2025-03-07 19:56:00",
       "scheduledAt": "2025-03-07 19:56:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/soi-noi-cac-hoat-dong-chao-mung-ky-niem-115-ngay-quoc-te-phu-nu",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 14,
@@ -889,14 +946,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 1938,
-      "likesCount": 82,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2025-01-15 21:35:00",
       "publishedAt": "2025-01-15 21:35:00",
       "scheduledAt": "2025-01-15 21:35:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/ron-rang-phien-cho-tet-0-dong-tai-truong-dai-hoc-thu-dau-mot",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 16,
@@ -912,14 +972,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 2158,
-      "likesCount": 60,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2024-11-20 21:00:00",
       "publishedAt": "2024-11-20 21:00:00",
       "scheduledAt": "2024-11-20 21:00:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/nhieu-hoat-dong-y-nghia-ky-niem-42-nam-ngay-nha-giao-viet-nam-20-11",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 18,
@@ -935,14 +998,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 2182,
-      "likesCount": 50,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2024-11-10 22:04:00",
       "publishedAt": "2024-11-10 22:04:00",
       "scheduledAt": "2024-11-10 22:04:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/cong-doan-truong-dai-hoc-thu-dau-mot-to-chuc-tap-huan-tuyen-truyen-pho-bien-phap-luat-nam-2024",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 19,
@@ -958,14 +1024,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 2761,
-      "likesCount": 74,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2024-10-20 23:07:00",
       "publishedAt": "2024-10-20 23:07:00",
       "scheduledAt": "2024-10-20 23:07:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/cac-hoat-dong-y-nghia-cua-cong-doan-dai-hoc-thu-dau-mot-chao-mung-ngay-phu-nu-viet-nam-20-10",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 21,
@@ -981,14 +1050,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 2533,
-      "likesCount": 51,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2024-10-18 18:03:00",
       "publishedAt": "2024-10-18 18:03:00",
       "scheduledAt": "2024-10-18 18:03:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/lanh-dao-truong-gap-mat-chuc-mung-ngay-phu-nu-viet-nam-20-10",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 22,
@@ -1004,14 +1076,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 2614,
-      "likesCount": 15,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2024-09-22 11:00:00",
       "publishedAt": "2024-09-22 11:00:00",
       "scheduledAt": "2024-09-22 11:00:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/da-dang-cac-hinh-thuc-to-chuc-vui-hoi-trang-ram-cho-cac-chau-thieu-nien-nhi-dong-nam-2024",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 23,
@@ -1027,14 +1102,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 2696,
-      "likesCount": 38,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2024-08-30 05:12:00",
       "publishedAt": "2024-08-30 05:12:00",
       "scheduledAt": "2024-08-30 05:12:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/bai-tuyen-truyen-ky-niem-79-nam-cach-mang-thang-8-va-quoc-khanh-2-9-2024",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 24,
@@ -1050,14 +1128,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 3078,
-      "likesCount": 83,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2024-08-15 11:01:00",
       "publishedAt": "2024-08-15 11:01:00",
       "scheduledAt": "2024-08-15 11:01:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/cong-doan-dh-thu-dau-mot-dong-hanh-cung-chuong-trinh-ung-ho-quan-ao-do-dung-hoc-tap",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 25,
@@ -1073,14 +1154,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 3141,
-      "likesCount": 28,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2024-06-22 21:53:00",
       "publishedAt": "2024-06-22 21:53:00",
       "scheduledAt": "2024-06-22 21:53:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/soi-noi-hoi-thao-can-bo-giang-vien-ky-niem-15-nam-thanh-lap-truong",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 27,
@@ -1096,14 +1180,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 3052,
-      "likesCount": 47,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2024-06-18 05:26:00",
       "publishedAt": "2024-06-18 05:26:00",
       "scheduledAt": "2024-06-18 05:26:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/thay-co-tdmu-dat-giai-nhat-toan-doan-hoi-thao-cum-cac-truong-dh-cd-tinh",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 26,
@@ -1119,14 +1206,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 3118,
-      "likesCount": 12,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2024-05-20 09:03:00",
       "publishedAt": "2024-05-20 09:03:00",
       "scheduledAt": "2024-05-20 09:03:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/tuyen-duong-khen-thuong-dien-hinh-tien-tien-hoc-tap-va-lam-theo-bac",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 28,
@@ -1142,14 +1232,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 3090,
-      "likesCount": 87,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2024-03-16 22:15:00",
       "publishedAt": "2024-03-16 22:15:00",
       "scheduledAt": "2024-03-16 22:15:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/hoi-nghi-vien-chuc-nguoi-lao-dong-truong-dai-hoc-thu-dau-mot-nam-2023",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 29,
@@ -1165,14 +1258,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 3075,
-      "likesCount": 23,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2024-03-11 10:21:00",
       "publishedAt": "2024-03-11 10:21:00",
       "scheduledAt": "2024-03-11 10:21:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/ngay-hoi-yeu-thuong-chinh-minh-cua-nu-cb-gv-vien-chuc-nu-truong-dai-hoc-thu-dau-mot",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 31,
@@ -1188,14 +1284,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 3238,
-      "likesCount": 56,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2024-01-27 07:18:00",
       "publishedAt": "2024-01-27 07:18:00",
       "scheduledAt": "2024-01-27 07:18:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/ron-rang-phien-cho-tet-dai-hoc-thu-dau-mot",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 32,
@@ -1211,14 +1310,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 3205,
-      "likesCount": 30,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2024-01-17 19:02:00",
       "publishedAt": "2024-01-17 19:02:00",
       "scheduledAt": "2024-01-17 19:02:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/thay-ngo-pham-toan-dat-giai-khuyen-khich-cuoc-thi-gui-niem-tin-trao-ky-vong",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 35,
@@ -1234,14 +1336,17 @@
       "status": "published",
       "statusName": "Đã Xuất Bản",
       "isAiGenerated": false,
-      "viewsCount": 2990,
-      "likesCount": 14,
+      "viewsCount": 0,
+      "likesCount": 0,
       "createdAt": "2023-11-22 18:50:00",
       "publishedAt": "2023-11-22 18:50:00",
       "scheduledAt": "2023-11-22 18:50:00",
       "originalUrl": "https://congdoan.tdmu.edu.vn/danh-muc/tin-tuc/quan-quan-mic-vang-tdmu-2023-da-lo-dien-sau-dem-chung-ket",
       "commentsCount": 0,
-      "comments": []
+      "comments": [],
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 130,
@@ -1253,11 +1358,15 @@
       "content": "<p>Vào dịp chuẩn bị đón xuân mới, Công đoàn Trường Đại học Thủ Dầu Một (TDMU) đã chính thức triển khai kế hoạch tổ chức chương trình Tết Sum Vầy 2026 với quy mô lớn, hướng đến mục tiêu chăm lo thiết thực cho đời sống đoàn viên.</p>",
       "image": "",
       "status": "draft",
-      "viewsCount": 921,
+      "viewsCount": 0,
       "readingTime": "5 phút",
       "createdAt": "2026-10-08 19:49:09",
       "updatedAt": "2026-10-08 19:49:09",
-      "comments": []
+      "comments": [],
+      "likesCount": 0,
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     },
     {
       "id": 131,
@@ -1269,11 +1378,15 @@
       "content": "<p>Trong không khí hân hoan chào mừng 44 năm Ngày Nhà giáo Việt Nam 20/11, Công đoàn Trường Đại học Thủ Dầu Một tổ chức chuỗi hoạt động văn hóa thể thao sôi nổi.</p>",
       "image": "",
       "status": "draft",
-      "viewsCount": 2972,
+      "viewsCount": 0,
       "readingTime": "15 phút",
       "createdAt": "2026-10-08 20:20:31",
       "updatedAt": "2026-10-08 20:20:31",
-      "comments": []
+      "comments": [],
+      "likesCount": 0,
+      "clapsCount": 0,
+      "views": 0,
+      "likes": 0
     }
   ],
   "bookmarks": [
@@ -3465,5 +3578,6 @@
       "created_by": "Ban Thường Vụ Công Đoàn",
       "note": "Bổ sung nguồn hỗ trợ khó khăn"
     }
-  ]
+  ],
+  "article_reactions": []
 }
