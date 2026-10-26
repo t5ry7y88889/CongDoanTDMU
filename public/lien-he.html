@@ -160,6 +160,39 @@
             </form>
           </div>
 
+          <!-- PHÂN HỆ TRA CỨU TIẾN ĐỘ & PHẢN HỒI Ý KIẾN TRỰC TIẾP TRÊN WEB -->
+          <div class="content-box mt-4" id="feedback_lookup_section">
+            <div class="tieudelon">
+              <span><i class="fa-solid fa-magnifying-glass text-primary me-2"></i>TRA CỨU KẾT QUẢ PHẢN HỒI Ý KIẾN TRỰC TIẾP TRÊN WEB</span>
+            </div>
+            <p class="text-muted small mb-3">Bạn <strong>hoàn toàn có thể xem phản hồi trực tiếp trên trang web</strong> mà không bắt buộc phải mở Email! Hãy nhập <strong>Mã góp ý</strong> (ví dụ: <code>5</code> hoặc <code>FB-5</code>) hoặc <strong>Email</strong> của bạn vào ô dưới đây để tra cứu kết quả giải đáp chính thức từ Ban Thường Vụ.</p>
+
+            <div class="input-group mb-3">
+              <span class="input-group-text bg-light text-primary"><i class="fa-solid fa-ticket"></i></span>
+              <input type="text" id="lookupQuery" class="form-control" placeholder="Nhập Mã số góp ý (ví dụ: FB-5) hoặc Email của bạn...">
+              <button class="btn btn-primary fw-bold px-4" type="button" onclick="lookupFeedbackResponse()">
+                <i class="fa-solid fa-search me-1"></i> Tra Cứu Ngay
+              </button>
+            </div>
+
+            <div id="lookupResultBox" style="display: none;" class="mt-3">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- DANH SÁCH Ý KIẾN & GIẢI ĐÁP ĐÃ ĐƯỢC BAN THƯỜNG VỤ TRẢ LỜI CÔNG KHAI -->
+          <div class="content-box mt-4">
+            <div class="tieudelon d-flex justify-content-between align-items-center">
+              <span><i class="fa-solid fa-comments text-success me-2"></i>GIẢI ĐÁP &amp; PHẢN HỒI ĐOÀN VIÊN MỚI NHẤT</span>
+              <button class="btn btn-sm btn-outline-primary" type="button" onclick="loadPublicResolvedFeedback()"><i class="fa-solid fa-arrows-rotate me-1"></i>Làm mới</button>
+            </div>
+            <p class="text-muted small mb-3">Tổng hợp các ý kiến đóng góp, kiến nghị về quyền lợi, chế độ và phong trào đã được Ban Thường Vụ Công đoàn trường tiếp nhận và giải đáp chính thức.</p>
+            
+            <div id="publicResolvedFeedbackList">
+              <div class="text-center p-3 text-muted"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang nạp dữ liệu phản hồi từ CSDL...</div>
+            </div>
+          </div>
+
         </div>
       </div>
       <!-- RIGHT COLUMN (3 PHẦN): LIÊN KẾT WEBSITE -->
@@ -253,9 +286,14 @@
         });
         const json = await res.json();
         if (json.success) {
-          alert('✅ ' + json.message);
+          const newId = json.data?.id || '';
+          alert('✅ ' + json.message + (newId ? ('\n\n📌 MÃ TRA CỨU CỦA BẠN LÀ: #FB-' + newId + '\nBạn có thể tra cứu phản hồi trực tiếp ngay trên trang web này (khối Tra cứu bên dưới) hoặc kiểm tra Email!') : ''));
           document.getElementById('fbTitle').value = '';
           document.getElementById('fbContent').value = '';
+          if (newId) {
+            document.getElementById('lookupQuery').value = 'FB-' + newId;
+            lookupFeedbackResponse();
+          }
         } else {
           alert('❌ ' + json.error);
         }
@@ -266,6 +304,117 @@
         btn.innerHTML = '<i class="fa-solid fa-paper-plane me-1"></i> Gửi Ý Kiến Tới Ban Chấp Hành';
       }
     }
+  
+    async function lookupFeedbackResponse() {
+      const query = (document.getElementById('lookupQuery').value || '').trim();
+      const box = document.getElementById('lookupResultBox');
+      if (!query) {
+        alert('Vui lòng nhập Mã số góp ý (ví dụ: FB-5) hoặc Email của bạn!');
+        return;
+      }
+
+      box.style.display = 'block';
+      box.innerHTML = '<div class="text-center p-3 text-muted"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang tra cứu từ Cơ sở dữ liệu...</div>';
+
+      try {
+        const res = await fetch('/api/feedback').then(r => r.json());
+        if (res.success && Array.isArray(res.data)) {
+          const qClean = query.replace(/^#?FB-?/i, '').toLowerCase().trim();
+          const match = res.data.find(f => 
+            String(f.id) === qClean || 
+            (f.email && f.email.toLowerCase() === query.toLowerCase()) ||
+            (f.phone && f.phone.includes(query))
+          );
+
+          if (!match) {
+            box.innerHTML = `
+              <div class="alert alert-warning mb-0">
+                <i class="fa-solid fa-circle-exclamation me-2"></i>Không tìm thấy ý kiến nào khớp với mã hoặc thông tin <strong>"${query}"</strong>. Vui lòng kiểm tra lại!
+              </div>
+            `;
+            return;
+          }
+
+          let statusBadge = '<span class="badge bg-warning text-dark"><i class="fa-solid fa-clock me-1"></i>Đang chờ Ban Thường vụ xử lý</span>';
+          if (match.status === 'processing') {
+            statusBadge = '<span class="badge bg-primary"><i class="fa-solid fa-spinner fa-spin me-1"></i>Đang giải quyết</span>';
+          } else if (match.status === 'resolved' || match.status === 'responded' || match.response) {
+            statusBadge = '<span class="badge bg-success"><i class="fa-solid fa-check-circle me-1"></i>Đã phản hồi chính thức</span>';
+          }
+
+          box.innerHTML = `
+            <div class="card border-primary shadow-sm">
+              <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <span><strong>Mã ý kiến: #FB-${match.id}</strong> | Ngày gửi: ${(match.submitted_at || '').slice(0, 16)}</span>
+                ${statusBadge}
+              </div>
+              <div class="card-body">
+                <h6 class="fw-bold text-dark mb-2">${match.title}</h6>
+                <p class="text-secondary small mb-3"><strong>Nội dung góp ý của bạn:</strong> ${match.content}</p>
+
+                ${match.response ? `
+                  <div class="p-3 bg-light rounded border-start border-4 border-success">
+                    <div class="d-flex align-items-center gap-2 mb-2 text-success fw-bold">
+                      <i class="fa-solid fa-reply-all"></i> CÂU TRẢ LỜI CHÍNH THỨC TỪ BAN THƯỜNG VỤ CÔNG ĐOÀN:
+                    </div>
+                    <div class="text-dark" style="white-space: pre-line; line-height: 1.6;">
+                      ${match.response}
+                    </div>
+                    <div class="text-muted small text-end mt-2">
+                      — ${match.resolved_by || 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một'}
+                    </div>
+                  </div>
+                ` : `
+                  <div class="alert alert-info mb-0">
+                    <i class="fa-solid fa-info-circle me-2"></i>Ý kiến của bạn đã được ghi nhận vào Cơ sở dữ liệu và đang được Ban Chấp Hành xem xét giải quyết. Bạn có thể quay lại tra cứu kết quả tại đây bất kỳ lúc nào!
+                  </div>
+                `}
+              </div>
+            </div>
+          `;
+        }
+      } catch(e) {
+        box.innerHTML = '<div class="alert alert-danger">Lỗi tra cứu: ' + e.message + '</div>';
+      }
+    }
+
+    async function loadPublicResolvedFeedback() {
+      const container = document.getElementById('publicResolvedFeedbackList');
+      if (!container) return;
+      try {
+        const res = await fetch('/api/feedback').then(r => r.json());
+        if (res.success && Array.isArray(res.data)) {
+          const resolvedList = res.data.filter(f => f.response || f.status === 'resolved' || f.status === 'responded');
+          if (resolvedList.length === 0) {
+            container.innerHTML = '<div class="text-center p-3 text-muted">Chưa có câu trả lời nào được công khai.</div>';
+            return;
+          }
+          container.innerHTML = resolvedList.slice(0, 5).map(item => `
+            <div class="card mb-3 border-0 shadow-sm" style="background: #F8FAFC;">
+              <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="badge bg-primary text-white font-monospace">#FB-${item.id}</span>
+                  <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i>Đã trả lời</span>
+                </div>
+                <h6 class="fw-bold text-dark mt-2 mb-1">${item.title}</h6>
+                <p class="text-muted small mb-2"><i class="fa-solid fa-user me-1"></i>Người gửi: <strong>${item.sender_name}</strong> (${item.unit || 'Đoàn viên'})</p>
+                <div class="p-3 bg-white rounded border border-light shadow-sm">
+                  <small class="text-success fw-bold d-block mb-1"><i class="fa-solid fa-reply me-1"></i>Ban Thường Vụ Công đoàn giải đáp:</small>
+                  <div class="small text-secondary" style="line-height: 1.6;">${item.response}</div>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch(e) {
+        container.innerHTML = '<div class="text-danger small">Không thể tải dữ liệu giải đáp.</div>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadPublicResolvedFeedback();
+    });
+
   </script>
   <script>
     if ('serviceWorker' in navigator) {
