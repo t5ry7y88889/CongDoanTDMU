@@ -357,7 +357,6 @@
             if (heroSummary) {
               heroSummary.innerText = hero.summary || 'Thông tin hoạt động nổi bật từ Công đoàn Trường Đại học Thủ Dầu Một.';
             }
-            }
           }
 
           renderMagazineGrid();
@@ -381,18 +380,13 @@
       if (currentCategory === 'saved') {
         const savedIds = typeof getSavedArticleIds === 'function' ? getSavedArticleIds() : [];
         filtered = filtered.filter(a => savedIds.includes(parseInt(a.id)));
-      } else if (currentCategory === 'Hoạt động phong trào') {
-        filtered = filtered.filter(a => {
-          const t = ((a.title || '') + ' ' + (a.summary || '')).toLowerCase();
-          return t.includes('hội thao') || t.includes('bóng đá') || t.includes('giải') || t.includes('hội thi') || t.includes('say hi') || t.includes('văn nghệ') || t.includes('chạy') || t.includes('thể thao');
-        });
-      } else if (currentCategory === 'Sự kiện nổi bật') {
-        filtered = filtered.filter(a => {
-          const t = ((a.title || '') + ' ' + (a.summary || '')).toLowerCase();
-          return t.includes('đại hội') || t.includes('tết') || t.includes('hội nghị') || t.includes('tọa đàm') || t.includes('tập huấn') || t.includes('kỷ niệm') || t.includes('tuyên dương');
-        });
       } else if (currentCategory !== 'all') {
-        filtered = filtered.filter(a => (a.categoryName || a.ChuyenMuc) === currentCategory);
+        const target = currentCategory.toLowerCase().trim();
+        filtered = filtered.filter(a => {
+          const cName = (a.categoryName || a.ChuyenMuc || '').toLowerCase().trim();
+          const tText = ((a.title || '') + ' ' + (a.summary || '')).toLowerCase();
+          return cName === target || cName.includes(target) || target.includes(cName) || tText.includes(target);
+        });
       }
 
       const qInput = document.getElementById('articleSearchInput');
