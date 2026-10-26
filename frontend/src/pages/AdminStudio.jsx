@@ -91,15 +91,14 @@ const navSections = [
   ]},
   { label: 'TRUYỀN THÔNG ĐA KÊNH', items: [
     { id: 'articles', label: 'Quản Lý Tin Tức', icon: 'fa-solid fa-newspaper', color: '#60A5FA' },
-    { id: 'ai-creator', label: 'Phòng Biên Tập Đa Kênh', icon: 'fa-solid fa-wand-magic-sparkles', color: '#F59E0B', badge: 'CMS' },
+    { id: 'ai-creator', label: 'Soạn Thảo & Biên Tập', icon: 'fa-solid fa-wand-magic-sparkles', color: '#F59E0B', badge: 'CMS' },
     { id: 'schedule', label: 'Lịch Xuất Bản', icon: 'fa-solid fa-calendar-check', color: '#C084FC' },
     { id: 'documents', label: 'Kho Văn Bản', icon: 'fa-solid fa-folder-open', color: '#34D399' },
     { id: 'templates', label: 'Kho Biểu Mẫu', icon: 'fa-solid fa-file-word', color: '#0284C7', count: '5' }
   ]},
   { label: 'NGHIỆP VỤ CÔNG ĐOÀN', items: [
     { id: 'feedback', label: 'Hòm Thư Góp Ý', icon: 'fa-solid fa-envelope-open-text', color: '#EC4899' },
-    { id: 'welfare', label: 'Quản Lý Trợ Cấp', icon: 'fa-solid fa-hand-holding-heart', color: '#F59E0B' },
-    { id: 'reports', label: 'Báo Cáo 16 Tổ CĐ', icon: 'fa-solid fa-file-invoice', color: '#FBBF24' },
+    { id: 'welfare', label: 'Quỹ Chăm Lo & Trợ Cấp', icon: 'fa-solid fa-hand-holding-heart', color: '#F59E0B' },
     { id: 'users', label: 'Cán Bộ & Phân Quyền', icon: 'fa-solid fa-users-gear', color: '#F87171' },
     { id: 'audits', label: 'Nhật Ký Tác Nghiệp', icon: 'fa-solid fa-clock-rotate-left', color: '#A78BFA' }
   ]}
@@ -108,13 +107,12 @@ const navSections = [
 const navTitles = {
   'dashboard': 'Bảng Điều Hành & Thống Kê',
   'articles': 'Quản Lý Tin Tức & Bài Viết',
-  'ai-creator': 'Phòng Biên Tập Đa Kênh',
+  'ai-creator': 'Soạn Thảo & Biên Tập',
   'schedule': 'Lịch Xuất Bản Đa Kênh',
   'documents': 'Kho Văn Bản Chỉ Đạo & Điều Hành',
   'templates': 'Kho Biểu Mẫu Nghiệp Vụ Công Đoàn',
   'feedback': 'Hòm Thư Góp Ý & Nguyện Vọng',
-  'welfare': 'Quản Lý Trợ Cấp & Chăm Lo',
-  'reports': 'Báo Cáo Định Kỳ 16 Tổ Công Đoàn',
+  'welfare': 'Quản Lý Quỹ Chăm Lo & Trợ Cấp Đoàn Viên',
   'users': 'Cán Bộ & Phân Quyền',
   'audits': 'Nhật Ký Tác Nghiệp Hệ Thống'
 };
@@ -151,6 +149,17 @@ export default function AdminStudio() {
 
   // ── Zalo Studio ───────────────────────────────────────────────────────────────
   const [zaloText, setZaloText] = useState('');
+  const [zaloPhoto, setZaloPhoto] = useState(null);
+  const [senderPhoneInput, setSenderPhoneInput] = useState('0912345678');
+  const [recipientPhoneInput, setRecipientPhoneInput] = useState('0386543483');
+  const [zaloTargetMode, setZaloTargetMode] = useState('group'); // 'group' | 'personal'
+  const [zaloGroupLink, setZaloGroupLink] = useState('https://zalo.me/g/wdhpzaoap7wkxb074exv');
+  const [zaloGroupName, setZaloGroupName] = useState('Nhóm Công Đoàn TDMU');
+  const [zaloBotStatus, setZaloBotStatus] = useState({ isConnected: false, botInfo: null });
+  const [zaloQrModalOpen, setZaloQrModalOpen] = useState(false);
+  const [zaloQrImage, setZaloQrImage] = useState('');
+  const [zaloQrMessage, setZaloQrMessage] = useState('');
+  const [zaloQrStatus, setZaloQrStatus] = useState('');
 
   // ── Schedule ──────────────────────────────────────────────────────────────────
   const [scheduledAt, setScheduledAt] = useState('');
@@ -178,7 +187,8 @@ export default function AdminStudio() {
     pageId: '',
     pageName: '',
     oaName: '',
-    recipientPhone: '',
+    senderPhone: '0912345678',
+    recipientPhone: '0386543483',
     recipientUserId: '',
     isDefault: false
   });
@@ -203,6 +213,23 @@ export default function AdminStudio() {
   const [selectionRange, setSelectionRange] = useState(null);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiInlineLoading, setAiInlineLoading] = useState(false); // Bubble Menu loading state
+
+  // ── Unified Snapshot Stack (Rollback duy nhất cho cả Groq + Gemini + User) ──
+  const [snapshotStack, setSnapshotStack] = useState([]); // [{id, ts, label, by, title, sapo, bodyHtml}]
+  const pushSnapshot = useCallback((label = 'Thay đổi', by = 'user') => {
+    const snap = {
+      id: Date.now(),
+      ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      label,
+      by,
+      title: titleRef.current?.value ?? title,
+      sapo: sapoRef.current?.value ?? sapo,
+      bodyHtml: editorRef.current?.getHTML?.() ?? editorRef.current?.getData?.() ?? editorRef.current?.innerHTML ?? bodyHtml,
+    };
+    setSnapshotStack(prev => [...prev.slice(-19), snap]); // Giữ tối đa 20 snapshots
+    return snap;
+  }, [title, sapo, bodyHtml]);
 
   // ── Rollback & Branching Tree State ──────────────────────────────────────────
   const [editingMsgId, setEditingMsgId] = useState(null);
@@ -211,13 +238,15 @@ export default function AdminStudio() {
   const [activeDiff, setActiveDiff] = useState(null);
   const [chatMessages, setChatMessages] = useState([{
     id: 1, sender: 'ai',
-    text: 'Trợ lý AI Báo chí TDMU đã sẵn sàng. Bôi đen đoạn văn rồi hỏi AI để sửa đoạn, hoặc gõ câu hỏi toàn bài.',
+    text: 'Trợ lý Biên tập Công đoàn TDMU đã sẵn sàng. Bôi đen đoạn văn để yêu cầu hiệu đính, hoặc gửi yêu cầu tổng hợp bài viết.',
     ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }]);
 
   // ── Files & Photos ────────────────────────────────────────────────────────────
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [eventPhotos, setEventPhotos] = useState([]); // [{url, caption, isFeatured}]
+  const featuredPhoto = eventPhotos.find(p => p.isFeatured) || eventPhotos[0];
+  const [activeDossier, setActiveDossier] = useState(null);
 
   // ── Autopilot ─────────────────────────────────────────────────────────────────
   const [autopilotPrompt, setAutopilotPrompt] = useState('');
@@ -239,7 +268,7 @@ export default function AdminStudio() {
     setGeminiKey((gKey || '').trim());
     setGroqKey((qKey || '').trim());
     setSettingsOpen(false);
-    alert('✅ Đã cập nhật cấu hình API Key cho AI Vision & Tòa Soạn thành công!');
+    alert('✅ Đã cập nhật cấu hình API Key cho AI Vision & Biên tập tin bài thành công!');
   };
 
   // ── Drop zone ─────────────────────────────────────────────────────────────────
@@ -253,6 +282,8 @@ export default function AdminStudio() {
   const fileInputRef = useRef(null);
   const folderInputRef = useRef(null);
   const portalIframeRef = useRef(null);
+  const fbFileInputRef = useRef(null);
+  const zaloFileInputRef = useRef(null);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // ACTIVITY LOG
@@ -317,7 +348,7 @@ export default function AdminStudio() {
   useEffect(() => {
     const handleHash = () => {
       const hash = window.location.hash.replace('#', '').trim();
-      const validTabs = ['dashboard', 'articles', 'ai-creator', 'schedule', 'documents', 'templates', 'feedback', 'welfare', 'reports', 'users', 'audits'];
+      const validTabs = ['dashboard', 'articles', 'ai-creator', 'schedule', 'documents', 'templates', 'feedback', 'users', 'audits'];
       if (hash && validTabs.includes(hash)) {
         setActiveNav(hash);
         syncPortalTab(hash);
@@ -361,7 +392,7 @@ export default function AdminStudio() {
         const payload = {
           title: title.trim() || 'Bản Thảo Chưa Đặt Tên',
           summary: sapo, content: editorRef.current?.innerHTML || bodyHtml,
-          status: 'draft', author: 'TS. Lê Thị Kim Út', image: featuredPhoto?.url || ''
+          status: 'draft', author: 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một', image: featuredPhoto?.url || ''
         };
         if (activeArticleId) {
           await fetch(`/api/articles/${activeArticleId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -409,7 +440,7 @@ export default function AdminStudio() {
       {
         id: Date.now(),
         sender: 'ai',
-        text: 'Trợ lý AI sẵn sàng hỗ trợ. Bạn có thể nạp hồ sơ tư liệu hoặc nhập yêu cầu viết bài mới!',
+        text: 'Trợ lý Biên tập sẵn sàng hỗ trợ. Quý Thầy/Cô có thể nạp hồ sơ tư liệu hoặc nhập yêu cầu biên tập tin bài!',
         ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
     ]);
@@ -431,7 +462,18 @@ export default function AdminStudio() {
   const switchDraft = (d) => {
     setTitle(d.title || ''); setSapo(d.summary || ''); setBodyHtml(d.content || '');
     setActiveArticleId(d.id); setSelectedText(''); setActiveDiff(null);
-    if (editorRef.current) editorRef.current.innerHTML = d.content || '';
+    if (d.packageData?.facebook?.caption) {
+      setFbCaption(d.packageData.facebook.caption);
+    } else if (d.title) {
+      setFbCaption(`${d.title}\n\n${d.summary || ''}\n\n#CongDoanTDMU #TDMU`);
+    }
+    if (d.packageData?.zalo?.message) {
+      setZaloText(d.packageData.zalo.message);
+    }
+    if (editorRef.current) {
+      if (editorRef.current.setData) editorRef.current.setData(d.content || '');
+      else editorRef.current.innerHTML = d.content || '';
+    }
   };
 
   const deleteDraft = async (id, e) => {
@@ -535,7 +577,7 @@ export default function AdminStudio() {
       const res = await fetch('/api/articles/export/word', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, sapo, bodyHtml: currentHtml, author: 'TS. Lê Thị Kim Út' })
+        body: JSON.stringify({ title, sapo, bodyHtml: currentHtml, author: 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một' })
       });
       if (!res.ok) throw new Error('Không thể xuất tệp Word');
       const blob = await res.blob();
@@ -558,7 +600,7 @@ export default function AdminStudio() {
       const res = await fetch('/api/articles/export/pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, sapo, bodyHtml: currentHtml, author: 'TS. Lê Thị Kim Út' })
+        body: JSON.stringify({ title, sapo, bodyHtml: currentHtml, author: 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một' })
       });
       if (!res.ok) throw new Error('Không thể xuất tệp PDF');
       const blob = await res.blob();
@@ -657,7 +699,8 @@ export default function AdminStudio() {
               } : m));
 
               // Tác động trực tiếp vào Canvas hoặc giao diện dựa trên kết quả Tool
-              if (ev.result) {
+              if (ev.result && ev.result.action) {
+                pushSnapshot(`AI Copilot: ${ev.result.action}`, 'gemini');
                 if (ev.result.action === 'replace_selection' && ev.result.revisedText) {
                   let applied = false;
                   let cleanText = (ev.result.revisedText || '').trim();
@@ -854,6 +897,99 @@ export default function AdminStudio() {
     if (snap.fbCaption !== undefined) setFbCaption(snap.fbCaption);
     if (snap.zaloText !== undefined) setZaloText(snap.zaloText);
   };
+
+  // Cập nhật restoreArticleSnapshot để tương thích TiptapEditor (getHTML/setHTML)
+  const restoreEditorHTML = (html) => {
+    if (!html) return;
+    setBodyHtml(html);
+    if (editorRef.current) {
+      // Tiptap: dùng setHTML
+      if (typeof editorRef.current.setHTML === 'function') editorRef.current.setHTML(html);
+      // CKEditor fallback: dùng setData
+      else if (typeof editorRef.current.setData === 'function') editorRef.current.setData(html);
+      // Plain fallback
+      else editorRef.current.innerHTML = html;
+    }
+  };
+
+  // ── Rollback từ Snapshot Stack (nút Hoàn tác toàn cầu) ──────────────────────
+  const rollbackFromStack = useCallback(() => {
+    if (snapshotStack.length === 0) return;
+    const prev = snapshotStack[snapshotStack.length - 1];
+    setSnapshotStack(s => s.slice(0, -1));
+    // Restore
+    if (prev.title !== undefined) {
+      setTitle(prev.title);
+      if (titleRef.current) { titleRef.current.value = prev.title; titleRef.current.style.height = 'auto'; titleRef.current.style.height = `${Math.max(54, titleRef.current.scrollHeight)}px`; }
+    }
+    if (prev.sapo !== undefined) {
+      setSapo(prev.sapo);
+      if (sapoRef.current) { sapoRef.current.value = prev.sapo; sapoRef.current.style.height = 'auto'; sapoRef.current.style.height = `${Math.max(68, sapoRef.current.scrollHeight)}px`; }
+    }
+    if (prev.bodyHtml !== undefined) restoreEditorHTML(prev.bodyHtml);
+    const byLabel = { groq: '⚡ Groq', gemini: '🧠 Gemini', user: '✏️ Bạn', autopilot: '🤖 Autopilot' }[prev.by] || prev.by;
+    setRollbackNotification(`↩️ Đã hoàn tác về "${prev.label}" (${byLabel} · ${prev.ts})`);
+    setTimeout(() => setRollbackNotification(''), 4000);
+    log(`↩️ Hoàn tác về: ${prev.label}`, 'done');
+  }, [snapshotStack, log]);
+
+  // ── AI Inline Edit (Bubble Menu → Groq qwen3.8-27b) ─────────────────────────
+  const handleAiInlineEdit = useCallback(async (selectedText, instruction) => {
+    if (!selectedText?.trim() || !instruction?.trim()) return;
+    setAiInlineLoading(true);
+
+    // Capture snapshot TRƯỚC khi sửa
+    pushSnapshot(`Sửa tại chỗ: "${selectedText.slice(0, 30)}..."`, 'groq');
+
+    try {
+      const res = await fetch('/api/ai/inline-edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          selectedText,
+          instruction,
+          action: 'rewrite',
+          fullContext: editorRef.current?.getHTML?.() ?? editorRef.current?.getData?.() ?? bodyHtml,
+          apiKey: groqKey || undefined,
+          preferGroq: true,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Lỗi server');
+
+      const rewritten = (data.rewrittenText || data.result || '').trim();
+      if (!rewritten) throw new Error('AI không trả về kết quả');
+
+      // Apply vào đúng chỗ selection của CKEditor
+      let applied = false;
+      if (editorRef.current?.replaceSelection) {
+        applied = editorRef.current.replaceSelection(rewritten);
+      }
+      if (!applied) {
+        // Fallback: thay thế chuỗi trên HTML
+        const currentHtml = editorRef.current?.getHTML?.() ?? editorRef.current?.getData?.() ?? bodyHtml;
+        if (currentHtml.includes(selectedText)) {
+          const newHtml = currentHtml.replace(selectedText, rewritten);
+          restoreEditorHTML(newHtml);
+        }
+      }
+      setTimeout(() => {
+        const newHtml = editorRef.current?.getHTML?.() ?? editorRef.current?.getData?.() ?? '';
+        if (newHtml) setBodyHtml(newHtml);
+      }, 50);
+      clearSelection();
+      log(`✨ Groq Qwen sửa tại chỗ: "${selectedText.slice(0, 30)}..."`, 'done');
+      showRollbackToast('✨ Đã sửa đoạn văn bản thành công!');
+    } catch (err) {
+      // Rollback nếu lỗi
+      setSnapshotStack(s => s.slice(0, -1));
+      setRollbackNotification(`❌ Lỗi inline edit: ${err.message}`);
+      setTimeout(() => setRollbackNotification(''), 3000);
+      log(`❌ Inline edit thất bại: ${err.message}`, 'error');
+    } finally {
+      setAiInlineLoading(false);
+    }
+  }, [bodyHtml, groqKey, pushSnapshot, log, clearSelection]);
 
   const runAi = async (overridePrompt = null) => {
     const prompt = (overridePrompt || aiPrompt).trim();
@@ -1210,7 +1346,28 @@ export default function AdminStudio() {
           isAnalyzingVision: true
         });
       } else {
-        newFileObjs.push({ name: f.name, size: (f.size / 1024).toFixed(1) + ' KB', type: f.type || 'document' });
+        let extractedText = f.extractedText || '';
+        if (!extractedText) {
+          try {
+            const b64 = await readAsDataURL(f);
+            const pRes = await fetch('/api/documents/parse-document', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ fileBase64: b64, fileName: f.name })
+            }).then(r => r.json());
+            if (pRes.success && pRes.text) {
+              extractedText = pRes.text;
+            }
+          } catch (pErr) {
+            console.warn('[Parse document error for ' + f.name + ']:', pErr);
+          }
+        }
+        newFileObjs.push({
+          name: f.name,
+          size: (f.size / 1024).toFixed(1) + ' KB',
+          type: f.type || 'document',
+          text: extractedText
+        });
       }
     }
     setAttachedFiles(prev => {
@@ -1280,39 +1437,6 @@ export default function AdminStudio() {
       if (files.length > 0) { await processFiles(files, true); return; }
     }
     if (e.dataTransfer?.files) await processFiles(e.dataTransfer.files, true);
-  };
-
-  const loadDemo = async () => {
-    setChatMessages(p => [
-      ...p,
-      {
-        id: Date.now(),
-        sender: 'ai',
-        text: '⏳ Đang nạp bộ tư liệu sự kiện demo Tinbaiviet từ máy chủ...',
-        ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }
-    ]);
-    try {
-      const res = await fetch('/api/documents/demo-tinbaiviet').then(r => r.json());
-      if (!res.success || !res.files?.length) throw new Error(res.error || 'Không tìm thấy demo');
-      const convertedFiles = res.files.map(f => {
-        const bytes = atob(f.base64);
-        const arr = new Uint8Array(bytes.length);
-        for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
-        return new File([arr], f.name, { type: f.type });
-      });
-      await processFiles(convertedFiles, false);
-    } catch (err) {
-      setChatMessages(p => [
-        ...p,
-        {
-          id: Date.now(),
-          sender: 'ai',
-          text: '❌ Lỗi nạp demo: ' + err.message,
-          ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ]);
-    }
   };
 
   const insertPhoto = (url, caption = '') => {
@@ -1390,6 +1514,7 @@ export default function AdminStudio() {
       alert('Vui lòng nạp hồ sơ tư liệu hoặc nhập yêu cầu chỉ đạo trong ô chat!');
       return;
     }
+    pushSnapshot(`Trước khi chạy Autopilot: "${(promptToUse || 'Chấp bút').slice(0, 30)}..."`, 'autopilot');
     setAutopilotLoading(true);
     setAiPrompt('');
 
@@ -1400,7 +1525,7 @@ export default function AdminStudio() {
         id: progressMsgId,
         sender: 'ai',
         type: 'progress',
-        title: '⚡ Tòa Soạn AI: Đang lập bài báo tự động',
+        title: '⚡ Trợ lý AI: Đang soạn thảo bài viết tự động',
         steps: [
           { id: 'read', text: 'Đang đọc hiểu & bóc tách toàn bộ tư liệu nguồn...', status: 'running' }
         ],
@@ -1465,7 +1590,8 @@ export default function AdminStudio() {
                 if (extSapo) setSapo(extSapo);
               }
 
-              // Trình soạn thảo chứa TOÀN BỘ bài báo chi tiết chuẩn phong cách báo chí
+              // Cập nhật state bài viết đồng bộ liên tục
+              setBodyHtml(webHtml);
               if (editorRef.current) {
                 if (editorRef.current.setData) editorRef.current.setData(webHtml);
                 else editorRef.current.innerHTML = webHtml;
@@ -1653,12 +1779,11 @@ export default function AdminStudio() {
 
   // ═══════════════════════════════════════════════════════════════════════════
   // METRICS
-  // ═══════════════════════════════════════════════════════════════════════════
-  const bodyText = editorRef.current ? editorRef.current.innerText.trim() : '';
+  const bodyText = (editorRef.current?.innerText || (bodyHtml ? bodyHtml.replace(/<[^>]*>/g, ' ') : '')).trim();
   const wordCount = bodyText ? bodyText.split(/\s+/).filter(Boolean).length : 0;
   const readTime = Math.max(1, Math.ceil(wordCount / 200));
   const effectiveRightWidth = rightPinned ? rightWidth : (rightHovered ? Math.max(340, rightWidth) : 48);
-  const featuredPhoto = eventPhotos.find(p => p.isFeatured) || eventPhotos[0];
+  // featuredPhoto is computed above at line 250
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PUBLISH
@@ -1667,7 +1792,7 @@ export default function AdminStudio() {
     if (!title && !bodyHtml) { alert('Vui lòng nhập nội dung!'); return; }
     setIsSaving(true);
     try {
-      const payload = { title: title || 'Bản Thảo Chưa Đặt Tên', summary: sapo, content: editorRef.current?.innerHTML || bodyHtml, status: 'draft', author: 'TS. Lê Thị Kim Út', image: featuredPhoto?.url || '' };
+      const payload = { title: title || 'Bản Thảo Chưa Đặt Tên', summary: sapo, content: editorRef.current?.innerHTML || bodyHtml, status: 'draft', author: 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một', image: featuredPhoto?.url || '' };
       let res;
       if (activeArticleId) {
         res = await fetch(`/api/articles/${activeArticleId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(r => r.json());
@@ -1703,9 +1828,27 @@ export default function AdminStudio() {
         const defaultFb = res.data.facebook?.find(a => a.isDefault)?.id || res.data.facebook?.[0]?.id || 'fb-default';
         setSelectedZaloAccId(prev => (res.data.zalo?.some(a => a.id === prev) ? prev : defaultZalo));
         setSelectedFbAccId(prev => (res.data.facebook?.some(a => a.id === prev) ? prev : defaultFb));
+        const activeZalo = res.data.zalo?.find(a => a.id === (res.data.zalo?.some(a => a.id === selectedZaloAccId) ? selectedZaloAccId : defaultZalo));
+        if (activeZalo?.recipientPhone) {
+          setRecipientPhoneInput(activeZalo.recipientPhone);
+        }
+        if (activeZalo?.senderPhone) {
+          setSenderPhoneInput(activeZalo.senderPhone);
+        }
       }
     } catch {}
-  }, []);
+  }, [selectedZaloAccId]);
+
+  const handleSelectZaloAcc = (id) => {
+    setSelectedZaloAccId(id);
+    const found = channelAccounts.zalo?.find(a => a.id === id);
+    if (found?.recipientPhone) {
+      setRecipientPhoneInput(found.recipientPhone);
+    }
+    if (found?.senderPhone) {
+      setSenderPhoneInput(found.senderPhone);
+    }
+  };
 
   useEffect(() => {
     fetchSchedulesList();
@@ -1716,14 +1859,15 @@ export default function AdminStudio() {
     setEditingChannel(channel);
     setEditingAccountData({
       id: '',
-      name: channel === 'zalo' ? 'Zalo của tôi (Cá nhân/Tester)' : 'Trang Facebook của tôi',
-      type: channel === 'zalo' ? 'personal' : 'fanpage',
+      name: channel === 'zalo' ? 'Zalo Cá Nhân (Gửi giữa 2 SĐT)' : 'Trang Facebook của tôi',
+      type: 'personal',
       oaId: '',
       accessToken: '',
       pageId: '',
       pageName: '',
       oaName: '',
-      recipientPhone: '',
+      senderPhone: '0912345678',
+      recipientPhone: '0386543483',
       recipientUserId: '',
       isDefault: false
     });
@@ -1732,20 +1876,21 @@ export default function AdminStudio() {
 
   const openEditAccountModal = (channel, accId) => {
     const list = channel === 'facebook' ? channelAccounts.facebook : channelAccounts.zalo;
-    const found = list?.find(a => a.id === accId) || {};
+    const found = list?.find(a => a.id === accId) || list?.[0] || {};
     setEditingChannel(channel);
     setEditingAccountData({
-      id: found.id || '',
-      name: found.name || (channel === 'zalo' ? 'Zalo của tôi' : 'Trang của tôi'),
-      type: found.type || 'personal',
+      id: found.id || accId || (channel === 'facebook' ? 'fb-default' : 'zalo-default'),
+      name: found.name || (channel === 'zalo' ? 'Zalo Cá Nhân (Gửi giữa 2 SĐT)' : 'Fanpage Công đoàn (Mặc định)'),
+      type: found.type || (channel === 'facebook' ? 'page' : 'personal'),
       oaId: found.oaId || '',
       accessToken: found.accessToken || '',
-      pageId: found.pageId || '',
-      pageName: found.pageName || '',
+      pageId: found.pageId || (channel === 'facebook' ? '1417956021396650' : ''),
+      pageName: found.pageName || (channel === 'facebook' ? 'Công đoàn' : ''),
       oaName: found.oaName || '',
-      recipientPhone: found.recipientPhone || '',
+      senderPhone: found.senderPhone || senderPhoneInput || '0912345678',
+      recipientPhone: found.recipientPhone || recipientPhoneInput || '0386543483',
       recipientUserId: found.recipientUserId || '',
-      isDefault: Boolean(found.isDefault)
+      isDefault: Boolean(found.isDefault !== undefined ? found.isDefault : true)
     });
     setAccountModalOpen(true);
   };
@@ -1755,13 +1900,22 @@ export default function AdminStudio() {
       alert('Vui lòng nhập tên tài khoản hiển thị!');
       return;
     }
+    const cleanAccount = {
+      ...editingAccountData,
+      name: editingAccountData.name.trim(),
+      accessToken: (editingAccountData.accessToken || '').trim(),
+      pageId: (editingAccountData.pageId || '').trim(),
+      oaId: (editingAccountData.oaId || '').trim(),
+      senderPhone: (editingAccountData.senderPhone || '').trim(),
+      recipientPhone: (editingAccountData.recipientPhone || '').trim()
+    };
     try {
       const res = await fetch('/api/publish/accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           channel: editingChannel,
-          account: editingAccountData
+          account: cleanAccount
         })
       }).then(r => r.json());
 
@@ -1791,64 +1945,252 @@ export default function AdminStudio() {
     }
   };
 
-  const testSendToMyZalo = async (accId) => {
-    const currentAcc = channelAccounts.zalo?.find(a => a.id === accId) || {};
+  const handleQuickSavePhone = async () => {
+    const phoneToSave = recipientPhoneInput.trim();
+    const sPhone = senderPhoneInput.trim();
+    if (!phoneToSave) {
+      alert('Vui lòng nhập số điện thoại Zalo của bạn!');
+      return;
+    }
+    const currentAcc = channelAccounts.zalo?.find(a => a.id === selectedZaloAccId) || channelAccounts.zalo?.[0] || {};
+    const updated = { 
+      ...currentAcc, 
+      recipientPhone: phoneToSave,
+      senderPhone: sPhone || '0912345678',
+      type: 'personal',
+      name: `Zalo Cá Nhân (${sPhone || 'Biên tập'})`
+    };
+    try {
+      const res = await fetch('/api/publish/accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel: 'zalo', account: updated })
+      }).then(r => r.json());
+      if (res.success) {
+        showRollbackToast(`✅ Đã lưu SĐT gửi (${sPhone}) & SĐT nhận (${phoneToSave})`);
+        await fetchChannelAccounts();
+      }
+    } catch (e) {
+      alert('Lỗi lưu số điện thoại: ' + e.message);
+    }
+  };
+
+  const handleFbPhotoUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setFbSelectedPhotos(prev => [...prev, ev.target.result]);
+      };
+      reader.readAsDataURL(file);
+    });
+    showRollbackToast(`Đã thêm ${files.length} ảnh vào bài Facebook`);
+    e.target.value = '';
+  };
+
+  const handleZaloPhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setZaloPhoto(ev.target.result);
+      showRollbackToast('Đã nạp ảnh đính kèm cho tin Zalo');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  // ── Logic Điều Khiển Bot Zalo Đẩy Tin Vào Nhóm ──────────────────────────────
+  const fetchZaloBotStatus = async () => {
+    try {
+      const res = await fetch('/api/publish/zalo/bot-status');
+      const json = await res.json();
+      if (json.success && json.data) {
+        setZaloBotStatus(json.data);
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    fetchZaloBotStatus();
+  }, []);
+
+  // Bắt đầu tạo QR quét kết nối Bot Zalo
+  const startBotQrLogin = async () => {
+    setZaloQrModalOpen(true);
+    setZaloQrStatus('generating');
+    setZaloQrMessage('Đang khởi tạo mã QR từ máy chủ Zalo...');
+    setZaloQrImage('');
+
+    try {
+      const res = await fetch('/api/publish/zalo/bot-login-qr', { method: 'POST' });
+      const json = await res.json();
+      if (json.success && json.data) {
+        if (json.data.status === 'already_connected') {
+          showRollbackToast('Bot Zalo đã được kết nối từ trước!');
+          setZaloQrModalOpen(false);
+          fetchZaloBotStatus();
+          return;
+        }
+        if (json.data.qrImage) {
+          setZaloQrImage(json.data.qrImage);
+          setZaloQrStatus('waiting');
+          setZaloQrMessage('Vui lòng mở Zalo trên điện thoại, quét mã QR và bấm "Xác nhận đăng nhập"');
+        }
+      }
+
+      // Polling kiểm tra trạng thái mỗi 2 giây
+      const pollTimer = setInterval(async () => {
+        try {
+          const checkRes = await fetch('/api/publish/zalo/bot-status');
+          const checkJson = await checkRes.json();
+          if (checkJson.success && checkJson.data?.isConnected) {
+            clearInterval(pollTimer);
+            setZaloBotStatus(checkJson.data);
+            setZaloQrStatus('success');
+            setZaloQrMessage(`🎉 Kết nối thành công với tài khoản: ${checkJson.data.botInfo?.name || 'Bot Zalo'}!`);
+            setTimeout(() => {
+              setZaloQrModalOpen(false);
+              showRollbackToast(`✅ Đã kết nối Bot: ${checkJson.data.botInfo?.name}`);
+            }, 1500);
+          } else if (checkJson.data?.qrState?.status === 'scanned') {
+            setZaloQrStatus('scanned');
+            setZaloQrMessage(`📱 Đã quét bởi [${checkJson.data.qrState.displayName || 'Bạn'}]. Vui lòng bấm Xác nhận trên điện thoại!`);
+          } else if (checkJson.data?.qrState?.status === 'expired') {
+            setZaloQrStatus('expired');
+            setZaloQrMessage('Mã QR đã hết hạn, vui lòng bấm "Tạo lại mã"!');
+          } else if (checkJson.data?.qrState?.status === 'declined') {
+            setZaloQrStatus('declined');
+            setZaloQrMessage('Đăng nhập bị từ chối trên điện thoại.');
+          } else if (checkJson.data?.qrState?.status === 'error') {
+            setZaloQrStatus('error');
+            setZaloQrMessage(checkJson.data.qrState.message || 'Lỗi kết nối Zalo');
+          }
+        } catch {}
+      }, 2000);
+
+      // Tự hủy polling sau 90 giây
+      setTimeout(() => clearInterval(pollTimer), 90000);
+    } catch (err) {
+      setZaloQrStatus('error');
+      setZaloQrMessage('Lỗi kết nối tới dịch vụ Bot: ' + err.message);
+    }
+  };
+
+  const logoutZaloBot = async () => {
+    if (!confirm('Bạn có chắc chắn muốn ngắt kết nối Bot Zalo này không?')) return;
+    try {
+      await fetch('/api/publish/zalo/bot-logout', { method: 'POST' });
+      setZaloBotStatus({ isConnected: false, botInfo: null });
+      showRollbackToast('Đã ngắt kết nối Bot Zalo');
+    } catch {}
+  };
+
+  const sendZaloMessage = async () => {
+    const fullContent = (zaloText || `[CÔNG ĐOÀN TDMU] ${title || 'Bản tin'}\n\n${sapo || ''}`).trim();
+    const linkUrl = getPublicArticleUrl();
+    const finalMsg = `${fullContent}\n\n🔗 Xem chi tiết: ${linkUrl}`;
+
+    // NẾU LÀ CHẾ ĐỘ GỬI VÀO NHÓM ZALO
+    if (zaloTargetMode === 'group') {
+      const targetLink = zaloGroupLink.trim() || 'https://zalo.me/g/wdhpzaoap7wkxb074exv';
+
+      // NẾU BOT ĐÃ KẾT NỐI -> BẮN TIN TỰ ĐỘNG 100% NGẦM
+      if (zaloBotStatus.isConnected) {
+        setIsPublishingNow(true);
+        try {
+          const res = await fetch('/api/publish/zalo/send-group', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              groupLink: targetLink,
+              content: finalMsg,
+              imageUrl: zaloPhoto || '',
+              articleTitle: title,
+              articleId: activeArticleId
+            })
+          });
+          const json = await res.json();
+          if (json.success) {
+            alert(`🎉 BOT ĐÃ TỰ ĐỘNG ĐẨY TIN VÀO NHÓM ZALO THÀNH CÔNG 100%!\n\n🤖 Tài khoản Bot: "${json.data?.botName || zaloBotStatus.botInfo?.name}"\n👥 Nhóm nhận: ${targetLink}\n⏰ Thời gian: ${new Date().toLocaleTimeString('vi-VN')}`);
+            showRollbackToast('🚀 Đã gửi bài viết vào Nhóm Zalo qua Bot tự động!');
+            return;
+          } else {
+            throw new Error(json.error || 'Không thể gửi tin');
+          }
+        } catch (err) {
+          alert(`⚠️ Bot chưa gửi được vào nhóm: ${err.message}\n\nHệ thống sẽ chuyển sang chế độ mở nhóm 1-chạm giúp bạn gửi ngay!`);
+        } finally {
+          setIsPublishingNow(false);
+        }
+      }
+
+      // NẾU BOT CHƯA KẾT NỐI HOẶC GỬI DỰ PHÒNG 1-CHẠM:
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try { await navigator.clipboard.writeText(finalMsg); } catch {}
+      }
+      showRollbackToast(`📋 Đã copy nội dung gửi vào Nhóm Zalo!`);
+      window.open(targetLink, '_blank');
+      alert(`🎉 ĐÃ CHUẨN BỊ GỬI VÀO NHÓM ZALO!\n\n1. Toàn bộ nội dung bài viết và đường link đã được tự động copy vào bộ nhớ đệm (Clipboard).\n2. Nhóm Zalo đang được mở trên trình duyệt/ứng dụng của bạn.\n\n👉 Bạn chỉ cần nhấn tổ hợp phím "Ctrl + V" (Dán) rồi bấm "Enter" là tin nhắn được gửi ngay vào nhóm!\n\n💡 MẸO: Bạn có thể bấm nút "Quét Mã QR Kết Nối Bot" để từ lần sau Bot tự động gửi ngầm 100% không cần làm thủ công.`);
+      return;
+    }
+
+    // NẾU LÀ CHẾ ĐỘ CÁ NHÂN P2P
+    const sPhone = senderPhoneInput.trim() || '0912345678';
+    const rPhone = recipientPhoneInput.trim() || '0386543483';
+    const phoneClean = rPhone.replace(/^0/, '84');
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try { await navigator.clipboard.writeText(finalMsg); } catch {}
+    }
+    showRollbackToast(`📋 Đã copy nội dung gửi tới ${rPhone}!`);
+
     setIsPublishingNow(true);
     try {
-      const res = await fetch('/api/publish/zalo', {
+      await fetch('/api/publish/zalo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          content: zaloText || `[TEST TIN NHẮN TỪ CÔNG ĐOÀN TDMU]\n${title || 'Bản tin thử nghiệm'}\n\n${sapo || 'Nội dung thông báo thử nghiệm.'}`,
-          title: title || 'Bản tin thử nghiệm',
+          content: finalMsg,
+          title: title || 'Bản tin Zalo',
           articleId: activeArticleId || 1,
-          accountId: accId,
-          recipientPhone: currentAcc.recipientPhone || '',
-          recipientUserId: currentAcc.recipientUserId || ''
+          recipientPhone: rPhone,
+          senderPhone: sPhone,
+          imageUrl: zaloPhoto || ''
         })
-      }).then(r => r.json());
-
-      if (res.success) {
-        let msg = `🎉 ${res.message}\n\n• Tài khoản: ${res.data?.accountName || currentAcc.name}`;
-        if (res.data?.recipientPhone) msg += `\n• Số điện thoại nhận: ${res.data.recipientPhone}`;
-        if (res.data?.mode === 'sandbox_simulation') {
-          msg += `\n\n💡 Bạn có thể bấm nút "Mở Zalo Gửi 1-Click" để gửi trực tiếp nội dung sang Zalo của bạn ngay!`;
-        }
-        alert(msg);
-      } else {
-        alert('Lỗi gửi tin: ' + (res.error || 'Không xác định'));
-      }
+      });
     } catch (e) {
-      alert('Lỗi kết nối: ' + e.message);
+      console.warn('Lỗi ghi nhận publish zalo:', e);
     } finally {
       setIsPublishingNow(false);
     }
+
+    window.open(`https://zalo.me/${phoneClean}`, '_blank');
+    alert(`🎉 ĐÃ CHUẨN BỊ GỬI TIN TỪ SĐT [${sPhone}] SANG [${rPhone}]!\n\n1. Toàn bộ nội dung tin nhắn và liên kết bài viết đã được tự động copy vào bộ nhớ đệm (Clipboard).\n2. Cửa sổ chat Zalo với số ${rPhone} đang được mở.\n\n👉 Bạn chỉ cần nhấn tổ hợp phím "Ctrl + V" (Dán) rồi bấm "Enter" là tin nhắn được gửi thật 100%!`);
   };
 
-  const openDirectZaloShare = () => {
-    const targetUrl = activeArticleId ? `http://localhost:3000/baiviet?id=${activeArticleId}` : 'http://localhost:3000';
-    const currentAcc = channelAccounts.zalo?.find(a => a.id === selectedZaloAccId);
-    
-    // Nếu có số điện thoại cá nhân, mở chat Zalo trực tiếp tới số đó
-    if (currentAcc?.recipientPhone) {
-      const phoneClean = currentAcc.recipientPhone.replace(/^0/, '84');
-      window.open(`https://zalo.me/${phoneClean}`, '_blank');
-    } else {
-      window.open(`https://zalo.me/share?url=${encodeURIComponent(targetUrl)}&title=${encodeURIComponent(title || 'Bản tin Công đoàn TDMU')}`, '_blank');
-    }
-  };
+  const sendZaloP2P = sendZaloMessage;
+
+  const testSendToMyZalo = sendZaloP2P;
+  const openDirectZaloShare = sendZaloP2P;
 
   const publishToFacebookDirect = async () => {
     if (!title.trim() && !fbCaption.trim()) { alert('Vui lòng nhập tiêu đề hoặc caption Facebook!'); return; }
     setIsPublishingNow(true);
     try {
       const currentAcc = channelAccounts.facebook?.find(a => a.id === selectedFbAccId) || {};
+      const allPhotos = fbSelectedPhotos.length > 0 
+        ? fbSelectedPhotos 
+        : (eventPhotos.map(p => p.url).filter(Boolean));
+
       const res = await fetch('/api/publish/facebook', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           caption: fbCaption || `${title}\n\n${sapo}\n\n#CongDoanTDMU #TDMU`,
-          imageUrl: fbSelectedPhotos[0] || (eventPhotos[0]?.url) || '',
+          imageUrl: allPhotos[0] || '',
+          imageUrls: allPhotos,
           articleTitle: title,
           articleId: activeArticleId,
           accountId: selectedFbAccId
@@ -1879,9 +2221,9 @@ export default function AdminStudio() {
           content: zaloText || `[BẢN TIN CÔNG ĐOÀN TDMU]\n${title}\n\n${sapo}`,
           title: title,
           articleId: activeArticleId,
-          imageUrl: (eventPhotos[0]?.url) || '',
+          imageUrl: zaloPhoto || (eventPhotos[0]?.url) || '',
           accountId: selectedZaloAccId,
-          recipientPhone: currentAcc.recipientPhone || '',
+          recipientPhone: recipientPhoneInput.trim() || currentAcc.recipientPhone || '',
           recipientUserId: currentAcc.recipientUserId || ''
         })
       }).then(r => r.json());
@@ -1907,6 +2249,9 @@ export default function AdminStudio() {
         body: JSON.stringify({ channel: ch, accountId: accId })
       }).then(r => r.json());
       alert(res.message || (res.error ? 'Lỗi: ' + res.error : 'Kết nối thành công!'));
+      if (res.success) {
+        await fetchChannelAccounts();
+      }
     } catch (e) {
       alert('Lỗi kiểm tra kết nối: ' + e.message);
     }
@@ -1996,7 +2341,7 @@ export default function AdminStudio() {
             summary: sapo,
             content: currentHtml,
             status: 'draft',
-            author: 'TS. Lê Thị Kim Út'
+            author: 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một'
           })
         }).then(r => r.json());
         if (createRes.success && createRes.data?.id) {
@@ -2005,6 +2350,10 @@ export default function AdminStudio() {
         }
       }
 
+      const allFbPhotos = fbSelectedPhotos.length > 0 
+        ? fbSelectedPhotos 
+        : (eventPhotos.map(p => p.url).filter(Boolean));
+
       const res = await fetch('/api/publish/now', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2012,7 +2361,11 @@ export default function AdminStudio() {
           articleId: artId,
           channels: chs,
           web: { title, summary: sapo, content: currentHtml, image: (eventPhotos[0]?.url) || 'images/banner.jpg' },
-          facebook: { caption: fbCaption || `${title}\n\n${sapo}\n\n#CongDoanTDMU #TDMU`, imageUrl: fbSelectedPhotos[0] || (eventPhotos[0]?.url) || '' },
+          facebook: { 
+            caption: fbCaption || `${title}\n\n${sapo}\n\n#CongDoanTDMU #TDMU`, 
+            imageUrl: allFbPhotos[0] || (eventPhotos[0]?.url) || '',
+            imageUrls: allFbPhotos
+          },
           zalo: { content: zaloText || `[BẢN TIN CÔNG ĐOÀN TDMU]\n${title}\n\n${sapo}` },
           facebookAccountId: selectedFbAccId,
           zaloAccountId: selectedZaloAccId
@@ -2044,6 +2397,22 @@ export default function AdminStudio() {
   return (
     <div style={{ background: '#F8FAFC', height: '100vh', display: 'flex', overflow: 'hidden', color: '#0F172A', fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
       <style>{`
+        /* VÔ HIỆU HÓA HOÀN TOÀN GẠCH ĐỎ CHÍNH TẢ TRÌNH DUYỆT (SPELLCHECK OFF) */
+        textarea, input, [contenteditable], .ck-editor__editable, .ck-editor__editable * {
+          spellcheck: false !important;
+          -webkit-spellcheck: false !important;
+        }
+        ::spelling-error {
+          display: none !important;
+          text-decoration: none !important;
+          -webkit-text-decoration: none !important;
+        }
+        ::grammar-error {
+          display: none !important;
+          text-decoration: none !important;
+          -webkit-text-decoration: none !important;
+        }
+
         .nav-item { display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:#CBD5E1;font-size:13px;font-weight:600;transition:all 0.2s;border:1px solid transparent;cursor:pointer;position:relative;white-space:nowrap; }
         .nav-item:hover { background:rgba(255,255,255,0.12)!important;color:#FFF!important;transform:translateX(4px); }
         .nav-item.active { background:rgba(2,132,199,0.25)!important;color:#FFF!important;border-color:rgba(56,189,248,0.5)!important;font-weight:700!important;box-shadow:0 2px 10px rgba(0,40,85,0.25); }
@@ -2130,7 +2499,7 @@ export default function AdminStudio() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', color: '#64748B' }}>
               <span>Trang Quản Trị</span><span>/</span>
               <strong style={{ color: '#002855' }}>
-                {navTitles[activeNav] || 'Phòng Biên Tập Đa Kênh'}
+                {navTitles[activeNav] || 'Soạn Thảo & Biên Tập'}
               </strong>
             </div>
             {activeNav === 'ai-creator' && (
@@ -2168,9 +2537,9 @@ export default function AdminStudio() {
                   onClick={() => handleNavClick('ai-creator')}
                   className="action-btn"
                   style={{ background: 'linear-gradient(135deg,#002855,#2563EB)', color: 'white', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}
-                  title="Mở Phòng Biên Tập Đa Kênh AI"
+                  title="Mở Soạn Thảo & Biên Tập Tin Bài AI"
                 >
-                  <i className="fa-solid fa-wand-magic-sparkles" /> Phòng Biên Tập AI
+                  <i className="fa-solid fa-wand-magic-sparkles" /> Soạn Thảo Tin Bài AI
                 </button>
                 <button onClick={() => setSettingsOpen(true)} className="action-btn" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }} title="Cài đặt API Key cho Gemini Vision và Groq">
                   ⚙️ Cài Đặt AI
@@ -2206,7 +2575,7 @@ export default function AdminStudio() {
                       id={`draft-item-${d.id}`}
                       data-draft-id={d.id}
                       onClick={() => switchDraft(d)}
-                      title={`Bản thảo #${d.id} - ${d.title || 'Chưa đặt tên'}\n• Ngày tạo: ${formatDateTime(d.createdAt || d.created_at)}\n• Cập nhật: ${formatDateTime(d.updatedAt || d.updated_at || d.createdAt)}\n• Tác giả: ${d.author || 'TS. Lê Thị Kim Út'}\n• Trạng thái: ${d.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}`}
+                      title={`Bản thảo #${d.id} - ${d.title || 'Chưa đặt tên'}\n• Ngày tạo: ${formatDateTime(d.createdAt || d.created_at)}\n• Cập nhật: ${formatDateTime(d.updatedAt || d.updated_at || d.createdAt)}\n• Tác giả: ${d.author || 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một'}\n• Trạng thái: ${d.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}`}
                       style={{
                         padding: '9px 10px',
                         borderRadius: '6px',
@@ -2242,7 +2611,7 @@ export default function AdminStudio() {
                 {[
                   { id: 'web', label: '📰 Website (Gốc)', cls: 'active-web' },
                   { id: 'fb', label: '📘 Facebook', cls: 'active-fb' },
-                  { id: 'zalo', label: '💬 Zalo OA', cls: 'active-zalo' },
+                  { id: 'zalo', label: '💬 Zalo', cls: 'active-zalo' },
                   { id: 'schedule', label: '⏰ Hẹn Lịch', cls: 'active-sched' }
                 ].map(tab => (
                   <button key={tab.id} onClick={() => setActiveChannel(tab.id)} className={`tab-btn ${activeChannel === tab.id ? tab.cls : ''}`}>{tab.label}</button>
@@ -2265,113 +2634,185 @@ export default function AdminStudio() {
                 {isDraggingOver && (
                   <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(37,99,235,0.15)', border: '3px dashed #2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                     <div style={{ background: 'white', borderRadius: '16px', padding: '24px 40px', fontSize: '18px', fontWeight: '800', color: '#2563EB', boxShadow: '0 10px 30px rgba(0,0,0,0.15)' }}>
-                      📂 Thả tài liệu hoặc ảnh vào đây để nạp vào AI Copilot
+                      📂 Thả tài liệu hoặc ảnh vào đây để nạp vào Trợ lý Biên tập
                     </div>
                   </div>
                 )}
 
-                {/* White Paper Document Canvas */}
-                <div style={{ width: '100%', maxWidth: '880px', minHeight: '100%', height: 'fit-content', background: '#FFF', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid #E2E8F0', padding: '28px 32px 50px', display: 'flex', flexDirection: 'column', gap: '18px', boxSizing: 'border-box' }}>
+                {/* World-Class Editorial Paper Canvas (Medium / Notion / Newsroom Style) */}
+                <div style={{
+                  width: '100%',
+                  maxWidth: '920px',
+                  minHeight: '100%',
+                  height: 'fit-content',
+                  background: '#FFFFFF',
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 25px -4px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04)',
+                  border: '1px solid #E2E8F0',
+                  padding: '36px 44px 60px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  boxSizing: 'border-box'
+                }}>
                   
-                  {/* Field 1: Headline (Title) */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label htmlFor="article-title" style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.6px', color: '#475569', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <i className="fa-solid fa-heading" style={{ color: '#002855' }} /> Tiêu đề bài báo (Headline) <span style={{ color: '#DC2626' }}>*</span>
-                    </label>
-                    <textarea
-                      id="article-title"
-                      ref={titleRef}
-                      value={title}
-                      onChange={e => setTitle(e.target.value)}
-                      onInput={e => {
-                        e.target.style.height = 'auto';
-                        e.target.style.height = `${Math.max(54, e.target.scrollHeight)}px`;
-                      }}
-                      placeholder="Nhập tiêu đề chính luận báo chí trang trọng..."
-                      style={{
-                        width: '100%',
-                        minHeight: '54px',
-                        fontSize: '20px',
-                        fontWeight: '800',
-                        color: '#002855',
-                        border: '1.5px solid #CBD5E1',
-                        borderRadius: '8px',
-                        outline: 'none',
-                        fontFamily: 'inherit',
-                        padding: '12px 16px',
-                        lineHeight: '1.4',
-                        background: '#FFFFFF',
-                        boxSizing: 'border-box',
-                        resize: 'none',
-                        overflowY: 'hidden',
-                        transition: 'border-color 0.2s, box-shadow 0.2s'
-                      }}
-                      onFocus={e => { e.target.style.borderColor = '#2563EB'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.1)'; }}
-                      onBlur={e => { e.target.style.borderColor = '#CBD5E1'; e.target.style.boxShadow = 'none'; }}
-                    />
-                  </div>
+                  {/* Seamless Headline (Title) */}
+                  <textarea
+                    id="article-title"
+                    ref={titleRef}
+                    value={title}
+                    spellCheck={false}
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    autoComplete="off"
+                    onChange={e => setTitle(e.target.value)}
+                    onInput={e => {
+                      e.target.style.height = 'auto';
+                      e.target.style.height = `${Math.max(48, e.target.scrollHeight)}px`;
+                    }}
+                    placeholder="Nhập tiêu đề bài báo..."
+                    style={{
+                      width: '100%',
+                      minHeight: '48px',
+                      fontSize: '26px',
+                      fontWeight: '800',
+                      color: '#002855',
+                      border: 'none',
+                      borderBottom: '1px solid transparent',
+                      outline: 'none',
+                      fontFamily: 'inherit',
+                      padding: '0 0 10px 0',
+                      lineHeight: '1.35',
+                      background: 'transparent',
+                      boxSizing: 'border-box',
+                      resize: 'none',
+                      overflowY: 'hidden',
+                      transition: 'border-color 0.2s',
+                      marginBottom: '14px'
+                    }}
+                    onFocus={e => { e.target.style.borderBottomColor = '#BFDBFE'; }}
+                    onBlur={e => { e.target.style.borderBottomColor = 'transparent'; }}
+                  />
 
-                  {/* Field 2: Sapo (Lead 5W1H) */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label htmlFor="article-sapo" style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.6px', color: '#475569', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <i className="fa-solid fa-quote-left" style={{ color: '#2563EB' }} /> Tóm tắt Sapo (Lead 5W1H)
-                    </label>
+                  {/* Seamless Sapo (Lead Deck) */}
+                  <div style={{
+                    background: '#F8FAFC',
+                    borderLeft: '4px solid #2563EB',
+                    borderRadius: '0 8px 8px 0',
+                    padding: '12px 18px',
+                    marginBottom: '20px',
+                    transition: 'background 0.2s'
+                  }}>
                     <textarea
                       id="article-sapo"
                       ref={sapoRef}
                       value={sapo}
+                      spellCheck={false}
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      autoComplete="off"
                       onChange={e => setSapo(e.target.value)}
                       onInput={e => {
                         e.target.style.height = 'auto';
-                        e.target.style.height = `${Math.max(80, e.target.scrollHeight)}px`;
+                        e.target.style.height = `${Math.max(64, e.target.scrollHeight)}px`;
                       }}
-                      placeholder="Tóm lược thông tin quan trọng: Ai, làm gì, ở đâu, khi nào, vì sao và kết quả trọng tâm..."
+                      placeholder="Đoạn mở đầu Sapo (Lead 5W1H): Tóm lược thông tin quan trọng nhất của sự kiện: Ai, làm gì, ở đâu, khi nào..."
                       style={{
                         width: '100%',
-                        minHeight: '80px',
-                        border: '1.5px solid #CBD5E1',
-                        borderLeft: '4px solid #2563EB',
-                        background: '#F8FAFC',
-                        borderRadius: '4px 8px 8px 4px',
-                        padding: '12px 16px',
-                        fontSize: '14px',
-                        lineHeight: '1.6',
+                        minHeight: '64px',
+                        border: 'none',
+                        background: 'transparent',
+                        fontSize: '15px',
+                        fontStyle: 'italic',
+                        lineHeight: '1.65',
                         color: '#334155',
                         outline: 'none',
                         resize: 'none',
                         overflowY: 'hidden',
                         fontFamily: 'inherit',
                         boxSizing: 'border-box',
-                        transition: 'border-color 0.2s, background 0.2s'
+                        padding: '0'
                       }}
-                      onFocus={e => { e.target.style.background = '#FFFFFF'; e.target.style.borderColor = '#2563EB'; }}
-                      onBlur={e => { e.target.style.background = '#F8FAFC'; e.target.style.borderColor = '#CBD5E1'; }}
                     />
                   </div>
 
-                  {/* Field 3: CKEditor 5 Core Canvas */}
-                  <div id="article-content" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.6px', color: '#475569', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <i className="fa-solid fa-file-lines" style={{ color: '#059669' }} /> Nội dung chi tiết bài viết (CKEditor 5)
-                    </label>
+                  {/* CKEditor 5 Core Canvas */}
+                  <div id="article-content" style={{ display: 'flex', flexDirection: 'column' }}>
                     <CKArticleEditor
                       ref={editorRef}
                       value={bodyHtml}
                       onChange={setBodyHtml}
                       onSelectionChange={(text) => setSelectedText(text)}
+                      onAiInlineEdit={handleAiInlineEdit}
+                      aiLoading={aiInlineLoading}
                       placeholder="Nội dung bài báo viết văn xuôi chính luận, không gạch đầu dòng..."
                     />
                   </div>
+
                 </div>
               </div>
             )}
 
             {/* ── FACEBOOK CHANNEL ────────────────────────────────────────── */}
             {activeChannel === 'fb' && (
-              <div style={{ flex: 1, overflowY: 'auto', padding: '18px 24px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '20px' }}>
-                  {/* Left: Editor */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* 1. Account & Sender Header Bar */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', flexWrap: 'wrap', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '320px' }}>
+                    <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#1877F2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '18px', flexShrink: 0 }}>
+                      <i className="fa-brands fa-facebook-f" />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontSize: '11px', fontWeight: '800', color: '#1E40AF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Tài Khoản Gửi (Fanpage Facebook):
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
+                        <select
+                          value={selectedFbAccId}
+                          onChange={e => setSelectedFbAccId(e.target.value)}
+                          style={{ padding: '5px 8px', borderRadius: '6px', border: '1.5px solid #93C5FD', fontSize: '12px', fontWeight: '700', color: '#0F172A', background: '#FFF', outline: 'none', maxWidth: '240px' }}
+                        >
+                          {(channelAccounts.facebook || []).map(acc => (
+                            <option key={acc.id} value={acc.id}>
+                              {acc.name} {acc.isDefault ? '★ (Mặc định)' : ''} {acc.pageName ? `[${acc.pageName}]` : ''}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => openEditAccountModal('facebook', selectedFbAccId)}
+                          style={{ padding: '5px 9px', borderRadius: '6px', border: '1px solid #93C5FD', background: '#FFF', color: '#1D4ED8', fontSize: '11px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          title="Cấu hình Access Token, Page ID của tài khoản này"
+                        >
+                          ⚙️ Cài đặt Token
+                        </button>
+                        <button
+                          onClick={() => openNewAccountModal('facebook')}
+                          style={{ padding: '5px 9px', borderRadius: '6px', border: 'none', background: '#1877F2', color: 'white', fontSize: '11px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          title="Thêm tài khoản Fanpage Facebook mới"
+                        >
+                          + Thêm Fanpage
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0', borderRadius: '20px', fontSize: '11.5px', fontWeight: '700' }}>
+                      <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10B981' }} /> Meta Graph API Ready
+                    </span>
+                    <button
+                      onClick={() => testChannelConnection('facebook')}
+                      style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #BFDBFE', background: '#EFF6FF', color: '#1D4ED8', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      title="Kiểm tra kết nối tới Meta API với token của tài khoản đang chọn"
+                    >
+                      <i className="fa-solid fa-circle-check" /> Test Kết Nối
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Main 2-Column Split: Left Composer, Right Realistic Feed Preview */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 390px', gap: '22px', alignItems: 'start' }}>
+                  {/* Left Column: Post Composer */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                     {/* Source Article Live Indicator */}
                     <div style={{ padding: '8px 12px', background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
@@ -2381,17 +2822,17 @@ export default function AdminStudio() {
                         </span>
                       </div>
                       <span style={{ fontSize: '11px', color: '#64748B', whiteSpace: 'nowrap' }}>
-                        🔗 {activeArticleId ? `ID: #${activeArticleId}` : 'Chưa lưu (Bản nháp)'}
+                        🔗 {activeArticleId ? `ID: #${activeArticleId}` : 'Bản nháp Canvas'}
                       </span>
                     </div>
 
-                    {/* Sync + Link Tools Action Bar */}
+                    {/* Sync + AI Tools Action Bar */}
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                       <button onClick={generateFbWithAi} className="action-btn" style={{ background: 'linear-gradient(135deg, #1877F2, #0284C7)', color: 'white', fontWeight: '800', boxShadow: '0 2px 6px rgba(24,119,242,0.25)' }} title="AI tự động phân tích bài báo và viết caption Facebook chuẩn tương tác, tự đính kèm đầy đủ link bài và file">
-                        ⚡ Cập nhật & Tối ưu AI
+                        ⚡ AI Tối Ưu Caption
                       </button>
                       <button onClick={syncFbFromWeb} className="action-btn" style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', fontWeight: '700' }} title="Đồng bộ tức thì tiêu đề, sapo, link bài và danh sách file vào caption">
-                        🔄 Đồng bộ nhanh
+                        🔄 Đồng Bộ Nhanh
                       </button>
                       <button onClick={() => insertArticleLinkToChannel('fb')} className="action-btn" style={{ background: '#FFF', color: '#0284C7', border: '1px solid #BAE6FD', fontWeight: '700', fontSize: '11.5px' }} title="Chèn nhanh link công khai của bài báo vào caption">
                         🔗 Chèn Link Bài
@@ -2399,147 +2840,261 @@ export default function AdminStudio() {
                       <button onClick={() => insertDocLinksToChannel('fb')} className="action-btn" style={{ background: '#FFF', color: '#059669', border: '1px solid #A7F3D0', fontWeight: '700', fontSize: '11.5px' }} title="Chèn link tải toàn bộ tài liệu đính kèm vào caption">
                         📎 Chèn Link File ({attachedFiles.filter(f => f.type !== 'image').length})
                       </button>
-                      {eventPhotos.length > 0 && (
-                        <button onClick={insertPhotoLinksToChannel} className="action-btn" style={{ background: '#FFF', color: '#D97706', border: '1px solid #FDE68A', fontWeight: '700', fontSize: '11.5px' }} title="Chèn link album ảnh vào caption">
-                          🖼️ Link Ảnh ({eventPhotos.length})
-                        </button>
-                      )}
                       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <span style={{ fontSize: '11px', color: '#64748B', fontWeight: '600' }}>Tỷ lệ:</span>
                         {['1:1 Vuông','4:5 Dọc','16:9 Ngang'].map(r => (
-                          <button key={r} onClick={() => setFbRatio(r)} className="fbpill" style={{ background: fbRatio === r ? '#1877F2' : '#EFF6FF', color: fbRatio === r ? 'white' : '#1D4ED8', border: fbRatio === r ? 'none' : '1px solid #BFDBFE' }}>{r}</button>
+                          <button key={r} onClick={() => setFbRatio(r)} className="fbpill" style={{ background: fbRatio === r ? '#1877F2' : '#EFF6FF', color: fbRatio === r ? 'white' : '#1D4ED8', border: fbRatio === r ? 'none' : '1px solid #BFDBFE', padding: '3px 8px', fontSize: '11px' }}>{r}</button>
                         ))}
                       </div>
                     </div>
 
-                    {/* Facebook Account Selector Toolbar */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: '#EFF6FF', borderRadius: '8px', border: '1px solid #BFDBFE', flexWrap: 'wrap', gap: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '240px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: '800', color: '#1E40AF', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <i className="fa-brands fa-facebook" style={{ color: '#1877F2', fontSize: '15px' }} />
-                          Tài khoản gửi:
-                        </span>
-                        <select
-                          value={selectedFbAccId}
-                          onChange={e => setSelectedFbAccId(e.target.value)}
-                          style={{ flex: 1, padding: '5px 8px', borderRadius: '6px', border: '1px solid #93C5FD', fontSize: '12px', fontWeight: '600', color: '#1E293B', background: '#FFF', outline: 'none' }}
-                        >
-                          {(channelAccounts.facebook || []).map(acc => (
-                            <option key={acc.id} value={acc.id}>
-                              {acc.name} {acc.isDefault ? '(Mặc định)' : ''} {acc.pageName ? `[${acc.pageName}]` : ''}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <button
-                          onClick={() => openEditAccountModal('facebook', selectedFbAccId)}
-                          style={{ padding: '5px 10px', borderRadius: '6px', border: '1px solid #93C5FD', background: '#FFF', color: '#1D4ED8', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                          title="Cấu hình Access Token, Page ID của tài khoản này"
-                        >
-                          ⚙️ Cài đặt
-                        </button>
-                        <button
-                          onClick={() => openNewAccountModal('facebook')}
-                          style={{ padding: '5px 10px', borderRadius: '6px', border: 'none', background: '#1877F2', color: 'white', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                          title="Thêm tài khoản hoặc Fanpage Facebook mới để test"
-                        >
-                          + Thêm mới
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Hashtag chips */}
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                      {FB_HASHTAGS.map(tag => (
-                        <button key={tag} onClick={() => insertFbHashtag(tag)} className="fbpill">{tag}</button>
-                      ))}
-                    </div>
-
-                    {/* Emoji tray */}
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', padding: '6px 10px', background: '#F8FAFC', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
-                      <span style={{ fontSize: '10.5px', color: '#64748B', fontWeight: '700', alignSelf: 'center', marginRight: '4px' }}>Emoji:</span>
-                      {FB_EMOJIS.map(em => (
-                        <button key={em} onClick={() => insertFbEmoji(em)} className="emoji-btn">{em}</button>
-                      ))}
-                    </div>
-
-                    <label style={{ fontSize: '12px', fontWeight: '800', color: '#002855' }}>CAPTION FACEBOOK:</label>
-                    <textarea
-                      value={fbCaption}
-                      onChange={e => setFbCaption(e.target.value)}
-                      placeholder="Nội dung caption Facebook..."
-                      rows={12}
-                      style={{ width: '100%', padding: '10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px', lineHeight: '1.65', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'vertical' }}
-                    />
-                    <div style={{ fontSize: '11.5px', color: fbCaption.length > 500 ? '#DC2626' : '#64748B', textAlign: 'right' }}>{fbCaption.length} / 500 ký tự khuyến nghị</div>
-
-                    {/* FB Photo picker */}
-                    {eventPhotos.length > 0 && (
-                      <div>
-                        <div style={{ fontSize: '12px', fontWeight: '800', color: '#002855', marginBottom: '8px' }}>Chọn ảnh đăng Facebook:</div>
-                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                          {eventPhotos.map((p, idx) => {
-                            const sel = fbSelectedPhotos.includes(p.url);
-                            return (
-                              <div key={idx} onClick={() => setFbSelectedPhotos(prev => sel ? prev.filter(u => u !== p.url) : [...prev, p.url])} style={{ position: 'relative', width: '68px', height: '68px', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer', border: `2.5px solid ${sel ? '#1877F2' : '#CBD5E1'}` }}>
-                                <img src={p.url} alt={p.caption} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                {sel && <div style={{ position: 'absolute', top: '2px', right: '2px', background: '#1877F2', color: 'white', borderRadius: '50%', width: '16px', height: '16px', fontSize: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900' }}>✓</div>}
-                              </div>
-                            );
-                          })}
+                    {/* Realistic Facebook Post Box */}
+                    <div style={{ background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: '12px', padding: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {/* Post Creator Header */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'linear-gradient(135deg, #002855, #1877F2)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '14px', flexShrink: 0, boxShadow: '0 2px 6px rgba(0,40,85,0.2)' }}>
+                          CĐ
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '13.5px', fontWeight: '800', color: '#0F172A', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            Công Đoàn Trường Đại học Thủ Dầu Một
+                            <i className="fa-solid fa-circle-check" style={{ color: '#1877F2', fontSize: '13px' }} title="Fanpage đã xác minh" />
+                          </div>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#F1F5F9', padding: '1px 8px', borderRadius: '12px', fontSize: '11px', color: '#475569', fontWeight: '600', marginTop: '2px' }}>
+                            <i className="fa-solid fa-earth-americas" style={{ fontSize: '10px' }} /> Công khai ▾
+                          </div>
                         </div>
                       </div>
-                    )}
-                    {/* Direct Facebook Action Buttons */}
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+
+                      {/* Textarea */}
+                      <textarea
+                        value={fbCaption}
+                        onChange={e => setFbCaption(e.target.value)}
+                        placeholder="Bạn đang nghĩ gì? Hãy soạn caption Facebook hấp dẫn chuẩn tương tác mạng xã hội..."
+                        rows={9}
+                        style={{ width: '100%', padding: '12px', border: '1px solid #E2E8F0', borderRadius: '8px', fontSize: '13.5px', lineHeight: '1.65', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'vertical', background: '#FBFCFE' }}
+                      />
+
+                      {/* Tools & Counters */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                        {/* Hashtag chips */}
+                        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'center' }}>
+                          <span style={{ fontSize: '11px', color: '#64748B', fontWeight: '700' }}>Hashtag:</span>
+                          {FB_HASHTAGS.map(tag => (
+                            <button key={tag} onClick={() => insertFbHashtag(tag)} className="fbpill" style={{ padding: '2px 8px', fontSize: '11px', background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE' }}>{tag}</button>
+                          ))}
+                        </div>
+                        <div style={{ fontSize: '11.5px', fontWeight: '700', color: fbCaption.length > 500 ? '#DC2626' : '#64748B' }}>
+                          {fbCaption.length} / 500 ký tự khuyến nghị
+                        </div>
+                      </div>
+
+                      {/* Emoji Tray */}
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', padding: '6px 10px', background: '#F8FAFC', borderRadius: '6px', border: '1px solid #E2E8F0', alignItems: 'center' }}>
+                        <span style={{ fontSize: '11px', color: '#64748B', fontWeight: '700', marginRight: '4px' }}>Emoji:</span>
+                        {FB_EMOJIS.map(em => (
+                          <button key={em} onClick={() => insertFbEmoji(em)} className="emoji-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', padding: '2px 4px', borderRadius: '4px' }}>{em}</button>
+                        ))}
+                      </div>
+
+                      {/* Photo Upload & Management (Dễ nạp ảnh thực tế) */}
+                      <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: '800', color: '#002855', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <i className="fa-solid fa-images" style={{ color: '#1877F2' }} />
+                            ẢNH ĐÍNH KÈM BÀI ĐĂNG ({fbSelectedPhotos.length} ảnh):
+                            {fbSelectedPhotos.length > 1 && (
+                              <span style={{ background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', padding: '2px 8px', borderRadius: '4px', fontSize: '10.5px', fontWeight: '800' }}>
+                                Đăng Album {fbSelectedPhotos.length} ảnh cùng lúc
+                              </span>
+                            )}
+                          </span>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <input
+                              ref={fbFileInputRef}
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              style={{ display: 'none' }}
+                              onChange={handleFbPhotoUpload}
+                            />
+                            <button
+                              onClick={() => fbFileInputRef.current?.click()}
+                              style={{ padding: '5px 10px', borderRadius: '6px', border: '1px solid #1877F2', background: '#EFF6FF', color: '#1877F2', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                              title="Tải thêm ảnh từ máy tính của bạn vào bài đăng Facebook"
+                            >
+                              <i className="fa-solid fa-cloud-arrow-up" /> + Tải ảnh từ máy tính
+                            </button>
+                            {eventPhotos.length > 0 && (
+                              <button
+                                onClick={() => {
+                                  const allUrls = eventPhotos.map(p => p.url);
+                                  setFbSelectedPhotos(prev => Array.from(new Set([...prev, ...allUrls])));
+                                  showRollbackToast(`Đã nạp ${allUrls.length} ảnh từ hồ sơ sự kiện`);
+                                }}
+                                style={{ padding: '5px 10px', borderRadius: '6px', border: '1px solid #BAE6FD', background: '#FFF', color: '#0284C7', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer' }}
+                                title="Nạp toàn bộ ảnh sự kiện đã phân tích trong hồ sơ"
+                              >
+                                🖼️ Nạp ảnh hồ sơ ({eventPhotos.length})
+                              </button>
+                            )}
+                            {fbSelectedPhotos.length > 0 && (
+                              <button
+                                onClick={() => setFbSelectedPhotos([])}
+                                style={{ padding: '5px 8px', borderRadius: '6px', border: '1px solid #FECACA', background: '#FFF', color: '#DC2626', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
+                                title="Xóa toàn bộ ảnh đã chọn"
+                              >
+                                ✕ Xóa hết
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Selected Photos Thumbnails with Delete button */}
+                        {fbSelectedPhotos.length === 0 ? (
+                          <div
+                            onClick={() => fbFileInputRef.current?.click()}
+                            style={{ border: '2px dashed #CBD5E1', borderRadius: '8px', padding: '16px', textAlign: 'center', color: '#64748B', fontSize: '12px', cursor: 'pointer', background: '#F8FAFC' }}
+                          >
+                            <i className="fa-solid fa-image" style={{ fontSize: '24px', color: '#94A3B8', marginBottom: '6px', display: 'block' }} />
+                            Chưa có ảnh nào được chọn. Nhấn để <strong>tải ảnh từ máy tính</strong> hoặc kéo thả ảnh vào đây.
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', maxHeight: '160px', overflowY: 'auto', padding: '4px' }}>
+                            {fbSelectedPhotos.map((url, idx) => (
+                              <div key={idx} style={{ position: 'relative', width: '74px', height: '74px', borderRadius: '8px', overflow: 'hidden', border: '2px solid #1877F2', flexShrink: 0, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                                <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <span style={{ position: 'absolute', bottom: '2px', left: '2px', background: 'rgba(0,0,0,0.65)', color: 'white', borderRadius: '4px', padding: '0 4px', fontSize: '9px', fontWeight: '800' }}>
+                                  #{idx + 1}
+                                </span>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setFbSelectedPhotos(prev => prev.filter((_, i) => i !== idx));
+                                  }}
+                                  style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(220,38,38,0.85)', color: 'white', border: 'none', borderRadius: '50%', width: '18px', height: '18px', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: '900' }}
+                                  title="Gỡ ảnh này khỏi bài đăng"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Publish Action Button */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <button 
                         onClick={publishToFacebookDirect} 
                         disabled={isPublishingNow}
                         className="action-btn" 
-                        style={{ background: '#1877F2', color: 'white', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        style={{ width: '100%', padding: '13px', background: 'linear-gradient(135deg, #1877F2, #0284C7)', color: 'white', fontSize: '14px', fontWeight: '800', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 3px 10px rgba(24,119,242,0.35)', cursor: isPublishingNow ? 'not-allowed' : 'pointer' }}
                       >
-                        <i className="fa-brands fa-facebook" /> {isPublishingNow ? 'Đang gửi...' : '🚀 Đăng Ngay Lên Fanpage Facebook'}
+                        <i className="fa-brands fa-facebook" style={{ fontSize: '18px' }} />
+                        {isPublishingNow ? 'Đang kết nối Meta API và đăng album ảnh...' : `🚀 ĐĂNG NGAY LÊN FANPAGE FACEBOOK ${fbSelectedPhotos.length > 1 ? `(ALBUM ${fbSelectedPhotos.length} ẢNH)` : (fbSelectedPhotos.length === 1 ? '(1 ẢNH)' : '')}`}
                       </button>
-                      <button 
-                        onClick={() => testChannelConnection('facebook')} 
-                        className="action-btn" 
-                        style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', fontSize: '11.5px' }}
-                      >
-                        <i className="fa-solid fa-circle-check" /> Test Kết Nối Meta API
-                      </button>
+                      <div style={{ fontSize: '11px', color: '#64748B', textAlign: 'center' }}>
+                        Bài viết và toàn bộ album {fbSelectedPhotos.length > 0 ? `${fbSelectedPhotos.length} ảnh` : ''} sẽ được xuất bản trực tiếp lên dòng thời gian của Fanpage đã chọn.
+                      </div>
                     </div>
                   </div>
 
-                  {/* Right: Facebook Preview Card */}
-                  <div>
-                    <div style={{ fontSize: '12px', fontWeight: '800', color: '#002855', marginBottom: '8px' }}>📱 Xem trước Fanpage:</div>
-                    <div style={{ background: '#F0F2F5', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.1)', border: '1px solid #E2E8F0' }}>
-                      {/* Page header */}
-                      <div style={{ background: '#FFF', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid #E2E8F0' }}>
-                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg,#002855,#0284C7)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '13px', fontWeight: '800', flexShrink: 0 }}>CĐ</div>
-                        <div>
-                          <div style={{ fontSize: '13.5px', fontWeight: '800', color: '#050505' }}>Công Đoàn TDMU</div>
-                          <div style={{ fontSize: '11px', color: '#65676B' }}>Trang · Vừa xong · <i className="fa-solid fa-earth-asia" style={{ fontSize: '10px' }} /></div>
+                  {/* Right Column: Realistic Facebook Feed Card Preview */}
+                  <div style={{ position: 'sticky', top: '10px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '800', color: '#002855', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <i className="fa-solid fa-mobile-screen" style={{ color: '#1877F2' }} /> XEM TRƯỚC TRÊN BẢNG TIN FACEBOOK:
+                    </div>
+
+                    <div style={{ background: '#FFFFFF', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', border: '1px solid #CBD5E1' }}>
+                      {/* Page Header */}
+                      <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid #F1F5F9' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg,#002855,#1877F2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '13px', fontWeight: '800', flexShrink: 0 }}>
+                          CĐ
                         </div>
-                        <div style={{ marginLeft: 'auto', color: '#1877F2', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>... Theo dõi</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '13.5px', fontWeight: '800', color: '#050505', display: 'flex', alignItems: 'center', gap: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            Công Đoàn TDMU
+                            <i className="fa-solid fa-circle-check" style={{ color: '#1877F2', fontSize: '12px' }} />
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#65676B', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            Trang · Vừa xong · <i className="fa-solid fa-earth-asia" style={{ fontSize: '10px' }} />
+                          </div>
+                        </div>
+                        <div style={{ color: '#65676B', fontSize: '16px', fontWeight: '800', cursor: 'pointer', padding: '0 4px' }}>•••</div>
                       </div>
-                      {/* Caption */}
-                      <div style={{ background: '#FFF', padding: '12px 14px', fontSize: '13.5px', lineHeight: '1.6', color: '#050505', whiteSpace: 'pre-wrap', maxHeight: '160px', overflowY: 'auto' }}>
-                        {fbCaption || <span style={{ color: '#BDC1C6', fontStyle: 'italic' }}>Nội dung caption sẽ hiển thị tại đây...</span>}
+
+                      {/* Caption with Highlighted Hashtags */}
+                      <div style={{ padding: '12px 14px', fontSize: '13.5px', lineHeight: '1.6', color: '#050505', whiteSpace: 'pre-wrap', maxHeight: '180px', overflowY: 'auto' }}>
+                        {fbCaption ? (
+                          fbCaption.split(/(#[a-zA-Z0-9_À-ỹ]+)/g).map((part, i) =>
+                            part.startsWith('#') ? (
+                              <span key={i} style={{ color: '#1877F2', fontWeight: '600' }}>{part}</span>
+                            ) : (
+                              part
+                            )
+                          )
+                        ) : (
+                          <span style={{ color: '#94A3B8', fontStyle: 'italic' }}>
+                            Nội dung bài đăng sẽ hiển thị trực quan tại đây...
+                          </span>
+                        )}
                       </div>
-                      {/* Photo */}
-                      {fbSelectedPhotos.length > 0 && (
-                        <div style={{ display: 'grid', gridTemplateColumns: fbSelectedPhotos.length === 1 ? '1fr' : 'repeat(2, 1fr)', gap: '2px' }}>
-                          {fbSelectedPhotos.slice(0, 4).map((url, i) => (
-                            <img key={i} src={url} alt="" style={{ width: '100%', height: fbSelectedPhotos.length === 1 ? '200px' : '100px', objectFit: 'cover' }} />
+
+                      {/* Authentic Multi-Photo Dynamic Facebook Layout */}
+                      {fbSelectedPhotos.length === 1 && (
+                        <div style={{ width: '100%', height: '220px', overflow: 'hidden', background: '#000' }}>
+                          <img src={fbSelectedPhotos[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      )}
+                      {fbSelectedPhotos.length === 2 && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', height: '180px', background: '#000' }}>
+                          {fbSelectedPhotos.slice(0, 2).map((url, i) => (
+                            <img key={i} src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           ))}
                         </div>
                       )}
-                      {/* Reactions bar */}
-                      <div style={{ background: '#FFF', padding: '8px 14px', borderTop: '1px solid #E2E8F0', display: 'flex', gap: '16px' }}>
+                      {fbSelectedPhotos.length === 3 && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '2px', height: '200px', background: '#000' }}>
+                          <img src={fbSelectedPhotos[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap: '2px', height: '100%' }}>
+                            <img src={fbSelectedPhotos[1]} alt="" style={{ width: '100%', height: '99px', objectFit: 'cover' }} />
+                            <img src={fbSelectedPhotos[2]} alt="" style={{ width: '100%', height: '99px', objectFit: 'cover' }} />
+                          </div>
+                        </div>
+                      )}
+                      {fbSelectedPhotos.length >= 4 && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', height: '200px', background: '#000' }}>
+                          <img src={fbSelectedPhotos[0]} alt="" style={{ width: '100%', height: '99px', objectFit: 'cover' }} />
+                          <img src={fbSelectedPhotos[1]} alt="" style={{ width: '100%', height: '99px', objectFit: 'cover' }} />
+                          <img src={fbSelectedPhotos[2]} alt="" style={{ width: '100%', height: '99px', objectFit: 'cover' }} />
+                          <div style={{ position: 'relative', width: '100%', height: '99px' }}>
+                            <img src={fbSelectedPhotos[3]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            {fbSelectedPhotos.length > 4 && (
+                              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '800' }}>
+                                +{fbSelectedPhotos.length - 3}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Engagement Counters */}
+                      <div style={{ padding: '8px 14px', borderTop: '1px solid #F1F5F9', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: '#65676B' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ fontSize: '13px' }}>👍❤️</span>
+                          <span>{activeDossier?.likesCount || 0}</span>
+                        </div>
+                        <div>{activeDossier?.commentsCount || 0} bình luận · {activeDossier?.sharesCount || 0} chia sẻ</div>
+                      </div>
+
+                      {/* Interactive Action Bar */}
+                      <div style={{ padding: '6px 14px', display: 'flex', justifyContent: 'space-around', background: '#FFF' }}>
                         {['👍 Thích','💬 Bình luận','↗️ Chia sẻ'].map(a => (
-                          <span key={a} style={{ fontSize: '13px', color: '#65676B', fontWeight: '600', cursor: 'pointer' }}>{a}</span>
+                          <button key={a} style={{ background: 'none', border: 'none', padding: '6px 12px', fontSize: '13px', color: '#65676B', fontWeight: '700', cursor: 'pointer', borderRadius: '6px', transition: 'background 0.2s' }}>
+                            {a}
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -2548,11 +3103,209 @@ export default function AdminStudio() {
               </div>
             )}
 
-            {/* ── ZALO OA CHANNEL ─────────────────────────────────────────── */}
+            {/* ── ZALO P2P CHANNEL (GỬI GIỮA 2 SỐ ĐIỆN THOẠI CÁ NHÂN) ─────── */}
             {activeChannel === 'zalo' && (
-              <div style={{ flex: 1, overflowY: 'auto', padding: '18px 24px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '20px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Mode Selector: Group vs Personal P2P */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#FFFFFF', padding: '10px 16px', borderRadius: '12px', border: '1.5px solid #BAE6FD', boxShadow: '0 2px 6px rgba(0,0,0,0.03)', flexWrap: 'wrap', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: '800', color: '#002855' }}>CHẾ ĐỘ GỬI ZALO:</span>
+                    <div style={{ display: 'flex', gap: '6px', background: '#F1F5F9', padding: '3px', borderRadius: '8px' }}>
+                      <button
+                        onClick={() => setZaloTargetMode('group')}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          fontSize: '12px',
+                          fontWeight: '800',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          background: zaloTargetMode === 'group' ? '#0068FF' : 'transparent',
+                          color: zaloTargetMode === 'group' ? '#FFFFFF' : '#475569',
+                          boxShadow: zaloTargetMode === 'group' ? '0 2px 6px rgba(0,104,255,0.25)' : 'none',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <i className="fa-solid fa-users" /> 👥 NHÓM ZALO CÔNG ĐOÀN (Khuyên dùng)
+                      </button>
+                      <button
+                        onClick={() => setZaloTargetMode('personal')}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          fontSize: '12px',
+                          fontWeight: '800',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          background: zaloTargetMode === 'personal' ? '#059669' : 'transparent',
+                          color: zaloTargetMode === 'personal' ? '#FFFFFF' : '#475569',
+                          boxShadow: zaloTargetMode === 'personal' ? '0 2px 6px rgba(5,150,105,0.25)' : 'none',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <i className="fa-solid fa-user" /> 👤 CÁ NHÂN P2P (SĐT)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Bot Connection Quick Status Badge */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {zaloBotStatus.isConnected ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '5px 12px', borderRadius: '20px' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+                        <span style={{ fontSize: '11.5px', fontWeight: '800', color: '#065F46' }}>
+                          Bot Tự Động: <strong>{zaloBotStatus.botInfo?.name || 'Đã kết nối'}</strong>
+                        </span>
+                        <button
+                          onClick={logoutZaloBot}
+                          style={{ background: 'none', border: 'none', color: '#DC2626', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+                          title="Đăng xuất bot"
+                        >
+                          [Ngắt]
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '11px', color: '#D97706', fontWeight: '700', background: '#FEF3C7', padding: '4px 8px', borderRadius: '6px', border: '1px solid #FDE68A' }}>
+                          ⚠️ Bot ngầm chưa kích hoạt
+                        </span>
+                        <button
+                          onClick={startBotQrLogin}
+                          style={{ padding: '6px 12px', background: 'linear-gradient(135deg, #0068FF, #0284C7)', color: 'white', border: 'none', borderRadius: '6px', fontSize: '11.5px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', boxShadow: '0 2px 6px rgba(0,104,255,0.25)' }}
+                          title="Quét mã QR để kích hoạt bot tự động bắn tin vào nhóm"
+                        >
+                          <i className="fa-solid fa-qrcode" /> 📲 Quét QR Kết Nối Bot
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 1. Configuration Panel: Group vs Personal */}
+                {zaloTargetMode === 'group' ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', background: 'linear-gradient(135deg, #EFF6FF, #F8FAFC)', borderRadius: '12px', border: '1.5px solid #93C5FD', boxShadow: '0 2px 6px rgba(0,0,0,0.04)', flexWrap: 'wrap', gap: '14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '320px' }}>
+                      <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#0068FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '18px', flexShrink: 0 }}>
+                        <i className="fa-solid fa-users-rectangle" />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '12px', fontWeight: '800', color: '#0369A1', textTransform: 'uppercase' }}>
+                            LINK NHÓM ZALO TIẾP NHẬN BÀI ĐĂNG:
+                          </span>
+                          <span style={{ fontSize: '10px', color: '#0068FF', fontWeight: '800' }}>
+                            Đích đến: Nhóm Công Đoàn
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                          <input
+                            type="text"
+                            value={zaloGroupLink}
+                            onChange={e => setZaloGroupLink(e.target.value)}
+                            placeholder="Dán link nhóm Zalo (VD: https://zalo.me/g/wdhpzaoap7wkxb074exv)"
+                            style={{ flex: 1, padding: '7px 10px', borderRadius: '6px', border: '1.5px solid #60A5FA', fontSize: '13px', fontWeight: '700', color: '#002855', outline: 'none' }}
+                          />
+                          <button
+                            onClick={() => {
+                              showRollbackToast('💾 Đã lưu link nhóm Zalo đích!');
+                            }}
+                            style={{ padding: '7px 12px', borderRadius: '6px', border: 'none', background: '#0068FF', color: 'white', fontSize: '11.5px', fontWeight: '800', cursor: 'pointer' }}
+                          >
+                            💾 Lưu Link
+                          </button>
+                          <button
+                            onClick={() => window.open(zaloGroupLink, '_blank')}
+                            style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid #BAE6FD', background: '#FFFFFF', color: '#0369A1', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer' }}
+                            title="Mở nhóm trên Zalo"
+                          >
+                            🌐 Mở Nhóm
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', background: 'linear-gradient(135deg, #F0FDF4, #F8FAFC)', borderRadius: '12px', border: '1.5px solid #A7F3D0', boxShadow: '0 2px 6px rgba(0,0,0,0.04)', flexWrap: 'wrap', gap: '14px' }}>
+                    {/* Sender Personal Account */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#FFFFFF', padding: '8px 14px', borderRadius: '10px', border: '1.5px solid #BAE6FD', flex: 1, minWidth: '280px' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#0068FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '16px', flexShrink: 0 }}>
+                        <i className="fa-solid fa-user-tie" />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '11px', fontWeight: '800', color: '#0369A1', textTransform: 'uppercase' }}>
+                            1. SĐT NGƯỜI GỬI:
+                          </span>
+                          <span style={{ fontSize: '10px', color: '#64748B', fontWeight: '600' }}>Zalo máy / web</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
+                          <input
+                            type="tel"
+                            value={senderPhoneInput}
+                            onChange={e => setSenderPhoneInput(e.target.value)}
+                            placeholder="SĐT người gửi (VD: 0912345678)"
+                            style={{ flex: 1, padding: '5px 8px', borderRadius: '6px', border: '1.5px solid #7DD3FC', fontSize: '13px', fontWeight: '700', color: '#0369A1', outline: 'none' }}
+                          />
+                          <button
+                            onClick={handleQuickSavePhone}
+                            style={{ padding: '5px 10px', borderRadius: '6px', border: 'none', background: '#0284C7', color: 'white', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
+                            title="Lưu số điện thoại người gửi"
+                          >
+                            💾 Lưu
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 8px' }}>
+                      <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#EFF6FF', border: '2px solid #93C5FD', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0068FF', fontSize: '15px', fontWeight: '900' }}>
+                        <i className="fa-solid fa-arrow-right" />
+                      </div>
+                    </div>
+
+                    {/* Recipient Personal Account */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#FFFFFF', padding: '8px 14px', borderRadius: '10px', border: '1.5px solid #6EE7B7', flex: 1, minWidth: '280px' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '16px', flexShrink: 0 }}>
+                        <i className="fa-solid fa-mobile-screen-button" />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '11px', fontWeight: '800', color: '#065F46', textTransform: 'uppercase' }}>
+                            2. SĐT NGƯỜI NHẬN:
+                          </span>
+                          <span style={{ fontSize: '10px', color: '#059669', fontWeight: '800' }}>Nhận tin thật</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
+                          <input
+                            type="tel"
+                            value={recipientPhoneInput}
+                            onChange={e => setRecipientPhoneInput(e.target.value)}
+                            placeholder="VD: 0386543483"
+                            style={{ flex: 1, padding: '5px 8px', borderRadius: '6px', border: '1.5px solid #6EE7B7', fontSize: '13px', fontWeight: '800', color: '#065F46', outline: 'none' }}
+                          />
+                          <button
+                            onClick={handleQuickSavePhone}
+                            style={{ padding: '5px 10px', borderRadius: '6px', border: 'none', background: '#059669', color: 'white', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
+                            title="Lưu số điện thoại nhận tin"
+                          >
+                            💾 Lưu SĐT
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Main 2-Column Split: Left Composer, Right Realistic Zalo Smartphone Preview */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '22px', alignItems: 'start' }}>
+                  {/* Left Column: Zalo Message Composer */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                     {/* Source Article Live Indicator */}
                     <div style={{ padding: '8px 12px', background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
@@ -2562,133 +3315,290 @@ export default function AdminStudio() {
                         </span>
                       </div>
                       <span style={{ fontSize: '11px', color: '#64748B', whiteSpace: 'nowrap' }}>
-                        🔗 {activeArticleId ? `ID: #${activeArticleId}` : 'Chưa lưu (Bản nháp)'}
+                        🔗 {activeArticleId ? `ID: #${activeArticleId}` : 'Bản nháp Canvas'}
                       </span>
-                    </div>
-
-                    {/* Zalo Account Selector Toolbar */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#F0F9FF', borderRadius: '8px', border: '1.5px solid #BAE6FD', flexWrap: 'wrap', gap: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '260px' }}>
-                        <span style={{ fontSize: '12.5px', fontWeight: '800', color: '#0369A1', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          <i className="fa-solid fa-user-gear" style={{ color: '#0068FF', fontSize: '15px' }} />
-                          Tài khoản gửi:
-                        </span>
-                        <select
-                          value={selectedZaloAccId}
-                          onChange={e => setSelectedZaloAccId(e.target.value)}
-                          style={{ flex: 1, padding: '6px 10px', borderRadius: '6px', border: '1.5px solid #7DD3FC', fontSize: '12px', fontWeight: '700', color: '#0F172A', background: '#FFF', outline: 'none' }}
-                        >
-                          {(channelAccounts.zalo || []).map(acc => (
-                            <option key={acc.id} value={acc.id}>
-                              {acc.name} {acc.recipientPhone ? `(${acc.recipientPhone})` : ''} {acc.type === 'personal' ? '👤 Cá nhân/Tester' : '🏢 Zalo OA'}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        <button
-                          onClick={() => openEditAccountModal('zalo', selectedZaloAccId)}
-                          style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #7DD3FC', background: '#FFF', color: '#0369A1', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                          title="Chỉnh sửa số điện thoại, OA ID, token để test gửi tin"
-                        >
-                          ⚙️ Cài đặt
-                        </button>
-                        <button
-                          onClick={() => openNewAccountModal('zalo')}
-                          style={{ padding: '6px 10px', borderRadius: '6px', border: 'none', background: '#0284C7', color: 'white', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                          title="Thêm tài khoản Zalo cá nhân của bạn để nhận tin test"
-                        >
-                          + Thêm mới
-                        </button>
-                        <button
-                          onClick={() => testSendToMyZalo(selectedZaloAccId)}
-                          disabled={isPublishingNow}
-                          style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: 'linear-gradient(135deg,#0068FF,#0284C7)', color: 'white', fontSize: '11.5px', fontWeight: '800', cursor: isPublishingNow ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '5px', boxShadow: '0 2px 6px rgba(0,104,255,0.25)' }}
-                          title="Thử nghiệm gửi tin nhắn ngay tới tài khoản Zalo đã chọn"
-                        >
-                          📲 Test gửi vào Zalo
-                        </button>
-                        <button
-                          onClick={openDirectZaloShare}
-                          style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #0068FF', background: '#EFF6FF', color: '#0068FF', fontSize: '11.5px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                          title="Mở Zalo trên máy/web gửi 1-click trực tiếp không qua API"
-                        >
-                          🔗 Mở Zalo 1-Click
-                        </button>
-                      </div>
                     </div>
 
                     {/* Sync + Link Tools Action Bar */}
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                      <button onClick={generateZaloWithAi} className="action-btn" style={{ background: 'linear-gradient(135deg, #0068FF, #0284C7)', color: 'white', fontWeight: '800', boxShadow: '0 2px 6px rgba(0,104,255,0.25)' }} title="AI tự động phân tích bài báo và soạn thông báo Zalo OA chuẩn công vụ, tóm tắt ý chính và gắn kèm link">
-                        ⚡ Cập nhật & Tối ưu AI
+                      <button onClick={generateZaloWithAi} className="action-btn" style={{ background: 'linear-gradient(135deg, #0068FF, #0284C7)', color: 'white', fontWeight: '800', boxShadow: '0 2px 6px rgba(0,104,255,0.25)' }} title="AI tự động phân tích bài báo và soạn tin nhắn Zalo súc tích, dễ đọc và gắn kèm link">
+                        ⚡ AI Soạn Tin Zalo
                       </button>
-                      <button onClick={syncZaloFromWeb} className="action-btn" style={{ background: '#EFF6FF', color: '#0068FF', border: '1px solid #BFDBFE', fontWeight: '700' }} title="Đồng bộ tức thì tiêu đề, sapo, link bài và danh sách file vào tin nhắn Zalo">
-                        🔄 Đồng bộ nhanh
+                      <button onClick={syncZaloFromWeb} className="action-btn" style={{ background: '#EFF6FF', color: '#0068FF', border: '1px solid #BFDBFE', fontWeight: '700' }} title="Đồng bộ tức thì tiêu đề, tóm tắt và link bài viết vào tin nhắn Zalo">
+                        🔄 Đồng Bộ Nhanh
                       </button>
-                      <button onClick={() => insertArticleLinkToChannel('zalo')} className="action-btn" style={{ background: '#FFF', color: '#0284C7', border: '1px solid #BAE6FD', fontWeight: '700', fontSize: '11.5px' }} title="Chèn nhanh link công khai của bài báo vào tin nhắn Zalo">
+                      <button onClick={() => insertArticleLinkToChannel('zalo')} className="action-btn" style={{ background: '#FFF', color: '#0284C7', border: '1px solid #BAE6FD', fontWeight: '700', fontSize: '11.5px' }} title="Chèn nhanh link bài báo trên web vào tin nhắn">
                         🔗 Chèn Link Bài
                       </button>
-                      <button onClick={() => insertDocLinksToChannel('zalo')} className="action-btn" style={{ background: '#FFF', color: '#059669', border: '1px solid #A7F3D0', fontWeight: '700', fontSize: '11.5px' }} title="Chèn link tải toàn bộ tài liệu đính kèm vào tin nhắn Zalo">
+                      <button onClick={() => insertDocLinksToChannel('zalo')} className="action-btn" style={{ background: '#FFF', color: '#059669', border: '1px solid #A7F3D0', fontWeight: '700', fontSize: '11.5px' }} title="Chèn link tải file đính kèm">
                         📎 Chèn Link File ({attachedFiles.filter(f => f.type !== 'image').length})
                       </button>
                     </div>
-                    {/* Quick templates */}
-                    <div>
-                      <div style={{ fontSize: '11.5px', fontWeight: '800', color: '#002855', marginBottom: '6px' }}>Mẫu nhanh:</div>
-                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        {ZALO_TEMPLATES.map(tpl => (
-                          <button key={tpl.label} onClick={() => setZaloText(tpl.text)} className="fbpill" style={{ background: '#E0F2FE', color: '#0369A1', borderColor: '#BAE6FD' }}>{tpl.label}</button>
-                        ))}
+
+                    {/* Quick templates pills */}
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span style={{ fontSize: '11.5px', fontWeight: '800', color: '#002855' }}>Mẫu nhanh:</span>
+                      {ZALO_TEMPLATES.map(tpl => (
+                        <button key={tpl.label} onClick={() => setZaloText(tpl.text)} className="fbpill" style={{ background: '#E0F2FE', color: '#0369A1', borderColor: '#BAE6FD', padding: '3px 8px', fontSize: '11px' }}>{tpl.label}</button>
+                      ))}
+                    </div>
+
+                    {/* Zalo Message Composer Box */}
+                    <div style={{ background: '#FFFFFF', border: '1.5px solid #CBD5E1', borderRadius: '12px', padding: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <label style={{ fontSize: '12.5px', fontWeight: '800', color: '#002855', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <i className="fa-solid fa-comment-dots" style={{ color: '#0068FF' }} />
+                          NỘI DUNG TIN NHẮN ZALO GỬI ĐI:
+                        </label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{ fontSize: '11.5px', fontWeight: '700', color: zaloText.length > 1000 ? '#DC2626' : '#64748B' }}>
+                            {zaloText.length} / 1000 ký tự
+                          </div>
+                          <button
+                            onClick={sendZaloMessage}
+                            disabled={isPublishingNow}
+                            style={{ padding: '6px 14px', borderRadius: '6px', border: 'none', background: '#0068FF', color: 'white', fontWeight: '800', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 2px 6px rgba(0,104,255,0.25)' }}
+                            title="Gửi ngay tin nhắn"
+                          >
+                            <i className="fa-solid fa-paper-plane" /> 🚀 Gửi Ngay
+                          </button>
+                        </div>
+                      </div>
+
+                      <textarea
+                        value={zaloText}
+                        onChange={e => setZaloText(e.target.value)}
+                        placeholder="Nhập nội dung tin nhắn gửi tới Nhóm Zalo hoặc cá nhân..."
+                        rows={10}
+                        style={{ width: '100%', padding: '12px', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '13.5px', lineHeight: '1.65', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'vertical', background: '#FBFCFE' }}
+                      />
+
+                      {/* Photo Attachment */}
+                      <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: '800', color: '#002855', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <i className="fa-solid fa-image" style={{ color: '#0068FF' }} />
+                            ẢNH ĐÍNH KÈM TIN NHẮN:
+                          </span>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <input
+                              ref={zaloFileInputRef}
+                              type="file"
+                              accept="image/*"
+                              style={{ display: 'none' }}
+                              onChange={handleZaloPhotoUpload}
+                            />
+                            <button
+                              onClick={() => zaloFileInputRef.current?.click()}
+                              style={{ padding: '5px 10px', borderRadius: '6px', border: '1px solid #0068FF', background: '#EFF6FF', color: '#0068FF', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                              title="Tải ảnh đính kèm từ máy tính của bạn"
+                            >
+                              <i className="fa-solid fa-cloud-arrow-up" /> + Tải ảnh từ máy tính
+                            </button>
+                            {eventPhotos.length > 0 && (
+                              <button
+                                onClick={() => {
+                                  setZaloPhoto(eventPhotos[0]?.url);
+                                  showRollbackToast('Đã chọn ảnh đại diện từ hồ sơ sự kiện');
+                                }}
+                                style={{ padding: '5px 10px', borderRadius: '6px', border: '1px solid #BAE6FD', background: '#FFF', color: '#0284C7', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer' }}
+                              >
+                                🖼️ Lấy ảnh từ bài
+                              </button>
+                            )}
+                            {zaloPhoto && (
+                              <button
+                                onClick={() => setZaloPhoto(null)}
+                                style={{ padding: '5px 8px', borderRadius: '6px', border: '1px solid #FECACA', background: '#FFF', color: '#DC2626', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
+                              >
+                                ✕ Xóa ảnh
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Image Preview Banner */}
+                        {zaloPhoto ? (
+                          <div style={{ position: 'relative', width: '100%', height: '140px', borderRadius: '8px', overflow: 'hidden', border: '1.5px solid #BAE6FD', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
+                            <img src={zaloPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <div style={{ position: 'absolute', bottom: '6px', left: '8px', background: 'rgba(0,0,0,0.65)', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: '700' }}>
+                              Ảnh đính kèm
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            onClick={() => zaloFileInputRef.current?.click()}
+                            style={{ border: '2px dashed #CBD5E1', borderRadius: '8px', padding: '14px', textAlign: 'center', color: '#64748B', fontSize: '12px', cursor: 'pointer', background: '#F8FAFC' }}
+                          >
+                            Chưa có ảnh đính kèm. Nhấn để <strong>tải ảnh từ máy tính</strong>.
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <label style={{ fontSize: '12px', fontWeight: '800', color: '#002855' }}>NỘI DUNG TIN ZALO OA:</label>
-                    <textarea
-                      value={zaloText}
-                      onChange={e => setZaloText(e.target.value)}
-                      placeholder="Nội dung tin nhắn Zalo OA..."
-                      rows={12}
-                      style={{ width: '100%', padding: '10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px', lineHeight: '1.65', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'vertical' }}
-                    />
-                    <div style={{ fontSize: '11.5px', color: zaloText.length > 1000 ? '#DC2626' : '#64748B', textAlign: 'right' }}>{zaloText.length} / 1000 ký tự</div>
-                    
-                    {/* Direct Zalo Action Buttons */}
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
+
+                    {/* Direct Action Buttons - ONE PRIMARY ACTION */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       <button 
-                        onClick={publishToZaloDirect} 
+                        onClick={sendZaloMessage} 
                         disabled={isPublishingNow}
                         className="action-btn" 
-                        style={{ background: '#0068FF', color: 'white', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        style={{
+                          padding: '14px 18px',
+                          background: zaloTargetMode === 'group'
+                            ? (zaloBotStatus.isConnected ? 'linear-gradient(135deg, #10B981, #059669)' : 'linear-gradient(135deg, #0068FF, #0284C7)')
+                            : 'linear-gradient(135deg, #059669, #047857)',
+                          color: 'white',
+                          fontWeight: '800',
+                          fontSize: '14px',
+                          borderRadius: '10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '10px',
+                          boxShadow: '0 4px 14px rgba(0,104,255,0.3)',
+                          cursor: isPublishingNow ? 'not-allowed' : 'pointer'
+                        }}
                       >
-                        <i className="fa-solid fa-comment-dots" /> {isPublishingNow ? 'Đang gửi...' : '🚀 Gửi Tin Lên Zalo OA Ngay'}
+                        <i className={zaloBotStatus.isConnected ? 'fa-solid fa-robot' : 'fa-solid fa-paper-plane'} style={{ fontSize: '17px' }} /> 
+                        {isPublishingNow ? 'Đang đẩy tin...' : (
+                          zaloTargetMode === 'group'
+                            ? (zaloBotStatus.isConnected ? '🤖 BOT TỰ ĐỘNG ĐẨY TIN VÀO NHÓM ZALO' : '🚀 GỬI BÀI VÀO NHÓM ZALO (1-CHẠM)')
+                            : `🚀 Gửi Tin Sang SĐT: ${recipientPhoneInput || '0386543483'}`
+                        )}
                       </button>
-                      <button 
-                        onClick={() => testSendToMyZalo(selectedZaloAccId)} 
-                        disabled={isPublishingNow}
-                        className="action-btn" 
-                        style={{ background: '#EFF6FF', border: '1.5px solid #0068FF', color: '#0068FF', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}
-                        title="Gửi tin nhắn mẫu thử nghiệm vào Zalo cá nhân của bạn"
-                      >
-                        <i className="fa-solid fa-paper-plane" /> 📲 Test Gửi Tin Zalo
-                      </button>
-                      <button 
-                        onClick={() => testChannelConnection('zalo')} 
-                        className="action-btn" 
-                        style={{ background: '#F0F9FF', border: '1px solid #BAE6FD', color: '#0369A1', fontSize: '11.5px' }}
-                      >
-                        <i className="fa-solid fa-circle-check" /> Test Kết Nối Zalo OA
-                      </button>
-                      <button onClick={() => navigator.clipboard.writeText(zaloText).then(() => alert('📋 Đã copy nội dung Zalo OA!'))} className="action-btn" style={{ background: '#FFF', border: '1px solid #CBD5E1', color: '#475569' }}>📋 Copy Nội Dung</button>
+
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <button 
+                          onClick={() => {
+                            const fullContent = (zaloText || `[CÔNG ĐOÀN TDMU] ${title || 'Bản tin'}\n\n${sapo || ''}`).trim();
+                            const linkUrl = getPublicArticleUrl();
+                            navigator.clipboard.writeText(`${fullContent}\n\n🔗 Xem chi tiết: ${linkUrl}`);
+                            showRollbackToast('📋 Đã copy toàn bộ nội dung tin nhắn và liên kết!');
+                          }} 
+                          className="action-btn" 
+                          style={{ background: '#FFF', border: '1.5px solid #CBD5E1', color: '#334155', fontWeight: '700', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        >
+                          📋 Sao Chép Tin Nhắn & Link
+                        </button>
+                        {zaloTargetMode === 'group' ? (
+                          <button 
+                            onClick={() => window.open(zaloGroupLink || 'https://zalo.me/g/wdhpzaoap7wkxb074exv', '_blank')} 
+                            className="action-btn" 
+                            style={{ background: '#EFF6FF', border: '1px solid #BAE6FD', color: '#0369A1', fontSize: '12px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}
+                          >
+                            💬 Mở Nhóm Zalo Trực Tiếp
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => {
+                              const phoneClean = (recipientPhoneInput || '0386543483').replace(/^0/, '84');
+                              window.open(`https://chat.zalo.me/?phone=${phoneClean}`, '_blank');
+                            }} 
+                            className="action-btn" 
+                            style={{ background: '#EFF6FF', border: '1px solid #BAE6FD', color: '#0369A1', fontSize: '12px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}
+                          >
+                            💬 Mở Chat Trực Tiếp Trên Zalo Web
+                          </button>
+                        )}
+                        {!zaloBotStatus.isConnected && (
+                          <button
+                            onClick={startBotQrLogin}
+                            className="action-btn"
+                            style={{ background: '#FEF3C7', border: '1px solid #FCD34D', color: '#B45309', fontSize: '12px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' }}
+                          >
+                            📲 Quét QR Bật Bot Ngầm
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  {/* Zalo Preview */}
-                  <div>
-                    <div style={{ fontSize: '12px', fontWeight: '800', color: '#002855', marginBottom: '8px' }}>📱 Xem trước Zalo OA:</div>
-                    <div style={{ background: '#F0F0F0', borderRadius: '12px', padding: '14px', minHeight: '200px', boxShadow: '0 2px 12px rgba(0,0,0,0.1)', border: '1px solid #E2E8F0' }}>
-                      <div style={{ background: '#FFF', borderRadius: '10px 10px 10px 2px', padding: '12px 14px', fontSize: '13.5px', lineHeight: '1.65', color: '#1A1A1A', whiteSpace: 'pre-wrap', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', maxHeight: '300px', overflowY: 'auto' }}>
-                        {zaloText || <span style={{ color: '#BDC1C6', fontStyle: 'italic' }}>Tin nhắn Zalo OA sẽ hiển thị tại đây...</span>}
+
+                  {/* Right Column: Realistic Zalo Smartphone Preview (Công Đoàn Review Box) */}
+                  <div style={{ position: 'sticky', top: '10px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '800', color: '#002855', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <i className="fa-solid fa-mobile-screen" style={{ color: '#0068FF' }} /> XEM TRƯỚC TIN NHẮN CÔNG ĐOÀN (ZALO):
+                    </div>
+
+                    <div style={{ background: '#E5EBF5', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', border: '2px solid #CBD5E1' }}>
+                      {/* Phone Top Bar */}
+                      <div style={{ background: '#0068FF', padding: '6px 14px 2px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'white', fontSize: '11px', fontWeight: '700' }}>
+                        <span>09:41</span>
+                        <div style={{ display: 'flex', gap: '6px', fontSize: '10px' }}>
+                          <i className="fa-solid fa-signal" />
+                          <i className="fa-solid fa-wifi" />
+                          <i className="fa-solid fa-battery-full" />
+                        </div>
                       </div>
-                      <div style={{ fontSize: '10.5px', color: '#999', marginTop: '6px', textAlign: 'right' }}>Công Đoàn TDMU · Vừa xong</div>
+
+                      {/* Zalo Công Đoàn Chat Header */}
+                      <div style={{ background: '#0068FF', padding: '8px 12px 10px', display: 'flex', alignItems: 'center', gap: '10px', color: 'white' }}>
+                        <span style={{ fontSize: '16px', fontWeight: '900', cursor: 'pointer' }}>‹</span>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#FFFFFF', color: '#002855', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: '900', flexShrink: 0, overflow: 'hidden', border: '1.5px solid #FCD34D', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }}>
+                          <img src="/images/logo_cong_doan.png" alt="Công đoàn" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '13.5px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '5px', letterSpacing: '-0.2px' }}>
+                            Công Đoàn Trường ĐH Thủ Dầu Một
+                            <span style={{ background: '#38BDF8', color: '#002855', fontSize: '9px', fontWeight: '900', padding: '1px 5px', borderRadius: '10px' }}>✓ OA</span>
+                          </div>
+                          <div style={{ fontSize: '10px', opacity: 0.95, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ADE80', display: 'inline-block' }}></span>
+                            Đang hoạt động • Kênh Tin Tức &amp; Chăm Lo Đoàn Viên
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px', fontSize: '14px', opacity: 0.9 }}>
+                          <i className="fa-solid fa-phone" title="Gọi thoại" />
+                          <i className="fa-solid fa-video" title="Gọi video" />
+                          <i className="fa-solid fa-bars" title="Tuỳ chọn" />
+                        </div>
+                      </div>
+
+                      {/* Chat Messages Canvas */}
+                      <div style={{ padding: '14px 12px', minHeight: '280px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {/* Date Pill */}
+                        <div style={{ alignSelf: 'center', background: '#D1D5DB', color: '#374151', padding: '2px 10px', borderRadius: '10px', fontSize: '10px', fontWeight: '700' }}>
+                          HÔM NAY
+                        </div>
+
+                        {/* Speech Bubble */}
+                        <div style={{ background: '#FFFFFF', borderRadius: '14px 14px 14px 2px', padding: '12px', boxShadow: '0 2px 6px rgba(0,0,0,0.08)', maxWidth: '92%', border: '1px solid #E2E8F0' }}>
+                          {/* Attached Banner Image */}
+                          {(zaloPhoto || (eventPhotos.length > 0 && eventPhotos[0].url)) && (
+                            <div style={{ width: '100%', height: '140px', borderRadius: '8px', overflow: 'hidden', marginBottom: '10px', background: '#000' }}>
+                              <img src={zaloPhoto || eventPhotos[0]?.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </div>
+                          )}
+
+                          {/* Message Header */}
+                          <div style={{ fontSize: '11px', fontWeight: '800', color: '#0068FF', textTransform: 'uppercase', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <i className="fa-solid fa-bullhorn" /> CÔNG ĐOÀN TDMU THÔNG BÁO
+                          </div>
+                          <div style={{ fontSize: '13.5px', fontWeight: '800', color: '#002855', marginBottom: '6px' }}>
+                            {title || 'THÔNG BÁO HOẠT ĐỘNG CÔNG ĐOÀN'}
+                          </div>
+
+                          {/* Message Body */}
+                          <div style={{ fontSize: '12.5px', lineHeight: '1.6', color: '#1E293B', whiteSpace: 'pre-wrap', maxHeight: '200px', overflowY: 'auto' }}>
+                            {zaloText || <span style={{ color: '#94A3B8', fontStyle: 'italic' }}>Nội dung tin nhắn sẽ hiển thị trực quan tại đây...</span>}
+                          </div>
+
+                          {/* Action CTA Button inside Zalo Bubble */}
+                          <div style={{ marginTop: '10px', padding: '8px 10px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '6px', textAlign: 'center', fontSize: '12px', fontWeight: '700', color: '#0068FF', cursor: 'pointer' }}>
+                            👉 Xem toàn văn bài viết trên Web ➔
+                          </div>
+
+                          {/* Message Timestamp & Double Tick */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', fontSize: '10px', color: '#94A3B8', marginTop: '6px' }}>
+                            <span>Vừa xong</span>
+                            <span style={{ color: '#0068FF', fontWeight: '900' }}>✓✓</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer Tip Card */}
+                      <div style={{ background: '#F8FAFC', padding: '8px 12px', borderTop: '1px solid #CBD5E1', fontSize: '11px', color: '#475569' }}>
+                        📱 <strong>Kênh phát hành:</strong> <strong>Công Đoàn Trường ĐH Thủ Dầu Một</strong> ➔ Gửi tới: <strong>Toàn thể Đoàn viên &amp; Cán bộ GV</strong>.
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2817,9 +3727,9 @@ export default function AdminStudio() {
                       gradient: 'linear-gradient(135deg,#1877F2,#0F172A)'
                     },
                     zalo: {
-                      name: 'Trợ Lý Zalo OA AI',
-                      badge: 'Official Broadcast',
-                      sub: 'Phát thanh công vụ · Tóm tắt ý chính · Đính kèm file',
+                      name: 'Trợ Lý Zalo AI',
+                      badge: 'Direct Chat P2P',
+                      sub: 'Gửi tin nhắn 2 số điện thoại · Tóm tắt ý chính · Đính kèm link',
                       icon: 'fa-solid fa-comment-dots',
                       iconColor: '#38BDF8',
                       gradient: 'linear-gradient(135deg,#0068FF,#0369A1)'
@@ -2863,55 +3773,59 @@ export default function AdminStudio() {
 
                 {/* Quick Action Command Bar */}
                 <div style={{ padding: '10px 12px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0 }}>
-                  {/* Top row: Nạp hồ sơ & 1-Click Demo */}
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                      onClick={loadDemo}
-                      style={{
-                        flex: 1,
-                        background: '#EFF6FF',
-                        color: '#1D4ED8',
-                        border: '1px solid #BFDBFE',
-                        borderRadius: '6px',
-                        padding: '8px 10px',
-                        fontSize: '11.5px',
-                        fontWeight: '700',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '5px',
-                        transition: 'all 0.15s'
-                      }}
-                      title="Nạp nhanh bộ tư liệu mẫu đại hội để trải nghiệm AI"
-                    >
-                      <i className="fa-solid fa-folder-arrow-up" />
-                      <span>1-Click Demo</span>
-                    </button>
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      style={{
-                        flex: 1,
-                        background: '#FFF',
-                        color: '#0284C7',
-                        border: '1px solid #BAE6FD',
-                        borderRadius: '6px',
-                        padding: '8px 10px',
-                        fontSize: '11.5px',
-                        fontWeight: '700',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '5px',
-                        transition: 'all 0.15s'
-                      }}
-                      title="Nạp tài liệu Word, Excel, PDF hoặc ảnh sự kiện"
-                    >
-                      <i className="fa-solid fa-paperclip" />
-                      <span>Nạp tệp / ảnh {attachedFiles.length > 0 ? `(${attachedFiles.length})` : ''}</span>
-                    </button>
-                  </div>
+                  <button
+                    id="btn-upload-files"
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      width: '100%',
+                      background: '#FFFFFF',
+                      color: '#0284C7',
+                      border: '1.5px dashed #38BDF8',
+                      borderRadius: '8px',
+                      padding: '9px 12px',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '7px',
+                      boxShadow: '0 1px 2px rgba(2, 132, 199, 0.06)',
+                      transition: 'all 0.15s'
+                    }}
+                    title="Nạp tài liệu Word (.docx), PDF, Excel (.xlsx) hoặc ảnh sự kiện từ máy tính hoặc kéo thả"
+                  >
+                    <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '13px', color: '#0284C7' }} />
+                    <span>Nạp tài liệu & ảnh sự kiện {attachedFiles.length > 0 ? `(${attachedFiles.length})` : ''}</span>
+                  </button>
+
+                  {/* Định hướng bài viết tùy chọn cho Autopilot */}
+                  <textarea
+                    id="autopilot-custom-direction"
+                    value={autopilotPrompt}
+                    onChange={e => setAutopilotPrompt(e.target.value)}
+                    spellCheck={false}
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    rows={2}
+                    placeholder="💡 Định hướng bài viết (tùy chọn: ví dụ 'Tập trung trận chung kết bóng đá nam', 'Nhấn mạnh chào mừng 16 năm thành lập TDMU')..."
+                    style={{
+                      width: '100%',
+                      minHeight: '48px',
+                      maxHeight: '80px',
+                      padding: '6px 10px',
+                      border: '1px solid #BAE6FD',
+                      borderRadius: '6px',
+                      fontSize: '11.5px',
+                      lineHeight: '1.45',
+                      background: '#FFFFFF',
+                      resize: 'none',
+                      fontFamily: 'inherit',
+                      boxSizing: 'border-box',
+                      color: '#0F172A',
+                      outline: 'none'
+                    }}
+                  />
 
                   {/* NÚT VIẾT TO NẰM NGAY BÊN DƯỚI NÚT NẠP */}
                   <button
@@ -2938,17 +3852,17 @@ export default function AdminStudio() {
                       boxShadow: '0 4px 12px rgba(2,132,199,0.25)',
                       transition: 'all 0.15s ease'
                     }}
-                    title="Bắt đầu phân tích toàn bộ hồ sơ tư liệu và chấp bút bài báo chí hoàn chỉnh"
+                    title="Phân tích hồ sơ tư liệu và tổng hợp bài viết hoàn chỉnh"
                   >
                     {autopilotLoading ? (
                       <>
                         <i className="fa-solid fa-circle-notch fa-spin" style={{ fontSize: '13px' }} />
-                        <span>Đang Chấp Bút Bài Báo...</span>
+                        <span>Đang Tổng Hợp Bài Viết...</span>
                       </>
                     ) : (
                       <>
                         <i className="fa-solid fa-wand-magic-sparkles" style={{ color: '#FCD34D', fontSize: '14px' }} />
-                        <span>✨ VIẾT BÀI BÁO TỰ ĐỘNG (AUTOPILOT)</span>
+                        <span>⚡ TỔNG HỢP & SOẠN THẢO BÀI VIẾT</span>
                       </>
                     )}
                   </button>
@@ -2992,7 +3906,9 @@ export default function AdminStudio() {
                           {/* File list */}
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: eventPhotos.length > 0 ? '8px' : '0' }}>
                             {attachedFiles.filter(f => f.type !== 'image').length === 0 && eventPhotos.length === 0 ? (
-                              <div style={{ fontSize: '11px', color: '#94A3B8', textAlign: 'center', padding: '10px 0' }}>Hồ sơ trống. Hãy bấm nút "Nạp tệp / ảnh" hoặc "1-Click Demo" ở trên!</div>
+                              <div style={{ fontSize: '11px', color: '#94A3B8', textAlign: 'center', padding: '10px 0', lineHeight: '1.5' }}>
+                                Chưa có tài liệu. Bấm <strong>"Nạp tài liệu & ảnh sự kiện"</strong> ở trên hoặc kéo thả tệp vào đây.
+                              </div>
                             ) : attachedFiles.filter(f => f.type !== 'image').map((f, fi) => (
                               <div key={fi} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '4px', padding: '4px 8px', fontSize: '10.5px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
@@ -3266,29 +4182,67 @@ export default function AdminStudio() {
 
                 {/* Selection Context & Prompt Input Area */}
                 <div style={{ borderTop: '1px solid #E2E8F0', background: '#FAFAFA', flexShrink: 0 }}>
-                  {/* Selection Context Banner */}
-                  {selectedText && (
-                    <div style={{ padding: '6px 10px', background: '#EFF6FF', borderBottom: '1px solid #BFDBFE', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
-                        <span style={{ background: '#2563EB', color: 'white', fontWeight: '800', padding: '1px 5px', borderRadius: '3px', fontSize: '9px' }}>ĐANG CHỌN</span>
-                        <span style={{ color: '#1E293B', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>"{selectedText.slice(0, 35)}..."</span>
-                        <span style={{ color: '#64748B', fontSize: '9.5px' }}>({selectedText.length} ký tự)</span>
-                      </div>
-                      <button onClick={clearSelection} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>✕</button>
-                    </div>
-                  )}
-
-                  {/* Fast Prompt Suggestions for Selection */}
+                  {/* Selection Context Card (Groq Qwen3.8-27B siêu tốc) */}
                   {selectedText ? (
-                    <div style={{ padding: '5px 8px', background: '#F8FAFC', display: 'flex', gap: '4px', overflowX: 'auto', borderBottom: '1px solid #F1F5F9' }}>
-                      {[
-                        { label: '✨ Rút gọn', prompt: 'Hãy rút gọn đoạn này thật súc tích, giữ nguyên ý chính.' },
-                        { label: '🏛️ Trang trọng', prompt: 'Biên tập lại đoạn này theo văn phong báo chí hành chính trang trọng.' },
-                        { label: '✏️ Sửa câu từ', prompt: 'Sửa lỗi chính tả, ngữ pháp và trau chuốt câu từ cho đoạn này.' },
-                        { label: '📢 Nhấn mạnh', prompt: 'Diễn đạt lại đoạn này nhấn mạnh tinh thần nhiệt huyết và đoàn kết.' }
-                      ].map(chip => (
-                        <button key={chip.label} onClick={() => runAi(chip.prompt)} style={{ background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '12px', padding: '2px 8px', fontSize: '10px', color: '#334155', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: '600' }}>{chip.label}</button>
-                      ))}
+                    <div style={{ padding: '10px 12px', background: '#F0F9FF', borderBottom: '1px solid #BFDBFE' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ background: '#2563EB', color: 'white', fontWeight: '800', padding: '2px 6px', borderRadius: '4px', fontSize: '9.5px' }}>⚡ GROQ QWEN</span>
+                          <span style={{ fontSize: '11px', fontWeight: '700', color: '#0369A1' }}>Biên tập nhanh đoạn chọn</span>
+                          <span style={{ color: '#64748B', fontSize: '10px' }}>({selectedText.length} ký tự)</span>
+                        </div>
+                        <button
+                          onClick={clearSelection}
+                          style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', padding: '0 4px' }}
+                          title="Bỏ chọn"
+                        >✕</button>
+                      </div>
+
+                      {/* Snippet Preview */}
+                      <div style={{ fontSize: '11px', color: '#334155', fontStyle: 'italic', background: '#FFFFFF', padding: '6px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', marginBottom: '8px', maxHeight: '48px', overflowY: 'auto', lineHeight: '1.4' }}>
+                        "{selectedText}"
+                      </div>
+
+                      {/* 2-column Grid of Action Chips */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                        {[
+                          { label: '✨ Sửa tự nhiên', prompt: 'Viết lại đoạn văn này tự nhiên, hấp dẫn, giữ nguyên ý nghĩa cốt lõi' },
+                          { label: '✂️ Rút gọn súc tích', prompt: 'Rút ngắn đoạn này còn 1-2 câu thật súc tích, giữ các số liệu và thông tin quan trọng' },
+                          { label: '🏛️ Chuẩn trang trọng', prompt: 'Biên tập lại đoạn này theo văn phong báo chí hành chính trang trọng của Công đoàn' },
+                          { label: '✏️ Sửa chính tả & câu', prompt: 'Sửa toàn bộ lỗi chính tả, ngữ pháp và trau chuốt câu từ mượt mà' },
+                          { label: '📢 Nhấn mạnh khí thế', prompt: 'Diễn đạt lại đoạn này nhấn mạnh tinh thần nhiệt huyết, đoàn kết và lan tỏa', span: true }
+                        ].map(chip => (
+                          <button
+                            key={chip.label}
+                            disabled={aiInlineLoading}
+                            onClick={() => handleAiInlineEdit(selectedText, chip.prompt)}
+                            style={{
+                              gridColumn: chip.span ? 'span 2' : 'auto',
+                              background: aiInlineLoading ? '#F1F5F9' : '#FFFFFF',
+                              border: '1px solid #93C5FD',
+                              borderRadius: '8px',
+                              padding: '6px 8px',
+                              fontSize: '11px',
+                              color: aiInlineLoading ? '#94A3B8' : '#1E40AF',
+                              cursor: aiInlineLoading ? 'wait' : 'pointer',
+                              fontWeight: '700',
+                              textAlign: 'center',
+                              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                              transition: 'all 0.15s'
+                            }}
+                            onMouseEnter={e => { if (!aiInlineLoading) { e.currentTarget.style.background = '#2563EB'; e.currentTarget.style.color = '#FFF'; } }}
+                            onMouseLeave={e => { if (!aiInlineLoading) { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.color = '#1E40AF'; } }}
+                          >
+                            {chip.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {aiInlineLoading && (
+                        <div style={{ marginTop: '8px', textAlign: 'center', fontSize: '11px', color: '#2563EB', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                          <i className="fa-solid fa-spinner fa-spin" /> Đang sửa bằng Groq Qwen3.8-27B...
+                        </div>
+                      )}
                     </div>
                   ) : (
                     /* Dynamic Sub-Agent Fast Action Chips per Channel */
@@ -3323,26 +4277,96 @@ export default function AdminStudio() {
                     </div>
                   )}
 
-                  {/* Input form */}
-                  <div style={{ padding: '8px 10px', display: 'flex', gap: '6px' }}>
-                    <input
+                  {/* Input form - Spacious Prompt Command Box */}
+                  <div style={{ padding: '10px 12px', background: '#FFFFFF', borderTop: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <textarea
                       id="ai-prompt-input"
-                      type="text"
                       value={aiPrompt}
+                      rows={3}
+                      spellCheck={false}
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      autoComplete="off"
                       onChange={e => setAiPrompt(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') runAi(); }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          runAi();
+                        }
+                      }}
                       placeholder={
                         selectedText 
-                          ? 'Hỏi AI hoặc yêu cầu sửa đoạn đang chọn...' 
+                          ? '👉 Nhập yêu cầu chỉnh sửa đoạn văn đang bôi đen (ví dụ: rút gọn, đổi giọng văn, thêm số liệu...)...' 
                           : activeChannel === 'fb' 
-                            ? 'Yêu cầu Trợ lý Facebook viết hook, thêm emoji, hashtag hoặc chèn link...'
+                            ? '💬 Nhập yêu cầu cho Trợ lý Facebook: viết mở đầu thu hút, gắn hashtag, chèn liên kết...'
                             : activeChannel === 'zalo'
-                              ? 'Yêu cầu Trợ lý Zalo OA soạn tin phát thanh, tóm tắt ý chính hoặc gửi tài liệu...'
-                              : 'Hỏi Tổng Biên Tập, ra lệnh viết hoặc chọn đoạn văn để sửa...'
+                              ? '📱 Nhập yêu cầu cho Trợ lý Zalo OA: soạn bản tin ngắn, điểm danh đại biểu, trích xuất thông báo...'
+                              : '💡 Nhập yêu cầu chỉ đạo cho Trợ lý AI (ví dụ: "Viết bài tập trung vào trận chung kết bóng đá nam", "Bổ sung danh sách khen thưởng...", "Rà soát lại chính tả toàn bài")...'
                       }
-                      style={{ flex: 1, padding: '7px 10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '11.5px', outline: 'none', background: 'white' }}
+                      style={{
+                        width: '100%',
+                        minHeight: '80px',
+                        maxHeight: '180px',
+                        padding: '10px 12px',
+                        border: '1.5px solid #CBD5E1',
+                        borderRadius: '8px',
+                        fontSize: '12.5px',
+                        lineHeight: '1.55',
+                        outline: 'none',
+                        background: '#F8FAFC',
+                        color: '#0F172A',
+                        resize: 'vertical',
+                        fontFamily: 'inherit',
+                        boxSizing: 'border-box',
+                        transition: 'border-color 0.2s, background 0.2s'
+                      }}
+                      onFocus={e => {
+                        e.target.style.borderColor = '#0284C7';
+                        e.target.style.background = '#FFFFFF';
+                      }}
+                      onBlur={e => {
+                        e.target.style.borderColor = '#CBD5E1';
+                        e.target.style.background = '#F8FAFC';
+                      }}
                     />
-                    <button id="ai-send-btn" onClick={() => runAi()} disabled={aiLoading} style={{ background: 'linear-gradient(135deg,#002855,#2563EB)', color: 'white', border: 'none', borderRadius: '6px', padding: '0 12px', fontSize: '13px', fontWeight: '800', cursor: aiLoading ? 'not-allowed' : 'pointer' }} title="Gửi yêu cầu">➔</button>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                      <span style={{ fontSize: '10px', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <i className="fa-regular fa-keyboard" /> Nhấn <strong>Enter</strong> để gửi • <strong>Shift + Enter</strong> xuống dòng
+                      </span>
+                      <button
+                        id="ai-send-btn"
+                        onClick={() => runAi()}
+                        disabled={aiLoading}
+                        style={{
+                          background: aiLoading ? '#94A3B8' : 'linear-gradient(135deg, #002855, #2563EB)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '7px 16px',
+                          fontSize: '12px',
+                          fontWeight: '800',
+                          cursor: aiLoading ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          boxShadow: '0 2px 6px rgba(37,99,235,0.25)',
+                          transition: 'all 0.15s'
+                        }}
+                        title="Gửi chỉ đạo cho Trợ lý AI"
+                      >
+                        {aiLoading ? (
+                          <>
+                            <i className="fa-solid fa-spinner fa-spin" />
+                            <span>Đang xử lý...</span>
+                          </>
+                        ) : (
+                          <>
+                            <i className="fa-solid fa-paper-plane" />
+                            <span>Gửi Chỉ Đạo</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3376,7 +4400,7 @@ export default function AdminStudio() {
             <div style={{ padding: '16px 20px', background: 'linear-gradient(135deg,#002855,#001A38)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '800' }}>
                 <i className="fa-solid fa-sliders" style={{ color: '#38BDF8' }} />
-                <span>Cấu Hình API Key AI Vision & Tòa Soạn</span>
+                <span>Cấu Hình API Key AI Vision & Biên Tập Tin Bài</span>
               </div>
               <button onClick={() => setSettingsOpen(false)} style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: '18px', cursor: 'pointer', lineHeight: '1' }}>✕</button>
             </div>
@@ -3607,7 +4631,7 @@ export default function AdminStudio() {
                   LOẠI HÌNH TÀI KHOẢN:
                 </label>
                 <select
-                  value={editingAccountData.type || 'personal'}
+                  value={editingChannel === 'facebook' ? (editingAccountData.type === 'personal' ? 'personal' : 'page') : (editingAccountData.type || 'personal')}
                   onChange={e => setEditingAccountData(p => ({ ...p, type: e.target.value }))}
                   style={{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box', background: '#FFF' }}
                 >
@@ -3618,8 +4642,8 @@ export default function AdminStudio() {
                     </>
                   ) : (
                     <>
-                      <option value="fanpage">🏢 Fanpage Doanh nghiệp / Đơn vị (Graph API)</option>
-                      <option value="personal">👤 Trang cá nhân / Tester Sandbox</option>
+                      <option value="page">🏢 Fanpage Doanh nghiệp / Đơn vị (Graph API v20.0)</option>
+                      <option value="personal">👤 Trang cá nhân / Sandbox</option>
                     </>
                   )}
                 </select>
@@ -3628,60 +4652,67 @@ export default function AdminStudio() {
               {/* Zalo-specific fields */}
               {editingChannel === 'zalo' && (
                 <>
-                  <div style={{ background: '#F0F9FF', border: '1px solid #BAE6FD', padding: '12px 14px', borderRadius: '8px' }}>
-                    <label style={{ fontSize: '12px', fontWeight: '800', color: '#0369A1', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                      <i className="fa-solid fa-mobile-screen" /> SỐ ĐIỆN THOẠI ZALO CỦA BẠN (ĐỂ NHẬN TEST):
-                    </label>
-                    <input
-                      type="text"
-                      value={editingAccountData.recipientPhone || ''}
-                      onChange={e => setEditingAccountData(p => ({ ...p, recipientPhone: e.target.value }))}
-                      placeholder="VD: 0901234567 hoặc 84901234567"
-                      style={{ width: '100%', padding: '9px 12px', border: '1px solid #7DD3FC', borderRadius: '6px', fontSize: '13px', outline: 'none', boxSizing: 'border-box', fontWeight: '600' }}
-                    />
-                    <div style={{ fontSize: '11px', color: '#0284C7', marginTop: '5px' }}>
-                      💡 Khi nhập số điện thoại của bạn, bạn có thể bấm "📲 Test gửi vào Zalo" hoặc "🔗 Mở Zalo 1-Click" để hệ thống tự động soạn sẵn tin và gửi trực tiếp vào Zalo cá nhân của bạn để kiểm tra thực tế!
+                  <div style={{ background: '#F0F9FF', border: '1.5px solid #BAE6FD', padding: '12px 14px', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: '800', color: '#0369A1', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        <i className="fa-solid fa-user-tie" /> SỐ ĐIỆN THOẠI NGƯỜI GỬI:
+                      </label>
+                      <input
+                        type="tel"
+                        value={editingAccountData.senderPhone || ''}
+                        onChange={e => setEditingAccountData(p => ({ ...p, senderPhone: e.target.value }))}
+                        placeholder="VD: 0912345678 (SĐT Zalo trên máy bạn)"
+                        style={{ width: '100%', padding: '9px 12px', border: '1px solid #7DD3FC', borderRadius: '6px', fontSize: '13px', outline: 'none', boxSizing: 'border-box', fontWeight: '600' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: '800', color: '#065F46', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        <i className="fa-solid fa-mobile-screen" /> SỐ ĐIỆN THOẠI NGƯỜI NHẬN (CỦA BẠN):
+                      </label>
+                      <input
+                        type="tel"
+                        value={editingAccountData.recipientPhone || ''}
+                        onChange={e => setEditingAccountData(p => ({ ...p, recipientPhone: e.target.value }))}
+                        placeholder="VD: 0386543483"
+                        style={{ width: '100%', padding: '9px 12px', border: '1px solid #6EE7B7', borderRadius: '6px', fontSize: '13px', outline: 'none', boxSizing: 'border-box', fontWeight: '700' }}
+                      />
+                    </div>
+
+                    <div style={{ fontSize: '11px', color: '#0369A1' }}>
+                      💡 <strong>Chế độ Zalo Cá Nhân:</strong> Gửi tin nhắn thật trực tiếp giữa 2 số điện thoại, không cần OA hay Token phức tạp.
                     </div>
                   </div>
 
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: '800', color: '#002855', display: 'block', marginBottom: '4px' }}>
-                      ZALO OA ID (Nếu dùng chế độ OA Doanh nghiệp):
-                    </label>
-                    <input
-                      type="text"
-                      value={editingAccountData.oaId || ''}
-                      onChange={e => setEditingAccountData(p => ({ ...p, oaId: e.target.value }))}
-                      placeholder="VD: 448899123456789"
-                      style={{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box' }}
-                    />
-                  </div>
+                  {editingAccountData.type === 'oa' && (
+                    <>
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: '800', color: '#002855', display: 'block', marginBottom: '4px' }}>
+                          ZALO OA ID:
+                        </label>
+                        <input
+                          type="text"
+                          value={editingAccountData.oaId || ''}
+                          onChange={e => setEditingAccountData(p => ({ ...p, oaId: e.target.value }))}
+                          placeholder="VD: 448899123456789"
+                          style={{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box' }}
+                        />
+                      </div>
 
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: '800', color: '#002855', display: 'block', marginBottom: '4px' }}>
-                      ACCESS TOKEN ZALO OA:
-                    </label>
-                    <input
-                      type="password"
-                      value={editingAccountData.accessToken || ''}
-                      onChange={e => setEditingAccountData(p => ({ ...p, accessToken: e.target.value }))}
-                      placeholder="Nhập Access Token Zalo OA (để trống nếu dùng chế độ giả lập test)"
-                      style={{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box' }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: '800', color: '#002855', display: 'block', marginBottom: '4px' }}>
-                      ZALO USER ID NGƯỜI NHẬN (Optional - Dùng cho API CS/Transaction):
-                    </label>
-                    <input
-                      type="text"
-                      value={editingAccountData.recipientUserId || ''}
-                      onChange={e => setEditingAccountData(p => ({ ...p, recipientUserId: e.target.value }))}
-                      placeholder="ID người dùng đã quan tâm Zalo OA"
-                      style={{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box' }}
-                    />
-                  </div>
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: '800', color: '#002855', display: 'block', marginBottom: '4px' }}>
+                          ACCESS TOKEN ZALO OA:
+                        </label>
+                        <input
+                          type="password"
+                          value={editingAccountData.accessToken || ''}
+                          onChange={e => setEditingAccountData(p => ({ ...p, accessToken: e.target.value }))}
+                          placeholder="Nhập Access Token Zalo OA thật"
+                          style={{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                    </>
+                  )}
                 </>
               )}
 
@@ -3723,8 +4754,11 @@ export default function AdminStudio() {
                       value={editingAccountData.accessToken || ''}
                       onChange={e => setEditingAccountData(p => ({ ...p, accessToken: e.target.value }))}
                       placeholder="EAA..."
-                      style={{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box' }}
+                      style={{ width: '100%', padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px', outline: 'none', boxSizing: 'border-box', fontFamily: 'monospace' }}
                     />
+                    <div style={{ fontSize: '11px', color: '#0284C7', marginTop: '4px', lineHeight: '1.4' }}>
+                      💡 <strong>Tự động quy đổi:</strong> Bạn có thể dán User Token hoặc Page Token từ Graph API Explorer. Máy chủ sẽ tự động gọi Meta Graph API v20.0 để trích xuất Page Access Token vĩnh viễn tương ứng.
+                    </div>
                   </div>
                 </>
               )}
@@ -3767,6 +4801,76 @@ export default function AdminStudio() {
                   💾 Lưu Cấu Hình
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── POPUP MODAL QUÉT MÃ QR KẾT NỐI BOT ZALO ──────────────────────── */}
+      {zaloQrModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 15, 38, 0.75)', backdropFilter: 'blur(5px)', zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ background: '#FFFFFF', borderRadius: '16px', maxWidth: '450px', width: '100%', boxShadow: '0 20px 50px rgba(0,0,0,0.3)', border: '2px solid #0068FF', overflow: 'hidden', animation: 'fadeIn 0.2s ease-out' }}>
+            {/* Header */}
+            <div style={{ background: 'linear-gradient(135deg, #002855, #0068FF)', padding: '16px 20px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <i className="fa-solid fa-robot" style={{ fontSize: '20px', color: '#60A5FA' }} />
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800' }}>KẾT NỐI BOT ZALO TỰ ĐỘNG</h3>
+                  <div style={{ fontSize: '11px', color: '#BFDBFE' }}>Tự động bắn tin vào nhóm Zalo 100% ngầm</div>
+                </div>
+              </div>
+              <button
+                onClick={() => setZaloQrModalOpen(false)}
+                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', borderRadius: '50%', width: '28px', height: '28px', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', textAlign: 'center' }}>
+              {/* QR Code Container */}
+              <div style={{ width: '260px', height: '260px', borderRadius: '12px', border: '2px dashed #93C5FD', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
+                {zaloQrImage ? (
+                  <img src={zaloQrImage} alt="Zalo QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: '#0068FF' }}>
+                    <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '32px' }} />
+                    <span style={{ fontSize: '12px', fontWeight: '700' }}>Đang sinh mã QR kết nối...</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Status Message */}
+              <div style={{ background: zaloQrStatus === 'success' ? '#ECFDF5' : (zaloQrStatus === 'scanned' ? '#FEF3C7' : '#EFF6FF'), border: `1px solid ${zaloQrStatus === 'success' ? '#A7F3D0' : (zaloQrStatus === 'scanned' ? '#FDE68A' : '#BFDBFE')}`, borderRadius: '8px', padding: '10px 14px', width: '100%', boxSizing: 'border-box' }}>
+                <div style={{ fontSize: '12.5px', fontWeight: '800', color: zaloQrStatus === 'success' ? '#065F46' : (zaloQrStatus === 'scanned' ? '#92400E' : '#0369A1') }}>
+                  {zaloQrMessage || 'Vui lòng mở app Zalo trên điện thoại để quét mã'}
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div style={{ textAlign: 'left', width: '100%', background: '#F8FAFC', padding: '12px 14px', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '12px', color: '#334155', lineHeight: '1.6' }}>
+                <strong style={{ color: '#002855' }}>3 BƯỚC KÍCH HOẠT NHANH:</strong>
+                <div style={{ marginTop: '4px' }}>1. Mở ứng dụng <strong>Zalo trên điện thoại</strong> (tài khoản đã tham gia nhóm Zalo).</div>
+                <div>2. Chọn biểu tượng <strong>Quét mã QR</strong> ở góc trên bên phải Zalo.</div>
+                <div>3. Quét mã QR này và chọn <strong>"Đăng nhập"</strong> trên điện thoại.</div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '12px 20px', background: '#F1F5F9', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <button
+                onClick={startBotQrLogin}
+                style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0284C7', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+              >
+                <i className="fa-solid fa-arrows-rotate" /> Tạo lại mã
+              </button>
+              <button
+                onClick={() => setZaloQrModalOpen(false)}
+                style={{ padding: '7px 18px', borderRadius: '6px', border: 'none', background: '#64748B', color: 'white', fontSize: '12px', fontWeight: '800', cursor: 'pointer' }}
+              >
+                Đóng
+              </button>
             </div>
           </div>
         </div>

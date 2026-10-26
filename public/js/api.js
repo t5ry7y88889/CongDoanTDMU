@@ -124,6 +124,12 @@ const API = {
     return await res.json();
   },
 
+  async getMonthlyAnalytics(month = null) {
+    const url = month ? '/api/analytics/monthly?month=' + encodeURIComponent(month) : '/api/analytics/monthly';
+    const res = await fetch(url);
+    return await res.json();
+  },
+
   async getAudits() {
     const res = await fetch('/api/audits');
     return await res.json();

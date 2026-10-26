@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mxfile host="app.diagrams.net" modified="2026-10-24T08:45:00.000Z" agent="Antigravity" version="24.0.0" type="device">
+  <diagram id="cd3_feedback" name="CD3 - Hòm thư góp ý đoàn viên">
+    <mxGraphModel dx="1100" dy="750" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="620" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Tiêu đề -->
+        <mxCell id="2" value="SƠ ĐỒ LỚP: PHÂN HỆ QUẢN LÝ HÒM THƯ GÓP Ý &amp; PHẢN HỒI ĐOÀN VIÊN" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontStyle=1;fontSize=15;fontColor=#000000;fontFamily=Arial;" parent="1" vertex="1">
+          <mxGeometry x="100" y="15" width="800" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Class 1: GopYDoanVien -->
+        <mxCell id="c_gopy" value="GopYDoanVien" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontFamily=Arial;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="360" y="70" width="280" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="c_gopy_attrs" value="# maGopY: Integer&#10;# maTracking: String&#10;# tieuDe: String&#10;# noiDung: Text&#10;# maChuDe: String&#10;# hoTenNguoiGui: String&#10;# emailNguoiGui: String&#10;# soDienThoai: String&#10;# isAnDanh: Boolean&#10;# trangThai: String&#10;# ngayGui: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=11;" parent="c_gopy" vertex="1">
+          <mxGeometry y="26" width="280" height="144" as="geometry" />
+        </mxCell>
+        <mxCell id="c_gopy_sep" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#000000;" parent="c_gopy" vertex="1">
+          <mxGeometry y="170" width="280" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="c_gopy_methods" value="+ taoGopY(): Boolean&#10;+ traCuuTheoTracking(code): Object&#10;+ capNhatTrangThai(status): Void" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=11;" parent="c_gopy" vertex="1">
+          <mxGeometry y="178" width="280" height="52" as="geometry" />
+        </mxCell>
+        
+        <!-- Class 2: PhanHoiGopY -->
+        <mxCell id="c_phanhoi" value="PhanHoiGopY" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontFamily=Arial;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="360" y="380" width="280" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="c_phanhoi_attrs" value="# maPhanHoi: Integer&#10;# maGopY: Integer&#10;# nguoiPhanHoi: String&#10;# chucVuNguoiPhanHoi: String&#10;# noiDungTraLoi: Text&#10;# ngayPhanHoi: DateTime&#10;# daGuiEmail: Boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=11;" parent="c_phanhoi" vertex="1">
+          <mxGeometry y="26" width="280" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="c_phanhoi_sep" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#000000;" parent="c_phanhoi" vertex="1">
+          <mxGeometry y="121" width="280" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="c_phanhoi_methods" value="+ guiCauTraLoi(): Boolean&#10;+ capNhatNoiDungTraLoi(): Void&#10;+ kichHoatGuiMailThongBao(): Boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=11;" parent="c_phanhoi" vertex="1">
+          <mxGeometry y="129" width="280" height="51" as="geometry" />
+        </mxCell>
+        
+        <!-- Class 3: ChuDeGopY -->
+        <mxCell id="c_chude" value="ChuDeGopY" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontFamily=Arial;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="50" y="100" width="230" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="c_chude_attrs" value="# maChuDe: String&#10;# tenChuDe: String&#10;# moTa: String&#10;# thuTuHienThi: Integer&#10;# isActive: Boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=11;" parent="c_chude" vertex="1">
+          <mxGeometry y="26" width="230" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="c_chude_sep" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#000000;" parent="c_chude" vertex="1">
+          <mxGeometry y="100" width="230" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="c_chude_methods" value="+ layDanhSachChuDe(): List&#10;+ themChuDeMoi(): Boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=11;" parent="c_chude" vertex="1">
+          <mxGeometry y="108" width="230" height="42" as="geometry" />
+        </mxCell>
+        
+        <!-- Class 4: GiaoDienHomThu (Boundary) -->
+        <mxCell id="c_ui" value="&amp;lt;&amp;lt;boundary&amp;gt;&amp;gt;&#10;GiaoDienHomThuGopY" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=36;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontFamily=Arial;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="720" y="100" width="240" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="c_ui_attrs" value="- formGuiGopY: HTMLForm&#10;- tabDanhSachAdmin: Table&#10;- trackingInput: InputBox" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=11;" parent="c_ui" vertex="1">
+          <mxGeometry y="36" width="240" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="c_ui_sep" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#000000;" parent="c_ui" vertex="1">
+          <mxGeometry y="84" width="240" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="c_ui_methods" value="+ renderFormGui(): Void&#10;+ hienThiThongBaoKetQua(): Void&#10;+ renderDanhSachAdmin(): Void&#10;+ moModalTraLoi(): Void" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=11;" parent="c_ui" vertex="1">
+          <mxGeometry y="92" width="240" height="68" as="geometry" />
+        </mxCell>
+        
+        <!-- Relationships -->
+        <!-- GopY 1 - 0..1 PhanHoi (Composition / Association) -->
+        <mxCell id="r_gopy_phanhoi" value="giải quyết&#10;1            0..1" style="endArrow=diamondThin;endFill=1;endSize=14;strokeColor=#000000;strokeWidth=1.2;fontSize=11;fontFamily=Arial;" parent="1" source="c_gopy" target="c_phanhoi" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- ChuDe 1 - 0..* GopY (Association) -->
+        <mxCell id="r_chude_gopy" value="phân loại&#10;1            0..*" style="endArrow=none;strokeColor=#000000;strokeWidth=1.2;fontSize=11;fontFamily=Arial;" parent="1" source="c_chude" target="c_gopy" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- GopY ..> GiaoDien (Dependency) -->
+        <mxCell id="r_ui_gopy" value="hiển thị / điều phối" style="endArrow=open;dashed=1;endSize=8;strokeColor=#000000;strokeWidth=1.2;fontSize=11;fontFamily=Arial;" parent="1" source="c_ui" target="c_gopy" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

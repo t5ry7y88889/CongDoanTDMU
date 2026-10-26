@@ -504,7 +504,7 @@ function logComposerActivity(key, text, status) {
   }
 }
 
-// ── 4. AI MASTER COMPOSITION (LẬP BÀI BÁO GỐC CHUẨN TÒA SOẠN) ───────────────────
+// ── 4. AI MASTER COMPOSITION (SOẠN THẢO BÀI VIẾT TỰ ĐỘNG) ───────────────────
 
 async function runComposerGeneration() {
   const prompt = (document.getElementById('composer_prompt_input')?.value || '').trim();
@@ -525,7 +525,7 @@ async function runComposerGeneration() {
   const stream = document.getElementById('composer_activity_stream');
   if (stream) stream.innerHTML = '';
 
-  logComposerActivity('init', 'Khởi động Tòa Soạn AI: Đang đọc hiểu toàn bộ tư liệu nguồn...', 'running');
+  logComposerActivity('init', 'Khởi động Trợ lý AI: Đang đọc hiểu toàn bộ tư liệu nguồn...', 'running');
 
   // Switch to Web Master Document
   switchComposerTab('web');
@@ -979,12 +979,17 @@ async function publishComposerChannel(channel) {
   if (!composerState.activeArticleId) return;
 
   try {
+    const fbCap = document.getElementById('composer_fb_caption')?.value || '';
+    const fbImg = (composerState.facebookPhotos && composerState.facebookPhotos[0]) || '';
+    const zaloContent = document.getElementById('composer_zalo_caption')?.value || '';
     const res = await fetch('/api/publish/now', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         articleId: composerState.activeArticleId,
-        channel
+        channel,
+        facebook: { caption: fbCap, imageUrl: fbImg },
+        zalo: { content: zaloContent }
       })
     }).then(r => r.json());
 
@@ -2218,6 +2223,72 @@ function syncFbFromWebMaster() {
   safeSetVal('composer_fb_caption', text);
   safeSetText('composer_fb_preview_text', text);
   logComposerActivity('fb_sync', 'Đã đồng bộ nội dung từ bài báo sang Facebook Fanpage.', 'done');
+}
+
+async function publishFacebookFromPane() {
+  const caption = (document.getElementById('composer_fb_caption')?.value || '').trim();
+  const title = (document.getElementById('composer_title_input')?.value || '').trim();
+  const sapo = (document.getElementById('composer_sapo_input')?.value || '').trim();
+  const statusEl = document.getElementById('pane_fb_status');
+  const btn = document.getElementById('btn_pane_fb_publish');
+
+  if (!caption && !title) {
+    alert('Vui lòng nhập nội dung Caption Facebook hoặc tiêu đề bài viết!');
+    return;
+  }
+
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang đăng lên Meta API...'; }
+  if (statusEl) statusEl.textContent = 'Đang kết nối Meta Graph API...';
+
+  try {
+    const photoUrl = (composerState.facebookPhotos && composerState.facebookPhotos[0]) || '';
+    const res = await fetch('/api/publish/facebook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        caption: caption || `${title}\n\n${sapo}\n\n#CongDoanTDMU #TDMU`,
+        imageUrl: photoUrl,
+        articleTitle: title,
+        articleId: composerState.activeArticleId || null,
+        accountId: 'fb-default'
+      })
+    }).then(r => r.json());
+
+    if (res.success) {
+      alert(`🎉 ${res.message}\n\nMã bài đăng: ${res.data?.postId || 'Thành công'}\nLink xem: ${res.data?.permalinkUrl || ''}`);
+      if (statusEl) statusEl.innerHTML = `<span style="color: #059669; font-weight: 700;">✅ Đã đăng thành công! (Mã: ${res.data?.postId})</span>`;
+      logComposerActivity('fb_pub', res.message, 'done');
+    } else {
+      alert('Lỗi đăng Facebook: ' + (res.error || 'Không xác định'));
+      if (statusEl) statusEl.innerHTML = `<span style="color: #DC2626; font-weight: 700;">✕ Lỗi: ${res.error}</span>`;
+    }
+  } catch (err) {
+    alert('Lỗi kết nối Facebook: ' + err.message);
+    if (statusEl) statusEl.innerHTML = `<span style="color: #DC2626;">✕ Lỗi kết nối: ${err.message}</span>`;
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-brands fa-facebook"></i> 🚀 ĐĂNG NGAY LÊN FANPAGE FACEBOOK'; }
+  }
+}
+
+async function testFacebookConnectionFromAdmin() {
+  const statusEl = document.getElementById('pane_fb_status');
+  if (statusEl) statusEl.textContent = 'Đang kiểm tra kết nối Meta API...';
+  try {
+    const res = await fetch('/api/publish/test-connection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channel: 'facebook', accountId: 'fb-default' })
+    }).then(r => r.json());
+    if (res.success) {
+      alert(`✅ Kết nối thành công tới Meta Graph API!\nFanpage: ${res.pageName} (ID: ${res.pageId})\nTài khoản: ${res.accountName}`);
+      if (statusEl) statusEl.innerHTML = `<span style="color: #059669; font-weight: 700;">✅ Meta API Ready: Fanpage "${res.pageName}"</span>`;
+    } else {
+      alert('Lỗi kết nối Facebook: ' + (res.error || 'Token không hợp lệ'));
+      if (statusEl) statusEl.innerHTML = `<span style="color: #DC2626;">✕ Lỗi: ${res.error}</span>`;
+    }
+  } catch (err) {
+    alert('Lỗi: ' + err.message);
+  }
 }
 
 function syncZaloFromWebMaster() {

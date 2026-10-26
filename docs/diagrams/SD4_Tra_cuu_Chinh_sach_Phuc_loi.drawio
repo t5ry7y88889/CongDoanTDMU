@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mxfile host="app.diagrams.net" modified="2026-10-24T08:45:00.000Z" agent="Antigravity" version="24.0.0" type="device">
+  <diagram id="sd4_welfare" name="SD4 - Tra cứu chính sách phúc lợi">
+    <mxGraphModel dx="1100" dy="750" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1250" pageHeight="800" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Tiêu đề sơ đồ -->
+        <mxCell id="2" value="Hình 2.10: Sơ đồ tuần tự Tra cứu &amp; Tiếp cận Chính sách Chăm lo, Phúc lợi Đoàn viên" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontStyle=1;fontSize=15;fontColor=#000000;fontFamily=Arial;" parent="1" vertex="1">
+          <mxGeometry x="150" y="15" width="950" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Lifeline 1: Doan vien -->
+        <mxCell id="3" value="Đoàn viên" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontSize=12;fontColor=#000000;fontFamily=Arial;" parent="1" vertex="1">
+          <mxGeometry x="40" y="60" width="120" height="640" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="Đoàn viên" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontFamily=Arial;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="40" y="710" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Lifeline 2: Cổng thông tin UI -->
+        <mxCell id="5" value="Cổng thông tin (UI)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontSize=12;fontColor=#000000;fontFamily=Arial;" parent="1" vertex="1">
+          <mxGeometry x="230" y="60" width="130" height="640" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Cổng thông tin (UI)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontFamily=Arial;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="230" y="710" width="130" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Lifeline 3: WelfareController -->
+        <mxCell id="7" value="WelfareController" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontSize=12;fontColor=#000000;fontFamily=Arial;" parent="1" vertex="1">
+          <mxGeometry x="430" y="60" width="130" height="640" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="WelfareController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontFamily=Arial;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="430" y="710" width="130" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Lifeline 4: TemplateController -->
+        <mxCell id="9" value="TemplateController" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontSize=12;fontColor=#000000;fontFamily=Arial;" parent="1" vertex="1">
+          <mxGeometry x="630" y="60" width="130" height="640" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="TemplateController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontFamily=Arial;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="630" y="710" width="130" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Lifeline 5: Database -->
+        <mxCell id="11" value="Database (CSDL)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontSize=12;fontColor=#000000;fontFamily=Arial;" parent="1" vertex="1">
+          <mxGeometry x="830" y="60" width="120" height="640" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="Database (CSDL)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontFamily=Arial;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="830" y="710" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Lifeline 6: To Cong Doan Co So -->
+        <mxCell id="13" value="Tổ Công đoàn CS" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontSize=12;fontColor=#000000;fontFamily=Arial;" parent="1" vertex="1">
+          <mxGeometry x="1030" y="60" width="120" height="640" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="Tổ Công đoàn CS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontFamily=Arial;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="1030" y="710" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Messages -->
+        <!-- 1. Chon chuyen muc -->
+        <mxCell id="15" value="1. Chọn chuyên mục 'Phúc Lợi Đoàn Viên' trên thanh điều hướng" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="100" y="130" as="sourcePoint" />
+            <mxPoint x="290" y="130" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 2. GET /api/welfare -->
+        <mxCell id="16" value="2. Gửi request GET /api/welfare truy vấn dữ liệu chính sách" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="170" as="sourcePoint" />
+            <mxPoint x="490" y="170" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 3. SELECT WELFARE_PROGRAMS -->
+        <mxCell id="17" value="3. SELECT * FROM WELFARE_PROGRAMS WHERE Status='active'" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="500" y="210" as="sourcePoint" />
+            <mxPoint x="885" y="210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 4. Tra ve danh muc chinh sach -->
+        <mxCell id="18" value="4. Trả về tập danh mục chính sách chăm lo &amp; định mức hỗ trợ" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="885" y="250" as="sourcePoint" />
+            <mxPoint x="500" y="250" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 5. Render cards -->
+        <mxCell id="19" value="5. Hiển thị các thẻ chính sách (Mã số, Tiêu đề, Định mức, Đối tượng)" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="490" y="290" as="sourcePoint" />
+            <mxPoint x="105" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 6. Xem chi tiet -->
+        <mxCell id="20" value="6. Chọn xem chi tiết chính sách &amp; tiêu chuẩn xét duyệt" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="100" y="340" as="sourcePoint" />
+            <mxPoint x="290" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 7. Nhan nut tai bieu mau -->
+        <mxCell id="21" value="7. Bấm 'Tải Biểu Mẫu Đơn Giấy (.docx)'" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="100" y="380" as="sourcePoint" />
+            <mxPoint x="290" y="380" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 8. GET /api/templates -->
+        <mxCell id="22" value="8. Chuyển hướng Kho Biểu mẫu -> GET /api/templates/download/BM-01" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="420" as="sourcePoint" />
+            <mxPoint x="690" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 9. SELECT TEMPLATES & UPDATE DownloadsCount -->
+        <mxCell id="23" value="9. Lấy đường dẫn FileUrl &amp; Tăng DownloadsCount + 1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="700" y="460" as="sourcePoint" />
+            <mxPoint x="885" y="460" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 10. Tra ve stream file docx -->
+        <mxCell id="24" value="10. Trả về luồng tệp tin văn bản đính kèm (.docx)" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="885" y="500" as="sourcePoint" />
+            <mxPoint x="700" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 11. Tai file ve trinh duyet -->
+        <mxCell id="25" value="11. Trình duyệt tải tệp tin mẫu đơn về máy tính của đoàn viên" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="690" y="540" as="sourcePoint" />
+            <mxPoint x="105" y="540" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 12. Nop don giay qua To cong doan -->
+        <mxCell id="26" value="12. Đoàn viên in, điền hoàn tất đơn giấy &amp; nộp qua Tổ Công đoàn" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="100" y="600" as="sourcePoint" />
+            <mxPoint x="1085" y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 13. To cong doan xac nhan va gui BTV -->
+        <mxCell id="27" value="13. Tổ Công đoàn tiếp nhận, thẩm định ban đầu và tổng hợp gửi Ban Thường vụ" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1085" y="650" as="sourcePoint" />
+            <mxPoint x="105" y="650" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

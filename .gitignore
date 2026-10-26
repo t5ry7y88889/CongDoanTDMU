@@ -33,3 +33,11 @@ admin_*.png
 # Embedded Local AI Models (>100MB)
 server/models/*.gguf
 server/models/*.tmp
+
+# Large raw event photos and assets
+Ho_So_Bai_Viet_Tieu_Chuan/
+public/Ho_So_Bai_Viet_Tieu_Chuan/
+docs/~*
+*.tmp
+API Key.json
+*.zip

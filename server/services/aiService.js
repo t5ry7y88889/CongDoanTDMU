@@ -2,12 +2,10 @@ const { GoogleGenAI: RawGoogleGenAI } = require('@google/genai');
 const { fixVietnameseFont } = require('./documentParser');
 
 const GEMINI_MODELS = [
-  'gemini-flash-lite-latest',
-  'gemini-3.5-flash-lite',
-  'gemini-3.6-flash',
-  'gemini-flash-latest',
   'gemini-2.5-flash',
-  'gemini-2.5-pro'
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+  'gemini-flash-latest'
 ];
 
 class GoogleGenAI extends RawGoogleGenAI {
@@ -122,9 +120,13 @@ function extractJsonFromText(text) {
 // =========================================================================
 // 3. GROQ NATIVE API CALLER
 // =========================================================================
-async function callGroqAPI(promptContent, systemPrompt, groqApiKey) {
+async function callGroqAPI(promptContent, systemPrompt = '', groqApiKey = '', options = {}) {
   const fetch = (await import('node-fetch')).default || globalThis.fetch;
   const cleanKey = (groqApiKey || "").trim();
+  const requireJson = options.requireJson ?? (options.json ?? (
+    String(systemPrompt).toLowerCase().includes('json') ||
+    String(promptContent).toLowerCase().includes('json')
+  ));
 
   // 1. Dynamically query models
   let availableModels = [];
@@ -140,11 +142,12 @@ async function callGroqAPI(promptContent, systemPrompt, groqApiKey) {
     console.warn("[Groq Model List Warning]:", e.message);
   }
 
-  // 2. Priority order: Official Groq production models
+  // 2. Priority order: Groq production models (Oct 2026)
   const preferredModels = [
-    'llama-3.3-70b-versatile',
-    'llama-3.1-8b-instant',
-    'gemma2-9b-it'
+    'qwen/qwen3.8-27b',      // Best Vietnamese, 27B, Free
+    'openai/gpt-oss-120b',   // 120B fallback
+    'openai/gpt-oss-20b',    // 20B fast fallback
+    'allam-2-7b'             // Last resort
   ];
 
   let modelsToTry = [];
@@ -159,22 +162,25 @@ async function callGroqAPI(promptContent, systemPrompt, groqApiKey) {
   if (modelsToTry.length === 0) modelsToTry = preferredModels;
 
   let lastError = null;
+  const formatsToTry = requireJson ? [true, false] : [false];
 
   for (const model of modelsToTry) {
-    for (const useJsonFormat of [true, false]) {
+    for (const useJsonFormat of formatsToTry) {
       try {
         console.log(`[Calling Groq]: Model=${model}, jsonMode=${useJsonFormat}...`);
         
+        const systemMsgContent = requireJson
+          ? (systemPrompt + "\n\nBẠN PHẢI TRẢ VỀ DUY NHẤT MỘT ĐỐI TƯỢNG JSON HỢP LỆ THEO ĐÚNG CẤU TRÚC ĐÃ CHO.")
+          : systemPrompt;
+
         const payload = {
           model: model,
           messages: [
-            { 
-              role: 'system', 
-              content: systemPrompt + "\n\nBẠN PHẢI TRẢ VỀ DUY NHẤT MỘT ĐỐI TƯỢNG JSON HỢP LỆ THEO ĐÚNG CẤU TRÚC ĐÃ CHO." 
-            },
+            ...(systemMsgContent ? [{ role: 'system', content: systemMsgContent }] : []),
             { role: 'user', content: promptContent }
           ],
-          temperature: 0.3
+          temperature: options.temperature ?? 0.3,
+          max_tokens: options.maxTokens ?? 1500
         };
 
         if (useJsonFormat) {
@@ -266,6 +272,13 @@ function normalizeAiGenerateOutput(parsed, defaultPrompt) {
     content = content.split(/\n\n+/).map(p => `<p>${p.trim()}</p>`).join('\n');
   }
 
+  // Đảm bảo chữ ký xuất bản truyền thống BBT của Công đoàn TDMU luôn hiện diện ở cuối bài báo
+  if (typeof content === 'string' && content.length > 50) {
+    if (!content.includes('BBT') && !content.includes('Ban Biên tập') && !content.includes('Ban Truyền thông')) {
+      content += '\n<div style="text-align: right; margin-top: 24px;"><p><strong>BBT</strong></p></div>';
+    }
+  }
+
   return { titles, subTitle, summary, content };
 }
 
@@ -345,7 +358,7 @@ QUY ĐỊNH BẮT BUỘC:
     try {
       const ai = new GoogleGenAI({ apiKey: activeGemini });
       const res = await ai.models.generateContent({
-        model: 'gemini-flash-latest',
+        model: 'gemini-2.5-flash',
         contents: [
           {
             inlineData: {

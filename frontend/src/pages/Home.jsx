@@ -4,53 +4,6 @@ import HeroCarousel from '../components/HeroCarousel';
 import PaginationBar from '../components/PaginationBar';
 import ArticleQuickModal from '../components/ArticleQuickModal';
 
-const staticArticles = [
-  {
-    id: 1,
-    title: 'Tọa đàm "Dinh dưỡng lành mạnh vì sức khỏe gia đình"',
-    createdAt: '2026-06-26 12:56',
-    viewsCount: 147,
-    author: 'Ban Nữ công Công đoàn TDMU',
-    categoryName: 'Hoạt Động Phong Trào',
-    image: 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=800',
-    summary: 'Hướng tới kỷ niệm Ngày Gia đình Việt Nam, Công đoàn Trường Đại học Thủ Dầu Một đã tổ chức tọa đàm với chủ đề "Dinh dưỡng lành mạnh vì sức khỏe gia đình"...',
-    content: '<p>Hướng tới kỷ niệm Ngày Gia đình Việt Nam, Công đoàn Trường Đại học Thủ Dầu Một đã tổ chức tọa đàm với chủ đề "Dinh dưỡng lành mạnh vì sức khỏe gia đình", thu hút đông đảo nữ cán bộ, giảng viên tham gia thảo luận về chế độ ăn uống khoa học và cân bằng cuộc sống.</p>'
-  },
-  {
-    id: 2,
-    title: 'Chào mừng Đại hội XIV Công đoàn Việt Nam nhiệm kỳ 2026 – 2031',
-    createdAt: '2026-06-01 21:06',
-    viewsCount: 140,
-    author: 'Ban Thường Vụ',
-    categoryName: 'Thông Báo Chỉ Đạo',
-    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800',
-    summary: 'Đại hội XIV Công đoàn Việt Nam là sự kiện chính trị quan trọng của giai cấp công nhân và tổ chức Công đoàn Việt Nam, đánh dấu giai đoạn phát triển mới...',
-    content: '<p>Đại hội XIV Công đoàn Việt Nam là sự kiện chính trị quan trọng của giai cấp công nhân và tổ chức Công đoàn Việt Nam. Toàn thể đoàn viên TDMU ra sức thi đua lập thành tích xuất sắc chào mừng ngày hội lớn.</p>'
-  },
-  {
-    id: 3,
-    title: 'Đại học Thủ Dầu Một được tuyên dương điển hình tiên tiến trong học tập và làm theo Bác',
-    createdAt: '2026-05-08 21:41',
-    viewsCount: 306,
-    author: 'Ban Tuyên giáo',
-    categoryName: 'Gương Sáng Đoàn Viên',
-    image: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800',
-    summary: 'Trường Đại học Thủ Dầu Một vinh dự được trao tặng Bằng khen dành cho tập thể điển hình tiên tiến có thành tích tiêu biểu giai đoạn 2021–2026...',
-    content: '<p>Trường Đại học Thủ Dầu Một vinh dự được trao tặng Bằng khen dành cho tập thể điển hình tiên tiến có thành tích tiêu biểu giai đoạn 2021–2026 trong phong trào học tập và làm theo tư tưởng, đạo đức, phong cách Hồ Chí Minh.</p>'
-  },
-  {
-    id: 4,
-    title: 'Phiên chợ Tết “Ngựa ô đón Tết – Rước lộc về dinh” chào xuân 2026',
-    createdAt: '2026-01-30 11:56',
-    viewsCount: 911,
-    author: 'Ban Thường Vụ',
-    categoryName: 'Chăm Lo Đời Sống',
-    image: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800',
-    summary: 'Trong không khí rộn ràng đón Tết, Công đoàn TDMU tổ chức Phiên chợ Tết với nhiều gian hàng ẩm thực, quà tết ưu đãi cho cán bộ, giảng viên và sinh viên...',
-    content: '<p>Trong không khí rộn ràng đón Tết, Công đoàn TDMU tổ chức Phiên chợ Tết với nhiều gian hàng ẩm thực, quà tết ưu đãi cho cán bộ, giảng viên và sinh viên có hoàn cảnh khó khăn.</p>'
-  }
-];
-
 const Home = () => {
   const [articles, setArticles] = useState([]);
   const [documents, setDocuments] = useState([]);
@@ -70,13 +23,11 @@ const Home = () => {
     fetch('/api/articles?status=published')
       .then((r) => r.json())
       .then((data) => {
-        if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
+        if (data && data.data && Array.isArray(data.data)) {
           setArticles(data.data);
-        } else {
-          setArticles(staticArticles);
         }
       })
-      .catch(() => setArticles(staticArticles))
+      .catch((err) => console.error('Error fetching live articles:', err))
       .finally(() => setLoading(false));
 
     // 2. Fetch live documents from API
@@ -140,46 +91,58 @@ const Home = () => {
 
               {/* Lưới bài viết */}
               <div className="row g-3" id="article_container">
-                {currentArticles.map((art) => (
-                  <div className="col-md-6 new_item" key={art.id}>
-                    <h3 className="new_item_title">
-                      <a
-                        href={`#read-${art.id}`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          openQuickArticle(art);
-                        }}
-                        title={art.title}
-                      >
-                        {art.title}
-                      </a>
-                    </h3>
-                    <div
-                      style={{ cursor: 'pointer', overflow: 'hidden', borderRadius: '4px' }}
-                      onClick={() => openQuickArticle(art)}
-                    >
-                      <img
-                        src={art.image || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500'}
-                        className="new_item_img"
-                        alt={art.title}
-                      />
-                    </div>
-                    <span className="new_item_time">
-                      <i className="fa-regular fa-clock me-1 text-primary"></i>
-                      {art.createdAt ? String(art.createdAt).slice(0, 16) : 'Vừa cập nhật'} &nbsp;|&nbsp;
-                      <i className="fa-regular fa-eye me-1 text-success"></i>
-                      {art.viewsCount || art.views || 140} lượt xem &nbsp;|&nbsp;
-                      <span className="badge bg-light text-primary border">{art.categoryName || 'Tin tức'}</span>
-                    </span>
-                    <span className="new_item_desc">
-                      {art.summary
-                        ? art.summary.length > 160
-                          ? art.summary.slice(0, 160) + '...'
-                          : art.summary
-                        : ''}
-                    </span>
+                {loading ? (
+                  <div className="col-12 text-center py-5">
+                    <i className="fa-solid fa-spinner fa-spin fa-2x text-primary mb-2"></i>
+                    <p className="text-muted">Đang tải bài báo từ cơ sở dữ liệu...</p>
                   </div>
-                ))}
+                ) : currentArticles.length === 0 ? (
+                  <div className="col-12 text-center py-5 text-muted">
+                    <i className="fa-solid fa-inbox fa-3x mb-3 text-secondary"></i>
+                    <p>Chưa có bài viết nào được xuất bản.</p>
+                  </div>
+                ) : (
+                  currentArticles.map((art) => (
+                    <div className="col-md-6 new_item" key={art.id}>
+                      <h3 className="new_item_title">
+                        <a
+                          href={`#read-${art.id}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            openQuickArticle(art);
+                          }}
+                          title={art.title}
+                        >
+                          {art.title}
+                        </a>
+                      </h3>
+                      <div
+                        style={{ cursor: 'pointer', overflow: 'hidden', borderRadius: '4px' }}
+                        onClick={() => openQuickArticle(art)}
+                      >
+                        <img
+                          src={art.image || '/images/banner.jpg'}
+                          className="new_item_img"
+                          alt={art.title}
+                        />
+                      </div>
+                      <span className="new_item_time">
+                        <i className="fa-regular fa-clock me-1 text-primary"></i>
+                        {art.publishedAt ? String(art.publishedAt).slice(0, 16) : (art.createdAt ? String(art.createdAt).slice(0, 16) : 'Vừa cập nhật')} &nbsp;|&nbsp;
+                        <i className="fa-regular fa-eye me-1 text-success"></i>
+                        {art.viewsCount || art.views || 0} lượt xem &nbsp;|&nbsp;
+                        <span className="badge bg-light text-primary border">{art.categoryName || 'Tin tức'}</span>
+                      </span>
+                      <span className="new_item_desc">
+                        {art.summary
+                          ? art.summary.length > 160
+                            ? art.summary.slice(0, 160) + '...'
+                            : art.summary
+                          : ''}
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
 
               {/* Bộ Phân Trang React */}
@@ -205,22 +168,22 @@ const Home = () => {
                   <i className="fa-solid fa-link me-2 text-primary"></i>Liên kết website
                 </div>
                 <div className="list-group-tdmu">
-                  <a href="http://tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+                  <a href="https://tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
                     <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đại học Thủ Dầu Một
                   </a>
-                  <a href="http://danguy.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+                  <a href="https://danguy.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
                     <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đảng Bộ ĐH Thủ Dầu Một
                   </a>
-                  <a href="http://www.congdoan.vn" target="_blank" rel="noreferrer" className="list-group-item">
+                  <a href="https://congdoanvietnam.vn" target="_blank" rel="noreferrer" className="list-group-item">
                     <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Tổng LĐLĐ Việt Nam
                   </a>
-                  <a href="http://congdoanbinhduong.org.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+                  <a href="https://binhduong.congdoan.vn/" target="_blank" rel="noreferrer" className="list-group-item">
                     <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> LĐLĐ Tỉnh Bình Dương
                   </a>
-                  <a href="http://lib.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
-                    <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> TT Học Liệu ĐH Thủ Dầu Một
+                  <a href="https://laodong.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+                    <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Báo Lao Động
                   </a>
-                  <a href="http://doanvien.congdoan.vn/VTBWebProject" target="_blank" rel="noreferrer" className="list-group-item">
+                  <a href="http://doanvien.congdoan.vn/" target="_blank" rel="noreferrer" className="list-group-item">
                     <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Phần mềm quản lý đoàn viên
                   </a>
                 </div>

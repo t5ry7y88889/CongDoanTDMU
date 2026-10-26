@@ -1,10 +1,10 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const { loadDB, saveDB } = require('../db');
 const { getMonthlyReportsFromDb } = require('../mssql_db');
 
 // =========================================================================
-// MONTHLY REPORTS & EMULATION RANKINGS
+// SỐ LIỆU BÁO CÁO THÁNG 16 TỔ CÔNG ĐOÀN (MẪU BM-02/CĐ)
 // =========================================================================
 router.get('/', async (req, res) => {
   let reports = await getMonthlyReportsFromDb();
@@ -59,8 +59,7 @@ router.post('/', (req, res) => {
       proof_url: req.body.proof_url || "",
       next_month_plan: req.body.next_month_plan || "",
       recommendations: req.body.recommendations || "",
-      status: "approved",
-      evaluation_score: 95
+      status: "submitted"
     };
 
     db.monthly_reports.push(newReport);
@@ -96,9 +95,7 @@ router.get('/summary', (req, res) => {
       care_fund: report ? report.total_care_fund : 0,
       propaganda_sessions: report ? report.propaganda_sessions_count : 0,
       party_introduced: report ? report.party_introduced_members : 0,
-      proof_url: report ? report.proof_url : "",
-      evaluation_score: report ? report.evaluation_score : 0,
-      evaluation_rank: report ? (report.evaluation_score >= 95 ? "Tổ CĐ Xuất Sắc" : "Tổ CĐ Hoàn Thành Tốt") : "Chưa Đánh Giá"
+      proof_url: report ? report.proof_url : ""
     };
   });
 

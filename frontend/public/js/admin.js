@@ -1,5 +1,5 @@
 // =========================================================================
-// TÒA SOẠN QUẢN TRỊ TRUYỀN THÔNG ĐA KÊNH & CMS TDMU - MAIN COORDINATOR
+// QUẢN TRỊ TRUYỀN THÔNG ĐA KÊNH & CMS CÔNG ĐOÀN TDMU - MAIN COORDINATOR
 // =========================================================================
 console.log('🏛️ TDMU Trade Union CMS Modular Architecture Initialized.');
 

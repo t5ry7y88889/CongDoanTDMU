@@ -7,7 +7,11 @@ const {
   getWelfareFromDb,
   getWelfareApplicationsFromDb,
   insertWelfareApplicationToDb,
-  updateWelfareApplicationInDb
+  updateWelfareApplicationInDb,
+  getWelfareFundFromDb,
+  getWelfareTransactionsFromDb,
+  depositWelfareFundInDb,
+  disburseWelfareFundInDb
 } = require('../mssql_db');
 
 function stripVietnamese(str) {
@@ -16,15 +20,98 @@ function stripVietnamese(str) {
 }
 
 // =========================================================================
+// QUẢN LÝ QUỸ CHĂM LO & TRỢ CẤP (WELFARE FUND & TRANSACTIONS)
+// =========================================================================
+
+// 1. Lấy thông tin Quỹ và Sổ giao dịch Thu - Chi
+router.get('/fund', async (req, res) => {
+  try {
+    const fund = await getWelfareFundFromDb();
+    const transactions = await getWelfareTransactionsFromDb();
+    
+    // Đếm số đơn chờ duyệt & tổng tiền yêu cầu đang chờ
+    const db = loadDB();
+    const allApps = db.don_tro_cap || db.aid_requests || [];
+    const pendingApps = allApps.filter(d => d.status === 'pending');
+    const pendingAmount = pendingApps.reduce((sum, d) => sum + (parseFloat(d.amount_requested) || 0), 0);
+    const approvedApps = allApps.filter(d => d.status === 'approved' || d.status === 'disbursed');
+    const approvedAmount = approvedApps.reduce((sum, d) => sum + (parseFloat(d.amount_approved) || parseFloat(d.amount_requested) || 0), 0);
+
+    res.json({
+      success: true,
+      fund: {
+        ...fund,
+        pending_count: pendingApps.length,
+        pending_amount: pendingAmount,
+        approved_count: approvedApps.length,
+        approved_amount: approvedAmount
+      },
+      transactions: transactions
+    });
+  } catch (err) {
+    console.error('Lỗi lấy thông tin Quỹ Chăm Lo:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2. Lấy sổ quỹ giao dịch
+router.get('/fund/transactions', async (req, res) => {
+  try {
+    const transactions = await getWelfareTransactionsFromDb();
+    res.json({ success: true, count: transactions.length, data: transactions });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3. Nạp tiền / Cấp ngân sách cho Quỹ Chăm Lo
+router.post('/fund/deposit', async (req, res) => {
+  try {
+    const { amount, source_name, decision_no, note, created_by } = req.body;
+    const numAmount = parseFloat(amount);
+
+    if (!numAmount || numAmount <= 0) {
+      return res.status(400).json({ success: false, error: 'Số tiền nạp quỹ phải lớn hơn 0!' });
+    }
+
+    if (!source_name || !source_name.trim()) {
+      return res.status(400).json({ success: false, error: 'Vui lòng chọn hoặc nhập nguồn kinh phí cấp!' });
+    }
+
+    const transaction = await depositWelfareFundInDb({
+      amount: numAmount,
+      source_name: source_name.trim(),
+      decision_no: (decision_no || '').trim(),
+      note: (note || 'Cấp bổ sung ngân sách Quỹ Chăm lo').trim(),
+      created_by: created_by || 'Ban Thường Vụ Công Đoàn'
+    });
+
+    const updatedFund = await getWelfareFundFromDb();
+
+    res.json({
+      success: true,
+      message: `Đã nạp thành công ${numAmount.toLocaleString('vi-VN')} đ vào Quỹ Chăm Lo & Trợ Cấp!`,
+      transaction,
+      fund: updatedFund
+    });
+  } catch (err) {
+    console.error('Lỗi nạp tiền Quỹ Chăm Lo:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =========================================================================
 // WELFARE & DON TRO CAP API (MSSQL 3NF + FALLBACK)
 // =========================================================================
 router.get('/', async (req, res) => {
-  const list = await getWelfareFromDb();
+  const db = loadDB();
+  const list = (db.welfare_programs && db.welfare_programs.length >= 6) ? db.welfare_programs : (await getWelfareFromDb());
   res.json({ success: true, data: list });
 });
 
 router.get('/phuc-loi', async (req, res) => {
-  const list = await getWelfareFromDb();
+  const db = loadDB();
+  const list = (db.welfare_programs && db.welfare_programs.length >= 6) ? db.welfare_programs : (await getWelfareFromDb());
   res.json({ success: true, count: list.length, data: list });
 });
 
@@ -181,6 +268,9 @@ router.put('/applications/:id', async (req, res) => {
     return res.status(404).json({ success: false, error: 'Không tìm thấy hồ sơ trợ cấp!' });
   }
 
+  const oldStatus = db.don_tro_cap[idx].status;
+  const approvedAmt = amount_approved !== undefined ? parseFloat(amount_approved) : (db.don_tro_cap[idx].amount_approved || db.don_tro_cap[idx].amount_requested || 0);
+
   if (status) db.don_tro_cap[idx].status = status;
   if (amount_approved !== undefined) db.don_tro_cap[idx].amount_approved = parseFloat(amount_approved);
   if (decision_note !== undefined) db.don_tro_cap[idx].decision_note = decision_note;
@@ -192,6 +282,22 @@ router.put('/applications/:id', async (req, res) => {
   }
   if (status === 'disbursed' && !db.don_tro_cap[idx].disbursed_at) {
     db.don_tro_cap[idx].disbursed_at = now;
+  }
+
+  // Tự động hạch toán xuất chi từ Quỹ Chăm Lo khi duyệt hoặc chi trả
+  if ((status === 'approved' || status === 'disbursed') && oldStatus !== 'approved' && oldStatus !== 'disbursed') {
+    try {
+      await disburseWelfareFundInDb({
+        amount: approvedAmt,
+        recipient_name: `${db.don_tro_cap[idx].full_name} (${db.don_tro_cap[idx].unit})`,
+        decision_no: `QĐ-TC-${id}`,
+        note: `Chi trợ cấp: ${db.don_tro_cap[idx].type} - ${decision_note || db.don_tro_cap[idx].reason}`,
+        created_by: approved_by || 'Ban Thường Vụ',
+        related_don_id: id
+      });
+    } catch (e) {
+      console.error('Error auto disbursing fund:', e.message);
+    }
   }
 
   saveDB(db);

@@ -214,19 +214,19 @@ const VanBan = () => {
               <i className="fa-solid fa-link me-2 text-primary"></i>Liên kết website
             </div>
             <div className="list-group-tdmu">
-              <a href="http://tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+              <a href="https://tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
                 <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đại học Thủ Dầu Một
               </a>
-              <a href="http://danguy.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+              <a href="https://danguy.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
                 <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đảng Bộ Đại học TDMU
               </a>
-              <a href="http://www.congdoan.vn" target="_blank" rel="noreferrer" className="list-group-item">
+              <a href="https://congdoanvietnam.vn" target="_blank" rel="noreferrer" className="list-group-item">
                 <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Tổng LĐLĐ Việt Nam
               </a>
-              <a href="http://congdoanbinhduong.org.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+              <a href="https://binhduong.congdoan.vn/" target="_blank" rel="noreferrer" className="list-group-item">
                 <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> LĐLĐ Tỉnh Bình Dương
               </a>
-              <a href="http://lib.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+              <a href="https://laodong.vn/" target="_blank" rel="noreferrer" className="list-group-item">
                 <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> TT Học Liệu ĐH TDMU
               </a>
             </div>

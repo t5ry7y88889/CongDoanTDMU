@@ -5,6 +5,7 @@ const JSZip = require('jszip');
 const mammoth = require('mammoth');
 const xlsx = require('xlsx');
 const officeParser = require('officeparser');
+const { convertBufferWithMarkItDown } = require('./markitdownService');
 
 /**
  * =============================================================================
@@ -187,17 +188,24 @@ function getImageDimensions(buf) {
 
 function saveExtractedImage(imageBuffer, ext = 'png', prefix = 'doc') {
   try {
+    const crypto = require('crypto');
     const uploadsDir1 = path.join(__dirname, '../../public/uploads');
     const uploadsDir2 = path.join(__dirname, '../../frontend/public/uploads');
     if (!fs.existsSync(uploadsDir1)) fs.mkdirSync(uploadsDir1, { recursive: true });
     if (!fs.existsSync(uploadsDir2)) fs.mkdirSync(uploadsDir2, { recursive: true });
 
     const cleanExt = (ext || 'png').replace(/^\./, '').toLowerCase();
-    const fileName = `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${cleanExt}`;
-    
-    fs.writeFileSync(path.join(uploadsDir1, fileName), imageBuffer);
-    if (fs.existsSync(path.join(__dirname, '../../frontend/public'))) {
-      fs.writeFileSync(path.join(uploadsDir2, fileName), imageBuffer);
+    const hash = crypto.createHash('md5').update(imageBuffer).digest('hex').slice(0, 16);
+    const fileName = `${prefix}_${hash}.${cleanExt}`;
+    const targetFile1 = path.join(uploadsDir1, fileName);
+    const targetFile2 = path.join(uploadsDir2, fileName);
+
+    // Reuse existing file if identical hash already exists!
+    if (!fs.existsSync(targetFile1)) {
+      fs.writeFileSync(targetFile1, imageBuffer);
+    }
+    if (fs.existsSync(path.join(__dirname, '../../frontend/public')) && !fs.existsSync(targetFile2)) {
+      fs.writeFileSync(targetFile2, imageBuffer);
     }
 
     return {
@@ -317,24 +325,39 @@ async function extractImagesFromPdfBuffer(buffer, originalFilename = 'document.p
 async function parsePdf(buffer, originalFilename = 'document.pdf') {
   let text = '';
   let pagesCount = 1;
+  let usedEngine = 'pdf-parse';
 
-  // Extract text using PDFParse
+  // 1. Try Microsoft MarkItDown first for high-fidelity markdown & table extraction
   try {
-    const parser = new PDFParse({ data: buffer });
-    await parser.load();
-    const textData = await parser.getText();
-    const info = await parser.getInfo().catch(() => ({ total: 1 }));
-    text = textData.text || '';
-    pagesCount = textData.total || (textData.pages ? textData.pages.length : info.total || 1);
-  } catch (err) {
-    console.warn('[PDFParse Text Notice]:', err.message, '-> Trying officeParser fallback');
+    const midRes = await convertBufferWithMarkItDown(buffer, originalFilename);
+    if (midRes && midRes.success && midRes.markdown && midRes.markdown.trim().length > 30) {
+      text = midRes.markdown;
+      usedEngine = 'Microsoft MarkItDown';
+    }
+  } catch (midErr) {
+    console.warn('[MarkItDown PDF Notice]:', midErr.message);
+  }
+
+  // 2. Fallback to PDFParse if MarkItDown did not produce text
+  if (!text) {
     try {
-      if (typeof officeParser.parseOffice === 'function') {
-        const fallbackText = await officeParser.parseOffice(buffer, { fileType: 'pdf' });
-        text = fallbackText || '';
+      const parser = new PDFParse({ data: buffer });
+      await parser.load();
+      const textData = await parser.getText();
+      const info = await parser.getInfo().catch(() => ({ total: 1 }));
+      text = textData.text || '';
+      pagesCount = textData.total || (textData.pages ? textData.pages.length : info.total || 1);
+    } catch (err) {
+      console.warn('[PDFParse Text Notice]:', err.message, '-> Trying officeParser fallback');
+      try {
+        if (typeof officeParser.parseOffice === 'function') {
+          const fallbackText = await officeParser.parseOffice(buffer, { fileType: 'pdf' });
+          text = fallbackText || '';
+          usedEngine = 'officeparser';
+        }
+      } catch (officeErr) {
+        console.warn('[officeParser PDF Fallback failed]:', officeErr.message);
       }
-    } catch (officeErr) {
-      console.warn('[officeParser PDF Fallback failed]:', officeErr.message);
     }
   }
 
@@ -394,7 +417,21 @@ async function parseDocx(buffer, originalFilename = 'document.docx') {
   let markdown = '';
   let rawText = '';
   const images = [];
+  let usedEngine = 'mammoth';
 
+  // 1. Try Microsoft MarkItDown first for high-fidelity markdown & table extraction
+  try {
+    const midRes = await convertBufferWithMarkItDown(buffer, originalFilename);
+    if (midRes && midRes.success && midRes.markdown && midRes.markdown.trim().length > 10) {
+      markdown = cleanAndFilterText(midRes.markdown);
+      rawText = markdown;
+      usedEngine = 'Microsoft MarkItDown';
+    }
+  } catch (midErr) {
+    console.warn('[MarkItDown Docx Notice]:', midErr.message);
+  }
+
+  // 2. Extract images and fallback text via mammoth
   try {
     const options = {
       convertImage: mammoth.images.imgElement(async (image) => {
@@ -415,36 +452,41 @@ async function parseDocx(buffer, originalFilename = 'document.docx') {
 
     const htmlResult = await mammoth.convertToHtml({ buffer }, options);
     const rawResult = await mammoth.extractRawText({ buffer });
-    rawText = cleanAndFilterText(rawResult.value || '');
+    if (!rawText) rawText = cleanAndFilterText(rawResult.value || '');
 
-    // Convert basic HTML to clean structured Markdown
-    let md = htmlResult.value || '';
-    md = md.replace(/<h1>(.*?)<\/h1>/gi, '# $1\n\n')
-           .replace(/<h2>(.*?)<\/h2>/gi, '## $1\n\n')
-           .replace(/<h3>(.*?)<\/h3>/gi, '### $1\n\n')
-           .replace(/<h4>(.*?)<\/h4>/gi, '#### $1\n\n')
-           .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
-           .replace(/<em>(.*?)<\/em>/gi, '*$1*')
-           .replace(/<li>(.*?)<\/li>/gi, '- $1\n')
-           .replace(/<\/ul>|<\/ol>/gi, '\n')
-           .replace(/<p>(.*?)<\/p>/gi, '$1\n\n')
-           .replace(/<table.*?>/gi, '\n')
-           .replace(/<\/table>/gi, '\n')
-           .replace(/<tr>/gi, '|')
-           .replace(/<\/tr>/gi, '|\n')
-           .replace(/<t[hd].*?>(.*?)<\/t[hd]>/gi, ' $1 |')
-           .replace(/<[^>]*>/g, '');
+    // Fallback markdown if MarkItDown did not produce text
+    if (!markdown) {
+      let md = htmlResult.value || '';
+      md = md.replace(/<h1>(.*?)<\/h1>/gi, '# $1\n\n')
+             .replace(/<h2>(.*?)<\/h2>/gi, '## $1\n\n')
+             .replace(/<h3>(.*?)<\/h3>/gi, '### $1\n\n')
+             .replace(/<h4>(.*?)<\/h4>/gi, '#### $1\n\n')
+             .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
+             .replace(/<em>(.*?)<\/em>/gi, '*$1*')
+             .replace(/<li>(.*?)<\/li>/gi, '- $1\n')
+             .replace(/<\/ul>|<\/ol>/gi, '\n')
+             .replace(/<p>(.*?)<\/p>/gi, '$1\n\n')
+             .replace(/<table.*?>/gi, '\n')
+             .replace(/<\/table>/gi, '\n')
+             .replace(/<tr>/gi, '|')
+             .replace(/<\/tr>/gi, '|\n')
+             .replace(/<t[hd].*?>(.*?)<\/t[hd]>/gi, ' $1 |')
+             .replace(/<[^>]*>/g, '');
 
-    markdown = cleanAndFilterText(md);
+      markdown = cleanAndFilterText(md);
+    }
   } catch (e) {
-    try {
-      if (typeof officeParser.parseOffice === 'function') {
-        const parsed = await officeParser.parseOffice(buffer, { fileType: 'docx' });
-        rawText = cleanAndFilterText(parsed || '');
-        markdown = rawText;
+    if (!markdown) {
+      try {
+        if (typeof officeParser.parseOffice === 'function') {
+          const parsed = await officeParser.parseOffice(buffer, { fileType: 'docx' });
+          rawText = cleanAndFilterText(parsed || '');
+          markdown = rawText;
+          usedEngine = 'officeparser';
+        }
+      } catch (oErr) {
+        console.warn('[Docx Fallback Error]:', oErr.message);
       }
-    } catch (oErr) {
-      console.warn('[Docx Fallback Error]:', oErr.message);
     }
   }
 
@@ -473,6 +515,7 @@ async function parseDocx(buffer, originalFilename = 'document.docx') {
 
   return {
     fileType: 'docx',
+    engine: usedEngine,
     markdown: markdown || rawText,
     rawText,
     images
@@ -480,13 +523,27 @@ async function parseDocx(buffer, originalFilename = 'document.docx') {
 }
 
 // 4.3 Excel (.xlsx, .xls, .csv) Parser
-function parseExcel(buffer) {
+async function parseExcel(buffer, originalFilename = 'document.xlsx') {
   const workbook = xlsx.read(buffer, { type: 'buffer' });
   const sheetNames = workbook.SheetNames || [];
   let fullMarkdown = '';
   let fullRawText = '';
   const sheetsDetail = [];
+  let usedEngine = 'xlsx';
 
+  // 1. Try Microsoft MarkItDown first for clean Markdown tables
+  try {
+    const midRes = await convertBufferWithMarkItDown(buffer, originalFilename);
+    if (midRes && midRes.success && midRes.markdown && midRes.markdown.trim().length > 10) {
+      fullMarkdown = cleanAndFilterText(midRes.markdown);
+      fullRawText = fullMarkdown;
+      usedEngine = 'Microsoft MarkItDown';
+    }
+  } catch (midErr) {
+    console.warn('[MarkItDown Excel Notice]:', midErr.message);
+  }
+
+  // 2. Extract sheets metadata and build fallback table if MarkItDown did not produce text
   for (const sheetName of sheetNames) {
     const worksheet = workbook.Sheets[sheetName];
     if (!worksheet) continue;
@@ -503,33 +560,36 @@ function parseExcel(buffer) {
       colCount: nonEmptyRows[0] ? nonEmptyRows[0].length : 0
     });
 
-    fullMarkdown += `### Bảng: ${sheetName}\n\n`;
+    if (!fullMarkdown) {
+      fullMarkdown += `### Bảng: ${sheetName}\n\n`;
 
-    const previewRows = nonEmptyRows.slice(0, 100);
-    if (previewRows.length > 0) {
-      const headerRow = previewRows[0].map(cell => String(cell).replace(/\|/g, '\\|').trim() || '-');
-      fullMarkdown += `| ${headerRow.join(' | ')} |\n`;
-      fullMarkdown += `| ${headerRow.map(() => '---').join(' | ')} |\n`;
+      const previewRows = nonEmptyRows.slice(0, 100);
+      if (previewRows.length > 0) {
+        const headerRow = previewRows[0].map(cell => String(cell).replace(/\|/g, '\\|').trim() || '-');
+        fullMarkdown += `| ${headerRow.join(' | ')} |\n`;
+        fullMarkdown += `| ${headerRow.map(() => '---').join(' | ')} |\n`;
 
-      for (let i = 1; i < previewRows.length; i++) {
-        const rowCells = previewRows[i].map(cell => String(cell).replace(/\|/g, '\\|').trim());
-        while (rowCells.length < headerRow.length) rowCells.push('');
-        fullMarkdown += `| ${rowCells.slice(0, headerRow.length).join(' | ')} |\n`;
-        fullRawText += rowCells.join(' ') + '\n';
-      }
-      fullMarkdown += '\n';
-      if (nonEmptyRows.length > 100) {
-        fullMarkdown += `*(Đã hiển thị 100/${nonEmptyRows.length} dòng dữ liệu của bảng)*\n\n`;
+        for (let i = 1; i < previewRows.length; i++) {
+          const rowCells = previewRows[i].map(cell => String(cell).replace(/\|/g, '\\|').trim());
+          while (rowCells.length < headerRow.length) rowCells.push('');
+          fullMarkdown += `| ${rowCells.slice(0, headerRow.length).join(' | ')} |\n`;
+          fullRawText += rowCells.join(' ') + '\n';
+        }
+        fullMarkdown += '\n';
+        if (nonEmptyRows.length > 100) {
+          fullMarkdown += `*(Đã hiển thị 100/${nonEmptyRows.length} dòng dữ liệu của bảng)*\n\n`;
+        }
       }
     }
   }
 
   return {
     fileType: 'xlsx',
+    engine: usedEngine,
     sheetsCount: sheetNames.length,
     sheetsDetail,
     markdown: fullMarkdown.trim(),
-    rawText: fullRawText.trim(),
+    rawText: (fullRawText || fullMarkdown).trim(),
     images: []
   };
 }
@@ -539,11 +599,23 @@ async function parsePptx(buffer, originalFilename = 'document.pptx') {
   let slideMarkdown = '';
   let slidesCount = 1;
   const images = [];
+  let usedEngine = 'jszip';
+
+  // 1. Try Microsoft MarkItDown first
+  try {
+    const midRes = await convertBufferWithMarkItDown(buffer, originalFilename);
+    if (midRes && midRes.success && midRes.markdown && midRes.markdown.trim().length > 10) {
+      slideMarkdown = cleanAndFilterText(midRes.markdown);
+      usedEngine = 'Microsoft MarkItDown';
+    }
+  } catch (midErr) {
+    console.warn('[MarkItDown PPTX Notice]:', midErr.message);
+  }
 
   try {
     const zip = await JSZip.loadAsync(buffer);
 
-    // 1. Extract slide texts in order
+    // 2. Extract slide texts in order if MarkItDown did not produce text
     const slideFiles = Object.keys(zip.files)
       .filter(k => /^ppt\/slides\/slide\d+\.xml$/i.test(k))
       .sort((a, b) => {
@@ -553,19 +625,21 @@ async function parsePptx(buffer, originalFilename = 'document.pptx') {
       });
 
     slidesCount = Math.max(1, slideFiles.length);
-    let slideIdx = 1;
 
-    for (const sf of slideFiles) {
-      const xml = await zip.files[sf].async('string');
-      const matches = xml.match(/<a:t[^>]*>(.*?)<\/a:t>/gi) || [];
-      const texts = matches.map(m => m.replace(/<[^>]*>/g, '').trim()).filter(Boolean);
-      if (texts.length > 0) {
-        slideMarkdown += `#### Phân cảnh / Slide ${slideIdx}:\n` + texts.join(' ') + '\n\n';
+    if (!slideMarkdown) {
+      let slideIdx = 1;
+      for (const sf of slideFiles) {
+        const xml = await zip.files[sf].async('string');
+        const matches = xml.match(/<a:t[^>]*>(.*?)<\/a:t>/gi) || [];
+        const texts = matches.map(m => m.replace(/<[^>]*>/g, '').trim()).filter(Boolean);
+        if (texts.length > 0) {
+          slideMarkdown += `#### Phân cảnh / Slide ${slideIdx}:\n` + texts.join(' ') + '\n\n';
+        }
+        slideIdx++;
       }
-      slideIdx++;
     }
 
-    // 2. Extract embedded images from ppt/media/
+    // 3. Extract embedded images from ppt/media/
     const mediaFiles = Object.keys(zip.files).filter(k => k.startsWith('ppt/media/'));
     for (const k of mediaFiles.slice(0, 10)) {
       const file = zip.files[k];
@@ -585,13 +659,16 @@ async function parsePptx(buffer, originalFilename = 'document.pptx') {
 
   } catch (zipErr) {
     console.warn('[JSZip PPTX parsing notice]:', zipErr.message, '-> Trying officeParser');
-    try {
-      if (typeof officeParser.parseOffice === 'function') {
-        const parsedText = await officeParser.parseOffice(buffer, { fileType: 'pptx' });
-        slideMarkdown = cleanAndFilterText(parsedText || '');
+    if (!slideMarkdown) {
+      try {
+        if (typeof officeParser.parseOffice === 'function') {
+          const parsedText = await officeParser.parseOffice(buffer, { fileType: 'pptx' });
+          slideMarkdown = cleanAndFilterText(parsedText || '');
+          usedEngine = 'officeparser';
+        }
+      } catch (oErr) {
+        console.warn('[officeParser PPTX Fallback failed]:', oErr.message);
       }
-    } catch (oErr) {
-      console.warn('[officeParser PPTX Fallback failed]:', oErr.message);
     }
   }
 
@@ -599,6 +676,7 @@ async function parsePptx(buffer, originalFilename = 'document.pptx') {
 
   return {
     fileType: 'pptx',
+    engine: usedEngine,
     slidesCount,
     markdown: clean,
     rawText: clean,
@@ -620,13 +698,14 @@ async function parseDocumentBuffer(buffer, originalFilename = 'document.txt') {
   } else if (ext === '.docx' || ext === '.doc') {
     result = await parseDocx(buffer, originalFilename);
   } else if (ext === '.xlsx' || ext === '.xls' || ext === '.csv') {
-    result = parseExcel(buffer);
+    result = await parseExcel(buffer, originalFilename);
   } else if (ext === '.pptx' || ext === '.ppt') {
     result = await parsePptx(buffer, originalFilename);
   } else {
     const text = cleanAndFilterText(buffer.toString('utf-8'));
     result = {
       fileType: 'txt',
+      engine: 'native',
       markdown: text,
       rawText: text,
       images: []
@@ -640,6 +719,7 @@ async function parseDocumentBuffer(buffer, originalFilename = 'document.txt') {
     fileName: path.basename(originalFilename),
     fileExt: ext,
     fileType: result.fileType,
+    engine: result.engine || 'native',
     fileSizeKB: (buffer.length / 1024).toFixed(1),
     charCount: (result.markdown || '').length,
     pagesCount: result.pagesCount || null,

@@ -61,58 +61,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Endpoint nạp nhanh toàn bộ thư mục demo Tinbaiviet (1-Click Demo)
-router.get('/demo-tinbaiviet', (req, res) => {
-  try {
-    const demoDir = path.join(__dirname, '../../public/demo_samples/Tinbaiviet');
-    if (!fs.existsSync(demoDir)) {
-      return res.status(404).json({ success: false, error: 'Thư mục demo Tinbaiviet chưa được khởi tạo.' });
-    }
-
-    const fileNames = fs.readdirSync(demoDir);
-    const mimeMap = {
-      '.pdf': 'application/pdf',
-      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      '.png': 'image/png',
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.txt': 'text/plain; charset=utf-8'
-    };
-
-    const files = [];
-    for (const fn of fileNames) {
-      const fullPath = path.join(demoDir, fn);
-      const stat = fs.statSync(fullPath);
-      if (stat.isFile()) {
-        const ext = path.extname(fn).toLowerCase();
-        const buf = fs.readFileSync(fullPath);
-        const mime = mimeMap[ext] || 'application/octet-stream';
-        const base64 = buf.toString('base64');
-        files.push({
-          name: fn,
-          sizeBytes: stat.size,
-          size: (stat.size / 1024).toFixed(1) + ' KB',
-          type: mime,
-          ext,
-          dataUrl: `data:${mime};base64,${base64}`,
-          base64
-        });
-      }
-    }
-
-    res.json({
-      success: true,
-      folderName: 'Tinbaiviet',
-      count: files.length,
-      files
-    });
-  } catch (err) {
-    console.error('[Demo Tinbaiviet Error]:', err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+const { parseDocumentBuffer } = require('../services/documentParser');
 
 router.get('/:id', (req, res) => {
   const db = loadDB();
@@ -188,8 +137,8 @@ router.post('/', (req, res) => {
     CoQuanBanHanh: (co_quan_ban_hanh || 'Ban Thường Vụ Công Đoàn TDMU').trim(),
     ngay_ban_hanh: ngay_ban_hanh || new Date().toISOString().split('T')[0],
     NgayBanHanh: ngay_ban_hanh || new Date().toISOString().split('T')[0],
-    nguoi_ky: (nguoi_ky || 'TS. Lê Thị Kim Út').trim(),
-    NguoiKy: (nguoi_ky || 'TS. Lê Thị Kim Út').trim(),
+    nguoi_ky: (nguoi_ky || 'Ban Thường Vụ Công Đoàn').trim(),
+    NguoiKy: (nguoi_ky || 'Ban Thường Vụ Công Đoàn').trim(),
     hieu_luc: hieu_luc || 'con_hieu_luc', // con_hieu_luc | het_hieu_luc
     file_url: savedFileUrl,
     FileUrl: savedFileUrl,
@@ -331,10 +280,8 @@ router.get('/download/:id', (req, res) => {
 
 
 // =========================================================================
-// =========================================================================
 // UNIVERSAL MULTI-FORMAT DOCUMENT PARSER ENGINE (PDF, DOCX, XLSX, PPTX, CSV, TXT)
 // =========================================================================
-const { parseDocumentBuffer } = require('../services/documentParser');
 
 router.post('/parse-document', async (req, res) => {
   const { fileBase64, fileName } = req.body;

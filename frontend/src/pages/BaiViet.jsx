@@ -10,7 +10,7 @@ const BaiViet = () => {
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState({ author_name: 'TS. Lê Thị Kim Út', content: '' });
+  const [newComment, setNewComment] = useState({ author_name: 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một', content: '' });
   const [submittingComment, setSubmittingComment] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [relatedArticles, setRelatedArticles] = useState([]);
@@ -79,13 +79,37 @@ const BaiViet = () => {
     if (isSpeaking) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
+      window._activeUtterance = null;
     } else {
-      const textToRead = `${article?.title || ''}. ${article?.summary || ''}. ${article?.content_web?.replace(/<[^>]*>?/gm, '') || ''}`;
-      const utterance = new SpeechSynthesisUtterance(textToRead.slice(0, 1500));
+      window.speechSynthesis.cancel();
+      const rawText = `${article?.title || ''}. ${article?.summary || ''}. ${(article?.content_web || article?.content || article?.noi_dung || '').replace(/<[^>]*>?/gm, ' ')}`;
+      const cleanText = rawText.replace(/\s+/g, ' ').trim();
+      if (!cleanText) {
+        alert('Nội dung bài viết chưa có văn bản để phát thanh.');
+        return;
+      }
+      const textToRead = cleanText.slice(0, 2500);
+      const utterance = new SpeechSynthesisUtterance(textToRead);
       utterance.lang = 'vi-VN';
-      utterance.rate = 1.0;
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
+      utterance.rate = 0.95;
+
+      const voices = window.speechSynthesis.getVoices() || [];
+      const viVoice = voices.find(v => (v.lang && v.lang.toLowerCase().startsWith('vi')) || (v.name && v.name.toLowerCase().includes('vietnam')));
+      if (viVoice) {
+        utterance.voice = viVoice;
+      }
+
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        window._activeUtterance = null;
+      };
+      utterance.onerror = (e) => {
+        console.warn('Speech synthesis event:', e);
+        setIsSpeaking(false);
+        window._activeUtterance = null;
+      };
+
+      window._activeUtterance = utterance;
       window.speechSynthesis.speak(utterance);
       setIsSpeaking(true);
     }
@@ -203,14 +227,7 @@ const BaiViet = () => {
               </span>
             </div>
 
-            {/* AI 30s KEY TAKEAWAYS */}
-            <div className="ai-takeaways-card">
-              <h6><i className="fa-solid fa-wand-magic-sparkles me-2 text-success"></i> Điểm Nhấn Bản Tin (Tóm tắt cốt lõi)</h6>
-              <ul className="mb-0 ps-3 text-secondary small" style={{ lineHeight: '1.6' }}>
-                <li>{article.summary || 'Thông tin chỉ đạo, hoạt động phong trào và chính sách mới nhất.'}</li>
-                <li>Phát huy tinh thần đổi mới, sáng tạo và bảo vệ quyền lợi đoàn viên Công đoàn TDMU.</li>
-              </ul>
-            </div>
+            
 
             {/* Sapo / Lead Paragraph */}
             {article.summary && (
@@ -220,7 +237,7 @@ const BaiViet = () => {
             )}
 
             {/* Image */}
-            {article.image && (
+            {article.image && !(article.content_web || article.noi_dung_web || article.content || '').includes('<img') && (
               <div className="mb-4 text-center">
                 <img
                   src={article.image}

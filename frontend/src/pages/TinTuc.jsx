@@ -6,6 +6,7 @@ import { useBookmarks } from '../App';
 const TinTuc = () => {
   const navigate = useNavigate();
   const [articles, setArticles] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentCategory, setCurrentCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -16,6 +17,14 @@ const TinTuc = () => {
 
   useEffect(() => {
     fetchArticles();
+    fetch('/api/categories')
+      .then(r => r.json())
+      .then(res => {
+        if (res.success && Array.isArray(res.data)) {
+          setCategories(res.data);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -50,7 +59,10 @@ const TinTuc = () => {
       return isBookmarked(a.id);
     }
     const cat = a.categoryName || a.category || a.ChuyenMuc || '';
-    const matchCat = currentCategory === 'all' || cat.toLowerCase().includes(currentCategory.toLowerCase());
+    const matchCat = currentCategory === 'all' ||
+      cat.toLowerCase() === currentCategory.toLowerCase() ||
+      cat.toLowerCase().includes(currentCategory.toLowerCase()) ||
+      String(a.categoryId) === String(currentCategory);
 
     const q = strip(searchQuery.trim());
     const matchSearch = !q ||
@@ -78,37 +90,25 @@ const TinTuc = () => {
       <div className="content-box mb-4 py-3">
         <div className="row g-3 align-items-center">
           <div className="col-lg-8">
-            <div className="doc-filter-bar mb-0 border-0 pb-0" id="articleCategoryFilter">
+            <div className="doc-filter-bar mb-0 border-0 pb-0 d-flex flex-wrap gap-2" id="articleCategoryFilter">
               <button
                 className={`doc-tab-btn ${currentCategory === 'all' ? 'active' : ''}`}
                 onClick={() => setCurrentCategory('all')}
               >
-                <i className="fa-solid fa-newspaper text-primary me-1"></i> Tất cả tin tức
+                <i className="fa-solid fa-newspaper text-primary me-1"></i> Tất cả ({articles.length})
               </button>
-              <button
-                className={`doc-tab-btn ${currentCategory === 'Hoạt động công đoàn' ? 'active' : ''}`}
-                onClick={() => setCurrentCategory('Hoạt động công đoàn')}
-              >
-                <i className="fa-solid fa-users text-primary me-1"></i> Hoạt động CĐ
-              </button>
-              <button
-                className={`doc-tab-btn ${currentCategory === 'Phong trào thi đua' ? 'active' : ''}`}
-                onClick={() => setCurrentCategory('Phong trào thi đua')}
-              >
-                <i className="fa-solid fa-trophy text-warning me-1"></i> Phong trào thi đua
-              </button>
-              <button
-                className={`doc-tab-btn ${currentCategory === 'Chăm lo đời sống' ? 'active' : ''}`}
-                onClick={() => setCurrentCategory('Chăm lo đời sống')}
-              >
-                <i className="fa-solid fa-heart-pulse text-danger me-1"></i> Chăm lo đời sống
-              </button>
-              <button
-                className={`doc-tab-btn ${currentCategory === 'Văn hóa - Thể thao' ? 'active' : ''}`}
-                onClick={() => setCurrentCategory('Văn hóa - Thể thao')}
-              >
-                <i className="fa-solid fa-futbol text-success me-1"></i> Văn hóa - Thể thao
-              </button>
+              {categories.map(cat => {
+                const count = articles.filter(a => a.categoryName === cat.name || a.categoryId === cat.id).length;
+                return (
+                  <button
+                    key={cat.id}
+                    className={`doc-tab-btn ${currentCategory === cat.name ? 'active' : ''}`}
+                    onClick={() => setCurrentCategory(cat.name)}
+                  >
+                    {cat.name} ({count})
+                  </button>
+                );
+              })}
               <button
                 className={`doc-tab-btn ${currentCategory === 'saved' ? 'active' : ''}`}
                 onClick={() => setCurrentCategory('saved')}
@@ -160,7 +160,7 @@ const TinTuc = () => {
                     <div className="col-md-7">
                       <div className="hero-img-wrap">
                         <img
-                          src={heroArticle.image || 'https://tdmu.edu.vn/hinh/thuvien/hinhanh/DSC02559(1).JPG'}
+                          src={heroArticle.image || '/images/banner.jpg'}
                           className="hero-img"
                           alt={heroArticle.title}
                         />
@@ -183,22 +183,16 @@ const TinTuc = () => {
                           {heroArticle.title}
                         </h3>
 
-                        {/* AI 30s Takeaways */}
-                        <div className="ai-takeaway-box">
-                          <div className="ai-takeaway-title">
-                            <i className="fa-solid fa-bolt text-warning"></i> Điểm Nhấn Bản Tin (30 Giây)
-                          </div>
-                          <ul className="ai-takeaway-list">
-                            <li>{heroArticle.summary ? heroArticle.summary.slice(0, 100) + '...' : 'Thông tin cập nhật mới nhất từ Công đoàn TDMU.'}</li>
-                            <li>Đồng hành chăm lo và bảo vệ quyền lợi chính đáng cho toàn thể đoàn viên.</li>
-                          </ul>
-                        </div>
+                                                {/* Hero Sapo / Summary */}
+                        <p className="text-secondary small mt-2 mb-3" style={{ lineHeight: '1.6', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {heroArticle.summary || 'Thông tin hoạt động nổi bật từ Công đoàn Trường Đại học Thủ Dầu Một.'}
+                        </p>
                       </div>
 
                       <div>
                         <div className="d-flex justify-content-between align-items-center text-muted small mb-3 border-top pt-2">
                           <div className="d-flex align-items-center gap-3">
-                            <span><i className="fa-regular fa-calendar me-1 text-primary"></i> {heroArticle.createdAt ? String(heroArticle.createdAt).split('T')[0] : '26/06/2026'}</span>
+                            <span><i className="fa-regular fa-calendar me-1 text-primary"></i> {heroArticle.publishedAt ? String(heroArticle.publishedAt).split('T')[0].split(' ')[0] : (heroArticle.createdAt ? String(heroArticle.createdAt).split('T')[0] : '2026-01-30')}</span>
                             <span><i className="fa-regular fa-eye text-success me-1"></i> <strong>{heroArticle.viewsCount || heroArticle.views || 450}</strong></span>
                             <button
                               type="button"
@@ -234,7 +228,7 @@ const TinTuc = () => {
                     >
                       <div className="magazine-thumb-wrap">
                         <img
-                          src={a.image || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500'}
+                          src={a.image || '/images/banner.jpg'}
                           className="magazine-thumb"
                           alt={a.title}
                         />
@@ -267,7 +261,7 @@ const TinTuc = () => {
 
                         <div className="d-flex justify-content-between align-items-center text-muted small pt-2 border-top">
                           <div>
-                            <span className="me-2"><i className="fa-regular fa-calendar me-1 text-primary"></i> {a.createdAt ? String(a.createdAt).split('T')[0] : '26/06/2026'}</span>
+                            <span className="me-2"><i className="fa-regular fa-calendar me-1 text-primary"></i> {a.publishedAt ? String(a.publishedAt).split('T')[0].split(' ')[0] : (a.createdAt ? String(a.createdAt).split('T')[0] : '2026-01-30')}</span>
                             <span><i className="fa-regular fa-eye text-success me-1"></i> {a.viewsCount || a.views || 140}</span>
                           </div>
                           <button
@@ -328,19 +322,19 @@ const TinTuc = () => {
               <i className="fa-solid fa-link me-2 text-primary"></i>Liên kết website
             </div>
             <div className="list-group-tdmu">
-              <a href="http://tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+              <a href="https://tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
                 <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đại học Thủ Dầu Một
               </a>
-              <a href="http://danguy.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+              <a href="https://danguy.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
                 <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đảng Bộ Đại học TDMU
               </a>
-              <a href="http://www.congdoan.vn" target="_blank" rel="noreferrer" className="list-group-item">
+              <a href="https://congdoanvietnam.vn" target="_blank" rel="noreferrer" className="list-group-item">
                 <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Tổng LĐLĐ Việt Nam
               </a>
-              <a href="http://congdoanbinhduong.org.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+              <a href="https://binhduong.congdoan.vn/" target="_blank" rel="noreferrer" className="list-group-item">
                 <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> LĐLĐ Tỉnh Bình Dương
               </a>
-              <a href="http://lib.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+              <a href="https://laodong.vn/" target="_blank" rel="noreferrer" className="list-group-item">
                 <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> TT Học Liệu ĐH TDMU
               </a>
             </div>

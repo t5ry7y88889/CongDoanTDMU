@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mxfile host="app.diagrams.net" modified="2026-10-24T08:45:00.000Z" agent="Antigravity" version="24.0.0" type="device">
+  <diagram id="sd3_feedback" name="SD3 - Tiếp nhận &amp; Phản hồi góp ý">
+    <mxGraphModel dx="1100" dy="750" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1250" pageHeight="820" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Tiêu đề sơ đồ -->
+        <mxCell id="2" value="Hình 2.9: Sơ đồ tuần tự Tiếp nhận, Xử lý và Phản hồi Ý kiến nguyện vọng đoàn viên" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontStyle=1;fontSize=15;fontColor=#000000;fontFamily=Arial;" parent="1" vertex="1">
+          <mxGeometry x="150" y="15" width="950" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Lifeline 1: Doan vien -->
+        <mxCell id="3" value="Đoàn viên" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontSize=12;fontColor=#000000;fontFamily=Arial;" parent="1" vertex="1">
+          <mxGeometry x="40" y="60" width="120" height="660" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="Đoàn viên" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontFamily=Arial;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="40" y="730" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Lifeline 2: Giao dien UI -->
+        <mxCell id="5" value="Giao diện (UI)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontSize=12;fontColor=#000000;fontFamily=Arial;" parent="1" vertex="1">
+          <mxGeometry x="240" y="60" width="120" height="660" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Giao diện (UI)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontFamily=Arial;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="240" y="730" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Lifeline 3: FeedbackController -->
+        <mxCell id="7" value="FeedbackController" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontSize=12;fontColor=#000000;fontFamily=Arial;" parent="1" vertex="1">
+          <mxGeometry x="440" y="60" width="130" height="660" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="FeedbackController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontFamily=Arial;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="440" y="730" width="130" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Lifeline 4: Database -->
+        <mxCell id="9" value="Database (CSDL)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontSize=12;fontColor=#000000;fontFamily=Arial;" parent="1" vertex="1">
+          <mxGeometry x="640" y="60" width="120" height="660" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="Database (CSDL)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontFamily=Arial;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="640" y="730" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Lifeline 5: Ban Thuong vu -->
+        <mxCell id="11" value="Ban Thường vụ" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontSize=12;fontColor=#000000;fontFamily=Arial;" parent="1" vertex="1">
+          <mxGeometry x="840" y="60" width="120" height="660" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="Ban Thường vụ" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontFamily=Arial;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="840" y="730" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Lifeline 6: EmailService -->
+        <mxCell id="13" value="EmailService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontSize=12;fontColor=#000000;fontFamily=Arial;" parent="1" vertex="1">
+          <mxGeometry x="1040" y="60" width="120" height="660" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="EmailService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontFamily=Arial;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="1040" y="730" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Messages -->
+        <!-- 1. Dien form -->
+        <mxCell id="15" value="1. Điền tiêu đề, nội dung ý kiến, chọn chủ đề &amp; gửi" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="100" y="130" as="sourcePoint" />
+            <mxPoint x="295" y="130" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 2. POST /api/feedback -->
+        <mxCell id="16" value="2. Gửi request POST /api/feedback (Payload: Title, Content, Topic, IsAnonymous)" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="305" y="170" as="sourcePoint" />
+            <mxPoint x="500" y="170" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 3. INSERT FEEDBACKS -->
+        <mxCell id="17" value="3. INSERT FEEDBACKS (Status='pending', TrackingCode=RAND)" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="210" as="sourcePoint" />
+            <mxPoint x="695" y="210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 4. Tra ve xac nhan -->
+        <mxCell id="18" value="4. Trả về kết quả ghi nhận thành công &amp; TrackingCode" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="695" y="250" as="sourcePoint" />
+            <mxPoint x="510" y="250" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 5. Thong bao nguoi dung -->
+        <mxCell id="19" value="5. Thông báo 'Gửi ý kiến thành công' &amp; Hiển thị mã tra cứu" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="495" y="290" as="sourcePoint" />
+            <mxPoint x="105" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 6. BTV mo admin xem danh sach -->
+        <mxCell id="20" value="6. Truy cập Admin CMS -> Mở tab 'Hòm Thư Góp Ý'" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="900" y="350" as="sourcePoint" />
+            <mxPoint x="305" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 7. GET /api/admin/feedbacks -->
+        <mxCell id="21" value="7. Gửi request GET /api/admin/feedbacks (Lọc Status='pending')" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="305" y="390" as="sourcePoint" />
+            <mxPoint x="500" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 8. SELECT FEEDBACKS -->
+        <mxCell id="22" value="8. SELECT * FROM FEEDBACKS WHERE Status='pending'" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="430" as="sourcePoint" />
+            <mxPoint x="695" y="430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 9. Tra ve danh sach -->
+        <mxCell id="23" value="9. Trả về danh sách phản ánh &amp; thông tin người gửi" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="695" y="470" as="sourcePoint" />
+            <mxPoint x="900" y="470" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 10. BTV soan phan hoi -->
+        <mxCell id="24" value="10. Thẩm tra nội dung, nhập câu trả lời chính thức -> Bấm 'Gửi phản hồi'" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="900" y="520" as="sourcePoint" />
+            <mxPoint x="510" y="520" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 11. UPDATE FEEDBACKS -->
+        <mxCell id="25" value="11. UPDATE FEEDBACKS (Status='resolved', ResponseContent, RespondedAt)" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="560" as="sourcePoint" />
+            <mxPoint x="695" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 12. Xac nhan cap nhat -->
+        <mxCell id="26" value="12. Xác nhận cập nhật trạng thái thành công" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="695" y="600" as="sourcePoint" />
+            <mxPoint x="510" y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 13. Gui email thong bao -->
+        <mxCell id="27" value="13. Kích hoạt SMTP gửi email thông báo kết quả trả lời cho đoàn viên" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="640" as="sourcePoint" />
+            <mxPoint x="1095" y="640" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 14. Thong bao hoan tat -->
+        <mxCell id="28" value="14. Thông báo 'Đã gửi phản hồi và gửi email thông báo thành công'" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;rounded=0;strokeWidth=1.2;strokeColor=#000000;fontSize=11;fontColor=#000000;fontFamily=Arial;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="500" y="680" as="sourcePoint" />
+            <mxPoint x="895" y="680" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

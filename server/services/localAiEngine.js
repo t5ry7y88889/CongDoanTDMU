@@ -161,7 +161,7 @@ async function rewriteHeadlineLocally({ curTitle, instruction }) {
       await seq.clearHistory();
       const session = new LlamaChatSession({
         contextSequence: seq,
-        systemPrompt: `Bạn là Thư ký Tòa soạn Báo chí Công đoàn Trường Đại học Thủ Dầu Một.
+        systemPrompt: `Bạn là Cán bộ Biên tập Tin bài Công đoàn Trường Đại học Thủ Dầu Một.
 Nhiệm vụ: Viết lại hoặc đặt lại tiêu đề bài báo theo đúng yêu cầu.
 Quy tắc:
 - Chỉ trả về DUY NHẤT một dòng tiêu đề mới.

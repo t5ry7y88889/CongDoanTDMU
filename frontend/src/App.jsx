@@ -1,9 +1,9 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+﻿import React, { useState, useEffect, createContext, useContext } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import BookmarksDrawer from './components/BookmarksDrawer';
-import Home from './pages/Home';
+import TrangChu from './pages/TrangChu';
 import GioiThieu from './pages/GioiThieu';
 import CoCauToChuc from './pages/CoCauToChuc';
 import TinTuc from './pages/TinTuc';
@@ -12,7 +12,7 @@ import VanBan from './pages/VanBan';
 import BieuMau from './pages/BieuMau';
 import LienHe from './pages/LienHe';
 import BaiViet from './pages/BaiViet';
-import AdminStudio from './pages/AdminStudio';
+import PhongBienTapStudio from './pages/PhongBienTapStudio';
 
 export const BookmarkContext = createContext();
 
@@ -37,6 +37,14 @@ class ErrorBoundary extends React.Component {
             <i className="fa-solid fa-triangle-exclamation fa-3x text-warning mb-3"></i>
             <h4 className="fw-bold text-dark">Đã có lỗi xảy ra khi tải nội dung</h4>
             <p className="text-muted small mb-3">Hệ thống đã tự động ghi nhận nhật ký lỗi. Vui lòng bấm làm mới hoặc quay lại trang chủ.</p>
+            {this.state.error && (
+              <div className="text-start bg-white p-3 rounded border mb-3 overflow-auto" style={{ maxHeight: '200px', fontSize: '12px' }}>
+                <strong className="text-danger">{this.state.error.toString()}</strong>
+                <pre className="text-muted mt-2 mb-0" style={{ fontSize: '11px', whiteSpace: 'pre-wrap' }}>
+                  {this.state.error.stack}
+                </pre>
+              </div>
+            )}
             <div className="d-flex justify-content-center gap-2">
               <button className="btn btn-primary" onClick={() => window.location.reload()}>
                 <i className="fa-solid fa-rotate-right me-1"></i> Làm mới trang
@@ -151,10 +159,10 @@ function AppContent() {
       <BookmarkContext.Provider value={{ bookmarks, toggleBookmark, removeBookmark, isBookmarked }}>
         <ErrorBoundary>
           <Routes>
-            <Route path="/admin" element={<AdminStudio />} />
-            <Route path="/admin/studio" element={<AdminStudio />} />
-            <Route path="/admin.html" element={<AdminStudio />} />
-            <Route path="*" element={<AdminStudio />} />
+            <Route path="/admin" element={<PhongBienTapStudio />} />
+            <Route path="/admin/studio" element={<PhongBienTapStudio />} />
+            <Route path="/admin.html" element={<PhongBienTapStudio />} />
+            <Route path="*" element={<PhongBienTapStudio />} />
           </Routes>
         </ErrorBoundary>
       </BookmarkContext.Provider>
@@ -172,31 +180,31 @@ function AppContent() {
 
           <ErrorBoundary>
             <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/index" element={<Home />} />
-              <Route path="/gioi-thieu" element={<GioiThieu />} />
-              <Route path="/co-cau-to-chuc" element={<CoCauToChuc />} />
-              <Route path="/tin-tuc" element={<TinTuc />} />
-              <Route path="/phuc-loi-doan-vien" element={<PhucLoiDoanVien />} />
-              <Route path="/van-ban" element={<VanBan />} />
-              <Route path="/bieu-mau" element={<BieuMau />} />
-              <Route path="/lien-he" element={<LienHe />} />
-              <Route path="/bai-viet" element={<BaiViet />} />
-              <Route path="/admin" element={<AdminStudio />} />
-              <Route path="/admin/studio" element={<AdminStudio />} />
-              <Route path="/admin.html" element={<AdminStudio />} />
+              <Route path="/" element={<TrangChu />} />
+              <Route path="/index" element={<TrangChu />} />
+              <Route path="/gioi-thieu" element={<About />} />
+              <Route path="/co-cau-to-chuc" element={<Organization />} />
+              <Route path="/tin-tuc" element={<News />} />
+              <Route path="/phuc-loi-doan-vien" element={<Welfare />} />
+              <Route path="/van-ban" element={<Documents />} />
+              <Route path="/bieu-mau" element={<Forms />} />
+              <Route path="/lien-he" element={<Contact />} />
+              <Route path="/bai-viet" element={<ArticleDetail />} />
+              <Route path="/admin" element={<PhongBienTapStudio />} />
+              <Route path="/admin/studio" element={<PhongBienTapStudio />} />
+              <Route path="/admin.html" element={<PhongBienTapStudio />} />
 
               {/* Aliases without hyphens */}
-              <Route path="/gioithieu" element={<GioiThieu />} />
-              <Route path="/cocautochuc" element={<CoCauToChuc />} />
-              <Route path="/tintuc" element={<TinTuc />} />
-              <Route path="/phucloi" element={<PhucLoiDoanVien />} />
-              <Route path="/vanban" element={<VanBan />} />
-              <Route path="/bieumau" element={<BieuMau />} />
-              <Route path="/lienhe" element={<LienHe />} />
-              <Route path="/baiviet" element={<BaiViet />} />
+              <Route path="/gioithieu" element={<About />} />
+              <Route path="/cocautochuc" element={<Organization />} />
+              <Route path="/tintuc" element={<News />} />
+              <Route path="/phucloi" element={<Welfare />} />
+              <Route path="/vanban" element={<Documents />} />
+              <Route path="/bieumau" element={<Forms />} />
+              <Route path="/lienhe" element={<Contact />} />
+              <Route path="/baiviet" element={<ArticleDetail />} />
 
-              <Route path="*" element={<Home />} />
+              <Route path="*" element={<TrangChu />} />
             </Routes>
           </ErrorBoundary>
         </div>

@@ -16,7 +16,7 @@ if (!fs.existsSync(EXPORT_DIR)) {
 }
 
 /**
- * Khởi tạo danh mục 16 Tools tác nghiệp tòa soạn tự hành cho Agent
+ * Khởi tạo danh mục 16 Tools hỗ trợ biên tập tin bài tự hành cho Agent
  */
 function createNewsroomTools(agentContext, onToolStatus) {
   const {
@@ -607,7 +607,7 @@ Phong cách ứng xử: Chuyên nghiệp, nhã nhặn, tôn trọng chuẩn mự
 
   // 1. NẾU CÓ GEMINI API KEY VÀ KHÔNG PHẢI TÁC VỤ SỬA ĐOẠN -> CHẠY TOOL LOOP AGENT ĐÍCH THỰC (MULTI-STEP STREAM)
   if (activeKey) {
-    const candidateModels = ['gemini-2.0-flash', 'gemini-2.5-flash'];
+    const candidateModels = ['gemini-3.8-flash', 'gemini-2.5-flash'];
     for (const modelName of candidateModels) {
       try {
         const google = createGoogleGenerativeAI({ apiKey: activeKey });
@@ -807,7 +807,7 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit, api
     emit('tool-call', { toolName: 'read_current_article', args: {} });
     const art = await tools.read_current_article.execute({});
     emit('tool-result', { toolName: 'read_current_article', result: art });
-    emit('text-delta', { delta: `Hệ thống Trợ lý Tòa soạn AI Autonomous Agent đang hoạt động 100% với đầy đủ các Tools:\n\n1. ✍️ **rewrite_selection**: Sửa, rút gọn, nâng cấp văn phong đoạn văn bản bôi đen trên Canvas bài viết.\n2. 📄 **export_word_document**: Xuất bản toàn bộ bài viết sang file Word (.docx) chuẩn thể thức công đoàn.\n3. 📑 **export_pdf_document**: Xuất bản PDF chuẩn A4 in ấn lưu chiểu.\n4. 📊 **extract_financial_data**: Đọc tệp Excel và bóc tách bảng biểu dự toán kinh phí.\n5. 🔍 **audit_journalism_compliance**: Rà soát chuẩn mực báo chí 5W1H và đạo đức truyền thông.\n6. 📢 **generate_facebook**: Tự động tạo bài đăng mạng xã hội chuẩn tương tác.\n\n👉 **Cách dùng:** Hãy bôi đen bất kỳ đoạn văn nào trên Canvas bài viết, sau đó bấm các nút gợi ý nhanh (Rút gọn, Trang trọng, Sửa câu từ) hoặc gõ yêu cầu vào khung chat để kích hoạt Tool!` });
+    emit('text-delta', { delta: `Trợ lý AI Biên tập Tin bài đang hoạt động 100% với đầy đủ các Tools:\n\n1. ✍️ **rewrite_selection**: Sửa, rút gọn, nâng cấp văn phong đoạn văn bản bôi đen trên Canvas bài viết.\n2. 📄 **export_word_document**: Xuất bản toàn bộ bài viết sang file Word (.docx) chuẩn thể thức công đoàn.\n3. 📑 **export_pdf_document**: Xuất bản PDF chuẩn A4 in ấn lưu chiểu.\n4. 📊 **extract_financial_data**: Đọc tệp Excel và bóc tách bảng biểu dự toán kinh phí.\n5. 🔍 **audit_journalism_compliance**: Rà soát chuẩn mực báo chí 5W1H và đạo đức truyền thông.\n6. 📢 **generate_facebook**: Tự động tạo bài đăng mạng xã hội chuẩn tương tác.\n\n👉 **Cách dùng:** Hãy bôi đen bất kỳ đoạn văn nào trên Canvas bài viết, sau đó bấm các nút gợi ý nhanh (Rút gọn, Trang trọng, Sửa câu từ) hoặc gõ yêu cầu vào khung chat để kích hoạt Tool!` });
     emit('finish', { success: true });
     return;
   }
@@ -836,7 +836,8 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit, api
     emit('tool-call', { toolName: 'extract_financial_data', args: {} });
     const res = await tools.extract_financial_data.execute({});
     emit('tool-result', { toolName: 'extract_financial_data', result: res });
-    emit('text-delta', { delta: `Tôi đã đọc chi tiết tệp dự toán **${res.source}**:\n- **Tổng kinh phí phê duyệt:** ${res.totalBudget}\n- **Quy mô đại biểu:** ${res.participants}\n- **Các hạng mục chính:**\n` + res.items.map(it => `  • ${it.content}: **${it.amount}**`).join('\n') + `\n\nTôi đã sẵn sàng đưa bảng biểu này vào bài viết nếu bạn cần!` });
+    const itemsList = Array.isArray(res?.items) ? res.items.map(it => `  • ${it.content || 'Hạng mục'}: **${it.amount || '0đ'}**`).join('\n') : '  • Không có hạng mục chi tiết';
+    emit('text-delta', { delta: `Tôi đã đọc chi tiết tệp dự toán **${res?.source || 'Kinh phí'}**:\n- **Tổng kinh phí phê duyệt:** ${res?.totalBudget || '0đ'}\n- **Quy mô đại biểu:** ${res?.participants || 'Cán bộ đoàn viên'}\n- **Các hạng mục chính:**\n${itemsList}\n\nTôi đã sẵn sàng đưa bảng biểu này vào bài viết nếu bạn cần!` });
     emit('finish', { success: true });
     return;
   }
@@ -940,30 +941,15 @@ async function executeLocalAutonomousAgent({ messages, context, tools, emit, api
       }
     }
 
-    // H. Động cơ Local AI Engine viết lại tiêu đề chuyên sâu
-    if (!newHeadline) {
-      try {
-        const { isLocalModelAvailable, rewriteHeadlineLocally } = require('./localAiEngine');
-        if (isLocalModelAvailable()) {
-          newHeadline = await rewriteHeadlineLocally({
-            curTitle,
-            instruction: lastUserMsg
-          });
-        }
-      } catch (errLocal) {
-        console.warn('[Local AI Title Rewrite error]:', errLocal.message);
-      }
-    }
-
-    // I. Cloud AI (Gemini / Groq) viết lại tiêu đề nếu Local chưa có
+    // H. Cloud AI (Gemini 3.8 Flash / Groq Qwen3.8-27B) viết lại tiêu đề
     if (!newHeadline && (apiKey || groqApiKey)) {
       try {
         if (apiKey) {
           const { GoogleGenAI } = require('@google/genai');
           const aiGen = new GoogleGenAI({ apiKey });
           const resp = await aiGen.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: `Bạn là Thư ký Tòa soạn Báo chí Công đoàn TDMU.
+            model: 'gemini-3.8-flash',
+            contents: `Bạn là Cán bộ Biên tập Tin bài Công đoàn TDMU.
 Người dùng yêu cầu sửa tiêu đề bài viết: "${lastUserMsg}"
 Tiêu đề hiện tại: "${curTitle}"
 Yêu cầu: Hãy viết lại tiêu đề bài báo theo đúng yêu cầu của người dùng, văn phong báo chí chính luận trang trọng. Chỉ trả về DUY NHẤT một dòng tiêu đề mới, tuyệt đối không kèm ngoặc kép.`
@@ -975,7 +961,8 @@ Yêu cầu: Hãy viết lại tiêu đề bài báo theo đúng yêu cầu của
           const groqRes = await callGroqAPI(
             `Sửa tiêu đề bài viết theo yêu cầu: "${lastUserMsg}". Tiêu đề hiện tại: "${curTitle}". Chỉ trả về một dòng tiêu đề mới, không ngoặc kép.`,
             'Bạn là biên tập viên báo chí Công đoàn chuyên nghiệp.',
-            groqApiKey
+            groqApiKey,
+            { requireJson: false }
           );
           const txt = (groqRes || '').trim().replace(/^["“']|["”']$/g, '');
           if (txt && txt.length > 5) newHeadline = txt;
@@ -1027,25 +1014,31 @@ Yêu cầu: Hãy viết lại tiêu đề bài báo theo đúng yêu cầu của
     let curSapo = context.article?.sapo || '';
     let newSapo = '';
 
-    try {
-      const { isLocalModelAvailable, rewriteSelectionLocally } = require('./localAiEngine');
-      if (isLocalModelAvailable()) {
-        newSapo = await rewriteSelectionLocally({
-          targetText: curSapo || context.article?.title || 'Hoạt động Công đoàn TDMU',
-          instruction: `Yêu cầu người dùng: "${lastUserMsg}". Hãy viết lại đoạn mở bài Sapo chuẩn 5W1H báo chí chính luận, trang trọng. Chỉ trả về DUY NHẤT nội dung Sapo mới.`
-        });
-      }
-    } catch {}
-
+    // 1. Thử Gemini 3.8 Flash
     if (!newSapo && apiKey) {
       try {
         const { GoogleGenAI } = require('@google/genai');
         const aiGen = new GoogleGenAI({ apiKey });
         const resp = await aiGen.models.generateContent({
-          model: 'gemini-2.0-flash',
+          model: 'gemini-3.8-flash',
           contents: `Người dùng yêu cầu viết lại đoạn mở bài Sapo: "${lastUserMsg}"\nSapo hiện tại: "${curSapo}"\nChỉ trả về duy nhất nội dung Sapo mới.`
         });
         const txt = (resp.text || '').trim().replace(/^["“']|["”']$/g, '');
+        if (txt && txt.length > 10) newSapo = txt;
+      } catch {}
+    }
+
+    // 2. Thử Groq Qwen3.8-27B
+    if (!newSapo && groqApiKey) {
+      try {
+        const { callGroqAPI } = require('./aiService');
+        const groqRes = await callGroqAPI(
+          `Người dùng yêu cầu viết lại đoạn mở bài Sapo: "${lastUserMsg}"\nSapo hiện tại: "${curSapo}"\nChỉ trả về duy nhất nội dung Sapo mới.`,
+          'Bạn là biên tập viên báo chí Công đoàn chuyên nghiệp.',
+          groqApiKey,
+          { requireJson: false }
+        );
+        const txt = (groqRes || '').trim().replace(/^["“']|["”']$/g, '');
         if (txt && txt.length > 10) newSapo = txt;
       } catch {}
     }
@@ -1169,17 +1162,40 @@ Yêu cầu: Hãy viết lại tiêu đề bài báo theo đúng yêu cầu của
 
     let revised = '';
 
-    // 0. ƯU TIÊN SỐ 1: Động cơ AI Local nhúng trực tiếp trong web (0.4s, 100% offline, 0đ quota)
-    try {
-      const { isLocalModelAvailable, rewriteSelectionLocally } = require('./localAiEngine');
-      if (isLocalModelAvailable()) {
-        revised = await rewriteSelectionLocally({ targetText: target, instruction: lastUserMsg });
+    // 1. ƯU TIÊN SỐ 1: Groq Qwen3.8-27B (Siêu tốc ~1.5s, tiếng Việt báo chí xuất sắc)
+    if (!revised && groqApiKey) {
+      try {
+        const { callGroqAPI } = require('./aiService');
+        const groqPrompt = `BẠN LÀ TỔNG BIÊN TẬP BÁO CHÍ CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT (TDMU).
+Người dùng đang chọn đoạn văn bản sau trên Canvas bài viết:
+"""
+${target}
+"""
+
+Yêu cầu chỉnh sửa cụ thể của người dùng:
+"""
+${lastUserMsg}
+"""
+
+QUY TẮC BẮT BUỘC:
+1. Chỉnh sửa và viết lại ĐÚNG đoạn văn bản trên theo đúng yêu cầu của người dùng.
+2. TUYỆT ĐỐI KHÔNG BỊA ĐẶT THÊM SỐ LIỆU, SỰ KIỆN, KINH PHÍ HAY CON SỐ KHÔNG CÓ TRONG ĐOẠN GỐC.
+3. Chỉ trả về DUY NHẤT nội dung đoạn văn bản mới đã sửa, không bọc dấu ngoặc kép, không kèm lời giải thích hay dẫn dắt.`;
+        const resGroq = await callGroqAPI(
+          groqPrompt,
+          'Bạn là biên tập viên báo chí chính luận chuyên nghiệp của Trường Đại học Thủ Dầu Một.',
+          groqApiKey,
+          { requireJson: false }
+        );
+        if (resGroq && resGroq.trim().length > 3) {
+          revised = resGroq.trim().replace(/^"|"$/g, '');
+        }
+      } catch (errGroq) {
+        console.warn('Groq agent rewrite error:', errGroq.message);
       }
-    } catch (localErr) {
-      console.warn('[Local AI Rewrite fallback to Cloud]:', localErr.message);
     }
 
-    // 1. Thử gọi trực tiếp Google GenAI nếu Local chưa có hoặc gặp sự cố
+    // 2. Thử Google Gemini 3.8 Flash nếu Groq chưa có kết quả
     if (!revised && apiKey) {
       try {
         const { GoogleGenAI } = require('@google/genai');
@@ -1200,7 +1216,7 @@ QUY TẮC BẮT BUỘC:
 2. TUYỆT ĐỐI KHÔNG BỊA ĐẶT THÊM SỐ LIỆU, SỰ KIỆN, KINH PHÍ HAY CON SỐ KHÔNG CÓ TRONG ĐOẠN GỐC.
 3. Chỉ trả về DUY NHẤT nội dung đoạn văn bản mới đã sửa, không bọc dấu ngoặc kép, không kèm lời giải thích hay dẫn dắt.`;
 
-        const candidateModels = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+        const candidateModels = ['gemini-3.8-flash', 'gemini-2.5-flash'];
         for (const model of candidateModels) {
           try {
             const resp = await aiGen.models.generateContent({ model, contents: rewritePrompt });
@@ -1215,20 +1231,6 @@ QUY TẮC BẮT BUỘC:
         }
       } catch (errGen) {
         console.warn('Gemini direct rewrite error:', errGen.message);
-      }
-    }
-
-    // 2. Thử gọi Groq nếu có groqApiKey và Gemini chưa có kết quả
-    if (!revised && groqApiKey) {
-      try {
-        const { callGroqAPI } = require('./aiService');
-        const groqPrompt = `Hãy sửa và trau chuốt đoạn văn sau theo yêu cầu: "${lastUserMsg}"\nĐoạn văn gốc: "${target}"\nQUY TẮC: Tuyệt đối không bịa số liệu hay ngày tháng mới. Chỉ trả về đúng nội dung đoạn văn mới đã được sửa, không thêm bất kỳ lời dẫn nào.`;
-        const resGroq = await callGroqAPI(groqPrompt, 'Bạn là biên tập viên báo chí chính luận chuyên nghiệp của Trường Đại học Thủ Dầu Một.', groqApiKey);
-        if (resGroq && resGroq.trim().length > 3) {
-          revised = resGroq.trim().replace(/^"|"$/g, '');
-        }
-      } catch (errGroq) {
-        console.warn('Groq agent fallback error:', errGroq.message);
       }
     }
 

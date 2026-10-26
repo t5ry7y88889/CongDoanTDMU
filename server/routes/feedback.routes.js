@@ -5,7 +5,9 @@ const {
   getFeedbackFromDb,
   insertFeedbackToDb,
   updateFeedbackInDb,
-  deleteFeedbackFromDb
+  deleteFeedbackFromDb,
+  getCommentsFromDb,
+  insertCommentToDb
 } = require('../mssql_db');
 
 // =========================================================================
@@ -189,7 +191,7 @@ router.post('/bookmarks', (req, res) => {
   const newBookmark = {
     id: db.bookmarks.length ? Math.max(...db.bookmarks.map(b => b.id || 0)) + 1 : 1,
     user_id: user_id || 'CB_001',
-    user_name: user_name || 'TS. Lê Thị Kim Út',
+    user_name: user_name || 'Ban Thường Vụ Công Đoàn',
     article_id: parseInt(article_id),
     article_title: article_title || 'Bài viết Công đoàn',
     saved_at: new Date().toISOString()
@@ -202,12 +204,44 @@ router.post('/bookmarks', (req, res) => {
 // =========================================================================
 // 3. COMMENTS, AUDITS, SCHEDULES, EVENTS & MEDIA
 // =========================================================================
-router.get('/comments', (req, res) => {
-  const db = loadDB();
-  res.json({ success: true, count: (db.comments || []).length, data: db.comments || [] });
+router.get('/comments', async (req, res) => {
+  const articleId = req.query.articleId || req.query.article_id;
+  try {
+    const comments = await getCommentsFromDb(articleId);
+    return res.json({ success: true, count: comments.length, data: comments });
+  } catch (err) {
+    const db = loadDB();
+    let comments = db.comments || [];
+    if (articleId) comments = comments.filter(c => String(c.articleId || c.article_id) === String(articleId));
+    res.json({ success: true, count: comments.length, data: comments });
+  }
 });
 
-router.get('/inbox/comments', (req, res) => res.json({ success: true, data: loadDB().comments || [] }));
+router.post('/comments', async (req, res) => {
+  const { articleId, article_id, content, noiDung, author, author_name, hoTen, unit, chucVu, email } = req.body;
+  const artId = articleId || article_id;
+  const commentContent = content || noiDung;
+  if (!artId || !commentContent) {
+    return res.status(400).json({ success: false, error: 'Thiếu mã bài viết hoặc nội dung bình luận' });
+  }
+  try {
+    const newComment = await insertCommentToDb({
+      articleId: artId,
+      content: commentContent,
+      author: author || author_name || hoTen,
+      unit: unit || chucVu,
+      email
+    });
+    res.json({ success: true, data: newComment });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get('/inbox/comments', async (req, res) => {
+  const comments = await getCommentsFromDb();
+  res.json({ success: true, data: comments || [] });
+});
 
 router.get('/article-audits', (req, res) => {
   const db = loadDB();
@@ -255,20 +289,82 @@ router.get('/analytics', getDashboardStats);
 router.get('/dashboard', getDashboardStats);
 router.get('/stats', getDashboardStats);
 
-router.post('/facebook/publish', (req, res) => {
-  const { articleId, title } = req.body;
+// Hiệu quả truyền thông đa kênh theo tháng (Media Analytics By Month)
+router.get('/analytics/monthly', (req, res) => {
   const db = loadDB();
-  const art = (db.articles || []).find(a => a.id == articleId);
-  if (art) {
-    art.status = 'published';
-    art.statusName = 'Đã Xuất Bản';
-    saveDB(db);
+  const list = db.media_analytics_monthly || [];
+  const { month } = req.query;
+  if (month) {
+    const found = list.find(m => m.monthKey === month || String(m.monthNumber) === String(month));
+    if (found) {
+      return res.json({
+        success: true,
+        data: found,
+        months: list,
+        allMonths: list.map(m => ({ monthKey: m.monthKey, label: m.label, isCurrentMonth: !!m.isCurrentMonth }))
+      });
+    }
   }
+  const current = list.find(m => m.isCurrentMonth) || list[list.length - 1];
   res.json({
     success: true,
-    facebookPostId: `fb_sync_${articleId || Date.now()}`,
-    message: `Đã đồng bộ và xuất bản thành công bài viết "${title}" lên kênh Fanpage Công Đoàn TDMU!`
+    currentMonth: current,
+    months: list,
+    allMonths: list.map(m => ({ monthKey: m.monthKey, label: m.label, isCurrentMonth: !!m.isCurrentMonth }))
   });
+});
+
+router.post('/facebook/publish', async (req, res) => {
+  try {
+    const { articleId, title, summary, caption, imageUrl } = req.body;
+    const db = loadDB();
+    const art = (db.articles || []).find(a => a.id == articleId) || {};
+    const finalTitle = title || art.title || 'Bản tin Công Đoàn TDMU';
+    const finalSummary = summary || art.summary || '';
+    const finalCaption = caption || `📢 [TDMU NEWS] ${finalTitle}\n\n${finalSummary}\n\n👉 Chi tiết xem tại Website Công đoàn TDMU!\n#CongDoanTDMU #TDMU2026 #ChuyenDoiSo`;
+    const finalImage = imageUrl || art.image || art.hinh_anh_url || '';
+
+    const { publishToFacebook } = require('../services/multiChannelService');
+    const fbResult = await publishToFacebook({
+      caption: finalCaption,
+      imageUrl: finalImage,
+      articleTitle: finalTitle,
+      articleId: articleId || art.id,
+      accountId: 'fb-default'
+    });
+
+    if (art && art.id) {
+      art.status = 'published';
+      art.statusName = 'Đã Xuất Bản';
+      art.fbPostId = fbResult.postId;
+      saveDB(db);
+    }
+
+    try {
+      const { updateArticleInDb } = require('../mssql_db');
+      if (art && art.id) {
+        await updateArticleInDb(art.id, {
+          fbPostId: fbResult.postId,
+          noi_dung_fb: finalCaption,
+          status: 'published'
+        });
+      }
+    } catch {}
+
+    res.json({
+      success: true,
+      facebookPostId: fbResult.postId,
+      permalinkUrl: fbResult.permalinkUrl,
+      message: `Đã xuất bản thành công bài viết "${finalTitle}" lên Fanpage Facebook "${fbResult.pageName}" qua Meta Graph API v20.0!`,
+      data: fbResult
+    });
+  } catch (err) {
+    console.error('[Legacy Facebook Publish Error]:', err);
+    res.status(500).json({
+      success: false,
+      error: 'Lỗi đăng Fanpage Facebook: ' + err.message
+    });
+  }
 });
 
 // =========================================================================

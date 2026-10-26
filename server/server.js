@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * ĐỒ ÁN CHUYÊN NGÀNH: XÂY DỰNG WEBSITE TRUYỀN THÔNG CÔNG ĐOÀN ĐH THỦ DẦU MỘT
+ * TÍCH HỢP TRÍ TUỆ NHÂN TẠO (AI) HỖ TRỢ TẠO VÀ ĐĂNG TẢI NỘI DUNG ĐA KÊNH
+ * ============================================================================
+ * File: server/server.js
+ * Chức năng: Khởi động máy chủ Express Backend, đăng ký các Middleware,
+ *            kết nối Cơ sở dữ liệu và ánh xạ toàn bộ API của 11 phân hệ.
+ * ============================================================================
+ */
+
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
 const express = require('express');
@@ -6,32 +17,39 @@ const cors = require('cors');
 const { loadDB, saveDB } = require('./db');
 const { isMssqlConnected } = require('./mssql_db');
 
-// Modular Route Handlers
-const aiRoutes = require('./routes/ai.routes');
-const articlesRoutes = require('./routes/articles.routes');
-const documentsRoutes = require('./routes/documents.routes');
-const welfareRoutes = require('./routes/welfare.routes');
-const reportsRoutes = require('./routes/reports.routes');
-const orgRoutes = require('./routes/organization.routes');
-const feedbackRoutes = require('./routes/feedback.routes');
-const publishRoutes = require('./routes/publish.routes');
-const templatesRoutes = require('./routes/templates.routes');
+// Khởi tạo các Route phân hệ chức năng (Đã chuẩn hóa danh xưng tiếng Việt)
+const triTueNhanTaoRoutes = require('./routes/triTueNhanTao.routes');
+const baiVietRoutes = require('./routes/baiViet.routes');
+const vanBanRoutes = require('./routes/vanBan.routes');
+const phucLoiRoutes = require('./routes/phucLoi.routes');
+const baoCaoThongKeRoutes = require('./routes/baoCaoThongKe.routes');
+const coCauToChucRoutes = require('./routes/coCauToChuc.routes');
+const homThuGopYRoutes = require('./routes/homThuGopY.routes');
+const phatHanhRoutes = require('./routes/phatHanh.routes');
+const bieuMauMauRoutes = require('./routes/bieuMauMau.routes');
+const xacThucRoutes = require('./routes/xacThuc.routes');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
-// Middleware Configuration
+// 1. Cấu hình Middleware cơ bản
 app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
+
+// Chống lưu bộ nhớ đệm (Cache-Control) đảm bảo dữ liệu thời gian thực
 app.use((req, res, next) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   next();
 });
-// Priority 0: React Admin Newsroom Studio routes (Vite / React 19 SPA)
+
+// 2. Điều hướng trang Quản trị Studio (Hỗ trợ cả React SPA và Standalone Portal)
 app.get(['/admin', '/admin.html', '/admin/studio'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   const spaHtml = path.join(__dirname, '../frontend/dist/index.html');
   if (require('fs').existsSync(spaHtml)) {
     return res.sendFile(spaHtml);
@@ -39,101 +57,84 @@ app.get(['/admin', '/admin.html', '/admin/studio'], (req, res) => {
   res.sendFile(path.join(__dirname, '../public/admin.html'));
 });
 
-// Dedicated route for embedded/standalone admin management portal (All 11 modules)
+// Route chuyên dụng cho cổng quản trị tích hợp
 app.get(['/admin-portal', '/admin-portal.html'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.sendFile(path.join(__dirname, '../public/admin.html'));
 });
 
-// React Production Assets
+// 3. Phục vụ tài nguyên tĩnh (Static Assets)
 app.use('/assets', express.static(path.join(__dirname, '../frontend/dist/assets')));
-app.use('/spa', express.static(path.join(__dirname, '../frontend/dist'), {
-  etag: false,
-  maxAge: 0
-}));
-
-// Static Assets Priority:
-// 1. Uploads directory (user-uploaded documents, templates, images)
+app.use('/spa', express.static(path.join(__dirname, '../frontend/dist'), { etag: false, maxAge: 0 }));
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+app.use(express.static(path.join(__dirname, '../public'), { etag: false, maxAge: 0 }));
 
-// 2. Official Production Portal & Public Pages
-app.use(express.static(path.join(__dirname, '../public'), {
-  etag: false,
-  maxAge: 0
-}));
+// 4. Đăng ký các Endpoint API chính thức
+app.use('/api/ai', triTueNhanTaoRoutes); app.use('/api/tri-tue-nhan-tao', triTueNhanTaoRoutes);
+app.use('/api/articles', baiVietRoutes); app.use('/api/bai-viet', baiVietRoutes);
+app.use('/api/documents', vanBanRoutes); app.use('/api/van-ban', vanBanRoutes);
+app.use('/api/welfare', phucLoiRoutes);
+app.use('/api/phuc-loi', phucLoiRoutes);
+app.use('/api/monthly-reports', baoCaoThongKeRoutes);
+app.use('/api/reports', baoCaoThongKeRoutes); app.use('/api/bao-cao', baoCaoThongKeRoutes);
+app.use('/api/publish', phatHanhRoutes); app.use('/api/phat-hanh', phatHanhRoutes);
+app.use('/api/templates', bieuMauMauRoutes); app.use('/api/bieu-mau', bieuMauMauRoutes);
+app.use('/api/auth', xacThucRoutes); app.use('/api/xac-thuc', xacThucRoutes);
 
-// =========================================================================
-// API ROUTER MOUNTING
-// =========================================================================
-app.use('/api/ai', aiRoutes);
-app.use('/api/articles', articlesRoutes);
-app.use('/api/documents', documentsRoutes);
-app.use('/api/welfare', welfareRoutes);
-app.use('/api/monthly-reports', reportsRoutes);
+// Ánh xạ các phân hệ Tổ chức, Nhân sự, Góp ý, Phản hồi
+app.use('/api', coCauToChucRoutes);
+app.use('/api', homThuGopYRoutes);
 
-// Core Organization, Cadres & Categories
-app.use('/api', orgRoutes);
-
-// Welfare Aliases (/api/phuc-loi, /api/don-tro-cap)
-app.use('/api', welfareRoutes);
-
-// Feedback, Bookmarks, Dossiers, Assets & Analytics
-app.use('/api', feedbackRoutes);
-
-// Publish & Scheduling
-app.use('/api/publish', publishRoutes);
-app.use('/api/templates', templatesRoutes);
-
-// Backward Compatibility Route Aliases
+// Tương thích ngược endpoint tạo bài viết
 app.post('/api/generate-article', (req, res, next) => {
   req.url = '/package-stream';
-  aiRoutes(req, res, next);
+  triTueNhanTaoRoutes(req, res, next);
 });
 
-// =========================================================================
-// BACKGROUND CRON JOBS (AUTO-PUBLISH 3 CHANNELS & AUTO-RELEASE IDLE LOCKS)
-// =========================================================================
+// 5. Tác vụ ngầm: Tự động phát hành bài viết theo lịch hẹn
 setInterval(() => {
-  const db = loadDB();
-  const now = new Date();
-  let changed = false;
+  try {
+    const db = loadDB();
+    const now = new Date();
+    let changed = false;
 
-  // 1. Auto-Publish Worker — Web channel
-  (db.articles || []).forEach(art => {
-    if (art.status === 'scheduled' && art.scheduledAt) {
-      const scheduledTime = new Date(art.scheduledAt);
-      if (scheduledTime <= now) {
-        console.log(`[Cron] Executing Auto-Publish for Package #${art.id}...`);
-        art.status = 'published';
-        art.statusName = 'Đã Xuất Bản';
-        art.publishedAt = now.toISOString();
-        console.log(`[Cron] Successfully published Package #${art.id}`);
-        changed = true;
+    (db.articles || []).forEach(art => {
+      if (art.status === 'scheduled' && art.scheduledAt) {
+        const scheduledTime = new Date(art.scheduledAt);
+        if (scheduledTime <= now) {
+          console.log(`[Lịch hẹn] Tự động xuất bản bài viết #${art.id}: "${art.title}"`);
+          art.status = 'published';
+          art.statusName = 'Đã Xuất Bản';
+          art.publishedAt = now.toISOString();
+          changed = true;
+        }
       }
-    }
 
-    // 2. Auto Release Worker (Release locks idle for > 24 hours)
-    if (art.assignee_id && art.updatedAt) {
-      const lastUpdate = new Date(art.updatedAt);
-      const diffHours = (now - lastUpdate) / (1000 * 60 * 60);
-      if (diffHours >= 24) {
-        console.log(`[Cron] Auto-releasing idle Package #${art.id} from User ${art.assignee_id}`);
-        art.assignee_id = null;
-        changed = true;
+      if (art.assignee_id && art.updatedAt) {
+        const lastUpdate = new Date(art.updatedAt);
+        const diffHours = (now - lastUpdate) / (1000 * 60 * 60);
+        if (diffHours >= 24) {
+          art.assignee_id = null;
+          changed = true;
+        }
       }
-    }
-  });
+    });
 
-  if (changed) {
-    saveDB(db);
+    if (changed) {
+      saveDB(db);
+    }
+  } catch (err) {
+    console.error('[Lịch hẹn] Lỗi quét tự động:', err.message);
   }
 }, 30000);
 
-// 3. Khởi động bộ lập lịch phát hành đa kênh tự động (Omnichannel Dispatcher)
-const { startScheduleWorker } = require('./services/multiChannelService');
+// Khởi chạy bộ lập lịch phát hành đa kênh (Fanpage Facebook & Zalo OA)
+const { startScheduleWorker } = require('./services/dichVuDaKenh.service');
 startScheduleWorker();
 
-
-// Clean URL routes for portal pages without .html extension
+// 6. Định tuyến URL thân thiện cho các trang cổng thông tin
 const cleanRoutes = [
   'gioi-thieu', 'co-cau-to-chuc', 'tin-tuc', 'bai-viet',
   'phuc-loi-doan-vien', 'van-ban', 'bieu-mau', 'lien-he', 'bao-cao-thang'
@@ -144,38 +145,22 @@ cleanRoutes.forEach(slug => {
   });
 });
 
-
-// Optional React SPA fallback for /spa/*
 app.get('/spa/*', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
 });
 
-// Server Bootstrap
+// 7. Khởi động lắng nghe máy chủ
 app.listen(PORT, () => {
-  console.log(`====================================================`);
-  console.log(`🚀 Website Truyền Thông Công Đoàn TDMU Real SaaS Engine`);
-  console.log(`🌐 Public Portal: http://localhost:${PORT}`);
-  console.log(`⚙️  Admin CMS Portal: http://localhost:${PORT}/admin.html`);
-  
-  // 4. Pre-warm Động cơ Local AI Engine (Qwen2.5-1.5B GGUF nhúng cục bộ)
-  try {
-    const { isLocalModelAvailable, initLocalAiEngine } = require('./services/localAiEngine');
-    if (isLocalModelAvailable()) {
-      console.log(`🤖 Local AI Model: Sẵn sàng (server/models/qwen2.5-1.5b-instruct-q4_k_m.gguf)`);
-      initLocalAiEngine()
-        .then(() => {
-          console.log(`⚡ [Local AI] Đã nạp trước mô hình vào bộ nhớ RAM/VRAM! Tốc độ phản hồi: ~0.3s`);
-        })
-        .catch(err => {
-          console.warn(`[Local AI Pre-warm Warning]:`, err.message);
-        });
-    } else {
-      console.log(`🤖 Local AI Model: Chưa tải file GGUF (Chạy "npm run download-model" nếu muốn dùng offline)`);
-    }
-  } catch (err) {
-    console.warn(`[Local AI Check]:`, err.message);
-  }
-  console.log(`====================================================`);
+  console.log(`================================================================`);
+  console.log(`  TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT - CÔNG ĐOÀN CƠ SỞ`);
+  console.log(`  HỆ THỐNG TRUYỀN THÔNG & PHÒNG BIÊN TẬP AI ĐA KÊNH`);
+  console.log(`================================================================`);
+  console.log(`🌐 Cổng thông tin công đoàn:   http://localhost:${PORT}`);
+  console.log(`⚙️  Phòng biên tập Studio AI:    http://localhost:${PORT}/admin.html`);
+  console.log(`📡 Chế độ CSDL:                 MSSQL Server & JSON Live Backup`);
+  console.log(`🤖 Trợ lý AI tác nhân:          Groq Cloud (Qwen) + Google Gemini Flash`);
+  console.log(`🚀 Hệ thống đã sẵn sàng cho buổi báo cáo / nghiệm thu đồ án!`);
+  console.log(`================================================================`);
 });
 
 module.exports = app;

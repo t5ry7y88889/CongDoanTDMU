@@ -8,6 +8,7 @@ const {
   saveChannelAccount,
   deleteChannelAccount,
   getAccountById,
+  resolveFacebookPageAccessToken,
   publishToFacebook,
   publishToZaloOA,
   publishOmnichannel,
@@ -25,13 +26,24 @@ router.get('/accounts', (req, res) => {
 });
 
 // POST /api/publish/accounts - Thêm hoặc cập nhật tài khoản gửi
-router.post('/accounts', (req, res) => {
+router.post('/accounts', async (req, res) => {
   const { channel, account } = req.body;
   if (!channel || !account) {
     return res.status(400).json({ success: false, error: 'Thiếu channel hoặc thông tin account' });
   }
-  const updatedList = saveChannelAccount({ channel, account });
-  res.json({ success: true, message: `Đã lưu tài khoản "${account.name || 'Mới'}" thành công!`, data: updatedList });
+  let accToSave = { ...account };
+  if (channel === 'facebook' && accToSave.pageId && accToSave.accessToken) {
+    try {
+      const resolved = await resolveFacebookPageAccessToken(accToSave.pageId, accToSave.accessToken);
+      if (resolved?.accessToken) {
+        accToSave.userToken = accToSave.accessToken;
+        accToSave.accessToken = resolved.accessToken;
+        if (resolved.pageName) accToSave.pageName = resolved.pageName;
+      }
+    } catch {}
+  }
+  const updatedList = saveChannelAccount({ channel, account: accToSave });
+  res.json({ success: true, message: `Đã lưu tài khoản "${accToSave.name || 'Mới'}" thành công!`, data: updatedList });
 });
 
 // DELETE /api/publish/accounts/:channel/:id - Xóa tài khoản
@@ -78,8 +90,8 @@ router.post('/test-connection', async (req, res) => {
   const creds = getChannelCredentials();
 
   if (channel === 'facebook') {
-    const pageId = account.pageId || creds.facebook.pageId;
-    const accessToken = account.accessToken || creds.facebook.accessToken;
+    let pageId = account.pageId || creds.facebook.pageId;
+    let accessToken = account.accessToken || creds.facebook.accessToken;
     if (!accessToken || !pageId) {
       return res.json({
         success: true,
@@ -90,6 +102,22 @@ router.post('/test-connection', async (req, res) => {
       });
     }
     try {
+      const resolved = await resolveFacebookPageAccessToken(pageId, accessToken);
+      if (resolved?.accessToken) {
+        accessToken = resolved.accessToken;
+        if (resolved.pageId) pageId = resolved.pageId;
+        if (account.id) {
+          saveChannelAccount({
+            channel: 'facebook',
+            account: {
+              ...account,
+              accessToken: resolved.accessToken,
+              pageId: pageId,
+              pageName: resolved.pageName || account.pageName
+            }
+          });
+        }
+      }
       const fetch = (await import('node-fetch')).default || globalThis.fetch;
       const testRes = await fetch(`https://graph.facebook.com/v20.0/${pageId}?fields=id,name,link&access_token=${accessToken}`);
       const testData = await testRes.json();
@@ -103,6 +131,7 @@ router.post('/test-connection', async (req, res) => {
         accountName: account.name,
         pageId: testData.id,
         link: testData.link,
+        pageAccessToken: accessToken,
         message: `Kết nối thành công tới Meta Graph API Fanpage: "${testData.name}" qua tài khoản "${account.name}"!`
       });
     } catch (e) {
@@ -147,9 +176,9 @@ router.post('/test-connection', async (req, res) => {
 
 // POST /api/publish/facebook
 router.post('/facebook', async (req, res) => {
-  const { caption, link, imageUrl, articleTitle, articleId, accountId, accountConfig } = req.body;
+  const { caption, link, imageUrl, imageUrls, articleTitle, articleId, accountId, accountConfig } = req.body;
   try {
-    const result = await publishToFacebook({ caption, link, imageUrl, articleTitle, articleId, accountId, accountConfig });
+    const result = await publishToFacebook({ caption, link, imageUrl, imageUrls, articleTitle, articleId, accountId, accountConfig });
     res.json({ success: true, message: result.message, data: result });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -158,9 +187,72 @@ router.post('/facebook', async (req, res) => {
 
 // POST /api/publish/zalo
 router.post('/zalo', async (req, res) => {
-  const { content, title, articleId, imageUrl, accountId, accountConfig, recipientPhone, recipientUserId } = req.body;
+  const { content, title, articleId, imageUrl, accountId, accountConfig, recipientPhone, recipientUserId, senderPhone } = req.body;
   try {
-    const result = await publishToZaloOA({ content, title, articleId, imageUrl, accountId, accountConfig, recipientPhone, recipientUserId });
+    const result = await publishToZaloOA({ content, title, articleId, imageUrl, accountId, accountConfig, recipientPhone, recipientUserId, senderPhone });
+    res.json({ success: true, message: result.message, data: result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =========================================================================
+// 2.1. ZALO BOT TỰ ĐỘNG ĐẨY TIN VÀO NHÓM ZALO (ZALO GROUP BOT)
+// =========================================================================
+const zaloBotService = require('../services/zaloBotService');
+
+// GET /api/publish/zalo/bot-status - Lấy trạng thái bot Zalo
+router.get('/zalo/bot-status', (req, res) => {
+  try {
+    const status = zaloBotService.getStatus();
+    res.json({ success: true, data: status });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/publish/zalo/bot-login-qr - Tạo mã QR đăng nhập Bot Zalo
+router.post('/zalo/bot-login-qr', async (req, res) => {
+  try {
+    const qrData = await zaloBotService.startQrLogin();
+    res.json({ success: true, data: qrData });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/publish/zalo/bot-logout - Ngắt kết nối / Đăng xuất Bot Zalo
+router.post('/zalo/bot-logout', (req, res) => {
+  try {
+    const result = zaloBotService.logout();
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/publish/zalo/bot-groups - Lấy danh sách nhóm Zalo bot tham gia
+router.get('/zalo/bot-groups', async (req, res) => {
+  try {
+    const groups = await zaloBotService.getGroups();
+    res.json({ success: true, data: groups });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/publish/zalo/send-group - Bot tự động bắn tin nhắn vào Nhóm Zalo
+router.post('/zalo/send-group', async (req, res) => {
+  const { groupId, groupLink, content, imageUrl, articleTitle, articleId } = req.body;
+  try {
+    const result = await zaloBotService.sendToGroup({
+      groupId,
+      groupLink: groupLink || 'https://zalo.me/g/wdhpzaoap7wkxb074exv',
+      content,
+      imageUrl,
+      articleTitle,
+      articleId
+    });
     res.json({ success: true, message: result.message, data: result });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

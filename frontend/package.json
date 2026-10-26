@@ -11,6 +11,12 @@
   },
   "dependencies": {
     "@ckeditor/ckeditor5-react": "^11.2.0",
+    "@tiptap/extension-bubble-menu": "^3.31.4",
+    "@tiptap/extension-character-count": "^3.31.4",
+    "@tiptap/extension-placeholder": "^3.31.4",
+    "@tiptap/extension-text-align": "^3.31.4",
+    "@tiptap/react": "^3.31.4",
+    "@tiptap/starter-kit": "^3.31.4",
     "ckeditor5": "^48.5.1",
     "diff": "^9.0.0",
     "react": "^19.2.8",

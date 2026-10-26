@@ -1,14 +1,15 @@
+const sql = require('mssql');
 const { loadDB, saveDB } = require('./db');
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
 const serverName = process.env.DB_SERVER || 'RTX-ON\\MSSQLVESE';
 
 const sqlConfig = {
-  server: process.env.DB_HOST || '127.0.0.1',
-  port: parseInt(process.env.DB_PORT || '56205'),
-  database: process.env.DB_DATABASE || 'TDMU_TradeUnion_DB',
-  user: process.env.DB_USER || 'node_app',
-  password: process.env.DB_PASSWORD || 'TDMUNode@2026',
+  server: (process.env.DB_HOST || '127.0.0.1').trim(),
+  port: parseInt(String(process.env.DB_PORT || '56205').trim()),
+  database: (process.env.DB_DATABASE || 'TDMU_TradeUnion_DB').trim(),
+  user: (process.env.DB_USER || 'node_app').trim(),
+  password: (process.env.DB_PASSWORD || 'TDMUNode@2026').trim(),
   options: {
     encrypt: false,
     trustServerCertificate: true
@@ -94,7 +95,7 @@ async function getArticlesFromDb(category = 'all', status = 'all', search = '') 
         request.input('search', sql.NVarChar, `%${search}%`);
       }
 
-      query += " ORDER BY a.ArticleId DESC";
+      query += " ORDER BY COALESCE(a.NgayXuatBan, a.NgayTao) DESC, a.ArticleId DESC";
       const result = await request.query(query);
       return result.recordset;
     } catch (err) {
@@ -134,47 +135,57 @@ async function insertArticleToDb(data) {
     try {
       await transaction.begin();
       const req = new sql.Request(transaction);
-      const slug = (data.slug || data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')) + '-' + Date.now();
+      const cleanTitle = (data.title || 'Tin tức Công đoàn').trim().slice(0, 250);
+      const slugPrefix = (data.slug || cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')).slice(0, 200);
+      const slug = slugPrefix + '-' + Date.now();
+      let catId = parseInt(data.categoryId) || 1;
+      if (![1, 2, 3].includes(catId)) catId = 1;
+      let authId = parseInt(data.authorId) || 1;
+      if (authId < 1 || authId > 17) authId = 1;
+      const isPublished = data.status === 'published';
       const insertArticleQuery = `
-        INSERT INTO dbo.ARTICLES (TieuDe, Slug, CategoryId, MaTacGia, TomTat, NoiDung, HinhAnhDaiDien, TrangThai, IsAiGenerated, AiPrompt, NgayTao, NgayCapNhat)
+        INSERT INTO dbo.ARTICLES (TieuDe, Slug, CategoryId, MaTacGia, TomTat, NoiDung, HinhAnhDaiDien, TrangThai, IsAiGenerated, AiPrompt, NgayXuatBan, NgayTao, NgayCapNhat)
         OUTPUT INSERTED.ArticleId AS id
-        VALUES (@title, @slug, @categoryId, @authorId, @summary, @content, @image, @status, @isAiGenerated, @aiPrompt, SYSDATETIME(), SYSDATETIME())
+        VALUES (@title, @slug, @categoryId, @authorId, @summary, @content, @image, @status, @isAiGenerated, @aiPrompt, @publishedAt, SYSDATETIME(), SYSDATETIME())
       `;
-      req.input('title', sql.NVarChar, data.title);
+      req.input('title', sql.NVarChar, cleanTitle);
       req.input('slug', sql.VarChar, slug);
-      req.input('categoryId', sql.Int, data.categoryId || 1);
-      req.input('authorId', sql.Int, data.authorId || 1);
-      req.input('summary', sql.NVarChar, data.summary || data.title);
-      req.input('content', sql.NVarChar, data.content || data.title);
+      req.input('categoryId', sql.Int, catId);
+      req.input('authorId', sql.Int, authId);
+      req.input('summary', sql.NVarChar, (data.summary || cleanTitle).trim());
+      req.input('content', sql.NVarChar, data.content || cleanTitle);
       let safeImage = data.image || 'images/banner.jpg';
       if (typeof safeImage === 'string' && (safeImage.startsWith('data:image/') || safeImage.length > 490)) {
         safeImage = safeImage.startsWith('data:image/') ? 'images/banner.jpg' : safeImage.slice(0, 490);
       }
       req.input('image', sql.VarChar, safeImage);
-      req.input('status', sql.VarChar, data.status || 'pending_review');
+      req.input('status', sql.VarChar, data.status || 'draft');
       req.input('isAiGenerated', sql.Bit, data.isAiGenerated ? 1 : 0);
       req.input('aiPrompt', sql.NVarChar, data.aiPrompt || null);
+      req.input('publishedAt', sql.DateTime2, isPublished ? new Date() : null);
 
       const artRes = await req.query(insertArticleQuery);
       const newId = artRes.recordset[0].id;
 
       const reqA = new sql.Request(transaction);
       reqA.input('articleId', sql.Int, newId);
-      reqA.input('userId', sql.Int, data.authorId || 1);
+      reqA.input('userId', sql.Int, authId);
       reqA.input('hanhDong', sql.VarChar, 'created');
-      reqA.input('ghiChu', sql.NVarChar, `Tạo bài viết: ${data.title}`);
-
+      reqA.input('ghiChu', sql.NVarChar, `Tạo bài viết: ${cleanTitle}`);
       await reqA.query(`
         INSERT INTO dbo.ARTICLE_AUDITS (ArticleId, UserId, HanhDong, GhiChu, NgayThucHien)
         VALUES (@articleId, @userId, @hanhDong, @ghiChu, SYSDATETIME())
       `);
-
       await transaction.commit();
       data.id = newId;
+      data.image = safeImage;
+      data.categoryId = catId;
+      data.authorId = authId;
+      if (isPublished) data.publishedAt = new Date().toISOString();
       return data;
     } catch (err) {
       await transaction.rollback();
-      console.error("MSSQL Insert Error:", err.message);
+      console.error('MSSQL Insert Error:', err.message);
     }
   }
 
@@ -403,8 +414,29 @@ async function getOrgDataFromDb() {
   if (isMssqlConnected && mssqlPool) {
     try {
       const boards = (await mssqlPool.request().query("SELECT MaToChuc AS id, TenToChuc AS name, NhiemKy AS tenure, MoTaChucNang AS description FROM dbo.ORGANIZATIONS ORDER BY ThuTuHienThi")).recordset;
-      const units = (await mssqlPool.request().query("SELECT MaToCongDoan AS id, MaDinhDanh AS code, TenToCongDoan AS name, ToTruong AS leader, EmailLienHe AS email FROM dbo.UNION_BRANCHES ORDER BY MaToCongDoan")).recordset;
-      const cadres = (await mssqlPool.request().query("SELECT MaNhanSu AS id, MaCanBo AS code, HoVaTen AS name, Email AS email, ChucVuCongDoan AS role, MaToCongDoan AS unit_id, MaToChuc AS board_id FROM dbo.MEMBERS")).recordset;
+      const units = (await mssqlPool.request().query("SELECT MaToCongDoan AS id, MaDinhDanh AS code, TenToCongDoan AS name, ToTruong AS leader, EmailLienHe AS email, SoDienThoai AS phone FROM dbo.UNION_BRANCHES ORDER BY MaToCongDoan")).recordset;
+      const cadres = (await mssqlPool.request().query(`
+        SELECT 
+          m.MaNhanSu AS id,
+          m.MaCanBo AS code,
+          m.HoVaTen AS name,
+          m.Email AS email,
+          m.SoDienThoai AS phone,
+          COALESCE(m.HocHamHocVi, N'Cử nhân') AS degree,
+          COALESCE(m.ChucVuCongDoan, N'Ủy viên') AS role,
+          COALESCE(m.ChucVuChuyenMon, N'Cán bộ') AS unit,
+          m.MaToCongDoan AS unit_id,
+          tb.TenToCongDoan AS unit_name,
+          m.MaToChuc AS board_id,
+          o.TenToChuc AS board_name,
+          COALESCE(u.AvatarUrl, 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Danh.jpg') AS photo,
+          N'Tham gia công tác phong trào và thực hiện các nhiệm vụ do Ban Thường vụ phân công.' AS duties
+        FROM dbo.MEMBERS m
+        LEFT JOIN dbo.UNION_BRANCHES tb ON m.MaToCongDoan = tb.MaToCongDoan
+        LEFT JOIN dbo.ORGANIZATIONS o ON m.MaToChuc = o.MaToChuc
+        LEFT JOIN dbo.USERS u ON u.MaNhanSu = m.MaNhanSu
+        ORDER BY m.MaNhanSu ASC
+      `)).recordset;
       return { boards, units, cadres };
     } catch (err) {
       console.error("MSSQL Org Data Error:", err.message);
@@ -416,6 +448,145 @@ async function getOrgDataFromDb() {
     units: db.union_branches || db.to_cong_doan || [], 
     cadres: db.members || db.nhan_su || [] 
   };
+}
+
+async function insertCadreToDb(data) {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      const code = data.code || ('CB_' + Date.now().toString().slice(-4));
+      req.input('code', sql.VarChar, code);
+      req.input('name', sql.NVarChar, data.name || data.ho_ten || 'Cán bộ mới');
+      req.input('email', sql.VarChar, data.email || '');
+      req.input('phone', sql.VarChar, data.phone || data.so_dien_thoai || '');
+      req.input('degree', sql.NVarChar, data.degree || data.hoc_vi || 'Cử nhân');
+      req.input('role', sql.NVarChar, data.role || data.chuc_vu || 'Ủy viên');
+      req.input('unit', sql.NVarChar, data.unit || data.don_vi || 'Công đoàn TDMU');
+      req.input('unitId', sql.Int, parseInt(data.unit_id) || 1);
+      req.input('boardId', sql.Int, parseInt(data.board_id) || 1);
+
+      const query = `
+        INSERT INTO dbo.MEMBERS (MaCanBo, HoVaTen, Email, SoDienThoai, HocHamHocVi, ChucVuCongDoan, ChucVuChuyenMon, MaToCongDoan, MaToChuc, TrangThai, NgayTao)
+        OUTPUT INSERTED.MaNhanSu AS id
+        VALUES (@code, @name, @email, @phone, @degree, @role, @unit, @unitId, @boardId, 1, SYSDATETIME())
+      `;
+      const res = await req.query(query);
+      data.id = res.recordset[0].id;
+      data.code = code;
+      return data;
+    } catch (err) {
+      console.error("MSSQL Insert Cadre Error:", err.message);
+    }
+  }
+  const db = loadDB();
+  db.members = db.members || [];
+  data.id = data.id || (db.members.length ? Math.max(...db.members.map(m => m.id || 0)) + 1 : 1);
+  data.code = data.code || ('CB_' + String(data.id).padStart(3, '0'));
+  db.members.push(data);
+  saveDB(db);
+  return data;
+}
+
+async function updateCadreInDb(id, data) {
+  const numericId = parseInt(id);
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      req.input('id', sql.Int, numericId);
+      req.input('name', sql.NVarChar, data.name || data.ho_ten || null);
+      req.input('email', sql.VarChar, data.email || null);
+      req.input('phone', sql.VarChar, data.phone || data.so_dien_thoai || null);
+      req.input('degree', sql.NVarChar, data.degree || data.hoc_vi || null);
+      req.input('role', sql.NVarChar, data.role || data.chuc_vu || null);
+      req.input('unit', sql.NVarChar, data.unit || data.don_vi || null);
+      req.input('unitId', sql.Int, data.unit_id ? parseInt(data.unit_id) : null);
+      req.input('boardId', sql.Int, data.board_id ? parseInt(data.board_id) : null);
+
+      await req.query(`
+        UPDATE dbo.MEMBERS
+        SET HoVaTen = COALESCE(@name, HoVaTen),
+            Email = COALESCE(@email, Email),
+            SoDienThoai = COALESCE(@phone, SoDienThoai),
+            HocHamHocVi = COALESCE(@degree, HocHamHocVi),
+            ChucVuCongDoan = COALESCE(@role, ChucVuCongDoan),
+            ChucVuChuyenMon = COALESCE(@unit, ChucVuChuyenMon),
+            MaToCongDoan = COALESCE(@unitId, MaToCongDoan),
+            MaToChuc = COALESCE(@boardId, MaToChuc)
+        WHERE MaNhanSu = @id
+      `);
+    } catch (err) {
+      console.error("MSSQL Update Cadre Error:", err.message);
+    }
+  }
+  const db = loadDB();
+  db.members = db.members || [];
+  const idx = db.members.findIndex(m => m.id == numericId || m.MaNhanSu == numericId);
+  if (idx !== -1) {
+    db.members[idx] = { ...db.members[idx], ...data, id: numericId };
+    saveDB(db);
+    return db.members[idx];
+  }
+  return { id: numericId, ...data };
+}
+
+async function deleteCadreFromDb(id) {
+  const numericId = parseInt(id);
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      req.input('id', sql.Int, numericId);
+      await req.query("DELETE FROM dbo.MEMBERS WHERE MaNhanSu = @id");
+    } catch (err) {
+      console.error("MSSQL Delete Cadre Error:", err.message);
+    }
+  }
+  const db = loadDB();
+  db.members = db.members || [];
+  const idx = db.members.findIndex(m => m.id == numericId || m.MaNhanSu == numericId);
+  if (idx !== -1) {
+    const removed = db.members.splice(idx, 1)[0];
+    saveDB(db);
+    return removed;
+  }
+  return true;
+}
+
+async function updateUnionBranchInDb(id, data) {
+  const numericId = parseInt(id);
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      req.input('id', sql.Int, numericId);
+      req.input('name', sql.NVarChar, data.name || data.TenToCongDoan || null);
+      req.input('leader', sql.NVarChar, data.leader || data.ToTruong || null);
+      req.input('email', sql.VarChar, data.email || data.EmailLienHe || null);
+      req.input('phone', sql.VarChar, data.phone || data.SoDienThoai || null);
+
+      await req.query(`
+        UPDATE dbo.UNION_BRANCHES
+        SET TenToCongDoan = COALESCE(@name, TenToCongDoan),
+            ToTruong = COALESCE(@leader, ToTruong),
+            EmailLienHe = COALESCE(@email, EmailLienHe),
+            SoDienThoai = COALESCE(@phone, SoDienThoai)
+        WHERE MaToCongDoan = @id
+      `);
+    } catch (err) {
+      console.error("MSSQL Update Union Branch Error:", err.message);
+    }
+  }
+  const db = loadDB();
+  db.union_branches = db.union_branches || [];
+  const idx = db.union_branches.findIndex(u => u.id == numericId || u.MaToCongDoan == numericId);
+  if (idx !== -1) {
+    db.union_branches[idx] = { ...db.union_branches[idx], ...data, id: numericId };
+    saveDB(db);
+    return db.union_branches[idx];
+  }
+  return { id: numericId, ...data };
 }
 
 // =========================================================================
@@ -723,6 +894,21 @@ async function updateWelfareApplicationInDb(id, data) {
   return false;
 }
 
+async function deleteWelfareApplicationInDb(id) {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      req.input('id', sql.Int, id);
+      await req.query('DELETE FROM dbo.AID_REQUESTS WHERE DonId = @id');
+      return true;
+    } catch (err) {
+      console.error("MSSQL Delete Welfare App Error:", err.message);
+    }
+  }
+  return false;
+}
+
 // =========================================================================
 // 10. INBOX_FEEDBACK (dbo.INBOX_FEEDBACK)
 // =========================================================================
@@ -855,6 +1041,299 @@ async function incrementArticleReactionInDb(id, type) {
   return false;
 }
 
+// =========================================================================
+// 12. COMMENTS (dbo.COMMENTS)
+// =========================================================================
+async function getCommentsFromDb(articleId) {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      let query = `
+        SELECT 
+          CommentId as id, 
+          ArticleId as articleId, 
+          ArticleId as article_id, 
+          UserId as userId, 
+          HoTen as author, 
+          HoTen as author_name, 
+          Email as email, 
+          ChucVu as unit, 
+          NoiDung as content, 
+          TrangThai as status, 
+          NgayTao as createdAt 
+        FROM dbo.COMMENTS
+      `;
+      if (articleId) {
+        query += " WHERE ArticleId = @articleId";
+        req.input('articleId', sql.Int, parseInt(articleId));
+      }
+      query += " ORDER BY NgayTao DESC";
+      const result = await req.query(query);
+      return result.recordset;
+    } catch (err) {
+      console.error("MSSQL Get Comments Error:", err.message);
+    }
+  }
+  const db = loadDB();
+  let comments = db.comments || [];
+  if (articleId) {
+    comments = comments.filter(c => String(c.articleId || c.article_id) === String(articleId));
+  }
+  return comments;
+}
+
+async function insertCommentToDb(data) {
+  const artId = parseInt(data.articleId || data.article_id || data.ArticleId);
+  const hoTen = data.author || data.author_name || data.hoTen || data.HoTen || 'Đoàn viên Công đoàn';
+  const unit = data.unit || data.chucVu || data.ChucVu || 'Trường ĐH Thủ Dầu Một';
+  const content = data.content || data.noiDung || data.NoiDung;
+  const email = data.email || null;
+  const userId = data.userId || null;
+  const status = data.status || 'approved';
+
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const sql = require('mssql');
+      const req = mssqlPool.request();
+      req.input('articleId', sql.Int, artId);
+      req.input('userId', sql.Int, userId);
+      req.input('hoTen', sql.NVarChar, hoTen);
+      req.input('email', sql.VarChar, email);
+      req.input('chucVu', sql.NVarChar, unit);
+      req.input('noiDung', sql.NVarChar, content);
+      req.input('trangThai', sql.VarChar, status);
+      const result = await req.query(`
+        INSERT INTO dbo.COMMENTS (ArticleId, UserId, HoTen, Email, ChucVu, NoiDung, TrangThai, NgayTao)
+        OUTPUT 
+          INSERTED.CommentId as id, 
+          INSERTED.ArticleId as articleId, 
+          INSERTED.ArticleId as article_id, 
+          INSERTED.HoTen as author, 
+          INSERTED.HoTen as author_name, 
+          INSERTED.ChucVu as unit, 
+          INSERTED.NoiDung as content, 
+          INSERTED.TrangThai as status, 
+          INSERTED.NgayTao as createdAt
+        VALUES (@articleId, @userId, @hoTen, @email, @chucVu, @noiDung, @trangThai, SYSDATETIME())
+      `);
+      return result.recordset[0];
+    } catch (err) {
+      console.error("MSSQL Insert Comment Error:", err.message);
+    }
+  }
+  const db = loadDB();
+  if (!db.comments) db.comments = [];
+  const newComment = {
+    id: Date.now(),
+    articleId: artId,
+    article_id: artId,
+    author: hoTen,
+    author_name: hoTen,
+    unit: unit,
+    content: content,
+    status: status,
+    createdAt: new Date().toISOString()
+  };
+  db.comments.unshift(newComment);
+  saveDB(db);
+  return newComment;
+}
+
+// =========================================================================
+// 10. WELFARE FUND & TRANSACTIONS (dbo.WELFARE_FUND, dbo.WELFARE_TRANSACTIONS)
+// =========================================================================
+async function getWelfareFundFromDb() {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const res = await mssqlPool.request().query(`
+        SELECT TOP 1 
+          FundId as fund_id,
+          FundName as fund_name,
+          CurrentBalance as current_balance,
+          TotalDeposited as total_deposited,
+          TotalDisbursed as total_disbursed,
+          UpdatedAt as updated_at
+        FROM dbo.WELFARE_FUND
+        ORDER BY FundId DESC
+      `);
+      if (res.recordset.length > 0) return res.recordset[0];
+    } catch (err) {
+      console.error("MSSQL Get Welfare Fund Error:", err.message);
+    }
+  }
+  const db = loadDB();
+  return db.welfare_fund || {
+    fund_id: 1,
+    fund_name: 'Quỹ Chăm Lo & Tương Trợ Đoàn Viên TDMU',
+    current_balance: 185000000,
+    total_deposited: 250000000,
+    total_disbursed: 65000000,
+    updated_at: new Date().toISOString()
+  };
+}
+
+async function getWelfareTransactionsFromDb() {
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const res = await mssqlPool.request().query(`
+        SELECT 
+          TransId as id,
+          TransCode as code,
+          TransType as type,
+          Amount as amount,
+          SourceName as source_name,
+          DecisionNo as decision_no,
+          TransDate as date,
+          CreatedBy as created_by,
+          Note as note,
+          RelatedDonId as related_don_id
+        FROM dbo.WELFARE_TRANSACTIONS
+        ORDER BY TransDate DESC, TransId DESC
+      `);
+      return res.recordset;
+    } catch (err) {
+      console.error("MSSQL Get Welfare Transactions Error:", err.message);
+    }
+  }
+  const db = loadDB();
+  return db.welfare_transactions || [];
+}
+
+async function depositWelfareFundInDb({ amount, source_name, decision_no, note, created_by }) {
+  const transCode = `NT-${Date.now().toString().slice(-6)}`;
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const pool = mssqlPool;
+      const transRes = await pool.request()
+        .input('transCode', sql.VarChar(50), transCode)
+        .input('transType', sql.VarChar(20), 'DEPOSIT')
+        .input('amount', sql.Decimal(18, 2), amount)
+        .input('sourceName', sql.NVarChar(255), source_name || 'Nguồn ngân sách bổ sung')
+        .input('decisionNo', sql.NVarChar(100), decision_no || '')
+        .input('createdBy', sql.NVarChar(150), created_by || 'Ban Thường Vụ')
+        .input('note', sql.NVarChar(1000), note || '')
+        .query(`
+          INSERT INTO dbo.WELFARE_TRANSACTIONS (TransCode, TransType, Amount, SourceName, DecisionNo, CreatedBy, Note, TransDate)
+          OUTPUT INSERTED.TransId as id, INSERTED.TransCode as code, INSERTED.TransType as type, INSERTED.Amount as amount,
+                 INSERTED.SourceName as source_name, INSERTED.DecisionNo as decision_no, INSERTED.TransDate as date,
+                 INSERTED.CreatedBy as created_by, INSERTED.Note as note
+          VALUES (@transCode, @transType, @amount, @sourceName, @decisionNo, @createdBy, @note, SYSDATETIME());
+        `);
+
+      await pool.request()
+        .input('amount', sql.Decimal(18, 2), amount)
+        .query(`
+          UPDATE dbo.WELFARE_FUND
+          SET CurrentBalance = CurrentBalance + @amount,
+              TotalDeposited = TotalDeposited + @amount,
+              UpdatedAt = SYSDATETIME();
+        `);
+
+      return transRes.recordset[0];
+    } catch (err) {
+      console.error("MSSQL Deposit Welfare Fund Error:", err.message);
+    }
+  }
+
+  const db = loadDB();
+  db.welfare_fund = db.welfare_fund || {
+    fund_id: 1,
+    fund_name: 'Quỹ Chăm Lo & Tương Trợ Đoàn Viên TDMU',
+    current_balance: 185000000,
+    total_deposited: 250000000,
+    total_disbursed: 65000000,
+    updated_at: new Date().toISOString()
+  };
+  db.welfare_fund.current_balance = Number(db.welfare_fund.current_balance || 0) + Number(amount);
+  db.welfare_fund.total_deposited = Number(db.welfare_fund.total_deposited || 0) + Number(amount);
+  db.welfare_fund.updated_at = new Date().toISOString();
+
+  db.welfare_transactions = db.welfare_transactions || [];
+  const newTrans = {
+    id: db.welfare_transactions.length + 1,
+    code: transCode,
+    type: 'DEPOSIT',
+    amount: Number(amount),
+    source_name: source_name,
+    decision_no: decision_no,
+    date: new Date().toISOString(),
+    created_by: created_by || 'Ban Thường Vụ',
+    note: note
+  };
+  db.welfare_transactions.unshift(newTrans);
+  saveDB(db);
+  return newTrans;
+}
+
+async function disburseWelfareFundInDb({ amount, recipient_name, decision_no, note, created_by, related_don_id }) {
+  const transCode = `CT-${Date.now().toString().slice(-6)}`;
+  if (isMssqlConnected && mssqlPool) {
+    try {
+      const pool = mssqlPool;
+      const transRes = await pool.request()
+        .input('transCode', sql.VarChar(50), transCode)
+        .input('transType', sql.VarChar(20), 'DISBURSEMENT')
+        .input('amount', sql.Decimal(18, 2), amount)
+        .input('sourceName', sql.NVarChar(255), recipient_name || 'Đoàn viên thụ hưởng')
+        .input('decisionNo', sql.NVarChar(100), decision_no || '')
+        .input('createdBy', sql.NVarChar(150), created_by || 'Ban Thường Vụ')
+        .input('note', sql.NVarChar(1000), note || '')
+        .input('relatedDonId', sql.Int, related_don_id || null)
+        .query(`
+          INSERT INTO dbo.WELFARE_TRANSACTIONS (TransCode, TransType, Amount, SourceName, DecisionNo, CreatedBy, Note, RelatedDonId, TransDate)
+          OUTPUT INSERTED.TransId as id, INSERTED.TransCode as code, INSERTED.TransType as type, INSERTED.Amount as amount,
+                 INSERTED.SourceName as source_name, INSERTED.DecisionNo as decision_no, INSERTED.TransDate as date,
+                 INSERTED.CreatedBy as created_by, INSERTED.Note as note, INSERTED.RelatedDonId as related_don_id
+          VALUES (@transCode, @transType, @amount, @sourceName, @decisionNo, @createdBy, @note, @relatedDonId, SYSDATETIME());
+        `);
+
+      await pool.request()
+        .input('amount', sql.Decimal(18, 2), amount)
+        .query(`
+          UPDATE dbo.WELFARE_FUND
+          SET CurrentBalance = CurrentBalance - @amount,
+              TotalDisbursed = TotalDisbursed + @amount,
+              UpdatedAt = SYSDATETIME();
+        `);
+
+      return transRes.recordset[0];
+    } catch (err) {
+      console.error("MSSQL Disburse Welfare Fund Error:", err.message);
+    }
+  }
+
+  const db = loadDB();
+  db.welfare_fund = db.welfare_fund || {
+    fund_id: 1,
+    fund_name: 'Quỹ Chăm Lo & Tương Trợ Đoàn Viên TDMU',
+    current_balance: 185000000,
+    total_deposited: 250000000,
+    total_disbursed: 65000000,
+    updated_at: new Date().toISOString()
+  };
+  db.welfare_fund.current_balance = Number(db.welfare_fund.current_balance || 0) - Number(amount);
+  db.welfare_fund.total_disbursed = Number(db.welfare_fund.total_disbursed || 0) + Number(amount);
+  db.welfare_fund.updated_at = new Date().toISOString();
+
+  db.welfare_transactions = db.welfare_transactions || [];
+  const newTrans = {
+    id: db.welfare_transactions.length + 1,
+    code: transCode,
+    type: 'DISBURSEMENT',
+    amount: Number(amount),
+    source_name: recipient_name,
+    decision_no: decision_no,
+    date: new Date().toISOString(),
+    created_by: created_by || 'Ban Thường Vụ',
+    note: note,
+    related_don_id: related_don_id
+  };
+  db.welfare_transactions.unshift(newTrans);
+  saveDB(db);
+  return newTrans;
+}
+
 module.exports = {
   sqlConfig,
   isMssqlConnected: () => isMssqlConnected,
@@ -863,9 +1342,15 @@ module.exports = {
   updateArticleInDb,
   deleteArticleFromDb,
   incrementArticleReactionInDb,
+  getCommentsFromDb,
+  insertCommentToDb,
   getDocumentsFromDb,
   getCategoriesFromDb,
   getOrgDataFromDb,
+  insertCadreToDb,
+  updateCadreInDb,
+  deleteCadreFromDb,
+  updateUnionBranchInDb,
   getMonthlyReportsFromDb,
   getWelfareFromDb,
   getUsersFromDb,
@@ -876,6 +1361,11 @@ module.exports = {
   getWelfareApplicationsFromDb,
   insertWelfareApplicationToDb,
   updateWelfareApplicationInDb,
+  deleteWelfareApplicationInDb,
+  getWelfareFundFromDb,
+  getWelfareTransactionsFromDb,
+  depositWelfareFundInDb,
+  disburseWelfareFundInDb,
   getFeedbackFromDb,
   insertFeedbackToDb,
   updateFeedbackInDb,

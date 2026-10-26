@@ -15,7 +15,12 @@ const {
 router.get('/', async (req, res) => {
   const { category, status, search } = req.query;
   let list = await getArticlesFromDb(category, status, search);
-  list.sort((a, b) => (parseInt(b.id) || 0) - (parseInt(a.id) || 0));
+  list.sort((a, b) => {
+    const timeA = new Date(a.publishedAt || a.createdAt || 0).getTime();
+    const timeB = new Date(b.publishedAt || b.createdAt || 0).getTime();
+    if (timeB !== timeA) return timeB - timeA;
+    return (parseInt(a.id) || 0) - (parseInt(b.id) || 0);
+  });
   res.json({ success: true, count: list.length, data: list });
 });
 
@@ -177,7 +182,7 @@ router.post('/:id/reactions', async (req, res) => {
     id: db.article_reactions.length ? Math.max(...db.article_reactions.map(r => r.id || 0)) + 1 : 1,
     article_id: articleId,
     user_id: userId,
-    user_name: user_name || 'TS. Lê Thị Kim Út',
+    user_name: user_name || 'Ban Thường Vụ Công Đoàn',
     reaction_type,
     created_at: new Date().toISOString()
   };

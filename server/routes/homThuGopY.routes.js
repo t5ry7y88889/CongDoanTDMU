@@ -1,0 +1,555 @@
+const express = require('express');
+const router = express.Router();
+const { loadDB, saveDB } = require('../db');
+const { sendFeedbackReplyEmail } = require('../services/dichVuEmail.service');
+const {
+  getFeedbackFromDb,
+  insertFeedbackToDb,
+  updateFeedbackInDb,
+  deleteFeedbackFromDb,
+  getCommentsFromDb,
+  insertCommentToDb
+} = require('../mssql_db');
+
+// =========================================================================
+// 1. INBOX FEEDBACK (Ý KIẾN & HÒM THƯ GÓP Ý ĐOÀN VIÊN)
+// =========================================================================
+function stripVietnamese(str) {
+  if (!str) return '';
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+}
+
+router.get('/feedback', async (req, res) => {
+  const { status, search } = req.query;
+  try {
+    const list = await getFeedbackFromDb(status, search);
+    if (list && list.length > 0) {
+      return res.json({ success: true, count: list.length, data: list });
+    }
+  } catch (err) {
+    console.error("MSSQL Feedback Get Error:", err.message);
+  }
+
+  const db = loadDB();
+  let list = db.inbox_feedback || [];
+  if (status && status !== 'all') {
+    list = list.filter(f => f.status === status);
+  }
+  if (search) {
+    const q = stripVietnamese(search.trim());
+    list = list.filter(f =>
+      stripVietnamese(f.title).includes(q) ||
+      stripVietnamese(f.content).includes(q) ||
+      stripVietnamese(f.sender_name).includes(q) ||
+      stripVietnamese(f.unit).includes(q) ||
+      stripVietnamese(f.category).includes(q)
+    );
+  }
+  res.json({ success: true, count: list.length, data: list });
+});
+
+router.get('/feedback/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const list = await getFeedbackFromDb('all', '');
+    const found = (list || []).find(f => f.id === id);
+    if (found) return res.json({ success: true, data: found });
+  } catch (e) {}
+
+  const db = loadDB();
+  const item = (db.inbox_feedback || []).find(f => f.id === id);
+  if (!item) return res.status(404).json({ success: false, error: 'Không tìm thấy ý kiến góp ý!' });
+  res.json({ success: true, data: item });
+});
+
+router.post('/feedback', async (req, res) => {
+  const sender_name = req.body.sender_name || req.body.senderName || req.body.ho_ten || req.body.name || req.body.fullname;
+  const email = (req.body.email || req.body.thu_dien_tu || '').trim();
+  const phone = (req.body.phone || req.body.so_dien_thoai || '').trim();
+  const unit = (req.body.unit || req.body.department || req.body.don_vi || 'Đoàn viên TDMU').trim();
+  const category = (req.body.category || req.body.chuyen_muc || req.body.topic || 'Góp ý chung').trim();
+  const title = req.body.title || req.body.tieu_de || req.body.subject;
+  const content = req.body.content || req.body.noi_dung || req.body.message;
+
+  if (!sender_name || !title || !content) {
+    return res.status(400).json({ success: false, error: 'Họ tên, tiêu đề và nội dung là bắt buộc' });
+  }
+
+  const newFeedback = {
+    sender_name: sender_name.trim(),
+    email: (email || '').trim(),
+    phone: (phone || '').trim(),
+    unit: (unit || 'Đoàn viên TDMU').trim(),
+    category: (category || 'Góp ý chung').trim(),
+    title: title.trim(),
+    content: content.trim(),
+    submitted_at: new Date().toISOString(),
+    status: 'pending',
+    response: null,
+    resolved_by: null,
+    resolved_at: null
+  };
+
+  // Sync to MSSQL
+  try {
+    const inserted = await insertFeedbackToDb(newFeedback);
+    if (inserted && inserted.id) {
+      newFeedback.id = inserted.id;
+    }
+  } catch (e) {
+    console.error('Error inserting feedback into MSSQL:', e.message);
+  }
+
+  const db = loadDB();
+  db.inbox_feedback = db.inbox_feedback || [];
+  if (!newFeedback.id) {
+    newFeedback.id = db.inbox_feedback.length ? Math.max(...db.inbox_feedback.map(f => f.id || 0)) + 1 : 1;
+  }
+  db.inbox_feedback.unshift(newFeedback);
+  saveDB(db);
+
+  res.json({ success: true, data: newFeedback, message: 'Cảm ơn bạn! Ý kiến đã được chuyển trực tiếp đến Ban Chấp Hành Công đoàn.' });
+});
+
+router.put('/feedback/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const { status, response, resolved_by } = req.body;
+
+  try {
+    await updateFeedbackInDb(id, { status, response, resolved_by });
+  } catch (e) {
+    console.error('Error updating feedback in MSSQL:', e.message);
+  }
+
+  const db = loadDB();
+  db.inbox_feedback = db.inbox_feedback || [];
+  const idx = db.inbox_feedback.findIndex(f => f.id === id);
+
+  if (idx === -1) {
+    return res.status(404).json({ success: false, error: 'Không tìm thấy ý kiến góp ý cần cập nhật!' });
+  }
+
+  if (status) db.inbox_feedback[idx].status = status;
+  if (response !== undefined) db.inbox_feedback[idx].response = response;
+  if (resolved_by) db.inbox_feedback[idx].resolved_by = resolved_by;
+  if (status === 'resolved' && !db.inbox_feedback[idx].resolved_at) {
+    db.inbox_feedback[idx].resolved_at = new Date().toISOString();
+  }
+
+  saveDB(db);
+
+  // Tự động gửi email phản hồi trực tiếp cho người gửi liên hệ
+  const feedbackItem = db.inbox_feedback[idx];
+  let emailResult = null;
+  if (response && feedbackItem && feedbackItem.email) {
+    try {
+      emailResult = await sendFeedbackReplyEmail({
+        recipientEmail: feedbackItem.email,
+        recipientName: feedbackItem.sender_name,
+        feedbackTitle: feedbackItem.title,
+        replyContent: response,
+        responderName: resolved_by || 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một'
+      });
+    } catch (eMail) {
+      console.warn('Lỗi gửi email phản hồi:', eMail.message);
+    }
+  }
+
+  const successMsg = emailResult?.success 
+    ? `Đã cập nhật xử lý và gửi email phản hồi chính thức thành công tới ${feedbackItem.email}!` 
+    : 'Đã cập nhật xử lý ý kiến thành công!';
+
+  res.json({
+    success: true,
+    data: db.inbox_feedback[idx],
+    emailResult,
+    message: successMsg
+  });
+});
+
+router.delete('/feedback/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    await deleteFeedbackFromDb(id);
+  } catch (e) {
+    console.error('Error deleting feedback from MSSQL:', e.message);
+  }
+
+  const db = loadDB();
+  db.inbox_feedback = db.inbox_feedback || [];
+  const idx = db.inbox_feedback.findIndex(f => f.id === id);
+
+  if (idx === -1) {
+    return res.status(404).json({ success: false, error: 'Không tìm thấy ý kiến góp ý!' });
+  }
+
+  const removed = db.inbox_feedback.splice(idx, 1)[0];
+  saveDB(db);
+  res.json({ success: true, message: 'Đã xóa ý kiến góp ý thành công!', data: removed });
+});
+
+router.get('/inbox-feedback', async (req, res) => {
+  try {
+    const list = await getFeedbackFromDb('all', '');
+    if (list && list.length > 0) {
+      return res.json({ success: true, count: list.length, data: list });
+    }
+  } catch (e) {}
+  const db = loadDB();
+  res.json({ success: true, count: (db.inbox_feedback || []).length, data: db.inbox_feedback || [] });
+});
+
+// =========================================================================
+// 2. BOOKMARKS (TỦ SÁCH ĐỌC SAU)
+// =========================================================================
+router.get('/bookmarks', (req, res) => {
+  const db = loadDB();
+  const userId = req.query.user_id || 'CB_001';
+  const userBookmarks = (db.bookmarks || []).filter(b => !req.query.user_id || b.user_id === userId);
+  res.json({ success: true, data: userBookmarks });
+});
+
+router.post('/bookmarks', (req, res) => {
+  const db = loadDB();
+  db.bookmarks = db.bookmarks || [];
+  const { article_id, article_title, user_id, user_name } = req.body;
+  if (!article_id) return res.status(400).json({ success: false, error: 'Thiếu article_id' });
+
+  const existingIdx = db.bookmarks.findIndex(b => b.article_id == article_id && (!user_id || b.user_id === user_id));
+  if (existingIdx >= 0) {
+    db.bookmarks.splice(existingIdx, 1);
+    saveDB(db);
+    return res.json({ success: true, action: 'removed', message: 'Đã bỏ lưu bài viết' });
+  }
+
+  const newBookmark = {
+    id: db.bookmarks.length ? Math.max(...db.bookmarks.map(b => b.id || 0)) + 1 : 1,
+    user_id: user_id || 'CB_001',
+    user_name: user_name || 'Ban Quản Trị Công Đoàn',
+    article_id: parseInt(article_id),
+    article_title: article_title || 'Bài viết Công đoàn',
+    saved_at: new Date().toISOString()
+  };
+  db.bookmarks.push(newBookmark);
+  saveDB(db);
+  res.json({ success: true, action: 'added', data: newBookmark, message: 'Đã lưu bài viết vào Tủ sách đọc sau' });
+});
+
+// =========================================================================
+// 3. COMMENTS, AUDITS, SCHEDULES, EVENTS & MEDIA
+// =========================================================================
+router.get('/comments', async (req, res) => {
+  const articleId = req.query.articleId || req.query.article_id;
+  try {
+    const comments = await getCommentsFromDb(articleId);
+    return res.json({ success: true, count: comments.length, data: comments });
+  } catch (err) {
+    const db = loadDB();
+    let comments = db.comments || [];
+    if (articleId) comments = comments.filter(c => String(c.articleId || c.article_id) === String(articleId));
+    res.json({ success: true, count: comments.length, data: comments });
+  }
+});
+
+router.post('/comments', async (req, res) => {
+  const { articleId, article_id, content, noiDung, author, author_name, hoTen, unit, chucVu, email } = req.body;
+  const artId = articleId || article_id;
+  const commentContent = content || noiDung;
+  if (!artId || !commentContent) {
+    return res.status(400).json({ success: false, error: 'Thiếu mã bài viết hoặc nội dung bình luận' });
+  }
+  try {
+    const newComment = await insertCommentToDb({
+      articleId: artId,
+      content: commentContent,
+      author: author || author_name || hoTen,
+      unit: unit || chucVu,
+      email
+    });
+    res.json({ success: true, data: newComment });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get('/inbox/comments', async (req, res) => {
+  const comments = await getCommentsFromDb();
+  res.json({ success: true, data: comments || [] });
+});
+
+router.get('/article-audits', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, count: (db.article_audits || []).length, data: db.article_audits || [] });
+});
+
+router.get('/audits', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, data: db.article_audits || [] });
+});
+
+router.get('/schedules', (req, res) => {
+  const db = loadDB();
+  res.json({ success: true, data: db.schedules || db.lich_xuat_ban || [] });
+});
+
+router.get('/events', (req, res) => res.json({ success: true, data: loadDB().events || [] }));
+router.get('/media', (req, res) => res.json({ success: true, data: loadDB().media || [] }));
+
+// =========================================================================
+// 4. STATS & ANALYTICS DASHBOARD
+// =========================================================================
+const getDashboardStats = (req, res) => {
+  const db = loadDB();
+  const arts = db.articles || [];
+  res.json({
+    success: true,
+    totalArticles: arts.length,
+    totalViews: arts.reduce((acc, a) => acc + (a.viewsCount || a.LuotXem || 0), 0),
+    totalLikes: arts.reduce((acc, a) => acc + (a.likesCount || a.LuotThich || 0), 0),
+    totalShares: arts.reduce((acc, a) => acc + (a.sharesCount || 0), 0),
+    aiArticlesCount: arts.filter(a => a.isAiGenerated || a.is_ai_generated).length,
+    publishedCount: arts.filter(a => a.status === 'published' || a.TrangThai === 'Published').length,
+    data: {
+      tong_bai: arts.length,
+      da_xuat_ban: arts.filter(a => a.status === 'published' || a.TrangThai === 'Published').length,
+      cho_duyet: arts.filter(a => a.status === 'pending' || a.TrangThai === 'Pending').length,
+      ban_nhap: arts.filter(a => a.status === 'draft' || a.TrangThai === 'Draft').length,
+      bai_gan_day: arts.slice(0, 5)
+    }
+  });
+};
+
+router.get('/analytics', getDashboardStats);
+router.get('/dashboard', getDashboardStats);
+router.get('/stats', getDashboardStats);
+
+// Hiệu quả truyền thông đa kênh theo tháng (Media Analytics By Month)
+router.get('/analytics/monthly', (req, res) => {
+  const db = loadDB();
+  const list = db.media_analytics_monthly || [];
+  const { month } = req.query;
+  if (month) {
+    const found = list.find(m => m.monthKey === month || String(m.monthNumber) === String(month));
+    if (found) {
+      return res.json({
+        success: true,
+        data: found,
+        months: list,
+        allMonths: list.map(m => ({ monthKey: m.monthKey, label: m.label, isCurrentMonth: !!m.isCurrentMonth }))
+      });
+    }
+  }
+  const current = list.find(m => m.isCurrentMonth) || list[list.length - 1];
+  res.json({
+    success: true,
+    currentMonth: current,
+    months: list,
+    allMonths: list.map(m => ({ monthKey: m.monthKey, label: m.label, isCurrentMonth: !!m.isCurrentMonth }))
+  });
+});
+
+router.post('/facebook/publish', async (req, res) => {
+  try {
+    const { articleId, title, summary, caption, imageUrl } = req.body;
+    const db = loadDB();
+    const art = (db.articles || []).find(a => a.id == articleId) || {};
+    const finalTitle = title || art.title || 'Bản tin Công Đoàn TDMU';
+    const finalSummary = summary || art.summary || '';
+    const finalCaption = caption || `📢 [TDMU NEWS] ${finalTitle}\n\n${finalSummary}\n\n👉 Chi tiết xem tại Website Công đoàn TDMU!\n#CongDoanTDMU #TDMU2026 #ChuyenDoiSo`;
+    const finalImage = imageUrl || art.image || art.hinh_anh_url || '';
+
+    const { publishToFacebook } = require('../services/multiChannelService');
+    const fbResult = await publishToFacebook({
+      caption: finalCaption,
+      imageUrl: finalImage,
+      articleTitle: finalTitle,
+      articleId: articleId || art.id,
+      accountId: 'fb-default'
+    });
+
+    if (art && art.id) {
+      art.status = 'published';
+      art.statusName = 'Đã Xuất Bản';
+      art.fbPostId = fbResult.postId;
+      saveDB(db);
+    }
+
+    try {
+      const { updateArticleInDb } = require('../mssql_db');
+      if (art && art.id) {
+        await updateArticleInDb(art.id, {
+          fbPostId: fbResult.postId,
+          noi_dung_fb: finalCaption,
+          status: 'published'
+        });
+      }
+    } catch {}
+
+    res.json({
+      success: true,
+      facebookPostId: fbResult.postId,
+      permalinkUrl: fbResult.permalinkUrl,
+      message: `Đã xuất bản thành công bài viết "${finalTitle}" lên Fanpage Facebook "${fbResult.pageName}" qua Meta Graph API v20.0!`,
+      data: fbResult
+    });
+  } catch (err) {
+    console.error('[Legacy Facebook Publish Error]:', err);
+    res.status(500).json({
+      success: false,
+      error: 'Lỗi đăng Fanpage Facebook: ' + err.message
+    });
+  }
+});
+
+// =========================================================================
+// 5. PACKAGES CLAIM / UNCLAIM
+// =========================================================================
+router.post('/packages/:id/claim', (req, res) => {
+  const id = req.params.id;
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ success: false, error: 'Thiếu userId' });
+
+  const db = loadDB();
+  const art = (db.articles || []).find(a => a.id == id);
+  if (!art) return res.status(404).json({ success: false, error: 'Không tìm thấy package' });
+  
+  if (art.assignee_id && art.assignee_id !== userId) {
+    return res.status(403).json({ success: false, error: 'Package này đã bị claim bởi người khác.' });
+  }
+
+  art.assignee_id = userId;
+  art.updatedAt = new Date().toISOString();
+  saveDB(db);
+  res.json({ success: true, message: 'Đã nhận việc thành công.' });
+});
+
+router.post('/packages/:id/unclaim', (req, res) => {
+  const id = req.params.id;
+  const { userId } = req.body;
+  const db = loadDB();
+  const art = (db.articles || []).find(a => a.id == id);
+  if (!art) return res.status(404).json({ success: false, error: 'Không tìm thấy package' });
+  
+  if (art.assignee_id && art.assignee_id !== userId) {
+    return res.status(403).json({ success: false, error: 'Bạn không có quyền trả việc package của người khác.' });
+  }
+
+  art.assignee_id = null;
+  art.updatedAt = new Date().toISOString();
+  saveDB(db);
+  res.json({ success: true, message: 'Đã hủy nhận việc thành công.' });
+});
+
+// =========================================================================
+// 6. DOSSIERS & ASSETS
+// =========================================================================
+router.get('/dossiers', (req, res) => {
+  const db = loadDB();
+  const dossiers = db.dossiers || [];
+  const assets = db.assets || [];
+  const articles = db.articles || [];
+
+  const enriched = dossiers.map(d => ({
+    ...d,
+    assetsCount: assets.filter(a => a.dossierId === d.id).length,
+    contentCount: articles.filter(a => a.dossierId === d.id).length
+  }));
+
+  res.json({ success: true, count: enriched.length, data: enriched });
+});
+
+router.get('/dossiers/:id', (req, res) => {
+  const db = loadDB();
+  const dossier = (db.dossiers || []).find(d => d.id === req.params.id);
+  if (!dossier) return res.status(404).json({ success: false, error: 'Không tìm thấy hồ sơ' });
+  
+  const relatedAssets = (db.assets || []).filter(a => a.dossierId === req.params.id);
+  const relatedArticles = (db.articles || []).filter(a => a.dossierId === req.params.id);
+  
+  res.json({ success: true, data: { ...dossier, assets: relatedAssets, articles: relatedArticles } });
+});
+
+router.post('/dossiers', (req, res) => {
+  const { title, code, category, unit, leadPerson, description, startDate, endDate } = req.body;
+  if (!title) return res.json({ success: false, error: 'Tiêu đề hồ sơ là bắt buộc' });
+
+  const db = loadDB();
+  if (!db.dossiers) db.dossiers = [];
+
+  const newDossier = {
+    id: `dossier_${Date.now()}`,
+    code: code || `HS-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+    title,
+    category: category || 'Thông Báo Chỉ Đạo',
+    unit: unit || 'Ban Thường Vụ Công Đoàn',
+    leadPerson: leadPerson || 'Cán Bộ Phụ Trách',
+    status: 'active',
+    startDate: startDate || new Date().toISOString().slice(0, 10),
+    endDate: endDate || '',
+    description: description || '',
+    createdAt: new Date().toISOString()
+  };
+
+  db.dossiers.unshift(newDossier);
+  saveDB(db);
+  res.json({ success: true, message: 'Đã tạo Hồ sơ nội dung mới thành công!', data: newDossier });
+});
+
+router.get('/assets', (req, res) => {
+  const { dossierId, fileType, source } = req.query;
+  const db = loadDB();
+  let list = db.assets || [];
+
+  if (dossierId && dossierId !== 'all') {
+    list = list.filter(a => a.dossierId === dossierId);
+  }
+  if (fileType && fileType !== 'all') {
+    list = list.filter(a => a.fileType === fileType);
+  }
+  if (source && source !== 'all') {
+    list = list.filter(a => a.source === source);
+  }
+
+  res.json({ success: true, count: list.length, data: list });
+});
+
+router.post('/assets', async (req, res) => {
+  const { title, fileName, fileType, dossierId, source, unit, uploadedBy, summary, fileUrl } = req.body;
+  if (!title) return res.json({ success: false, error: 'Tên tư liệu là bắt buộc' });
+
+  const db = loadDB();
+  if (!db.assets) db.assets = [];
+
+  const newAsset = {
+    id: `asset_${Date.now()}`,
+    title,
+    fileName: fileName || `${title.replace(/\s+/g, '_')}.pdf`,
+    fileType: fileType || 'document',
+    fileSize: req.body.fileSize || '1.5 MB',
+    fileUrl: fileUrl || (fileType === 'image' ? 'images/banner.jpg' : 'uploads/sample.pdf'),
+    dossierId: dossierId || null,
+    source: source || 'Công đoàn TDMU',
+    unit: unit || 'Ban Thường Vụ',
+    uploadedBy: uploadedBy || 'Cán Bộ Phụ Trách',
+    status: 'verified',
+    ai_status: 'ready',
+    confidence_score: 95,
+    ai_notes: 'Tài liệu rõ nét, đầy đủ thông tin truyền thông.',
+    aiAllowed: true,
+    summary: summary || title,
+    createdAt: new Date().toISOString()
+  };
+
+  db.assets.unshift(newAsset);
+  saveDB(db);
+  res.json({ success: true, message: 'Đã nạp tư liệu mới vào Hòm Thư Tư Liệu thành công!', data: newAsset });
+});
+
+router.delete('/assets/:id', (req, res) => {
+  const db = loadDB();
+  db.assets = (db.assets || []).filter(a => a.id !== req.params.id);
+  saveDB(db);
+  res.json({ success: true, message: 'Đã xóa tư liệu khỏi hệ thống' });
+});
+
+module.exports = router;

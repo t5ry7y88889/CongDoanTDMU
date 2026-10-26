@@ -92,22 +92,22 @@ const GioiThieu = () => {
               <i className="fa-solid fa-link me-2 text-primary"></i>Liên kết website
             </div>
             <div className="list-group list-group-flush" style={{ fontSize: '13.5px' }}>
-              <a href="http://tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
+              <a href="https://tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
                 <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>Đại học Thủ Dầu Một
               </a>
-              <a href="http://danguy.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
+              <a href="https://danguy.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
                 <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>Đảng Bộ ĐH Thủ Dầu Một
               </a>
-              <a href="http://www.congdoan.vn" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
+              <a href="https://congdoanvietnam.vn" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
                 <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>Tổng LĐLĐ Việt Nam
               </a>
-              <a href="http://congdoanbinhduong.org.vn/" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
+              <a href="https://binhduong.congdoan.vn/" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
                 <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>LĐLĐ Tỉnh Bình Dương
               </a>
-              <a href="http://lib.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
-                <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>TT Học Liệu ĐH Thủ Dầu Một
+              <a href="https://laodong.vn/" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
+                <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>Báo Lao Động
               </a>
-              <a href="http://doanvien.congdoan.vn/VTBWebProject" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
+              <a href="http://doanvien.congdoan.vn/" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
                 <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>QL Đoàn Viên Toàn Quốc
               </a>
             </div>

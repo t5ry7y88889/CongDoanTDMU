@@ -61,6 +61,14 @@
     .article-content p {
       margin-bottom: 18px;
     }
+    .article-content img {
+      max-width: 100% !important;
+      height: auto !important;
+      border-radius: 8px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+      margin: 18px auto;
+      display: block;
+    }
     .editorial-quote {
       border-left: 4px solid var(--tdmu-yellow);
       background: #F8FAFC;
@@ -90,21 +98,7 @@
       margin-bottom: 22px;
     }
 
-    .ai-takeaways-card {
-      background: #F0FDF4;
-      border: 1px solid #BBF7D0;
-      border-left: 4px solid #16A34A;
-      border-radius: 8px;
-      padding: 16px 20px;
-      margin-bottom: 22px;
-    }
-    .ai-takeaways-card h6 {
-      color: #15803D;
-      font-weight: 800;
-      font-size: 13px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
+    
 
     .reaction-pill {
       background: #F8FAFC;
@@ -227,7 +221,6 @@
               <div class="d-flex align-items-center gap-3">
                 <span><i class="fa-regular fa-clock me-1 text-warning"></i> <span id="artReadingTime">3 phút đọc</span></span>
                 <span><i class="fa-regular fa-eye me-1 text-success"></i> <span id="artViews">162</span> lượt xem</span>
-                <span><i class="fa-regular fa-comment-dots me-1 text-primary"></i> <span id="artCommentsCount">14</span> bình luận</span>
               </div>
             </div>
 
@@ -245,15 +238,7 @@
               <span class="badge bg-white text-primary border p-2"><i class="fa-solid fa-volume-high me-1"></i> Trực tuyến</span>
             </div>
 
-            <!-- AI 30s KEY TAKEAWAYS -->
-            <div class="ai-takeaways-card">
-              <h6><i class="fa-solid fa-wand-magic-sparkles me-2 text-success"></i> Điểm Nhấn Bản Tin (Tóm tắt cốt lõi)</h6>
-              <ul class="mb-0 ps-3 text-secondary small" style="line-height: 1.6;" id="artTakeaways">
-                <li>Hưởng ứng kỷ niệm 25 năm Ngày Gia đình Việt Nam (28/6/2001 – 28/6/2026).</li>
-                <li>PGS.TS. Lê Tuấn Anh (Bí thư Đảng ủy) và TS. Lê Thị Kim Út (Chủ tịch CĐ) chủ trì tọa đàm.</li>
-                <li>Chuyên gia Viện Y Dược TDMU chia sẻ giải pháp dinh dưỡng tăng cường đề kháng cho gia đình.</li>
-              </ul>
-            </div>
+            
 
             <!-- Article Body Content -->
             <div class="article-content" id="artContent">
@@ -284,21 +269,21 @@
             <section class="mt-4 pt-3" id="commentsSection">
               <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4 class="fw-bold m-0" style="color: #002855; font-size: 18px;">
-                  <i class="fa-solid fa-comments text-primary me-2"></i> Ý Kiến &amp; Bình Luận Đoàn Viên (<span id="totalCommentsHeader">2</span>)
+                  <i class="fa-solid fa-comments text-primary me-2"></i> Ý Kiến &amp; Bình Luận Đoàn Viên (<span id="totalCommentsHeader">0</span>)
                 </h4>
                 <span class="text-muted small">Quy chế trao đổi văn minh &amp; xây dựng</span>
               </div>
 
-                            <!-- Comment Input Box (Tự động nhận diện danh tính cán bộ từ hệ thống) -->
+              <!-- Comment Input Box (Tự động nhận diện danh tính cán bộ từ hệ thống) -->
               <div class="p-3 bg-light rounded border mb-4 shadow-sm">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                   <div class="d-flex align-items-center gap-2">
                     <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 12px;" id="userCommentAvatar">
-                      U
+                      DV
                     </div>
                     <div style="font-size: 13px;">
-                      Đang bình luận với tư cách: <strong class="text-primary" id="userCommentName">TS. Lê Thị Kim Út</strong>
-                      <span class="badge bg-white text-secondary border ms-1" id="userCommentUnit">Tổ CĐ Viện Công nghệ số</span>
+                      Đang bình luận với tư cách: <strong class="text-primary" id="userCommentName">Đoàn viên Công đoàn</strong>
+                      <span class="badge bg-white text-secondary border ms-1" id="userCommentUnit">Trường ĐH Thủ Dầu Một</span>
                     </div>
                   </div>
                   <span class="text-muted" style="font-size: 11px;"><i class="fa-solid fa-shield-halved text-success me-1"></i> Xác thực tài khoản TDMU</span>
@@ -315,40 +300,9 @@
 
               <!-- List of Comments -->
               <div id="commentsListContainer">
-                <div class="d-flex gap-3 mb-3 p-3 bg-white border rounded shadow-sm">
-                  <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 42px; height: 42px; flex-shrink: 0;">
-                    VL
-                  </div>
-                  <div class="flex-grow-1">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                      <div>
-                        <strong class="text-dark">ThS. Võ Quốc Lương</strong>
-                        <span class="badge bg-light text-primary border ms-2 small">Tổ CĐ Viện Công nghệ số</span>
-                      </div>
-                      <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> 26/06/2026 14:20</small>
-                    </div>
-                    <p class="mb-0 text-secondary" style="font-size: 13.5px; line-height: 1.5;">
-                      Chương trình tọa đàm rất bổ ích và thiết thực cho cán bộ giảng viên trong trường. Cảm ơn Ban Nữ công đã tổ chức chu đáo!
-                    </p>
-                  </div>
-                </div>
-
-                <div class="d-flex gap-3 mb-3 p-3 bg-white border rounded shadow-sm">
-                  <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold" style="width: 42px; height: 42px; flex-shrink: 0;">
-                    LK
-                  </div>
-                  <div class="flex-grow-1">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                      <div>
-                        <strong class="text-dark">Đ/c Huỳnh Thị Lệ Kha</strong>
-                        <span class="badge bg-light text-primary border ms-2 small">Tổ CĐ Trường Luật &amp; Quản lý</span>
-                      </div>
-                      <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> 26/06/2026 15:05</small>
-                    </div>
-                    <p class="mb-0 text-secondary" style="font-size: 13.5px; line-height: 1.5;">
-                      Nhiều kiến thức dinh dưỡng khoa học rất hữu ích để áp dụng vào bữa cơm gia đình hàng ngày. Mong Công đoàn tiếp tục duy trì các chuyên đề như thế này!
-                    </p>
-                  </div>
+                <div id="noCommentsBox" class="p-4 bg-light rounded text-center text-muted border">
+                  <i class="fa-regular fa-comment-dots fs-3 mb-2 text-secondary d-block"></i>
+                  Chưa có bình luận nào cho bài viết này. Hãy là người đầu tiên chia sẻ ý kiến!
                 </div>
               </div>
             </section>
@@ -378,11 +332,11 @@
           <div class="panel-tdmu">
             <div class="panel-heading-tdmu"><i class="fa-solid fa-link me-2 text-primary"></i>Liên kết website</div>
             <div class="list-group-tdmu">
-              <a href="http://tdmu.edu.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Đại học Thủ Dầu Một</a>
-              <a href="http://danguy.tdmu.edu.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Đảng Bộ Đại học TDMU</a>
-              <a href="http://www.congdoan.vn" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Tổng LĐLĐ Việt Nam</a>
-              <a href="http://congdoanbinhduong.org.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> LĐLĐ Tỉnh Bình Dương</a>
-              <a href="http://lib.tdmu.edu.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> TT Học Liệu ĐH TDMU</a>
+              <a href="https://tdmu.edu.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Đại học Thủ Dầu Một</a>
+              <a href="https://danguy.tdmu.edu.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Đảng Bộ Đại học TDMU</a>
+              <a href="https://congdoanvietnam.vn" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> Tổng LĐLĐ Việt Nam</a>
+              <a href="https://binhduong.congdoan.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> LĐLĐ Tỉnh Bình Dương</a>
+              <a href="https://laodong.vn/" target="_blank" class="list-group-item"><i class="fa-solid fa-chevron-right me-1 text-muted small"></i> TT Học Liệu ĐH TDMU</a>
             </div>
           </div>
 
@@ -470,13 +424,14 @@
           const viewsEl = document.getElementById('artViews');
           if (viewsEl) viewsEl.innerText = a.viewsCount || a.LuotXem || 162;
           const commentsEl = document.getElementById('artCommentsCount');
-          if (commentsEl) commentsEl.innerText = a.commentsCount || 14;
+          if (commentsEl) commentsEl.innerText = a.commentsCount || 0;
 
           const contentEl = document.getElementById('artContent');
           if (contentEl) {
             let bodyHtml = a.content || a.NoiDung || ('<p>' + (a.summary || a.TomTat || '') + '</p>');
-            if (a.image && !bodyHtml.includes(a.image)) {
-              bodyHtml = '<div class="text-center mb-4"><img src="' + a.image + '" class="img-fluid rounded shadow-sm" style="max-height: 480px; width: 100%; object-fit: cover;" alt="' + (a.title || '') + '"><p class="text-muted small mt-2 fst-italic">' + (a.title || '') + '</p></div>' + bodyHtml;
+            const hasImgs = /<img[^>]+src=/i.test(bodyHtml);
+            if (!hasImgs && a.image) {
+              bodyHtml = '<div class="text-center mb-4"><img src="' + a.image + '" class="img-fluid rounded shadow-sm" style="max-height: 520px; max-width: 100%; height: auto; object-fit: contain;" alt="' + (a.title || '') + '"><p class="text-muted small mt-2 fst-italic">' + (a.title || '') + '</p></div>' + bodyHtml;
             }
             contentEl.innerHTML = bodyHtml;
             contentEl.querySelectorAll('img').forEach(img => {
@@ -486,15 +441,6 @@
                 else this.remove();
               };
             });
-          }
-
-          const takeawaysEl = document.getElementById('artTakeaways');
-          if (takeawaysEl) {
-            if (a.ai_takeaways && Array.isArray(a.ai_takeaways) && a.ai_takeaways.length > 0) {
-              takeawaysEl.innerHTML = a.ai_takeaways.map(t => '<li>' + t + '</li>').join('');
-            } else if (a.summary) {
-              takeawaysEl.innerHTML = '<li>' + a.summary + '</li>';
-            }
           }
 
           // Render sidebar top articles
@@ -513,6 +459,9 @@
           if (next && nextEl) {
             nextEl.innerHTML = '<a href="bai-viet.html?id=' + next.id + '" class="text-decoration-none text-primary">' + (next.title || next.TieuDe) + '</a>';
           }
+
+          // Real dynamic comments
+          await loadComments(articleId);
         }
       } catch (e) {
         console.error('Lỗi tải bài viết chi tiết:', e);
@@ -520,29 +469,64 @@
     }
 
     function toggleFullPageAudio() {
-      if ('speechSynthesis' in window) {
-        if (isFullSpeaking) {
-          window.speechSynthesis.cancel();
-          isFullSpeaking = false;
-          document.getElementById('audioArtIcon').className = 'fa-solid fa-play';
-          document.getElementById('audioArtTitle').innerText = 'Phát Thanh Bản Tin Trực Tuyến';
-        } else {
-          const textToRead = document.getElementById('artTitle').innerText + '. ' + (currentArticle ? (currentArticle.summary || currentArticle.TomTat) : '');
-          const utterance = new SpeechSynthesisUtterance(textToRead);
-          utterance.lang = 'vi-VN';
-          utterance.rate = 1.0;
-          utterance.onend = () => {
-            isFullSpeaking = false;
-            document.getElementById('audioArtIcon').className = 'fa-solid fa-play';
-            document.getElementById('audioArtTitle').innerText = 'Đã hoàn thành phát thanh';
-          };
-          window.speechSynthesis.speak(utterance);
-          isFullSpeaking = true;
-          document.getElementById('audioArtIcon').className = 'fa-solid fa-pause text-warning';
-          document.getElementById('audioArtTitle').innerText = 'Đang phát thanh bản tin...';
-        }
-      } else {
+      if (!('speechSynthesis' in window)) {
         alert('Trình duyệt chưa hỗ trợ Web Speech API.');
+        return;
+      }
+
+      const icon = document.getElementById('audioArtIcon');
+      const title = document.getElementById('audioArtTitle');
+
+      if (isFullSpeaking) {
+        window.speechSynthesis.cancel();
+        isFullSpeaking = false;
+        if (icon) icon.className = 'fa-solid fa-play';
+        if (title) title.innerText = 'Phát Thanh Bản Tin Trực Tuyến';
+        window._activeUtterance = null;
+      } else {
+        window.speechSynthesis.cancel();
+        const artTitle = (document.getElementById('artTitle') ? document.getElementById('artTitle').innerText : '') || '';
+        const summary = currentArticle ? (currentArticle.summary || currentArticle.TomTat || '') : '';
+        const bodyContent = (document.getElementById('artContent') ? document.getElementById('artContent').innerText : '') || '';
+        const rawText = `${artTitle}. ${summary}. ${bodyContent}`;
+        const cleanText = rawText.replace(/\s+/g, ' ').trim();
+
+        if (!cleanText) {
+          alert('Chưa có nội dung bài viết để phát thanh.');
+          return;
+        }
+
+        const textToRead = cleanText.slice(0, 2500);
+        const utterance = new SpeechSynthesisUtterance(textToRead);
+        utterance.lang = 'vi-VN';
+        utterance.rate = 0.95;
+
+        const voices = window.speechSynthesis.getVoices() || [];
+        const viVoice = voices.find(v => (v.lang && v.lang.toLowerCase().startsWith('vi')) || (v.name && v.name.toLowerCase().includes('vietnam')));
+        if (viVoice) {
+          utterance.voice = viVoice;
+        }
+
+        utterance.onend = () => {
+          isFullSpeaking = false;
+          if (icon) icon.className = 'fa-solid fa-play';
+          if (title) title.innerText = 'Đã hoàn thành phát thanh';
+          window._activeUtterance = null;
+        };
+
+        utterance.onerror = (e) => {
+          console.warn('Speech error:', e);
+          isFullSpeaking = false;
+          if (icon) icon.className = 'fa-solid fa-play';
+          if (title) title.innerText = 'Phát Thanh Bản Tin Trực Tuyến';
+          window._activeUtterance = null;
+        };
+
+        window._activeUtterance = utterance;
+        window.speechSynthesis.speak(utterance);
+        isFullSpeaking = true;
+        if (icon) icon.className = 'fa-solid fa-pause text-warning';
+        if (title) title.innerText = 'Đang phát thanh bản tin...';
       }
     }
 
@@ -558,50 +542,88 @@
       }
     }
 
+    async function loadComments(articleId) {
+      const container = document.getElementById('commentsListContainer');
+      const headerCount = document.getElementById('totalCommentsHeader');
+      if (!container) return;
+      try {
+        const res = await fetch(`/api/comments?article_id=${articleId}`).then(r => r.json());
+        const comments = (res.success && Array.isArray(res.data)) ? res.data : [];
+        if (headerCount) headerCount.innerText = comments.length;
+        if (comments.length === 0) {
+          container.innerHTML = `
+            <div id="noCommentsBox" class="p-4 bg-light rounded text-center text-muted border">
+              <i class="fa-regular fa-comment-dots fs-3 mb-2 text-secondary d-block"></i>
+              Chưa có bình luận nào cho bài viết này. Hãy là người đầu tiên chia sẻ ý kiến!
+            </div>
+          `;
+        } else {
+          container.innerHTML = comments.map(c => `
+            <div class="d-flex gap-3 mb-3 p-3 bg-white border rounded shadow-sm">
+              <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 42px; height: 42px; flex-shrink: 0;">
+                ${(c.author_name || c.author || 'ĐV').slice(0, 2).toUpperCase()}
+              </div>
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div>
+                    <strong class="text-dark">${c.author_name || c.author || 'Đoàn viên'}</strong>
+                    <span class="badge bg-light text-primary border ms-2 small">${c.unit || c.chucVu || 'Trường ĐH Thủ Dầu Một'}</span>
+                  </div>
+                  <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> ${c.createdAt ? new Date(c.createdAt).toLocaleString('vi-VN') : 'Vừa xong'}</small>
+                </div>
+                <p class="mb-0 text-secondary" style="font-size: 13.5px; line-height: 1.5;">
+                  ${c.content || c.noiDung}
+                </p>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.warn('Lỗi tải bình luận:', err);
+      }
+    }
+
     const currentLoggedUser = {
-      name: 'TS. Lê Thị Kim Út',
-      unit: 'Tổ CĐ Viện Công nghệ số',
-      initials: 'KU',
-      role: 'Chủ tịch Công đoàn'
+      name: 'Đoàn viên Công đoàn',
+      unit: 'Trường ĐH Thủ Dầu Một',
+      initials: 'DV',
+      role: 'Đoàn viên'
     };
 
-    function submitUserComment() {
+    async function submitUserComment() {
       const text = document.getElementById('inputCommentText').value.trim();
-
       if (!text) {
         alert('Vui lòng nhập nội dung bình luận!');
         document.getElementById('inputCommentText').focus();
         return;
       }
 
-      const list = document.getElementById('commentsListContainer');
-      const now = new Date().toLocaleString('vi-VN');
+      const urlParams = new URLSearchParams(window.location.search);
+      const articleId = urlParams.get('id') || (currentArticle ? currentArticle.id : 1);
 
-      const newCommentEl = document.createElement('div');
-      newCommentEl.className = 'd-flex gap-3 mb-3 p-3 bg-white border rounded shadow-sm';
-      newCommentEl.innerHTML = `
-        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 42px; height: 42px; flex-shrink: 0;">
-          ${currentLoggedUser.initials}
-        </div>
-        <div class="flex-grow-1">
-          <div class="d-flex justify-content-between align-items-center mb-1">
-            <div>
-              <strong class="text-dark">${currentLoggedUser.name}</strong>
-              <span class="badge bg-light text-primary border ms-2 small">${currentLoggedUser.unit}</span>
-            </div>
-            <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> ${now}</small>
-          </div>
-          <p class="mb-0 text-secondary" style="font-size: 13.5px; line-height: 1.5;">
-            ${text}
-          </p>
-        </div>
-      `;
+      try {
+        const res = await fetch('/api/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            article_id: parseInt(articleId),
+            author_name: currentLoggedUser.name,
+            unit: currentLoggedUser.unit,
+            content: text
+          })
+        }).then(r => r.json());
 
-      list.prepend(newCommentEl);
-      document.getElementById('inputCommentText').value = '';
-      const totalHeader = document.getElementById('totalCommentsHeader');
-      totalHeader.innerText = parseInt(totalHeader.innerText) + 1;
-      alert('Đã gửi ý kiến bình luận của bạn thành công!');
+        if (res.success && res.data) {
+          document.getElementById('inputCommentText').value = '';
+          await loadComments(articleId);
+          alert('Đã gửi ý kiến bình luận của bạn thành công!');
+        } else {
+          alert('Không thể gửi bình luận: ' + (res.error || 'Vui lòng thử lại sau'));
+        }
+      } catch (err) {
+        console.error('Lỗi gửi bình luận:', err);
+        alert('Lỗi gửi bình luận!');
+      }
     }
 
     function copyFullArticleLink() {

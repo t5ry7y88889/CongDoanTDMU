@@ -23,11 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initTinyMCEEditors();
   loadAdminDashboard();
   loadAdminArticles();
-  loadAdminMonthlyReports();
+  if (typeof loadAdminWelfare === "function") loadAdminWelfare();
   loadAdminDocuments();
   loadAdminTemplates();
   loadAdminFeedback();
-  loadAdminWelfare();
   loadUsersTable();
   loadScheduleTable();
   loadAuditLogs();
@@ -75,7 +74,7 @@ function switchUserRole(role) {
   currentUserRole = role;
   const nameEl = document.getElementById('current_user_name');
   if (nameEl) {
-    if (role === 'admin') nameEl.innerText = "TS. Lê Thị Kim Út";
+    if (role === 'admin') nameEl.innerText = "Ban Thường Vụ Công Đoàn";
     else if (role === 'editor') nameEl.innerText = "Đ/c Trần Thị B";
     else nameEl.innerText = "Đ/c Nguyễn Văn C";
   }
@@ -87,7 +86,7 @@ function showAdminTab(rawTabName, subFilter = null) {
   if (['writer', 'studio', 'composer', 'editor', 'tinbaiviet', 'tab_writer'].includes(rawTabName) || ['writer', 'studio', 'composer', 'editor', 'tinbaiviet'].includes(tabName)) {
     tabName = 'ai-creator';
   }
-  const tabs = ['dashboard', 'articles', 'ai-creator', 'welfare', 'feedback', 'reports', 'templates', 'documents', 'schedule', 'users', 'audits'];
+  const tabs = ['dashboard', 'articles', 'ai-creator', 'organization', 'welfare', 'feedback', 'templates', 'documents', 'schedule', 'users', 'audits'];
   if (!tabs.includes(tabName)) {
     tabName = 'ai-creator';
   }
@@ -104,10 +103,10 @@ function showAdminTab(rawTabName, subFilter = null) {
   const titles = {
     'dashboard': 'Bảng Điều Hành & Thống Kê',
     'articles': 'Quản Lý Tin Tức & Bài Viết',
-    'ai-creator': 'Phòng Biên Tập & Sản Xuất Đa Kênh',
-    'welfare': 'Quản Lý Đơn Đề Nghị Trợ Cấp & Chăm Lo',
+    'ai-creator': 'Soạn Thảo & Biên Tập Tin Bài',
     'feedback': 'Hòm Thư Góp Ý & Nguyện Vọng Đoàn Viên',
-    'reports': 'Báo Cáo Định Kỳ 16 Tổ Công Đoàn',
+    'organization': 'Quản Lý Cơ Cấu Tổ Chức & Cán Bộ',
+    'welfare': 'Quản Lý & Xét Duyệt Đơn Trợ Cấp Khó Khăn',
     'templates': 'Kho Biểu Mẫu Nghiệp Vụ Công Đoàn',
     'documents': 'Kho Văn Bản Chỉ Đạo & Điều Hành',
     'schedule': 'Lịch Xuất Bản Đa Kênh',
@@ -134,19 +133,13 @@ function showAdminTab(rawTabName, subFilter = null) {
     }
   });
 
-  if (tabName === 'templates') loadAdminTemplates();
-  loadAdminFeedback();
-  loadAdminWelfare();
   if (tabName === 'dashboard') loadAdminDashboard();
   if (tabName === 'articles') loadAdminArticles(subFilter || 'all');
-  if (tabName === 'welfare') loadAdminWelfare();
-  if (tabName === 'feedback') loadAdminFeedback();
-  loadAdminWelfare();
-  if (tabName === 'reports') loadAdminMonthlyReports();
   if (tabName === 'documents') loadAdminDocuments();
-  loadAdminTemplates();
-  loadAdminFeedback();
-  loadAdminWelfare();
+  if (tabName === 'templates') loadAdminTemplates();
+  if (tabName === 'organization' && typeof loadAdminOrganization === 'function') loadAdminOrganization();
+  if (tabName === 'welfare' && typeof loadAdminWelfare === 'function') loadAdminWelfare();
+  if (tabName === 'feedback') loadAdminFeedback();
   if (tabName === 'schedule') loadScheduleTable();
   if (tabName === 'users') loadUsersTable();
   if (tabName === 'audits') loadAuditLogs();

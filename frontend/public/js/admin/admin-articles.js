@@ -136,7 +136,8 @@ async function loadAdminDashboard() {
         }
       }
     }
-    loadTopArticlesTable();
+    await loadTopArticlesTable();
+    await loadMonthlyMediaAnalytics();
   } catch (err) {
     console.error('Error loading admin dashboard:', err);
   }
@@ -149,18 +150,19 @@ async function loadTopArticlesTable() {
   try {
     const res = await API.getArticles('all', 'all');
     if (res.success && Array.isArray(res.data)) {
-      tbody.innerHTML = res.data.map(a => `
-        <tr style="border-bottom: 1px solid var(--border-color);">
-          <td style="padding: 10px; font-weight: 600;">${a.title}</td>
-          <td style="padding: 10px;">${a.categoryName}</td>
-          <td style="padding: 10px; font-weight: 700; color: var(--primary-color);">${a.viewsCount || 0}</td>
-          <td style="padding: 10px; font-weight: 700; color: #1877F2;">${a.likesCount || 0}</td>
-          <td style="padding: 10px;"><span class="badge ${getStatusBadgeClass(a.status)}">${a.statusName || a.status}</span></td>
+      const top5 = res.data.slice(0, 5);
+      tbody.innerHTML = top5.map(a => `
+        <tr style="border-bottom: 1px solid #E2E8F0;">
+          <td style="padding: 10px 12px; font-weight: 600; color: #1E293B; max-width: 380px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${(a.title || '').replace(/"/g, '&quot;')}">${a.title || 'Bản tin Công đoàn'}</td>
+          <td style="padding: 10px 12px; color: #475569; font-size: 13px;">${a.categoryName || 'Hoạt động'}</td>
+          <td style="padding: 10px 12px; font-weight: 700; color: #0284C7;">${(a.viewsCount || 0).toLocaleString('vi-VN')}</td>
+          <td style="padding: 10px 12px; font-weight: 700; color: #1877F2;">${(a.likesCount || 0).toLocaleString('vi-VN')}</td>
+          <td style="padding: 10px 12px;"><span class="badge ${getStatusBadgeClass(a.status)}" style="font-size: 11px; padding: 4px 8px; border-radius: 4px;">${a.statusName || (a.status === 'published' ? 'Đã xuất bản' : a.status)}</span></td>
         </tr>
       `).join('');
     }
   } catch (err) {
-    console.error(err);
+    console.error('Error loading top articles table:', err);
   }
 }
 
@@ -655,7 +657,7 @@ function renderAuditsPage() {
   tbody.innerHTML = displayList.map(log => `
     <tr style="border-bottom: 1px solid var(--border-color);">
       <td style="padding: 12px; font-weight: 600; font-size: 13px;">${log.timestamp || log.created_at || '2026-09-01'}</td>
-      <td style="padding: 12px; font-weight: 700; color: #003865;">${log.userName || log.user_name || 'TS. Lê Thị Kim Út'}</td>
+      <td style="padding: 12px; font-weight: 700; color: #003865;">${log.userName || log.user_name || 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một'}</td>
       <td style="padding: 12px;"><span class="badge badge-gold" style="font-size: 11px;">${log.action || 'TÁC NGHIỆP'}</span></td>
       <td style="padding: 12px; font-size: 13px; color: #334155;">${log.details || log.note || log.action}</td>
     </tr>
@@ -758,3 +760,180 @@ function refreshAnalytics() {
   loadAdminArticles();
   alert("Đã đồng bộ và làm mới dữ liệu thống kê từ CSDL vĩnh viễn!");
 }
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 2B. MONTHLY MULTI-CHANNEL MEDIA ANALYTICS (HIỆU QUẢ TRUYỀN THÔNG ĐA KÊNH THEO THÁNG)
+// ═══════════════════════════════════════════════════════════════════════════════
+let cachedMonthlyAnalytics = [];
+let currentSelectedMonthKey = '2026-10';
+
+async function loadMonthlyMediaAnalytics(selectedMonth = '2026-10') {
+  try {
+    currentSelectedMonthKey = selectedMonth;
+    let res = null;
+    if (typeof API !== 'undefined' && API.getMonthlyAnalytics) {
+      res = await API.getMonthlyAnalytics(selectedMonth);
+    } else {
+      const resp = await fetch(`/api/analytics/monthly?month=${encodeURIComponent(selectedMonth)}`);
+      res = await resp.json();
+    }
+    
+    if (!res || !res.success) return;
+    
+    if (res.months && Array.isArray(res.months)) {
+      cachedMonthlyAnalytics = res.months;
+    } else if (cachedMonthlyAnalytics.length === 0) {
+      try {
+        const allResp = await fetch('/api/analytics/monthly');
+        const allData = await allResp.json();
+        if (allData.months) cachedMonthlyAnalytics = allData.months;
+      } catch (e) {}
+    }
+    
+    const data = res.data || res.currentMonth || (cachedMonthlyAnalytics.find(m => m.monthKey === selectedMonth));
+    
+    // Sync select dropdown
+    const selectEl = document.getElementById('media_analytics_month_select');
+    if (selectEl && selectEl.value !== currentSelectedMonthKey) {
+      selectEl.value = currentSelectedMonthKey;
+    }
+    
+    if (data) {
+      renderMonthlyMediaData(data);
+    }
+    
+    if (cachedMonthlyAnalytics.length > 0) {
+      renderMonthlyMiniChart(cachedMonthlyAnalytics, currentSelectedMonthKey);
+    }
+  } catch (err) {
+    console.error('Error loading monthly media analytics:', err);
+  }
+}
+
+function onMediaMonthChange(monthKey) {
+  currentSelectedMonthKey = monthKey;
+  
+  // Update select dropdown
+  const selectEl = document.getElementById('media_analytics_month_select');
+  if (selectEl && selectEl.value !== monthKey) {
+    selectEl.value = monthKey;
+  }
+
+  // If already in memory cache, render instantly
+  const found = cachedMonthlyAnalytics.find(m => m.monthKey === monthKey);
+  if (found) {
+    renderMonthlyMediaData(found);
+    renderMonthlyMiniChart(cachedMonthlyAnalytics, monthKey);
+  } else {
+    loadMonthlyMediaAnalytics(monthKey);
+  }
+}
+
+function renderMonthlyMediaData(data) {
+  if (!data) return;
+
+  // Header & Summary
+  safeSetText('media_chart_current_label', `Đang xem: ${data.label}`);
+  safeSetText('media_month_total_reach', (data.totalReach || 0).toLocaleString('vi-VN'));
+  safeSetText('media_month_top_article', data.topArticle || '');
+
+  // Card 2: Overall Growth vs previous month
+  const growthRate = data.overallGrowth || data.targetAchievementRate || '+10.0%';
+  const isPos = data.overallGrowthIsPositive !== undefined ? data.overallGrowthIsPositive : !growthRate.startsWith('-');
+  safeSetText('media_month_target_rate', growthRate);
+  const growthBadge = document.getElementById('media_month_growth_badge');
+  if (growthBadge) {
+    growthBadge.innerText = isPos ? '(Tăng trưởng ↑)' : '(Giảm nhẹ ↓)';
+    growthBadge.style.color = isPos ? '#059669' : '#DC2626';
+  }
+  const rateEl = document.getElementById('media_month_target_rate');
+  if (rateEl) {
+    rateEl.style.color = isPos ? '#059669' : '#DC2626';
+  }
+
+  // 1. Website Channel
+  if (data.web) {
+    safeSetText('media_web_views', (data.web.views || 0).toLocaleString('vi-VN'));
+    safeSetText('media_web_posts', `${data.web.posts || 0} bài viết`);
+    const webGrowthTxt = `${data.web.growth} ${data.web.growthIsPositive ? '↑' : '↓'}`;
+    safeSetText('media_web_target_txt', webGrowthTxt);
+    const webTargetEl = document.getElementById('media_web_target_txt');
+    if (webTargetEl) {
+      webTargetEl.style.color = data.web.growthIsPositive ? '#059669' : '#DC2626';
+    }
+    const webGrowthEl = document.getElementById('media_web_growth');
+    if (webGrowthEl) {
+      webGrowthEl.innerText = webGrowthTxt;
+      webGrowthEl.style.background = data.web.growthIsPositive ? '#DEF7EC' : '#FDE8E8';
+      webGrowthEl.style.color = data.web.growthIsPositive ? '#03543F' : '#9B1C1C';
+    }
+    const webProg = document.getElementById('media_web_progress');
+    if (webProg) webProg.style.width = `${Math.min(100, Math.max(20, Math.round((data.web.views / 16000) * 100)))}%`;
+  }
+
+  // 2. Facebook Channel
+  if (data.facebook) {
+    safeSetText('media_fb_interactions', (data.facebook.interactions || 0).toLocaleString('vi-VN'));
+    safeSetText('media_fb_reach', `${(data.facebook.reach || 0).toLocaleString('vi-VN')} reach`);
+    const fbGrowthTxt = `${data.facebook.growth} ${data.facebook.growthIsPositive ? '↑' : '↓'}`;
+    safeSetText('media_fb_target_txt', fbGrowthTxt);
+    const fbTargetEl = document.getElementById('media_fb_target_txt');
+    if (fbTargetEl) {
+      fbTargetEl.style.color = data.facebook.growthIsPositive ? '#1877F2' : '#DC2626';
+    }
+    const fbGrowthEl = document.getElementById('media_fb_growth');
+    if (fbGrowthEl) {
+      fbGrowthEl.innerText = fbGrowthTxt;
+      fbGrowthEl.style.background = data.facebook.growthIsPositive ? '#DEF7EC' : '#FDE8E8';
+      fbGrowthEl.style.color = data.facebook.growthIsPositive ? '#03543F' : '#9B1C1C';
+    }
+    const fbProg = document.getElementById('media_fb_progress');
+    if (fbProg) fbProg.style.width = `${Math.min(100, Math.max(20, Math.round((data.facebook.reach / 6000) * 100)))}%`;
+  }
+
+  // 3. Zalo OA Channel
+  if (data.zalo) {
+    safeSetText('media_zalo_reads', (data.zalo.broadcastReads || 0).toLocaleString('vi-VN'));
+    safeSetText('media_zalo_new', `+${data.zalo.newFollowers || 0} người`);
+    const zaloGrowthTxt = `${data.zalo.growth} ${data.zalo.growthIsPositive ? '↑' : '↓'}`;
+    safeSetText('media_zalo_target_txt', zaloGrowthTxt);
+    const zaloTargetEl = document.getElementById('media_zalo_target_txt');
+    if (zaloTargetEl) {
+      zaloTargetEl.style.color = data.zalo.growthIsPositive ? '#059669' : '#DC2626';
+    }
+    const zaloGrowthEl = document.getElementById('media_zalo_growth');
+    if (zaloGrowthEl) {
+      zaloGrowthEl.innerText = zaloGrowthTxt;
+      zaloGrowthEl.style.background = data.zalo.growthIsPositive ? '#DEF7EC' : '#FDE8E8';
+      zaloGrowthEl.style.color = data.zalo.growthIsPositive ? '#03543F' : '#9B1C1C';
+    }
+    const zaloProg = document.getElementById('media_zalo_progress');
+    if (zaloProg) zaloProg.style.width = `${Math.min(100, Math.max(20, Math.round((data.zalo.broadcastReads / 800) * 100)))}%`;
+  }
+}
+
+function renderMonthlyMiniChart(months, currentKey) {
+  const container = document.getElementById('media_mini_bar_chart');
+  if (!container || !Array.isArray(months) || months.length === 0) return;
+
+  // Last 6 months (May to Oct 2026)
+  const displayMonths = months.slice(-6);
+  const maxReach = Math.max(...displayMonths.map(m => m.totalReach || 1));
+
+  container.innerHTML = displayMonths.map(m => {
+    const isSelected = m.monthKey === currentKey;
+    const heightPercent = Math.max(25, Math.round((m.totalReach / maxReach) * 100));
+    const label = `T${m.monthNumber}`;
+    return `
+      <div onclick="onMediaMonthChange('${m.monthKey}')" title="${m.label}: ${(m.totalReach || 0).toLocaleString('vi-VN')} lượt tiếp cận" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; cursor: pointer; gap: 4px; transition: transform 0.2s;" onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform='translateY(0)'">
+        <div style="font-size: 10px; font-weight: 700; color: ${isSelected ? '#0284C7' : '#94A3B8'};">${(m.totalReach / 1000).toFixed(1)}k</div>
+        <div style="width: 100%; max-width: 26px; height: ${heightPercent}%; border-radius: 4px 4px 0 0; background: ${isSelected ? 'linear-gradient(180deg, #0284C7 0%, #003865 100%)' : '#CBD5E1'}; box-shadow: ${isSelected ? '0 2px 8px rgba(2,132,199,0.35)' : 'none'}; transition: all 0.3s;"></div>
+        <div style="font-size: 11px; font-weight: ${isSelected ? '800' : '600'}; color: ${isSelected ? '#003865' : '#64748B'}; padding-top: 2px; border-top: 2px solid ${isSelected ? '#0284C7' : 'transparent'}; width: 100%; text-align: center;">${label}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.loadMonthlyMediaAnalytics = loadMonthlyMediaAnalytics;
+window.onMediaMonthChange = onMediaMonthChange;

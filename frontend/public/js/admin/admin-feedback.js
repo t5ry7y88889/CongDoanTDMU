@@ -158,12 +158,12 @@ async function submitFeedbackResponse() {
       body: JSON.stringify({
         status,
         response,
-        resolved_by: 'TS. Lê Thị Kim Út (Ban Thường Vụ)'
+        resolved_by: 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một (Ban Thường Vụ)'
       })
     }).then(r => r.json());
 
     if (res.success) {
-      alert('✅ Đã cập nhật kết quả xử lý ý kiến thành công!');
+      alert('✅ ' + (res.message || 'Đã cập nhật kết quả xử lý và gửi email phản hồi thành công!'));
       closeRespondFeedbackModal();
       loadAdminFeedback();
     } else {

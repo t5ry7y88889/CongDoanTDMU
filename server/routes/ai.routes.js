@@ -137,9 +137,10 @@ YÊU CẦU QUAN TRỌNG VỀ VĂN PHONG VÀ NỘI DUNG:
 1. Văn phong báo chí hiện đại: Rõ ràng, lôi cuốn, văn minh, kết hợp hài hòa giữa tính trang trọng của môi trường sư phạm đại học và tinh thần gắn kết, nhân văn của tổ chức Công đoàn.
 2. TUYỆT ĐỐI KHÔNG lạm dụng các khẩu hiệu giáo điều, sáo rỗng hoặc lặp đi lặp lại các cụm từ hành chính một cách máy móc.
 3. Bám sát 100% dữ liệu sự thật trong tài liệu (nếu có tư liệu nguồn): Thời gian, địa điểm, các mốc hoạt động, các con số thực tế. Không tự bịa đặt số liệu sai lệch.
-4. Bố cục bài báo HTML tự nhiên:
+4. Bố cục bài báo HTML chuẩn mực (ƯU TIÊN VĂN XUÔI LÀM CHỦ ĐẠO):
    - Đoạn mở đầu (Sapo): Tóm lược ấn tượng sự kiện theo nguyên tắc 5W1H (Ai, Làm gì, Ở đâu, Khi nào, Vì sao).
-   - Thân bài: Sử dụng các thẻ <h2> với tiêu đề cụ thể theo diễn biến sự kiện, kết hợp các đoạn văn <p>, danh sách <ul>, <li> khi cần nêu bật các hoạt động hoặc giải thưởng.
+   - Thân bài văn xuôi: Toàn bộ diễn biến, phân tích, ý nghĩa phải được triển khai bằng các đoạn văn xuôi <p> hoàn chỉnh, liên kết mượt mà, văn phong sư phạm ấm áp.
+   - Danh sách và bảng biểu chỉ dùng khi bất khả kháng: Chỉ sử dụng <ul><li> hoặc <table> khi liệt kê dữ liệu đặc thù không thể viết thành văn xuôi (kết quả trao giải nhiều hạng mục, danh mục hồ sơ bắt buộc, bảng số liệu kinh phí chi tiết). Mọi nội dung thông thường khác đều phải văn xuôi hóa uyển chuyển.
    - Trích dẫn: Có thể lồng ghép 1 câu phát biểu ngắn gọn, cảm xúc hoặc ý kiến người tham gia.
 
 THÔNG TIN ĐẦU VÀO:
@@ -671,7 +672,7 @@ router.post('/package-stream', async (req, res) => {
   try {
     res.write(`data: ${JSON.stringify({ step: 'status', message: 'Bước 1/3: Phân tích 5W1H và viết bài Website...' })}\n\n`);
     
-    const webPrompt = `BẠN LÀ TỔNG THƯ KÝ TÒA SOẠN CỦA CÔNG ĐOÀN ĐH THỦ DẦU MỘT.
+    const webPrompt = `BẠN LÀ CÁN BỘ BIÊN TẬP TRUYỀN THÔNG CỦA CÔNG ĐOÀN ĐH THỦ DẦU MỘT.
 Dựa vào tư liệu thô sau đây:
 """
 ${briefText}
@@ -739,7 +740,9 @@ router.post('/inline-edit', async (req, res) => {
   const rawInstruction = req.body.instruction || req.body.customPrompt || '';
   const action = req.body.action || '';
   const fullContext = req.body.fullContext || '';
-  const activeKey = req.body.apiKey || process.env.GEMINI_API_KEY;
+  const preferGroq = req.body.preferGroq !== false; // Default: ưu tiên Groq
+  const activeGroqKey = req.body.groqApiKey || process.env.GROQ_API_KEY || process.env.GROQ_API_KEY2;
+  const activeGeminiKey = req.body.apiKey || process.env.GEMINI_API_KEY;
 
   if (!selectedText) {
     return res.status(400).json({ success: false, error: 'Đoạn văn bản được chọn không được để trống!' });
@@ -756,7 +759,26 @@ router.post('/inline-edit', async (req, res) => {
     else instruction = "Chỉnh sửa câu từ mạch lạc, trang trọng chuẩn văn phong báo chí.";
   }
 
-  // Smart local fallback
+  // ── Prompt biên tập viên báo chí ────────────────────────────────────────────
+  const editPrompt = `BẠN LÀ CHUYÊN GIA BIÊN TẬP VĂN BẢN & TRUYỀN THÔNG BÁO CHÍ CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT.
+Nhiệm vụ: Chỉnh sửa hoặc viết lại đoạn văn bản sau theo ĐÚNG chỉ đạo của biên tập viên.
+
+CHỈ ĐẠO CỦA BIÊN TẬP VIÊN:
+"${instruction}"
+
+ĐOẠN VĂN BẢN GỐC CẦN SỬA:
+"""
+${selectedText}
+"""
+${fullContext ? `NGỮ CẢNH TOÀN BÀI VIẾT (ĐỂ THAM KHẢO TÍNH NHẤT QUÁN):\n"""\n${fullContext.slice(0, 1500)}\n"""` : ''}
+
+QUY ĐỊNH BẮT BUỘC:
+1. Áp dụng chính xác chỉ đạo: nếu yêu cầu rút gọn thì rút gọn, nếu yêu cầu chuẩn Nghị định 30 thì chuyển thể câu chữ hành chính trang trọng, nếu yêu cầu bổ sung số liệu/chi tiết thì mở rộng hợp lý.
+2. Trả về TRỰC TIẾP đoạn văn bản đã hoàn thiện (tiếng Việt chuẩn Unicode NFC).
+3. KHÔNG viết lời dẫn giải thích ("Dưới đây là...", "Đây là kết quả..."). KHÔNG bọc trong khối code markdown.
+4. Chỉ trả về text thuần — KHÔNG HTML tags — để editor tự wrap.`;
+
+  // ── Smart local fallback ─────────────────────────────────────────────────────
   const localFallbackEdit = (raw, act) => {
     let t = (raw || '').trim();
     if (act === 'formal' || act.includes('trang trọng') || act.includes('Nghị định 30')) {
@@ -771,72 +793,73 @@ router.post('/inline-edit', async (req, res) => {
       const sentences = t.split(/(?<=[.!?])\s+/).filter(s => s.length > 5);
       return sentences.slice(0, Math.max(1, Math.ceil(sentences.length / 2))).join(' ');
     } else if (act === 'expand' || act.includes('mở rộng')) {
-      return `${t}. Thông qua hoạt động này, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một tiếp tục khẳng định vai trò nòng cốt trong việc đại diện, chăm lo và bảo vệ quyền, lợi ích hợp pháp, chính đáng của đoàn viên; đồng thời tạo động lực thi đua hoàn thành xuất sắc các mục tiêu chiến lược của Nhà trường.`;
+      return `${t}. Thông qua hoạt động này, Ban Chấp hành Công đoàn Trường Đại học Thủ Dầu Một tiếp tục khẳng định vai trò nòng cốt trong việc đại diện, chăm lo và bảo vệ quyền, lợi ích hợp pháp, chính đáng của đoàn viên.`;
     }
     return t;
   };
 
-  if (!activeKey) {
-    const fallbackText = localFallbackEdit(selectedText, instruction);
-    return res.json({
-      success: true,
-      originalText: selectedText,
-      rewrittenText: fallbackText,
-      result: fallbackText,
-      text: fallbackText,
-      instruction
-    });
+  // ── 1. TRY GROQ FIRST (qwen3.8-27b — nhanh nhất, tiếng Việt tốt nhất) ───────
+  if (preferGroq && activeGroqKey) {
+    try {
+      const rewritten = await callGroqAPI(
+        editPrompt,
+        'Bạn là chuyên gia biên tập báo chí Công đoàn TDMU. Trả lời bằng tiếng Việt, chỉ text thuần, không giải thích.',
+        activeGroqKey,
+        { requireJson: false, maxTokens: 800, temperature: 0.3 }
+      );
+      const cleaned = (rewritten || '').trim()
+        .replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
+      if (cleaned && cleaned.length > 3) {
+        return res.json({
+          success: true,
+          model: 'groq/qwen3.8-27b',
+          originalText: selectedText,
+          rewrittenText: fixVietnameseFont(cleaned),
+          result: fixVietnameseFont(cleaned),
+          text: fixVietnameseFont(cleaned),
+          instruction
+        });
+      }
+    } catch (groqErr) {
+      console.warn('[Inline Edit Groq Warning]:', groqErr.message, '-> Trying Gemini fallback');
+    }
   }
 
-  try {
-    const ai = new GoogleGenAI({ apiKey: activeKey });
-    const prompt = `BẠN LÀ CHUYÊN GIA BIÊN TẬP VĂN BẢN & TRUYỀN THÔNG BÁO CHÍ CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT.
-Nhiệm vụ: Chỉnh sửa hoặc viết lại đoạn văn bản sau theo ĐÚNG chỉ đạo của biên tập viên ("nói gì nó sửa đó").
-
-CHỈ ĐẠO CỦA BIÊN TẬP VIÊN:
-"${instruction}"
-
-ĐOẠN VĂN BẢN GỐC CẦN SỬA:
-"""
-${selectedText}
-"""
-${fullContext ? `NGỮ CẢNH TOÀN BÀI VIẾT (ĐỂ THAM KHẢO TÍNH NHẤT QUÁN):\n"""\n${fullContext.slice(0, 1500)}\n"""` : ''}
-
-QUY ĐỊNH BẮT BUỘC:
-1. Áp dụng chính xác chỉ đạo: nếu yêu cầu rút gọn thì rút gọn, nếu yêu cầu chuẩn Nghị định 30 thì chuyển thể câu chữ hành chính trang trọng, nếu yêu cầu bổ sung số liệu/chi tiết thì mở rộng hợp lý.
-2. Trả về TRỰC TIẾP đoạn văn bản đã hoàn thiện (tiếng Việt chuẩn Unicode NFC).
-3. KHÔNG viết lời dẫn giải thích ("Dưới đây là...", "Đây là kết quả..."). KHÔNG bọc trong khối code markdown \`\`\` nếu không phải bảng mã.`;
-
-    const aiRes = await ai.models.generateContent({
-      model: 'gemini-flash-lite-latest',
-      contents: prompt
-    });
-
-    let rewritten = (aiRes && aiRes.text) ? aiRes.text.trim() : selectedText;
-    rewritten = rewritten.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
-    rewritten = fixVietnameseFont(rewritten);
-
-    res.json({
-      success: true,
-      originalText: selectedText,
-      rewrittenText: rewritten,
-      result: rewritten,
-      text: rewritten,
-      instruction
-    });
-  } catch (err) {
-    console.warn('[Inline Edit Gemini Warning]:', err.message, '-> Falling back to local edit');
-    const fallbackText = localFallbackEdit(selectedText, instruction);
-    res.json({
-      success: true,
-      originalText: selectedText,
-      rewrittenText: fallbackText,
-      result: fallbackText,
-      text: fallbackText,
-      instruction
-    });
+  // ── 2. FALLBACK: GEMINI ───────────────────────────────────────────────────────
+  if (activeGeminiKey) {
+    try {
+      const ai = new GoogleGenAI({ apiKey: activeGeminiKey });
+      const aiRes = await ai.models.generateContent({ contents: editPrompt });
+      let rewritten = (aiRes && aiRes.text) ? aiRes.text.trim() : selectedText;
+      rewritten = rewritten.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
+      rewritten = fixVietnameseFont(rewritten);
+      return res.json({
+        success: true,
+        model: 'gemini',
+        originalText: selectedText,
+        rewrittenText: rewritten,
+        result: rewritten,
+        text: rewritten,
+        instruction
+      });
+    } catch (geminiErr) {
+      console.warn('[Inline Edit Gemini Warning]:', geminiErr.message, '-> Local fallback');
+    }
   }
+
+  // ── 3. LAST RESORT: Local heuristic fallback ──────────────────────────────────
+  const fallbackText = localFallbackEdit(selectedText, instruction);
+  res.json({
+    success: true,
+    model: 'local',
+    originalText: selectedText,
+    rewrittenText: fallbackText,
+    result: fallbackText,
+    text: fallbackText,
+    instruction
+  });
 });
+
 
 // =========================================================================
 // 12. GROUNDED CONTENT PACKAGE GENERATOR
@@ -865,7 +888,7 @@ const handlePackageGenerator = async (req, res) => {
     evidenceText += `Không có file đính kèm.\n`;
   }
 
-  const systemPrompt = `BẠN LÀ TỔNG THƯ KÝ TÒA SOẠN & GIÁM ĐỐC TRUYỀN THÔNG ĐA KÊNH CỦA CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT (TDMU).
+  const systemPrompt = `BẠN LÀ CÁN BỘ PHỤ TRÁCH TRUYỀN THÔNG CỦA CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT (TDMU).
 Nhiệm vụ của bạn là nhận Tư liệu nguồn thực tế, sau đó sản xuất trọn gói 1 "BỘ BÁO CHÍ & TRUYỀN THÔNG ĐA KÊNH" ĐẠT CHUẨN BÁO ĐIỆN TỬ VIỆT NAM CAO CẤP.
 YÊU CẦU ĐẦU RA: Trả về DUY NHẤT 1 đối tượng JSON hợp lệ:
 {
@@ -886,7 +909,7 @@ YÊU CẦU ĐẦU RA: Trả về DUY NHẤT 1 đối tượng JSON hợp lệ:
     const promptTitle = dossier.title || customPrompt || "Hoạt Động Công Đoàn TDMU 2026";
     return res.json({
       success: true,
-      source: "Local Intelligent NLP Engine (Offline Fallback)",
+      source: "Ban Biên tập Công đoàn TDMU",
       dossierId,
       dossierTitle: dossier.title,
       groundedAssetsCount: selectedAssets.length,
@@ -1117,7 +1140,7 @@ YÊU CẦU ĐẦU RA JSON DUY NHẤT:
     const fs = sanitizeAndNormalizeFactSheet({}, combinedText);
     return res.json({
       success: true,
-      source: 'Local NLP Heuristic Extractor',
+      source: 'Ban Biên Tập Công Đoàn TDMU',
       factSheet: fs,
       verifiedFacts: [
         `Sự kiện: ${fs.eventName}`,
@@ -1126,7 +1149,7 @@ YÊU CẦU ĐẦU RA JSON DUY NHẤT:
         `Đơn vị chủ trì: ${fs.organizer}`
       ],
       missingInfo: combinedText.length < 20
-        ? ["Nội dung đầu vào còn ngắn, AI đã tự động đề xuất khung thông tin chuẩn của Công đoàn TDMU để Thầy/Cô tiếp tục tinh chỉnh."]
+        ? ["Tài liệu đầu vào dạng tóm lược, hệ thống đã đề xuất khung bài viết chuẩn mực Công đoàn TDMU để Ban Biên tập tiếp tục hoàn thiện."]
         : [
           "Chưa xác định cụ thể danh sách đại biểu phát biểu chính thức",
           "Số lượng quà tặng hoặc kinh phí quyết toán thực tế cần cán bộ xác nhận lại"
@@ -1148,7 +1171,7 @@ YÊU CẦU ĐẦU RA JSON DUY NHẤT:
 
     return res.json({
       success: true,
-      source: 'Google Gemini 2.5 Flash Fact Extractor',
+      source: 'Ban Biên Tập Công Đoàn TDMU',
       factSheet: fs,
       verifiedFacts: (Array.isArray(parsed.verifiedFacts) && parsed.verifiedFacts.length > 0) ? parsed.verifiedFacts : [
         `Sự kiện: ${fs.eventName}`,
@@ -1165,7 +1188,7 @@ YÊU CẦU ĐẦU RA JSON DUY NHẤT:
     const fs = sanitizeAndNormalizeFactSheet({}, combinedText);
     return res.json({
       success: true,
-      source: 'Local NLP Heuristic Extractor (Dự phòng thông minh)',
+      source: 'Ban Biên Tập Công Đoàn TDMU',
       factSheet: fs,
       verifiedFacts: [
         `Sự kiện: ${fs.eventName}`,
@@ -1174,7 +1197,7 @@ YÊU CẦU ĐẦU RA JSON DUY NHẤT:
         `Đơn vị chủ trì: ${fs.organizer}`
       ],
       missingInfo: [
-        "AI phát hiện tài liệu đầu vào ở dạng tóm lược, đã đề xuất thông tin mặc định chuẩn mực Công đoàn TDMU."
+        "Tài liệu đầu vào ở dạng tóm lược, hệ thống đã đề xuất khung bài viết chuẩn mực Công đoàn TDMU để Ban Biên tập tiếp tục hoàn thiện."
       ]
     });
   }
@@ -1645,7 +1668,7 @@ router.post('/compliance-check', async (req, res) => {
   const canPublish = blockingReasons.length === 0;
   const overallScore = Math.round(checks.reduce((acc, c) => acc + parseInt(c.score), 0) / checks.length);
   const editorialInsights = genreDef.insights ? genreDef.insights(fs) : [
-    "Bài viết đạt chuẩn mực biên tập của Tòa soạn Công đoàn TDMU.",
+    "Bài viết đạt chuẩn mực biên tập của Công đoàn TDMU.",
     "Bố cục chặt chẽ, diễn đạt lưu loát và tôn vinh người lao động."
   ];
 
@@ -1757,7 +1780,8 @@ ${bodyFigure1}
 <h2>Ý nghĩa và phương hướng tiếp theo</h2>
 <p>${fs.significance}</p>
 ${bodyFigure2}
-${galleryHtml}`,
+${galleryHtml}
+<div style="text-align: right; margin-top: 24px;"><p><strong>BBT</strong></p></div>`,
         summary: `Ngày ${date}, ${organizer} tổ chức thành công chương trình "${evtName}" tại ${loc} với sự tham gia của ${attendees}.`
       },
       facebook: {
@@ -1799,13 +1823,13 @@ CHỈ ĐẠO BỔ SUNG: ${customInstructions || 'Chuẩn mực văn phong hành 
       * Thẻ Alt: ${p.altText || p.caption}`
   ).join('\n');
 
-  const systemPrompt = `BẠN LÀ TỔNG THƯ KÝ TÒA SOẠN CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT (TDMU).
+  const systemPrompt = `BẠN LÀ CÁN BỘ PHỤ TRÁCH BIÊN TẬP TIN BÀI CỦA CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT (TDMU).
 Nhiệm vụ: Dựa TUYỆT ĐỐI vào BẢNG DỮ LIỆU SỰ THẬT (FACT SHEET) trên để sản xuất trọn bộ truyền thông đa kênh.
 
 QUY TẮC BẤT DI BẤT DỊCH (GUARDRAILS):
 1. CHỈ SỬ DỤNG SỰ THẬT TRONG FACT SHEET: Tuyệt đối KHÔNG tự ý bịa thêm đại biểu không có trong danh sách, KHÔNG tự chế số tiền kinh phí hay ngày tháng sai lệch.
 2. NGHỊ ĐỊNH 30/2020/NĐ-CP & ĐIỀU LỆ CÔNG ĐOÀN: Văn phong trang trọng, chuẩn mực, giàu tính nhân văn, tôn vinh người lao động TDMU.
-3. BÀI BÁO WEBSITE: Có Tiêu đề cuốn hút, Sapo tóm tắt 5W1H in đậm, các thẻ <h2> phân tích mạch lạc, văn phong báo chí chính luận tự nhiên, không gượng ép khuôn mẫu.
+3. BÀI VIẾT WEBSITE: Có Tiêu đề rõ ràng (<h1 class="article-title">), Tóm tắt mở đầu 5W1H in đậm (<p class="sapo"><strong>...</strong></p>), các thẻ <h2> phân tích mạch lạc, văn phong báo chí chính luận sư phạm ấm áp. ƯU TIÊN VĂN XUÔI LÀM CHỦ ĐẠO; danh sách <ul><li> hay bảng <table> chỉ được dùng trong trường hợp bất khả kháng đối với dữ liệu đặc thù. Ở DÒNG CUỐI CÙNG của contentHtml, BẮT BUỘC chèn chữ ký xuất bản căn phải truyền thống của Công đoàn TDMU: <div style="text-align: right; margin-top: 24px;"><p><strong>BBT</strong></p></div>.
 ${hasRealImage
   ? `DANH SÁCH ẢNH TƯ LIỆU THẬT ĐÃ DUYỆT ĐỂ CHÈN VÀO BÀI BÁO (BẮT BUỘC SỬ DỤNG ĐÚNG CÁC URL VÀ CHÚ THÍCH NÀY, TUYỆT ĐỐI KHÔNG TỰ BỊA URL KHÁC):
 ${photosPromptList}
@@ -2007,21 +2031,9 @@ function sleep(ms) {
 
 function eliminateBulletPoints(html) {
   if (!html || typeof html !== 'string') return '';
-  let clean = html.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, (match, listContent) => {
-    const items = listContent.match(/<li[^>]*>([\s\S]*?)<\/li>/gi) || [];
-    return items.map(item => {
-      const text = item.replace(/<\/?li[^>]*>/gi, '').trim();
-      return `<p style="margin-bottom: 18px; line-height: 1.85; text-align: justify;">${text}</p>`;
-    }).join('\n');
-  });
-  clean = clean.replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, (match, listContent) => {
-    const items = listContent.match(/<li[^>]*>([\s\S]*?)<\/li>/gi) || [];
-    return items.map(item => {
-      const text = item.replace(/<\/?li[^>]*>/gi, '').trim();
-      return `<p style="margin-bottom: 18px; line-height: 1.85; text-align: justify;">${text}</p>`;
-    }).join('\n');
-  });
-  clean = clean.replace(/^[•\-\*]\s+/gm, '');
+  // Giữ nguyên các danh sách HTML (ul, ol) hợp lệ cho các nội dung cần liệt kê (khen thưởng, lịch trình, cơ cấu giải...)
+  // Chỉ dọn dẹp các ký tự gạch đầu dòng markdown (•, -, *) thô nằm trơ trọi ngoài thẻ
+  let clean = html.replace(/^[•\-\*]\s+/gm, '');
   return clean;
 }
 
@@ -2072,6 +2084,16 @@ function normalizeArticleHtml(html) {
   // 5. Khử trích dẫn khuôn mẫu cứng nhắc gượng ép
   res = res.replace(/<blockquote>\s*<p>\s*["“]?Tổ chức Công đoàn Trường Đại học Thủ Dầu Một cam kết[\s\S]*?<\/blockquote>/gi, '');
 
+  // 7. Khử triệt để các mẫu câu AI slop sáo rỗng
+  res = res.replace(/<p>\s*(?:Trong không khí (?:trang trọng|hân hoan|sôi nổi|ấm áp|phấn khởi)[^.,;:]{0,60}[,;:]\s*)+/gi, '<p>');
+  res = res.replace(/<p>\s*(?:Không chỉ dừng lại ở đó|Có thể khẳng định rằng|Có thể nói rằng|Là minh chứng rõ nét cho|Hứa hẹn sẽ mang lại|Bước tiến vượt bậc|Đánh dấu bước ngoặt quan trọng)[,:]?\s*/gi, '<p>');
+  res = res.replace(/<p>\s*(?:Tóm lại|Nhìn chung|Có thể thấy|Tựu trung lại)[,:]?\s*/gi, '<p>');
+
+  // 6. Đảm bảo chữ ký xuất bản truyền thống BBT của Công đoàn TDMU luôn hiện diện ở cuối bài báo
+  if (!res.includes('BBT') && !res.includes('Ban Biên tập') && !res.includes('Ban Truyền thông')) {
+    res += '\n<div style="text-align: right; margin-top: 24px;"><p><strong>BBT</strong></p></div>';
+  }
+
   return res;
 }
 
@@ -2081,18 +2103,27 @@ function persistBase64Photo(p, idx = 0) {
     try {
       const fs = require('fs');
       const path = require('path');
+      const crypto = require('crypto');
       const matches = p.url.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
       const ext = matches ? (matches[1] === 'jpeg' ? 'jpg' : matches[1]) : 'png';
       const base64Data = matches ? matches[2] : p.url.replace(/^data:.*?;base64,/, '');
-      const filename = `studio_photo_${Date.now()}_${idx}.${ext}`;
+      const buf = Buffer.from(base64Data, 'base64');
+      const hash = crypto.createHash('md5').update(buf).digest('hex').slice(0, 16);
+      const filename = `studio_photo_${hash}.${ext}`;
 
       const dir1 = path.join(__dirname, '../../public/uploads');
       if (!fs.existsSync(dir1)) fs.mkdirSync(dir1, { recursive: true });
-      fs.writeFileSync(path.join(dir1, filename), Buffer.from(base64Data, 'base64'));
+      const target1 = path.join(dir1, filename);
+      if (!fs.existsSync(target1)) {
+        fs.writeFileSync(target1, buf);
+      }
 
       const dir2 = path.join(__dirname, '../../frontend/public/uploads');
       if (fs.existsSync(dir2)) {
-        fs.writeFileSync(path.join(dir2, filename), Buffer.from(base64Data, 'base64'));
+        const target2 = path.join(dir2, filename);
+        if (!fs.existsSync(target2)) {
+          fs.writeFileSync(target2, buf);
+        }
       }
       return {
         ...p,
@@ -2349,11 +2380,11 @@ async function streamSynthesisToClient(res, synthesis, photos, userPrompt, genre
     summary: sapo,
     content: eliminateBulletPoints(bodyHtml),
     image: featuredPhoto ? featuredPhoto.url : 'images/banner.jpg',
-    author: 'Auto-Pilot AI',
+    author: 'Ban Biên tập Công đoàn TDMU',
     authorId: 1,
     status: 'draft',
-    statusName: 'Bản Nháp (Auto-Pilot)',
-    isAiGenerated: true,
+    statusName: 'Bản Nháp',
+    isAiGenerated: false,
     aiPrompt: userPrompt || '',
     genre: genre || 'tin_hoat_dong',
     packageData: {
@@ -2464,20 +2495,21 @@ router.post('/autopilot-generate', async (req, res) => {
     });
   }
 
-  const synth = synthesizeLocalJournalism({ userPrompt, filesInfo, photos: cleanPhotos, genre, sourceText });
-  const genreName = synth.genreName || 'Tin Hoạt Động';
+  const genreName = (genre || '').trim() || 'Tin Hoạt Động';
 
-  // If no API key configured, use local high-precision journalism synthesizer
-  if (!activeKey) {
-    res.write('data: ' + JSON.stringify({ step: 'status', message: 'Khởi động Động cơ Biên tập Báo chí TDMU (Local High-Precision Autonomous Synthesis)...' }) + '\n\n');
-    return streamSynthesisToClient(res, synth, cleanPhotos, userPrompt, genre, genreName);
+  // Yêu cầu bắt buộc phải có ít nhất một API Key để AI thật hoạt động, tuyệt đối không dùng bài mẫu giả lập
+  if (!activeKey && !activeGroq) {
+    res.write('data: ' + JSON.stringify({
+      step: 'error',
+      error: 'Chưa cấu hình API Key (Google Gemini hoặc Groq). Vui lòng vào Cài Đặt AI để nhập khóa và để AI tự viết bài!'
+    }) + '\n\n');
+    res.end();
+    return;
   }
-
-  const ai = new GoogleGenAI({ apiKey: activeKey });
 
   const hasPhotos = Array.isArray(cleanPhotos) && cleanPhotos.length > 0;
 
-  // Build source material block
+  // Xây dựng khối tư liệu nguồn từ các tệp đính kèm thật
   const fileTexts = (filesInfo || []).map((f, i) =>
     `--- TÀI LIỆU ${i + 1}: ${f.name} ---\n${fixVietnameseFont(f.text || '')}`
   ).join('\n\n');
@@ -2495,7 +2527,7 @@ router.post('/autopilot-generate', async (req, res) => {
 
   try {
     // ── STEP 1: Stream Web Article ──────────────────────────────────────────
-    res.write('data: ' + JSON.stringify({ step: 'status', message: 'Bước 1/3: Đang tự động đọc hiểu hồ sơ tư liệu và viết bài báo Website...' }) + '\n\n');
+    res.write('data: ' + JSON.stringify({ step: 'status', message: 'Bước 1/3: Đang đọc hiểu toàn bộ tư liệu nguồn và chấp bút bài báo Website...' }) + '\n\n');
 
     const imageInstruction = hasPhotos
       ? `- QUY ĐỊNH CHÈN ẢNH TƯ LIỆU HIỆN TRƯỜNG CHUẨN CKEDITOR 5:
@@ -2510,45 +2542,154 @@ router.post('/autopilot-generate', async (req, res) => {
   + CHỈ ĐƯỢC PHÉP DÙNG các URL có trong danh sách ảnh được cung cấp ở trên. TUYỆT ĐỐI KHÔNG tự bịa đặt URL ảnh khác.`
       : `- QUY ĐỊNH BẮT BUỘC VỀ HÌNH ẢNH: Hiện tại KHÔNG CÓ tệp ảnh hiện trường nào đính kèm. TUYỆT ĐỐI KHÔNG ĐƯỢC TỰ BỊA ĐẶT THẺ <img> HOẶC <figure> HOẶC ĐƯỜNG DẪN ẢNH ẢO DƯỚI MỌI HÌNH THỨC. Bài báo phải là thuần văn bản chuẩn mực, không có bất kỳ thẻ ảnh nào.`;
 
-    const webSystemPrompt = `BẠN LÀ TỔNG THƯ KÝ TÒA SOẠN CỦA CÔNG ĐOÀN ĐẠI HỌC THỦ DẦU MỘT (TDMU).
-BẠN LÀ CHUYÊN GIA BÁO CHÍ CHÍNH LUẬN VỚI PHONG CÁCH VIẾT BÁO HIỆN ĐẠI, MẠCH LẠC, TRANG TRỌNG VÀ GIÀU TÍNH NHÂN VĂN.
+    const webSystemPrompt = `BẠN LÀ CÁN BỘ BIÊN TẬP TIN BÀI CỦA CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT (TDMU).
+BẠN ĐƯỢC HUẤN LUYỆN CHUYÊN SÂU THEO BỘ QUY CHUẨN VÀ PHONG CÁCH BÁO CHÍ TRUYỀN THỐNG CỦA CÁC THẦY CÔ VÀ CÁN BỘ CÔNG ĐOÀN TDMU.
 
 NHIỆM VỤ: Phân tích kỹ lưỡng toàn bộ hồ sơ tư liệu thực tế (Word, Excel, Slide PPTX, Scan...) và viết một bài báo hoàn chỉnh, sâu sắc, trọn vẹn bố cục cho Website Công Đoàn TDMU.
 
-BỐ CỤC CHUẨN MỰC BÁO CHÍ CHUYÊN NGHIỆP:
-1. TIÊU ĐỀ BÀI BÁO (HEADLINE): Mở đầu bằng <h1 class="article-title">Tiêu đề bài báo thời sự lôi cuốn, phản ánh đúng trọng tâm và quy mô sự kiện từ tài liệu</h1>
-2. LỜI DẪN NHẬP / SAPO (LEAD 5W1H): Đoạn dẫn nhập đĩnh đạc, hấp dẫn đặt trong <p class="sapo"><strong>Tóm lược sắc nét 5W1H (Thời gian, địa điểm, sự kiện chính, thành phần tham dự và mục tiêu trọng tâm)...</strong></p>
-3. VỊ TRÍ ĐẶT ẢNH TƯ LIỆU: Ảnh hiện trường được đặt sau đoạn dẫn mở đầu hoặc xen kẽ giữa các phần thân bài <h2> tương ứng với không khí hoạt động (tuyệt đối không đặt ảnh chơ vơ ở đầu trang trước tiêu đề).
-4. THÂN BÀI CHUYÊN SÂU: Triển khai các tiêu mục bằng thẻ <h2> với văn xuôi mạch lạc, phân tích thấu đáo các nội dung, báo cáo chuyên đề và ý kiến đại biểu (không dùng lối đặt tên khô khan "Phần 1", "Phần 2"). Tự động trích xuất các số liệu thực tế từ bảng tính Excel (kinh phí, số lượng tham gia...) để trình bày dạng bảng HTML <table> hoặc lồng ghép tinh tế vào văn cảnh.
-5. VĂN PHONG VÀ TRÍCH DẪN TỰ NHIÊN:
-   - Viết văn xuôi chính luận truyền cảm hứng, khúc chiết, lan tỏa tinh thần chăm lo và phát triển bền vững của Công đoàn Nhà trường.
-   - TUYỆT ĐỐI KHÔNG tạo trích dẫn cứng nhắc, không khuôn mẫu gò bó. Không ép buộc thẻ <blockquote> rập khuôn nếu không có phát biểu trực tiếp thực tế trong tài liệu. Mọi ý kiến chỉ đạo, tâm tư nguyện vọng hãy được hòa quyện tự nhiên, mượt mà trong dòng văn bản.
-6. KẾT LUẬN / ĐỊNH HƯỚNG HÀNH ĐỘNG: Đúc kết ý nghĩa và phương hướng triển khai thời gian tới một cách đĩnh đạc, thể hiện quyết tâm của toàn thể đoàn viên.
+NGUYÊN TẮC BẢO ĐẢM TÍNH XÁC THỰC - CHỐNG BỊA ĐẶT DỮ LIỆU (ANTI-HALLUCINATION GUARDRAILS):
+1. BÁM SÁT 100% TƯ LIỆU NGUỒN: Mọi thông tin về thời gian, địa điểm, sự kiện, nội dung chuyên đề, thành phần tham gia PHẢI lấy từ tư liệu thực tế. Tuyệt đối KHÔNG tự sáng tác sự kiện không có thật.
+2. KHÔNG BỊA TÊN ĐẠI BIỂU / NGƯỜI PHÁT BIỂU: Chỉ trích dẫn tên, học hàm, học vị (PGS.TS., TS., ThS., Đ/c) của các thầy cô, lãnh đạo nếu tài liệu có ghi rõ. Nếu trong tài liệu không ghi tên người phát biểu, chỉ ghi: "Đại diện Ban Thường vụ Công đoàn Trường" hoặc "Đại diện Ban Tổ chức".
+3. KHÔNG BỊA ĐẶT SỐ LIỆU TÀI CHÍNH / KINH PHÍ: Nếu tài liệu có bảng Excel dự toán hoặc quyết toán kinh phí, hãy lấy đúng số tiền, số lượng, định mức. Nếu tài liệu không đề cập kinh phí, tuyệt đối KHÔNG tự chế ra các con số tiền bạc ảo.
 
-QUY CÁCH KỸ THUẬT VÀ QUY MÔ BÀI BÁO (QUY ĐỊNH BẮT BUỘC):
-- ĐỘ DÀI VÀ QUY MÔ BÀI VIẾT (BẮT BUỘC): BÀI BÁO PHẢI ĐẠT ĐỘ DÀI TỪ 1.000 ĐẾN 1.500 TỪ. TUYỆT ĐỐI KHÔNG ĐƯỢC VIẾT TÓM TẮT NGẮN NỔN. Phải phân tích thấu đáo từng chuyên đề khoa học, từng luận điểm từ slide thuyết trình, từng khoản mục kinh phí từ Excel và bối cảnh thực tiễn của công đoàn để phát triển thành nhiều đoạn văn phong phú, lập luận chặt chẽ.
+BỐ CỤC BÁO CHÍ LINH HOẠT - CHỐNG KHUÔN MẪU RẬP KHUÔN:
+1. TIÊU ĐỀ BÀI BÁO (HEADLINE): Mở đầu bằng <h1 class="article-title">Tiêu đề bài báo thời sự sắc sảo, tự nhiên, phản ánh đúng linh hồn và kết quả nổi bật của sự kiện</h1>
+2. ĐOẠN DẪN NHẬP / SAPO (LEAD 5W1H): Đặt trong <p class="sapo"><strong>Tóm lược cô đọng (2-3 câu) mốc thời gian, địa điểm, chủ thể Công đoàn TDMU và thông điệp cốt lõi nhất theo nguyên tắc 5W1H, dẫn dắt độc giả bước vào bài viết.</strong></p>
+3. VỊ TRÍ ĐẶT ẢNH TƯ LIỆU: Ảnh hiện trường được chèn tự nhiên sau đoạn dẫn Sapo hoặc xen kẽ giữa các phần thân bài <h2> phù hợp nhất với ngữ cảnh hoạt động.
+4. THÂN BÀI SINH ĐỘNG THEO TỪNG THỂ LOẠI SỰ KIỆN (TUYỆT ĐỐI KHÔNG DÙNG KHUÔN MẪU 3 PHẦN CỐ ĐỊNH):
+   - NẾU LÀ HỘI THAO / GIẢI ĐẤU: Khắc họa bức tranh toàn cảnh không khí rộn ràng, tinh thần thể thao trung thực cao thượng của các đội bóng liên quân, diễn biến nghẹt thở của các trận tranh tài, loạt trận chung kết kịch tính và khoảnh khắc vinh danh nâng cúp, trao huy chương.
+   - NẾU LÀ ĐẠI HỘI / HỘI NGHỊ: Tập trung phân tích các dấu ấn nhiệm kỳ, phương hướng chỉ tiêu mới, kết quả bầu cử Ban Chấp hành, sự tín nhiệm của đoàn viên và phát biểu chỉ đạo của lãnh đạo Nhà trường.
+   - NẾU LÀ TỌA ĐÀM / CHUYÊN ĐỀ: Đi sâu vào các thông điệp tri thức, giá trị thực tiễn từ chuyên gia và sự chia sẻ cởi mở giữa các cán bộ, giảng viên.
+   - NẾU LÀ CHĂM LO / AN SINH / TẾT SUM VẦY: Viết bằng cảm xúc ấm áp, chân thành, làm nổi bật sự quan tâm thiết thực, số lượng quà tặng và sự gắn bó nghĩa tình dưới mái nhà chung TDMU.
+   - CÁC TIÊU ĐỀ MỤC <h2>: Phải đặt tên sáng tạo, gợi mở, bám sát diễn biến thực tế, TUYỆT ĐỐI CẤM các tiêu đề sáo mòn chung chung như "Gắn kết tình thân...", "Ý nghĩa lan tỏa...", "Nâng cao chất lượng...".
+5. BẢNG BIỂU & SỐ LIỆU:
+   - Nếu có số liệu từ bảng tính Excel (lịch thi đấu, tỷ số các trận, danh sách xếp hạng giải thưởng, dự toán kinh phí...), hãy trình bày dưới dạng bảng HTML <table> trang nhã, sắc nét hoặc lồng ghép tinh tế vào văn cảnh.
+6. KẾT LUẬN & KÝ TÊN XUẤT BẢN:
+   - Kết bài đúc kết súc tích, tự nhiên (không giáo điều, không đao to búa lớn).
+   - Ở DÒNG CUỐI CÙNG CĂN PHẢI:
+     <div style="text-align: right; margin-top: 24px;"><p><strong>Ban Biên Tập Tin Bài — CĐ TDMU</strong></p></div>
+
+QUY CÁCH KỸ THUẬT VÀ DUNG LƯỢNG BÀI VIẾT (LINH HOẠT & CHÂN THỰC):
+- DUNG LƯỢNG TỰ NHIÊN THEO TÀI LIỆU NGUỒN: Độ dài bài viết phải tương xứng với nội dung thực tế của hồ sơ đính kèm. Nếu tài liệu là thông báo ngắn, lịch thi đấu hoặc bảng dự toán đơn giản, hãy viết súc tích, rõ ràng (350 - 600 từ), tránh bôi chữ hay lan man. Nếu tài liệu là báo cáo tổng kết, tham luận chuyên đề nhiều trang, hãy phân tích sâu sắc, đầy đủ. TUYỆT ĐỐI KHÔNG tự sáng tác thêm tình tiết hay phát biểu giả mạo chỉ để kéo dài bài viết.
+- ƯU TIÊN VĂN XUÔI BÁO CHÍ LÀM CHỦ ĐẠO: Toàn bộ bài báo phải được triển khai bằng các đoạn văn xuôi <p> hoàn chỉnh, liên kết mượt mà, diễn đạt trôi chảy và sâu sắc theo đúng ngôn ngữ báo chí chính thống. Tuyệt đối KHÔNG lạm dụng gạch đầu dòng biến bài viết thành bản tóm tắt cộc lốc hay slide trình chiếu.
+- DANH SÁCH & BẢNG BIỂU CHỈ DÙNG TRONG TRƯỜNG HỢP BẤT KHẢ KHÁNG: Chỉ sử dụng thẻ <ul><li> hoặc bảng <table> khi đối mặt với dữ liệu đặc thù bắt buộc phải tra cứu trực quan mà không thể văn xuôi hóa tự nhiên (ví dụ: bảng kết quả trao giải Nhất - Nhì - Ba gồm nhiều đội thi, bảng dự toán/quyết toán nhiều dòng cột từ Excel, hoặc danh mục hồ sơ bắt buộc). Mọi thông tin thông thường khác đều phải được văn xuôi hóa uyển chuyển.
+- BẢO TỒN NỘI DUNG THIẾT YẾU CỦA SỰ KIỆN: Những thông tin cốt lõi mà người đọc quan tâm (thời gian, địa điểm, thể lệ, danh sách khen thưởng, đối tượng thụ hưởng, thời hạn chót, đầu mối liên hệ...) PHẢI ĐƯỢC GIỮ TRỌN VẸN VÀ NÊU BẬT, không được cắt bỏ vì khuôn mẫu.
+- NGÔN TỪ TỰ NHIÊN, KHÔNG SÁO RỖNG & TRIỆT TIÊU AI SLOP: Dùng từ ngữ phong phú, tự nhiên, đúng tính chất sự kiện. TUYỆT ĐỐI CẤM CÁC MẪU CÂU AI SLOP KINH ĐIỂN:
+  + CẤM mở đầu bài/đoạn bằng: "Trong không khí trang trọng...", "Trong không khí hân hoan...", "Hòa chung không khí..."
+  + CẤM các câu sáo mòn chuyển đoạn: "Không chỉ dừng lại ở đó...", "Có thể nói rằng...", "Có thể khẳng định rằng...", "Là minh chứng rõ nét cho...", "Hứa hẹn sẽ mang lại..."
+  + CẤM các kết luận máy móc: "Tóm lại...", "Nhìn chung...", "Bước tiến vượt bậc...", "Đánh dấu bước ngoặt quan trọng..."
+  + TUYỆT ĐỐI KHÔNG xưng hô kiểu trợ lý máy tính ("Dưới đây là bài viết...", "Tôi đã viết xong..."). Trả về trực tiếp 100% mã HTML bài báo.
 - Trả về HTML RAW chuẩn mực (không bọc trong khối mã markdown \`\`\`html).
-- TUYỆT ĐỐI KHÔNG SỬ DỤNG GẠCH ĐẦU DÒNG HOẶC BULLET (•, -, *, hoặc <ul><li>). Mọi luận điểm, số liệu phải được diễn giải thành các đoạn văn <p> hoàn chỉnh, chuẩn văn phong báo chí.
 ${imageInstruction}
 - ĐẢM BẢO CHÍNH TẢ VÀ BẢNG MÃ TIẾNG VIỆT: Sử dụng 100% tiếng Việt chuẩn Unicode dựng sẵn (NFC).
-- BÁM SÁT DỮ LIỆU THỰC TẾ TRONG HỒ SƠ TƯ LIỆU, không bịa đặt số liệu hoặc thông tin sai lệch.
 
 TƯ LIỆU THỰC TẾ:
 ${sourceBlock}`;
 
     let webContent = '';
-    const webStream = await ai.models.generateContentStream({
-      model: 'gemini-flash-lite-latest',
-      contents: webSystemPrompt
-    });
+    let streamSuccess = false;
 
-    for await (const chunk of webStream) {
-      if (chunk.text) {
-        let textChunk = chunk.text.replace(/```html|```/g, '');
-        textChunk = fixVietnameseFont(textChunk);
-        webContent += textChunk;
-        res.write('data: ' + JSON.stringify({ step: 'web_chunk', chunk: textChunk }) + '\n\n');
+    // 1. THỬ STREAM QUA GOOGLE GEMINI NẾU CÓ KEY
+    if (activeKey) {
+      try {
+        console.log('[AutoPilot]: Attempting Gemini Stream...');
+        const ai = new GoogleGenAI({ apiKey: activeKey });
+        const webStream = await ai.models.generateContentStream({
+          model: 'gemini-flash-lite-latest',
+          contents: webSystemPrompt
+        });
+
+        for await (const chunk of webStream) {
+          if (chunk.text) {
+            let textChunk = chunk.text.replace(/```html|```/g, '');
+            textChunk = fixVietnameseFont(textChunk);
+            webContent += textChunk;
+            res.write('data: ' + JSON.stringify({ step: 'web_chunk', chunk: textChunk }) + '\n\n');
+          }
+        }
+
+        if (webContent.trim().length > 50) {
+          streamSuccess = true;
+          console.log(`[AutoPilot Gemini Stream Success: ${webContent.length} chars]`);
+        }
+      } catch (geminiErr) {
+        console.warn('[AutoPilot Gemini 429/Quota Warning]:', geminiErr.message, '-> Kích hoạt Groq Neural LLM Engine...');
+        webContent = '';
       }
+    }
+
+    // 2. NẾU GEMINI BỊ 429 HOẶC KHÔNG CÓ KEY: STREAM QUA GROQ NEURAL LLM (OPENAI/GPT-OSS-120B HOẶC QWEN 27B)
+    if (!streamSuccess && activeGroq) {
+      res.write('data: ' + JSON.stringify({ step: 'status', message: '⚡ Đang phân tích hồ sơ tư liệu và tổng hợp bài viết chuẩn phong cách Công đoàn TDMU...' }) + '\n\n');
+
+      const groqModels = ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b'];
+      for (const gModel of groqModels) {
+        try {
+          console.log(`[AutoPilot Groq Stream Attempt]: Model=${gModel}...`);
+          const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${activeGroq}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: gModel,
+              messages: [
+                { role: 'system', content: webSystemPrompt },
+                { role: 'user', content: 'Hãy đọc kỹ hồ sơ tư liệu đã cung cấp và trực tiếp chấp bút bài báo HTML hoàn chỉnh cho Website Công đoàn TDMU.' }
+              ],
+              stream: true,
+              temperature: 0.6,
+              max_tokens: 3500
+            })
+          });
+
+          if (!groqRes.ok) {
+            const errTxt = await groqRes.text();
+            console.warn(`[Groq ${gModel} Error ${groqRes.status}]:`, errTxt.slice(0, 200));
+            continue;
+          }
+
+          const reader = groqRes.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (trimmed.startsWith('data: ') && trimmed !== 'data: [DONE]') {
+                try {
+                  const j = JSON.parse(trimmed.slice(6));
+                  const delta = j.choices?.[0]?.delta?.content || '';
+                  if (delta) {
+                    const cleanDelta = delta.replace(/```html|```/g, '');
+                    webContent += cleanDelta;
+                    res.write('data: ' + JSON.stringify({ step: 'web_chunk', chunk: cleanDelta }) + '\n\n');
+                  }
+                } catch (pe) {}
+              }
+            }
+          }
+
+          if (webContent.trim().length > 50) {
+            streamSuccess = true;
+            console.log(`[AutoPilot Groq Stream Success with ${gModel}: ${webContent.length} chars]`);
+            break;
+          }
+        } catch (gErr) {
+          console.warn(`[Groq Model ${gModel} Failed]:`, gErr.message);
+        }
+      }
+    }
+
+    if (!streamSuccess || webContent.trim().length < 50) {
+      throw new Error('Cả hai mô hình AI (Google Gemini và Groq) đều không phản hồi hoặc bị quá tải. Vui lòng kiểm tra lại API Key trong phần Cài đặt.');
     }
 
     // Clean and normalize final webContent
@@ -2570,19 +2711,18 @@ ${sourceBlock}`;
 
     res.write('data: ' + JSON.stringify({ step: 'web_done' }) + '\n\n');
 
-    // ── STEP 2: Facebook + Zalo + Video Script in parallel ───────────────────
-    res.write('data: ' + JSON.stringify({ step: 'status', message: 'Bước 2/3: Đang chuyển thể sang Fanpage Facebook, Zalo OA & Kịch bản Video...' }) + '\n\n');
+    // ── STEP 2: Facebook + Zalo + Video Script via Real AI ───────────────────
+    res.write('data: ' + JSON.stringify({ step: 'status', message: 'Bước 2/3: AI đang chuyển thể sang Fanpage Facebook, Zalo OA & Kịch bản Video...' }) + '\n\n');
 
     const cleanPlainText = webContent.replace(/<[^>]*>/g, ' ').slice(0, 2500);
 
-    let facebookContent = synth.fbCaption;
-    let zaloContent = synth.zaloMessage;
-    let videoContent = "Kịch bản video 60s: [Cảnh 1: Hội trường TDMU trang trọng - Lời bình: Chào mừng quý đại biểu tham dự hoạt động Công đoàn] [Cảnh 2: Thảo luận sôi nổi - Lời bình: Phát huy trí tuệ đoàn viên] [Cảnh 3: Kết thúc - Lời bình: Đồng hành và phát triển bền vững].";
+    let facebookContent = '';
+    let zaloContent = '';
+    let videoContent = '';
 
-    try {
-      const socialPrompt = `Dựa vào bài báo sau đây, hãy tạo nội dung cho 3 kênh truyền thông. Bắt buộc trả về đúng định dạng JSON:
+    const socialPrompt = `Dựa vào bài báo sau đây, hãy tạo nội dung cho 3 kênh truyền thông. Bắt buộc trả về đúng định dạng JSON:
 {
-  "facebook": "Bài đăng Facebook Fanpage 150-250 từ, 3 dòng đầu thu hút, icon lịch sự, hashtag #CongDoanTDMU #TDMU2026 #${genreName.replace(/\s+/g, '')}",
+  "facebook": "Bài đăng Facebook Fanpage 150-250 từ, 3 dòng đầu thu hút, icon lịch sự, hashtag #CongDoanTDMU #TDMU2026 #${genreName.replace(/\\s+/g, '')}",
   "zalo": "Tin nhắn Zalo OA ngắn gọn dưới 90 từ, thông tin cô đọng, trang trọng",
   "video": "Kịch bản video 60s gồm 3 phân cảnh có [Hình ảnh] và [Lời bình]"
 }
@@ -2590,17 +2730,34 @@ ${sourceBlock}`;
 BÀI BÁO GỐC:
 ${cleanPlainText}`;
 
-      const socialRes = await ai.models.generateContent({
-        model: 'gemini-flash-lite-latest',
-        contents: socialPrompt,
-        config: { responseMimeType: 'application/json' }
-      });
-      const parsed = JSON.parse(socialRes.text);
-      if (parsed.facebook) facebookContent = fixVietnameseFont(parsed.facebook);
-      if (parsed.zalo) zaloContent = fixVietnameseFont(parsed.zalo);
-      if (parsed.video) videoContent = fixVietnameseFont(parsed.video);
-    } catch (e) {
-      console.warn('[Social generation fallback to local synth]:', e.message?.slice(0, 100));
+    let socialParsed = null;
+    if (activeKey) {
+      try {
+        const ai = new GoogleGenAI({ apiKey: activeKey });
+        const socialRes = await ai.models.generateContent({
+          model: 'gemini-flash-lite-latest',
+          contents: socialPrompt,
+          config: { responseMimeType: 'application/json' }
+        });
+        socialParsed = JSON.parse(socialRes.text);
+      } catch (e) {
+        console.warn('[Social Gemini Notice]:', e.message);
+      }
+    }
+
+    if (!socialParsed && activeGroq) {
+      try {
+        const groqSocial = await callGroqAPI(socialPrompt, 'Bạn là chuyên viên truyền thông đa kênh Công đoàn TDMU.', activeGroq, { requireJson: true });
+        socialParsed = extractJsonFromText(groqSocial);
+      } catch (ge) {
+        console.warn('[Social Groq Notice]:', ge.message);
+      }
+    }
+
+    if (socialParsed) {
+      facebookContent = fixVietnameseFont(socialParsed.facebook || '');
+      zaloContent = fixVietnameseFont(socialParsed.zalo || '');
+      videoContent = fixVietnameseFont(socialParsed.video || '');
     }
 
     res.write('data: ' + JSON.stringify({
@@ -2622,7 +2779,7 @@ ${cleanPlainText}`;
     res.write('data: ' + JSON.stringify({ step: 'status', message: 'Bước 3/3: Đang lưu bài vào hệ thống...' }) + '\n\n');
 
     const titleMatch = webContent.match(/<h1[^>]*>(.*?)<\/h1>/i);
-    const sapoMatch = webContent.match(/<p class="sapo"[^>]*>.*?<strong>(.*?)<\/strong>/i);
+    const sapoMatch = webContent.match(/<p class="sapo"[^>]*>.*?<strong>(.*?)<\/strong>/i) || webContent.match(/<p class="sapo"[^>]*>(.*?)<\/p>/i);
     const extractedTitle = fixVietnameseFont(titleMatch ? titleMatch[1].replace(/<[^>]*>/g, '').trim() : (userPrompt ? userPrompt.slice(0, 100) : 'Bài Báo Mới'));
     const extractedSummary = fixVietnameseFont(sapoMatch ? sapoMatch[1].replace(/<[^>]*>/g, '').trim() : webContent.replace(/<[^>]*>/g, '').slice(0, 200));
 
@@ -2639,11 +2796,11 @@ ${cleanPlainText}`;
       summary: extractedSummary,
       content: cleanWebContent,
       image: featuredPhoto ? featuredPhoto.url : 'images/banner.jpg',
-      author: 'Auto-Pilot AI',
+      author: 'Ban Biên tập Công đoàn TDMU',
       authorId: 1,
       status: 'draft',
-      statusName: 'Bản Nháp (Auto-Pilot)',
-      isAiGenerated: true,
+      statusName: 'Bản Nháp',
+      isAiGenerated: false,
       aiPrompt: userPrompt || '',
       genre: genre || 'tin_hoat_dong',
       packageData: {
@@ -2662,15 +2819,18 @@ ${cleanPlainText}`;
       title: extractedTitle,
       summary: extractedSummary,
       webContent: cleanWebContent,
-      message: 'Hoàn tất! Bài báo đã được tạo và lưu vào hệ thống.'
+      message: 'Hoàn tất! Bài báo đã được AI sáng tác và lưu vào hệ thống.'
     }) + '\n\n');
 
     res.end();
 
   } catch (err) {
-    console.warn('[AutoPilot Gemini Warning]:', err.message, '-> Seamlessly falling back to Local Synthesis');
-    const synth = synthesizeLocalJournalism({ userPrompt, filesInfo, photos: cleanPhotos, genre, sourceText });
-    return streamSynthesisToClient(res, synth, cleanPhotos, userPrompt, genre, genreName);
+    console.error('[AutoPilot Fatal Error]:', err.message);
+    res.write('data: ' + JSON.stringify({
+      step: 'error',
+      error: 'Lỗi xử lý AI: ' + err.message
+    }) + '\n\n');
+    res.end();
   }
 });
 
