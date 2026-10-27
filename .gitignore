@@ -5,12 +5,16 @@ vendor/
 *.log
 ~$*
 backups/
+data/
 
 # Project documentation & presentations (kept in local archive)
 docs/
 
-# Startup batch scripts
+# Startup scripts
 *.bat
+*.cmd
+*.ps1
+*.sh
 
 # Developer / test / scratch scripts
 server/scripts/
