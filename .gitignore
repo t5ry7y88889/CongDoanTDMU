@@ -1,17 +1,27 @@
 node_modules/
 vendor/
 .env
-database/migrations_backup_old/
-database/*.sqlite
-database/*.sqlite-journal
-backups/
-storage/logs/*.log
-storage/framework/cache/data/*
-storage/framework/sessions/*
-storage/framework/views/*
-bootstrap/cache/*.php
+.env.local
 *.log
 ~$*
+backups/
+
+# Project documentation & presentations (kept in local archive)
+docs/
+
+# Startup batch scripts
+*.bat
+
+# Developer / test / scratch scripts
+server/scripts/
+test*.py
+*.tmp
+*.zip
+screenshots*/
+demo_*.png
+admin_*.png
+tintuc_*.png
+feedback_*.png
 
 # Dynamic user uploads & extracted media caches
 public/uploads/pdf_*
@@ -26,7 +36,6 @@ frontend/public/uploads/studio_photo_*
 # Exported documents & scratch
 public/exports/
 scratch/
-admin_*.png
 *.backup.*
 *.ckeditor_v4.*
 
@@ -37,7 +46,8 @@ server/models/*.tmp
 # Large raw event photos and assets
 Ho_So_Bai_Viet_Tieu_Chuan/
 public/Ho_So_Bai_Viet_Tieu_Chuan/
-docs/~*
-*.tmp
 API Key.json
-*.zip
+dist/
+build/
+.vscode/
+.idea/
