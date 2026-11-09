@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 const defaultCadres = [
-  { id: 1, name: 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/images/Picture1.jpg', title: 'Chủ tịch Công đoàn Trường', degree: 'Tiến sĩ Quản lý', unit: 'Phòng Quản lý Khoa học', email: 'congdoan@tdmu.edu.vn', duties: 'Phụ trách chung công tác Công đoàn, trực tiếp chỉ đạo kế hoạch hoạt động, tài chính và quan hệ đối ngoại.', tag: 'tag-president', tagText: 'Chủ tịch' },
+  { id: 1, name: 'TS. Lê Thị Kim Út', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/images/Picture1.jpg', title: 'Chủ tịch Công đoàn Trường', degree: 'Tiến sĩ Quản lý', unit: 'Phòng Quản lý Khoa học', email: 'congdoan@tdmu.edu.vn', duties: 'Phụ trách chung công tác Công đoàn, trực tiếp chỉ đạo kế hoạch hoạt động, tài chính và quan hệ đối ngoại.', tag: 'tag-president', tagText: 'Chủ tịch' },
   { id: 2, name: 'ThS. Nguyễn Minh Danh', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Danh.jpg', title: 'Phó Chủ tịch Công đoàn, Chủ nhiệm UBKT', degree: 'Thạc sĩ', unit: 'Công đoàn Trường TDMU', email: 'danhnm@tdmu.edu.vn', duties: 'Chỉ đạo công tác kiểm tra giám sát, bảo vệ quyền và lợi ích hợp pháp chính đáng của người lao động.', tag: 'tag-vice-president', tagText: 'Phó Chủ tịch' },
   { id: 3, name: 'ThS. Phan Nguyễn Quỳnh Anh', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Anh.jpg', title: 'Phó Chủ tịch Công đoàn Trường', degree: 'Thạc sĩ', unit: 'Công đoàn Trường TDMU', email: 'anhpnq@tdmu.edu.vn', duties: 'Chỉ đạo công tác Nữ công, phong trào thi đua và chăm lo đời sống vật chất tinh thần đoàn viên.', tag: 'tag-vice-president', tagText: 'Phó Chủ tịch' },
   { id: 4, name: 'Lê Nguyễn Xuân Lan', photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Lan.jpg', title: 'Ủy viên Ban Chấp hành', degree: 'Thạc sĩ', unit: 'Khoa Sư phạm', email: 'lanlnx@tdmu.edu.vn', duties: 'Phụ trách công tác chuyên môn khối Sư phạm, phát động các phong trào hội thi giáo viên dạy giỏi.', tag: 'tag-executive', tagText: 'Ủy viên BCH' },
@@ -25,10 +25,10 @@ const CoCauToChuc = () => {
   const [activeTab, setActiveTab] = useState(tabParam || 'ban-thuong-vu');
   const [selectedCadre, setSelectedCadre] = useState(null);
   const [units, setUnits] = useState([]);
-  const [bchMembers, setBchMembers] = useState(defaultCadres);
-  const [btvMembers, setBtvMembers] = useState(defaultCadres.slice(0, 3));
-  const [ubktMembers, setUbktMembers] = useState(defaultCadres.slice(1, 4));
-  const [stats, setStats] = useState({ total_members: 760, total_units: 16, total_boards: 5, total_cadres: 13 });
+  const [bchMembers, setBchMembers] = useState([]);
+  const [btvMembers, setBtvMembers] = useState([]);
+  const [ubktMembers, setUbktMembers] = useState([]);
+  const [stats, setStats] = useState({ total_members: 0, total_units: 0, total_boards: 0, total_cadres: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

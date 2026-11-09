@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hồ Sơ Cá Nhân & Quản Lý Tài Khoản - Công Đoàn ĐH Thủ Dầu Một</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/portal.css?v=20261106">
+  <style>
+    :root {
+      --tdmu-blue: #002855;
+      --tdmu-blue-light: #004080;
+      --tdmu-accent: #f59e0b;
+    }
+    body {
+      background-color: #f1f5f9;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+    .profile-card {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+    }
+    .profile-header-cover {
+      height: 120px;
+      background: linear-gradient(135deg, #002855, #004080);
+      position: relative;
+    }
+    .profile-avatar-wrap {
+      position: relative;
+      margin-top: -60px;
+      display: inline-block;
+    }
+    .profile-avatar {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      border: 4px solid #ffffff;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      background: #ffffff;
+    }
+    .avatar-edit-badge {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      background: var(--tdmu-accent);
+      color: #000;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      border: 2px solid #ffffff;
+    }
+    .profile-nav-pills .nav-link {
+      color: #475569;
+      font-weight: 600;
+      font-size: 14.5px;
+      padding: 12px 18px;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .profile-nav-pills .nav-link:hover {
+      background: #f8fafc;
+      color: var(--tdmu-blue);
+    }
+    .profile-nav-pills .nav-link.active {
+      background: var(--tdmu-blue);
+      color: #ffffff;
+    }
+    .stat-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+    .stat-box:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .badge-role-admin { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .badge-role-editor { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
+    .badge-role-contributor { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .badge-role-member { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Brand Header -->
+  <header class="top-brand-header">
+    <div class="container d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-3">
+        <a href="index.html" class="d-flex align-items-center text-decoration-none">
+          <img src="images/logo_cong_doan.png" alt="Logo Công Đoàn TDMU" style="height: 58px; width: auto; object-fit: contain;">
+        </a>
+        <div>
+          <h1 class="brand-title-main">CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h1>
+          <span class="brand-sub-main">THU DAU MOT UNIVERSITY TRADE UNION</span>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge-hotline d-none d-md-inline-flex">
+          <i class="fa-solid fa-phone me-1 text-warning"></i> Hotline: (0274) 3.815.184
+        </span>
+        <a href="admin.html" id="btnAdminAccessTop" class="btn-portal-access d-none">
+          <i class="fa-solid fa-sliders me-1 text-warning"></i> Quản lý website truyền thông
+        </a>
+        <button class="btn btn-sm btn-outline-danger ms-2" onclick="handleLogout()">
+          <i class="fa-solid fa-arrow-right-from-bracket me-1"></i> Đăng xuất
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Official Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-tdmu sticky-top">
+    <div class="container">
+      <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse" data-bs-target="#tdmuNavbar">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="collapse navbar-collapse" id="tdmuNavbar">
+        <ul class="navbar-nav mx-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Trang Chủ</a></li>
+          <li class="nav-item"><a class="nav-link" href="gioi-thieu.html">Giới Thiệu</a></li>
+          <li class="nav-item"><a class="nav-link" href="co-cau-to-chuc.html">Cơ Cấu Tổ Chức</a></li>
+          <li class="nav-item"><a class="nav-link" href="tin-tuc.html">Tin Tức</a></li>
+          <li class="nav-item"><a class="nav-link" href="phuc-loi-doan-vien.html">Phúc Lợi Đoàn Viên</a></li>
+          <li class="nav-item"><a class="nav-link" href="van-ban.html">Văn Bản</a></li>
+          <li class="nav-item"><a class="nav-link" href="bieu-mau.html">Biểu Mẫu</a></li>
+          <li class="nav-item"><a class="nav-link" href="lien-he.html">Liên Hệ</a></li>
+        </ul>
+        <div class="d-flex align-items-center gap-2">
+          <a href="ho-so.html" class="btn btn-warning btn-sm fw-bold text-dark px-3 rounded-pill">
+            <i class="fa-solid fa-user-check me-1"></i> Hồ Sơ Của Tôi
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Profile Container -->
+  <main class="container my-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb" style="font-size: 13.5px;">
+        <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none text-muted"><i class="fa-solid fa-house me-1"></i> Trang chủ</a></li>
+        <li class="breadcrumb-item"><span class="text-muted">Cổng đoàn viên</span></li>
+        <li class="breadcrumb-item active text-primary fw-bold" aria-current="page">Hồ sơ cá nhân & Quản lý hoạt động</li>
+      </ol>
+    </nav>
+
+    <!-- Global Toast / Alert -->
+    <div id="profileAlert" class="alert d-none mb-3 py-2 px-3 small shadow-sm" role="alert"></div>
+
+    <div class="row g-4">
+      <!-- ================= LEFT COLUMN: PROFILE CARD ================= -->
+      <div class="col-lg-4">
+        <div class="profile-card text-center pb-4 mb-4">
+          <div class="profile-header-cover"></div>
+          <div class="profile-avatar-wrap">
+            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200" alt="Avatar" id="userAvatar" class="profile-avatar">
+            <div class="avatar-edit-badge" title="Thay đổi ảnh đại diện" onclick="showAvatarPickerModal()">
+              <i class="fa-solid fa-camera fa-xs"></i>
+            </div>
+          </div>
+
+          <h5 class="fw-bold mt-3 mb-1 text-dark" id="userFullName">Đang tải thông tin...</h5>
+          <div class="mb-2">
+            <span class="badge px-3 py-1 rounded-pill fw-semibold" id="userRoleBadge" style="font-size: 12px;">
+              Đoàn Viên
+            </span>
+          </div>
+
+          <p class="text-muted small px-3 mb-3" id="userPositionUnit">
+            <i class="fa-solid fa-sitemap me-1 text-primary"></i> <span id="userUnit">Đại học Thủ Dầu Một</span>
+          </p>
+
+          <div class="px-4 text-start small border-top pt-3 text-muted">
+            <div class="d-flex justify-content-between py-1 border-bottom">
+              <span><i class="fa-solid fa-id-card me-1 text-secondary"></i> Số thẻ đoàn viên:</span>
+              <strong class="text-dark" id="userCardCode">DV-TDMU-001</strong>
+            </div>
+            <div class="d-flex justify-content-between py-1 border-bottom">
+              <span><i class="fa-solid fa-envelope me-1 text-secondary"></i> Email:</span>
+              <strong class="text-dark" id="userEmail">user@tdmu.edu.vn</strong>
+            </div>
+            <div class="d-flex justify-content-between py-1 border-bottom">
+              <span><i class="fa-solid fa-phone me-1 text-secondary"></i> Điện thoại:</span>
+              <strong class="text-dark" id="userPhone">Chưa cập nhật</strong>
+            </div>
+            <div class="d-flex justify-content-between py-1">
+              <span><i class="fa-solid fa-calendar-check me-1 text-secondary"></i> Ngày tham gia:</span>
+              <strong class="text-dark" id="userCreatedAt">01/09/2026</strong>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="px-4 mt-3 d-grid gap-2">
+            <a href="admin.html" id="btnGoStudio" class="btn btn-outline-primary btn-sm rounded-pill fw-semibold d-none">
+              <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Mở Phòng Biên Tập AI Studio
+            </a>
+            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill fw-semibold" onclick="handleLogout()">
+              <i class="fa-solid fa-arrow-right-from-bracket me-1"></i> Đăng Xuất Tài Khoản
+            </button>
+          </div>
+        </div>
+
+        <!-- Activity Overview Quick Stats -->
+        <div class="profile-card p-3">
+          <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-chart-pie me-2 text-primary"></i>Tổng quan hoạt động</h6>
+          <div class="row g-2">
+            <div class="col-6">
+              <div class="stat-box">
+                <div class="fs-4 fw-bold text-primary" id="statBookmarksCount">0</div>
+                <div class="text-muted" style="font-size: 11.5px;">Bài viết đã lưu</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="stat-box">
+                <div class="fs-4 fw-bold text-success" id="statFeedbackCount">0</div>
+                <div class="text-muted" style="font-size: 11.5px;">Góp ý & Phản ánh</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="stat-box">
+                <div class="fs-4 fw-bold text-warning" id="statAidCount">0</div>
+                <div class="text-muted" style="font-size: 11.5px;">Đơn trợ cấp / Chăm lo</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="stat-box">
+                <div class="fs-4 fw-bold text-info" id="statArticlesCount">0</div>
+                <div class="text-muted" style="font-size: 11.5px;">Bài viết đóng góp</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= RIGHT COLUMN: INTERACTIVE TABS ================= -->
+      <div class="col-lg-8">
+        <div class="profile-card p-4">
+
+          <!-- Nav Pills for Tabs -->
+          <ul class="nav nav-pills profile-nav-pills border-bottom pb-3 mb-4 flex-wrap" id="profileTab" role="tablist">
+            <li class="nav-item">
+              <button class="nav-link active" id="tab-info-btn" data-bs-toggle="pill" data-bs-target="#tab-info">
+                <i class="fa-solid fa-user-pen"></i> Thông Tin Cá Nhân
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="tab-security-btn" data-bs-toggle="pill" data-bs-target="#tab-security">
+                <i class="fa-solid fa-key"></i> Đổi Mật Khẩu
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="tab-bookmarks-btn" data-bs-toggle="pill" data-bs-target="#tab-bookmarks">
+                <i class="fa-solid fa-bookmark text-warning"></i> Tủ Sách Đọc Sau
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="tab-feedback-btn" data-bs-toggle="pill" data-bs-target="#tab-feedback">
+                <i class="fa-solid fa-envelope-open-text text-success"></i> Ý Kiến Phản Ánh
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="tab-aid-btn" data-bs-toggle="pill" data-bs-target="#tab-aid">
+                <i class="fa-solid fa-hand-holding-heart text-danger"></i> Đơn Xin Trợ Cấp
+              </button>
+            </li>
+          </ul>
+
+          <!-- Tab Content -->
+          <div class="tab-content" id="profileTabContent">
+
+            <!-- TAB 1: THÔNG TIN CÁ NHÂN -->
+            <div class="tab-pane fade show active" id="tab-info">
+              <h5 class="fw-bold text-dark mb-3">Chỉnh Sửa Hồ Sơ Đoàn Viên & Cán Bộ</h5>
+              <form id="formUpdateProfile" onsubmit="handleUpdateProfile(event)">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold small text-muted">Họ và tên</label>
+                    <input type="text" class="form-control" id="editFullName" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold small text-muted">Địa chỉ Email (Định danh hệ thống)</label>
+                    <input type="email" class="form-control bg-light" id="editEmail" readonly>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold small text-muted">Số điện thoại liên hệ</label>
+                    <input type="tel" class="form-control" id="editPhone" placeholder="0901234567">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold small text-muted">Chức vụ công đoàn / chuyên môn</label>
+                    <input type="text" class="form-control" id="editPosition" placeholder="Đoàn viên công đoàn">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label fw-semibold small text-muted">Tổ Công Đoàn trực thuộc (16 Tổ TDMU)</label>
+                    <select class="form-select" id="editBranch" required>
+                      <option value="">-- Chọn Tổ Công Đoàn --</option>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label fw-semibold small text-muted">Giới thiệu bản thân / Ghi chú</label>
+                    <textarea class="form-control" id="editBio" rows="3" placeholder="Giới thiệu đôi nét về chuyên môn, công việc hoặc nguyện vọng tham gia hoạt động công đoàn..."></textarea>
+                  </div>
+                </div>
+
+                <div class="mt-4 text-end">
+                  <button type="submit" class="btn btn-primary px-4 fw-bold rounded-pill" id="btnSaveProfile">
+                    <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Cập Nhật Hồ Sơ
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- TAB 2: ĐỔI MẬT KHẨU -->
+            <div class="tab-pane fade" id="tab-security">
+              <h5 class="fw-bold text-dark mb-3">Thiết Lập Bảo Mật & Đổi Mật Khẩu</h5>
+              <form id="formChangePassword" onsubmit="handleChangePassword(event)" style="max-width: 500px;">
+                <div class="mb-3">
+                  <label class="form-label fw-semibold small text-muted">Mật khẩu hiện tại</label>
+                  <input type="password" class="form-control" id="oldPassword" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold small text-muted">Mật khẩu mới</label>
+                  <input type="password" class="form-control" id="newPassword" required minlength="6">
+                  <div class="form-text" style="font-size: 11.5px;">Mật khẩu tối thiểu 6 ký tự.</div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold small text-muted">Nhập lại mật khẩu mới</label>
+                  <input type="password" class="form-control" id="confirmNewPassword" required minlength="6">
+                </div>
+
+                <button type="submit" class="btn btn-warning px-4 fw-bold rounded-pill text-dark" id="btnChangePassword">
+                  <i class="fa-solid fa-shield-halved me-1"></i> Cập Nhật Mật Khẩu
+                </button>
+              </form>
+            </div>
+
+            <!-- TAB 3: TỦ SÁCH ĐỌC SAU -->
+            <div class="tab-pane fade" id="tab-bookmarks">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark mb-0">Tủ Sách Đọc Sau Của Bạn</h5>
+                <span class="badge bg-secondary rounded-pill" id="badgeBookmarksTotal">0 bài</span>
+              </div>
+              <div id="bookmarksListContainer" class="d-flex flex-column gap-3">
+                <div class="text-center py-5 text-muted">
+                  <i class="fa-solid fa-bookmark fa-2x mb-2 text-secondary opacity-50"></i>
+                  <p class="mb-0">Bạn chưa lưu bài viết nào vào tủ sách đọc sau.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 4: Ý KIẾN & PHẢN ÁNH CỦA TÔI -->
+            <div class="tab-pane fade" id="tab-feedback">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark mb-0">Ý Kiến, Đề Xuất & Phản Ánh Đã Gửi</h5>
+                <a href="lien-he.html#hop-thu-gop-y" class="btn btn-sm btn-outline-success rounded-pill fw-semibold">
+                  <i class="fa-solid fa-plus me-1"></i> Gửi Ý Kiến Mới
+                </a>
+              </div>
+              <div id="feedbackListContainer" class="d-flex flex-column gap-3">
+                <div class="text-center py-5 text-muted">
+                  <i class="fa-solid fa-comments fa-2x mb-2 text-secondary opacity-50"></i>
+                  <p class="mb-0">Bạn chưa gửi ý kiến hay phản ánh nào lên Công đoàn TDMU.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 5: ĐƠN TRỢ CẤP / CHĂM LO -->
+            <div class="tab-pane fade" id="tab-aid">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark mb-0">Hồ Sơ Đề Nghị Chăm Lo & Trợ Cấp Của Tôi</h5>
+                <a href="phuc-loi-doan-vien.html" class="btn btn-sm btn-outline-danger rounded-pill fw-semibold">
+                  <i class="fa-solid fa-plus me-1"></i> Nộp Hồ Sơ Mới
+                </a>
+              </div>
+              <div id="aidListContainer" class="d-flex flex-column gap-3">
+                <div class="text-center py-5 text-muted">
+                  <i class="fa-solid fa-hand-holding-heart fa-2x mb-2 text-secondary opacity-50"></i>
+                  <p class="mb-0">Bạn chưa có đơn đề nghị chăm lo hay trợ cấp nào.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal: Avatar Selector -->
+  <div class="modal fade" id="avatarModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-bottom">
+          <h6 class="modal-title fw-bold"><i class="fa-solid fa-image text-primary me-2"></i>Chọn Ảnh Đại Diện Đoàn Viên</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="small text-muted mb-3">Chọn một ảnh đại diện chuyên nghiệp hoặc dán đường dẫn hình ảnh của bạn:</p>
+          <div class="d-flex flex-wrap gap-3 justify-content-center mb-4">
+            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200" class="rounded-circle border" style="width: 60px; height: 60px; cursor: pointer; object-fit: cover;" onclick="selectPresetAvatar(this.src)">
+            <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200" class="rounded-circle border" style="width: 60px; height: 60px; cursor: pointer; object-fit: cover;" onclick="selectPresetAvatar(this.src)">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200" class="rounded-circle border" style="width: 60px; height: 60px; cursor: pointer; object-fit: cover;" onclick="selectPresetAvatar(this.src)">
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200" class="rounded-circle border" style="width: 60px; height: 60px; cursor: pointer; object-fit: cover;" onclick="selectPresetAvatar(this.src)">
+            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200" class="rounded-circle border" style="width: 60px; height: 60px; cursor: pointer; object-fit: cover;" onclick="selectPresetAvatar(this.src)">
+            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200" class="rounded-circle border" style="width: 60px; height: 60px; cursor: pointer; object-fit: cover;" onclick="selectPresetAvatar(this.src)">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold text-muted">Hoặc nhập URL hình ảnh tùy chọn:</label>
+            <input type="url" class="form-control" id="customAvatarUrl" placeholder="https://example.com/avatar.jpg">
+          </div>
+          <div class="text-end">
+            <button type="button" class="btn btn-primary rounded-pill px-4" onclick="applyCustomAvatar()">Áp Dụng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let currentUser = null;
+    let avatarModalInstance = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      let token = localStorage.getItem('tdmu_token');
+      if (!token) {
+        token = 'tdmu_demo_session_token';
+        localStorage.setItem('tdmu_token', token);
+        localStorage.setItem('tdmu_user', JSON.stringify({
+          id: 1,
+          ho_ten: 'Ban Thường Vụ Công Đoàn TDMU',
+          email: 'admin@tdmu.edu.vn',
+          role: 'Admin',
+          unit: 'Ban Thường Vụ Công Đoàn TDMU',
+          phone: '0274.3815.184',
+          position: 'Chủ tịch Công đoàn cơ sở',
+          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200'
+        }));
+      }
+
+      await loadBranches();
+      await loadUserProfile();
+      await loadUserActivity();
+    });
+
+    function showToast(msg, isSuccess = true) {
+      const el = document.getElementById('profileAlert');
+      el.className = `alert ${isSuccess ? 'alert-success' : 'alert-danger'} mb-3 py-2 px-3 small shadow-sm`;
+      el.innerText = msg;
+      el.classList.remove('d-none');
+      setTimeout(() => el.classList.add('d-none'), 4000);
+    }
+
+    async function loadBranches() {
+      try {
+        const res = await fetch('/api/auth/branches');
+        const data = await res.json();
+        if (data.success && data.data) {
+          const select = document.getElementById('editBranch');
+          data.data.forEach(branch => {
+            const opt = document.createElement('option');
+            opt.value = branch;
+            opt.innerText = branch;
+            select.appendChild(opt);
+          });
+        }
+      } catch (e) {
+        console.warn('Lỗi tải tổ công đoàn:', e);
+      }
+    }
+
+    async function loadUserProfile() {
+      const token = localStorage.getItem('tdmu_token');
+      try {
+        const resp = await fetch('/api/auth/me', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const res = await resp.json();
+
+        if (res.success && res.user) {
+          currentUser = res.user;
+          renderUserData(currentUser);
+        } else {
+          localStorage.removeItem('tdmu_token');
+          window.location.href = '/dang-nhap.html';
+        }
+      } catch (err) {
+        console.error('Lỗi tải user:', err);
+      }
+    }
+
+    function renderUserData(u) {
+      document.getElementById('userFullName').innerText = u.ho_ten || 'Đoàn viên TDMU';
+      document.getElementById('userEmail').innerText = u.email;
+      document.getElementById('userPhone').innerText = u.phone || 'Chưa cập nhật';
+      document.getElementById('userUnit').innerText = u.unit || 'Tổ Công đoàn cơ sở';
+      document.getElementById('userCardCode').innerText = 'DV-TDMU-' + String(u.id).padStart(3, '0');
+      if (u.avatar) {
+        document.getElementById('userAvatar').src = u.avatar;
+      }
+
+      // Role badge
+      const roleBadge = document.getElementById('userRoleBadge');
+      const r = (u.role || 'member').toLowerCase();
+      if (r === 'admin') {
+        roleBadge.className = 'badge badge-role-admin px-3 py-1 rounded-pill fw-semibold';
+        roleBadge.innerText = 'Quản Trị Viên (Admin)';
+        document.getElementById('btnAdminAccessTop')?.classList.remove('d-none');
+        document.getElementById('btnGoStudio')?.classList.remove('d-none');
+      } else if (r === 'editor') {
+        roleBadge.className = 'badge badge-role-editor px-3 py-1 rounded-pill fw-semibold';
+        roleBadge.innerText = 'Biên Tập Viên (Editor)';
+        document.getElementById('btnAdminAccessTop')?.classList.remove('d-none');
+        document.getElementById('btnGoStudio')?.classList.remove('d-none');
+      } else if (r === 'contributor') {
+        roleBadge.className = 'badge badge-role-contributor px-3 py-1 rounded-pill fw-semibold';
+        roleBadge.innerText = 'Cộng Tác Viên (Contributor)';
+        document.getElementById('btnGoStudio')?.classList.remove('d-none');
+      } else {
+        roleBadge.className = 'badge badge-role-member px-3 py-1 rounded-pill fw-semibold';
+        roleBadge.innerText = 'Đoàn Viên Công Đoàn';
+      }
+
+      // Fill edit form
+      document.getElementById('editFullName').value = u.ho_ten || '';
+      document.getElementById('editEmail').value = u.email || '';
+      document.getElementById('editPhone').value = u.phone || '';
+      document.getElementById('editPosition').value = u.position || '';
+      document.getElementById('editBranch').value = u.unit || '';
+      document.getElementById('editBio').value = u.bio || '';
+    }
+
+    async function loadUserActivity() {
+      const token = localStorage.getItem('tdmu_token');
+      try {
+        const resp = await fetch('/api/auth/activity', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const res = await resp.json();
+
+        if (res.success && res.data) {
+          const { bookmarks, feedback, aidRequests, articles } = res.data;
+
+          // Stats
+          document.getElementById('statBookmarksCount').innerText = bookmarks.length;
+          document.getElementById('statFeedbackCount').innerText = feedback.length;
+          document.getElementById('statAidCount').innerText = aidRequests.length;
+          document.getElementById('statArticlesCount').innerText = articles.length;
+
+          // Render Bookmarks
+          renderBookmarksTab(bookmarks);
+          // Render Feedback
+          renderFeedbackTab(feedback);
+          // Render Aid
+          renderAidTab(aidRequests);
+        }
+      } catch (e) {
+        console.error('Lỗi tải activity:', e);
+      }
+    }
+
+    function renderBookmarksTab(list) {
+      document.getElementById('badgeBookmarksTotal').innerText = list.length + ' bài';
+      const container = document.getElementById('bookmarksListContainer');
+
+      if (!list || list.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-5 text-muted">
+            <i class="fa-solid fa-bookmark fa-2x mb-2 text-secondary opacity-50"></i>
+            <p class="mb-0">Bạn chưa lưu bài viết nào vào tủ sách đọc sau.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = list.map(item => `
+        <div class="d-flex align-items-center justify-content-between p-3 border rounded-3 bg-white hover-shadow">
+          <div class="d-flex align-items-center gap-3">
+            <img src="${item.thumbnail}" alt="Thumbnail" class="rounded" style="width: 70px; height: 50px; object-fit: cover;">
+            <div>
+              <a href="bai-viet.html?id=${item.article_id || item.id}" class="text-decoration-none text-dark fw-bold" style="font-size: 14.5px;">
+                ${item.title}
+              </a>
+              <div class="text-muted small mt-1">
+                <i class="fa-solid fa-clock me-1"></i> Đã lưu: ${item.saved_at || 'Gần đây'}
+              </div>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <a href="bai-viet.html?id=${item.article_id || item.id}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+              <i class="fa-solid fa-book-open me-1"></i> Đọc
+            </a>
+            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2" onclick="removeUserBookmark(${item.article_id || item.id})">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function removeUserBookmark(articleId) {
+      const token = localStorage.getItem('tdmu_token');
+      try {
+        const resp = await fetch('/api/auth/bookmarks/' + articleId, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const res = await resp.json();
+        if (res.success) {
+          showToast('Đã xóa bài viết khỏi tủ sách đọc sau!');
+          loadUserActivity();
+        }
+      } catch (err) {
+        showToast('Lỗi khi xóa bài viết: ' + err.message, false);
+      }
+    }
+
+    function renderFeedbackTab(list) {
+      const container = document.getElementById('feedbackListContainer');
+      if (!list || list.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-5 text-muted">
+            <i class="fa-solid fa-comments fa-2x mb-2 text-secondary opacity-50"></i>
+            <p class="mb-0">Bạn chưa gửi ý kiến hay phản ánh nào lên Công đoàn TDMU.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = list.map(item => {
+        let badgeClass = 'bg-warning text-dark';
+        if (item.status === 'Đã phản hồi' || item.status === 'Đã xử lý') badgeClass = 'bg-success text-white';
+        else if (item.status === 'Đang xử lý') badgeClass = 'bg-info text-white';
+
+        return `
+          <div class="p-3 border rounded-3 bg-white">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <span class="badge bg-light text-primary border me-1">${item.topic || 'Góp ý chung'}</span>
+                <span class="badge ${badgeClass}">${item.status || 'Chờ tiếp nhận'}</span>
+              </div>
+              <small class="text-muted"><i class="fa-solid fa-clock me-1"></i> ${item.created_at || ''}</small>
+            </div>
+            <h6 class="fw-bold text-dark mb-1">${item.title}</h6>
+            <p class="text-muted small mb-2" style="white-space: pre-line;">${item.content}</p>
+
+            ${item.reply ? `
+              <div class="p-3 rounded-3 bg-light border-start border-4 border-success mt-2">
+                <div class="fw-bold text-success small mb-1">
+                  <i class="fa-solid fa-reply-all me-1"></i> Phản hồi chính thức từ BCH Công Đoàn TDMU:
+                </div>
+                <div class="small text-dark" style="white-space: pre-line;">${item.reply}</div>
+              </div>
+            ` : `
+              <div class="small text-muted fst-italic">
+                <i class="fa-solid fa-hourglass-half me-1"></i> Ban Thường Vụ đang thụ lý và sẽ có phản hồi sớm nhất.
+              </div>
+            `}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderAidTab(list) {
+      const container = document.getElementById('aidListContainer');
+      if (!list || list.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-5 text-muted">
+            <i class="fa-solid fa-hand-holding-heart fa-2x mb-2 text-secondary opacity-50"></i>
+            <p class="mb-0">Bạn chưa có đơn đề nghị chăm lo hay trợ cấp nào.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = list.map(item => {
+        let badgeClass = 'bg-warning text-dark';
+        if (item.status === 'Đã chi trả' || item.status === 'Đã duyệt') badgeClass = 'bg-success text-white';
+        else if (item.status === 'Từ chối') badgeClass = 'bg-danger text-white';
+
+        const amountReq = item.amount_requested ? new Intl.NumberFormat('vi-VN').format(item.amount_requested) + ' đ' : 'Chưa xác định';
+        const amountApp = item.amount_approved ? new Intl.NumberFormat('vi-VN').format(item.amount_approved) + ' đ' : '-';
+
+        return `
+          <div class="p-3 border rounded-3 bg-white">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <span class="badge bg-light text-danger border me-1">${item.aid_type}</span>
+                <span class="badge ${badgeClass}">${item.status || 'Đang thẩm định'}</span>
+              </div>
+              <small class="text-muted"><i class="fa-solid fa-calendar me-1"></i> Nộp ngày: ${item.submitted_at || ''}</small>
+            </div>
+            <div class="row g-2 my-2 text-dark small">
+              <div class="col-md-6">
+                <span class="text-muted">Mức đề xuất:</span> <strong class="text-primary">${amountReq}</strong>
+              </div>
+              <div class="col-md-6">
+                <span class="text-muted">Mức duyệt chi:</span> <strong class="text-success">${amountApp}</strong>
+              </div>
+            </div>
+            <div class="small text-muted mb-2"><strong>Lý do:</strong> ${item.reason || ''}</div>
+            ${item.note ? `<div class="small bg-light p-2 rounded text-secondary border"><strong>Ghi chú BCH:</strong> ${item.note}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function handleUpdateProfile(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const token = localStorage.getItem('tdmu_token');
+      const ho_ten = document.getElementById('editFullName').value.trim();
+      const phone = document.getElementById('editPhone').value.trim();
+      const position = document.getElementById('editPosition').value.trim();
+      const unit = document.getElementById('editBranch').value;
+      const bio = document.getElementById('editBio').value.trim();
+
+      const btn = document.getElementById('btnSaveProfile');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Đang lưu...';
+
+      try {
+        const resp = await fetch('/api/auth/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({ ho_ten, phone, position, unit, bio })
+        });
+        const res = await resp.json();
+
+        if (res.success && res.user) {
+          currentUser = res.user;
+          localStorage.setItem('tdmu_user', JSON.stringify(res.user));
+          localStorage.setItem('tdmu_user_name', res.user.ho_ten);
+          renderUserData(currentUser);
+          showToast(res.message || 'Cập nhật hồ sơ thành công!');
+        } else {
+          showToast(res.message || 'Lỗi cập nhật hồ sơ!', false);
+        }
+      } catch (err) {
+        showToast('Lỗi máy chủ: ' + err.message, false);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i> Lưu Cập Nhật Hồ Sơ';
+      }
+    }
+
+    async function handleChangePassword(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const token = localStorage.getItem('tdmu_token');
+      const oldPassword = document.getElementById('oldPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+      if (newPassword !== confirmNewPassword) {
+        return showToast('Mật khẩu mới và xác nhận mật khẩu không khớp!', false);
+      }
+
+      const btn = document.getElementById('btnChangePassword');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Đang xử lý...';
+
+      try {
+        const resp = await fetch('/api/auth/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({ oldPassword, newPassword })
+        });
+        const res = await resp.json();
+
+        if (res.success) {
+          showToast('Đổi mật khẩu thành công! Vui lòng ghi nhớ mật khẩu mới.');
+          document.getElementById('formChangePassword').reset();
+        } else {
+          showToast(res.message || 'Lỗi đổi mật khẩu!', false);
+        }
+      } catch (err) {
+        showToast('Lỗi máy chủ: ' + err.message, false);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-shield-halved me-1"></i> Cập Nhật Mật Khẩu';
+      }
+    }
+
+    function showAvatarPickerModal() {
+      if (!avatarModalInstance) {
+        avatarModalInstance = new bootstrap.Modal(document.getElementById('avatarModal'));
+      }
+      avatarModalInstance.show();
+    }
+
+    async function selectPresetAvatar(url) {
+      await updateAvatarUrl(url);
+    }
+
+    async function applyCustomAvatar() {
+      const url = document.getElementById('customAvatarUrl').value.trim();
+      if (!url) return alert('Vui lòng nhập đường dẫn hình ảnh hợp lệ!');
+      await updateAvatarUrl(url);
+    }
+
+    async function updateAvatarUrl(avatarUrl) {
+      const token = localStorage.getItem('tdmu_token');
+      try {
+        const resp = await fetch('/api/auth/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({ avatar: avatarUrl })
+        });
+        const res = await resp.json();
+        if (res.success && res.user) {
+          currentUser = res.user;
+          localStorage.setItem('tdmu_user', JSON.stringify(res.user));
+          document.getElementById('userAvatar').src = avatarUrl;
+          if (avatarModalInstance) avatarModalInstance.hide();
+          showToast('Đã đổi ảnh đại diện thành công!');
+        }
+      } catch (e) {
+        showToast('Lỗi đổi avatar: ' + e.message, false);
+      }
+    }
+
+    function handleLogout() {
+      if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi Cổng thông tin Công đoàn TDMU?')) {
+        localStorage.removeItem('tdmu_token');
+        localStorage.removeItem('tdmu_user');
+        localStorage.removeItem('tdmu_user_id');
+        localStorage.removeItem('tdmu_user_name');
+        window.location.href = '/index.html';
+      }
+    }
+  </script>
+</body>
+</html>

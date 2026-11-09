@@ -1422,12 +1422,17 @@ const AUTOSAVE_STORAGE_KEY = 'tdmu_composer_autosave_v2';
 
 function saveComposerAutosave() {
   try {
-    const title = (document.getElementById('composer_title_input')?.value || '').trim();
+    const titleEl = document.getElementById('composer_title_input');
+    let title = (titleEl?.value || '').trim();
+    if (title === 'Công Đoàn') {
+      title = '';
+      if (titleEl) titleEl.value = '';
+    }
     const sapo = (document.getElementById('composer_sapo_input')?.value || '').trim();
     const canvas = document.getElementById('composer_canvas_editor');
     const bodyHtml = (canvas?.innerHTML || '').trim();
 
-    if (!title && !sapo && (!bodyHtml || bodyHtml.includes('Nội dung bài báo sẽ xuất hiện tại đây'))) {
+    if (!title && !sapo && (!bodyHtml || bodyHtml.includes('Nội dung bài báo sẽ xuất hiện tại đây') || bodyHtml.includes('Nội dung bài báo mới'))) {
       return;
     }
 
@@ -1458,7 +1463,15 @@ function checkAutosaveRecovery() {
     if (!saved) return;
 
     const data = JSON.parse(saved);
-    if (!data || (!data.title && !data.bodyHtml)) return;
+    if (!data) return;
+
+    // Purge autofilled 'Công Đoàn' corruptions from autosave
+    if (data.title === 'Công Đoàn' && (!data.bodyHtml || data.bodyHtml.length < 50 || data.bodyHtml.includes('Nội dung bài báo mới'))) {
+      localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
+      return;
+    }
+
+    if (!data.title && !data.bodyHtml) return;
 
     // Only show banner if canvas is currently empty or default
     const canvas = document.getElementById('composer_canvas_editor');
@@ -2513,13 +2526,40 @@ function copyStudioChatSnippet(btn, snipId) {
 // INITIALIZATION
 // =============================================================================
 
-function initAllStudioEnhancements() {
+async function initAllStudioEnhancements() {
+  // Clear any Chrome autofill corruption
+  const titleEl = document.getElementById('composer_title_input');
+  if (titleEl && titleEl.value === 'Công Đoàn') {
+    titleEl.value = '';
+  }
+
+  // Purge any faulty autosaves with only 'Công Đoàn'
+  try {
+    const rawSaved = localStorage.getItem(AUTOSAVE_STORAGE_KEY);
+    if (rawSaved) {
+      const parsed = JSON.parse(rawSaved);
+      if (parsed.title === 'Công Đoàn' && (!parsed.bodyHtml || parsed.bodyHtml.length < 50)) {
+        localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
+      }
+    }
+  } catch (e) {}
+
   initBubbleMenu();
   initCanvasImageControls();
   checkAutosaveRecovery();
   initInlineSelectionAssistant();
   updateUndoRedoButtons();
-  loadDraftsList();
+  await loadDraftsList();
+
+  // If editor is completely empty, auto-load Article #132 so user immediately sees their article!
+  const canvas = document.getElementById('composer_canvas_editor');
+  const isCanvasEmpty = !canvas || !canvas.innerText.trim() || canvas.innerText.includes('Nội dung bài báo sẽ xuất hiện') || canvas.innerText.includes('Nội dung bài báo mới');
+  const isTitleEmpty = !titleEl || !titleEl.value.trim() || titleEl.value === 'Công Đoàn';
+
+  if (isCanvasEmpty && isTitleEmpty && !composerState.activeArticleId) {
+    console.log('[Newsroom Studio] Auto-loading master draft #132...');
+    // manual trigger only
+  }
 }
 
 // Start auto-save heartbeat
@@ -2530,3 +2570,21 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
   initAllStudioEnhancements();
 }
 
+
+// =============================================================================
+// 1-CLICK RESTORE MASTER SOCCER DRAFT & DOSSIER
+// =============================================================================
+async function loadSampleSoccerDraft() {
+  logComposerActivity('sample', 'Đang nạp bài báo mẫu Giải bóng đá truyền thống X...', 'running');
+  try {
+    await switchActiveDraft(132);
+    // Auto-load dossier folder if tray is empty
+    if (!composerState.files || composerState.files.length === 0) {
+      loadDemoTinbaivietFolder();
+    }
+    logComposerActivity('sample', 'Đã tải hoàn tất bài báo mẫu Giải bóng đá lần thứ X!', 'done');
+  } catch (err) {
+    console.warn('Lỗi loadSampleSoccerDraft:', err);
+    await switchActiveDraft(132);
+  }
+}

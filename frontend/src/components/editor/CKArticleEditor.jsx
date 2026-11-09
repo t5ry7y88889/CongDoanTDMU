@@ -245,8 +245,6 @@ const CKArticleEditor = forwardRef(({
         '|',
         'heading',
         '|',
-        'fontFamily', 'fontSize',
-        '|',
         'fontColor', 'fontBackgroundColor', 'highlight',
         '|',
         'bold', 'italic', 'underline', 'strikethrough', 'subscript', 'superscript',

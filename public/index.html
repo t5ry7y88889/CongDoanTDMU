@@ -260,6 +260,7 @@
   <script src="libs/tui-pagination/tui-pagination.min.js"></script>
   <script src="js/pagination.js?v=1788874000000"></script>
   <script src="js/bookmarks.js?v=20260901_v23"></script>
+  <script src="js/auth-nav.js?v=20261106"></script>
   <script>
     let homeArticles = [];
     let homePager = null;
@@ -294,13 +295,15 @@
       `).join('');
     }
 
-    async function loadHomeArticles() {
+    async function loadHomeArticles(renderCarousel = false) {
       try {
         const res = await fetch('/api/articles?status=published');
         const data = await res.json();
         if (data.success && Array.isArray(data.data) && data.data.length > 0) {
           homeArticles = data.data;
-          renderHeroCarousel(homeArticles);
+          if (renderCarousel) {
+            renderHeroCarousel(homeArticles);
+          }
 
           // Nạp động Thông Báo Nhanh từ CSDL
           const noticeBox = document.getElementById('notice_quick_box');
@@ -398,23 +401,113 @@
       } catch (e) {}
     }
 
+    
+    async function loadHomeBanners() {
+      try {
+        const res = await fetch('/api/banners');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          const carousel = document.getElementById('heroCarousel');
+          if (!carousel) return;
+          const indicators = carousel.querySelector('.carousel-indicators');
+          const inner = carousel.querySelector('.carousel-inner');
+          if (indicators) {
+            indicators.innerHTML = json.data.map((_, i) => `
+              <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="${i}" class="${i === 0 ? 'active' : ''}"></button>
+            `).join('');
+          }
+          if (inner) {
+            inner.innerHTML = json.data.map((b, i) => `
+              <div class="carousel-item ${i === 0 ? 'active' : ''}">
+                <a href="${b.linkUrl || '#'}" style="text-decoration: none; color: inherit;">
+                  <img src="${b.image || 'images/banner.jpg'}" class="d-block w-100" alt="${b.title}" style="height: 380px; object-fit: cover;" onerror="this.src='images/banner.jpg'">
+                  <div class="carousel-caption d-none d-md-block" style="background: rgba(0, 34, 64, 0.82); border-radius: 6px; padding: 14px 24px; text-align: left; max-width: 88%;">
+                    <h5 class="fw-bold text-white mb-1" style="font-size: 17px; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">${b.title}</h5>
+                    <p class="mb-0 text-light small" style="opacity: 0.92;">${b.subtitle || ''}</p>
+                  </div>
+                </a>
+              </div>
+            `).join('');
+          }
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+
+    async function loadHomeNotices() {
+      try {
+        const res = await fetch('/api/quick-notices');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          const noticeBox = document.getElementById('notice_quick_box');
+          if (noticeBox) {
+            noticeBox.innerHTML = json.data.map((n, i) => `
+              <p class="${i === 0 ? 'mb-2' : 'mb-0'}">
+                <i class="fa-solid ${n.icon || (i === 0 ? 'fa-circle-info text-primary' : 'fa-circle-check text-success')} me-1"></i>
+                <a href="${n.linkUrl || '#'}" style="color: inherit; text-decoration: none;">
+                  <strong>${n.title} </strong> ${n.content}
+                </a>
+              </p>
+            `).join('');
+          }
+        }
+      } catch (e) {}
+    }
+
+    async function loadHomeExternalLinks() {
+      try {
+        const res = await fetch('/api/external-links');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          const panel = document.querySelector('.panel-tdmu .list-group-tdmu');
+          if (panel) {
+            panel.innerHTML = json.data.map(l => `
+              <a href="${l.url}" target="_blank" rel="noreferrer" class="list-group-item d-flex align-items-center">
+                <i class="fa-solid fa-chevron-right me-2 text-muted small"></i> ${l.title}
+              </a>
+            `).join('');
+          }
+        }
+      } catch (e) {}
+    }
+
+    async function loadHomeSettings() {
+      try {
+        const res = await fetch('/api/settings');
+        const json = await res.json();
+        if (json.success && json.data) {
+          const s = json.data;
+          const brandTitle = document.querySelector('.brand-title-main');
+          const brandSub = document.querySelector('.brand-sub-main');
+          const hotline = document.querySelector('.badge-hotline');
+          if (brandTitle && s.brandTitle) brandTitle.innerText = s.brandTitle;
+          if (brandSub && s.brandSub) brandSub.innerText = s.brandSub;
+          if (hotline && s.hotline) hotline.innerHTML = '<i class="fa-solid fa-phone me-1 text-warning"></i> Hotline: ' + s.hotline;
+        }
+      } catch (e) {}
+    }
+
     async function loadHomeStats() {
       try {
-        const res = await fetch('/api/stats');
+        const res = await fetch('/api/stats/realtime');
         const data = await res.json();
-        if (data) {
+        if (data && data.success) {
           const elOnline = document.getElementById('stat_online');
           const elViews = document.getElementById('stat_views');
-          if (elOnline) elOnline.innerText = (data.online || 28).toLocaleString('vi-VN');
+          if (elOnline) elOnline.innerText = (data.online || 1).toLocaleString('vi-VN');
           const totalViews = data.totalViews || (data.data && data.data.tong_luot_xem) || 0;
           if (elViews) elViews.innerText = totalViews.toLocaleString('vi-VN');
         }
       } catch (e) {}
     }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      loadHomeArticles();
+document.addEventListener('DOMContentLoaded', async () => {
+      const hasBanners = await loadHomeBanners();
+      await loadHomeArticles(!hasBanners);
       loadHomeDocuments();
+      loadHomeNotices();
+      loadHomeExternalLinks();
+      loadHomeSettings();
       loadHomeStats();
     });
   </script>
@@ -423,7 +516,7 @@
   <div class="offcanvas offcanvas-end" tabindex="-1" id="bookmarksOffcanvas" style="width: 380px;">
     <div class="offcanvas-header" style="background: #002855; color: white;">
       <h5 class="offcanvas-title fw-bold" style="font-size: 16px;">
-        <i class="fa-solid fa-bookmark text-warning me-2"></i> Tủ Sách Đọc Sau (<span class="bookmark-badge-count">2</span>)
+        <i class="fa-solid fa-bookmark text-warning me-2"></i> Tủ Sách Đọc Sau (<span class="bookmark-badge-count">0</span>)
       </h5>
       <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
     </div>

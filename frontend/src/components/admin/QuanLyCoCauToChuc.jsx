@@ -5,15 +5,17 @@ export default function QuanLyCoCauToChuc() {
   const [units, setUnits] = useState([]);
   const [boards, setBoards] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterTab, setFilterTab] = useState('all'); // 'all' | 'btv' | 'bch' | 'ubkt' | 'units'
+  const [filterTab, setFilterTab] = useState('all'); // 'all' | 'btv' | 'bch' | 'ubkt' | 'boards' | 'units'
   const [search, setSearch] = useState('');
 
   // Modal State
-  const [editingCadre, setEditingCadre] = useState(null); // null = closed, {} = add new, { id, ... } = edit
-  const [editingUnit, setEditingUnit] = useState(null);
+  const [editingCadre, setEditingCadre] = useState(null); // null = closed, {} = add, { id, ... } = edit
+  const [editingUnit, setEditingUnit] = useState(null);   // null = closed, {} = add, { id, ... } = edit
+  const [editingBoard, setEditingBoard] = useState(null); // null = closed, {} = add, { id, ... } = edit
   const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  // Form State
+  // Form State: Cán Bộ
   const [formCadre, setFormCadre] = useState({
     name: '',
     degree: 'Thạc sĩ',
@@ -25,6 +27,24 @@ export default function QuanLyCoCauToChuc() {
     phone: '',
     photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Danh.jpg',
     duties: ''
+  });
+
+  // Form State: Ban
+  const [formBoard, setFormBoard] = useState({
+    name: '',
+    tenure: 'Nhiệm kỳ 2023 - 2028',
+    description: '',
+    orderIndex: 1
+  });
+
+  // Form State: Tổ Công Đoàn
+  const [formUnit, setFormUnit] = useState({
+    code: '',
+    name: '',
+    leader: '',
+    email: '',
+    phone: '',
+    office: ''
   });
 
   const loadOrgData = async () => {
@@ -47,14 +67,15 @@ export default function QuanLyCoCauToChuc() {
     loadOrgData();
   }, []);
 
-  const openAddModal = () => {
+  // ─── CADRE ACTIONS ─────────────────────────────────────────────────────────
+  const openAddCadreModal = () => {
     setFormCadre({
       name: '',
       degree: 'Thạc sĩ',
       role: 'Ủy viên Ban Chấp hành',
       unit: 'Khoa Công nghệ Thông tin',
       unit_id: units[0]?.id || 1,
-      board_id: 1,
+      board_id: boards[0]?.id || 1,
       email: '',
       phone: '',
       photo: 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Danh.jpg',
@@ -63,7 +84,7 @@ export default function QuanLyCoCauToChuc() {
     setEditingCadre({});
   };
 
-  const openEditModal = (c) => {
+  const openEditCadreModal = (c) => {
     setFormCadre({
       name: c.name || c.HoVaTen || '',
       degree: c.degree || c.HocHamHocVi || 'Thạc sĩ',
@@ -77,6 +98,37 @@ export default function QuanLyCoCauToChuc() {
       duties: c.duties || c.NhiemVuPhanCong || ''
     });
     setEditingCadre(c);
+  };
+
+    const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const res = await fetch('/api/upload/image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: ev.target.result, filename: file.name })
+          }).then(r => r.json());
+          if (res.success && res.url) {
+            setFormCadre(prev => ({ ...prev, photo: res.url }));
+          } else {
+            alert(res.message || 'Lỗi tải ảnh cán bộ!');
+          }
+        } catch (fetchErr) {
+          alert('Lỗi kết nối upload: ' + fetchErr.message);
+        } finally {
+          setUploadingPhoto(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      alert('Lỗi đọc file: ' + err.message);
+      setUploadingPhoto(false);
+    }
   };
 
   const handleSaveCadre = async (e) => {
@@ -126,22 +178,52 @@ export default function QuanLyCoCauToChuc() {
     }
   };
 
-  const handleSaveUnit = async (e) => {
+  // ─── BOARD (BAN) ACTIONS ────────────────────────────────────────────────────
+  const openAddBoardModal = () => {
+    setFormBoard({
+      name: '',
+      tenure: 'Nhiệm kỳ 2023 - 2028',
+      description: '',
+      orderIndex: boards.length + 1
+    });
+    setEditingBoard({});
+  };
+
+  const openEditBoardModal = (b) => {
+    setFormBoard({
+      name: b.name || b.TenToChuc || '',
+      tenure: b.tenure || b.NhiemKy || 'Nhiệm kỳ 2023 - 2028',
+      description: b.description || b.MoTaChucNang || '',
+      orderIndex: b.orderIndex !== undefined ? b.orderIndex : (b.ThuTuHienThi || 0)
+    });
+    setEditingBoard(b);
+  };
+
+  const handleSaveBoard = async (e) => {
     e.preventDefault();
-    if (!editingUnit) return;
+    if (!formBoard.name.trim()) {
+      alert('Vui lòng nhập Tên Ban / Bộ phận!');
+      return;
+    }
     setSaving(true);
     try {
-      const res = await fetch(`/api/to-cong-doan/${editingUnit.id}`, {
-        method: 'PUT',
+      const isEdit = Boolean(editingBoard && (editingBoard.id || editingBoard.MaToChuc));
+      const boardId = editingBoard.id || editingBoard.MaToChuc;
+      const url = isEdit ? `/api/organizations/${boardId}` : '/api/organizations';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingUnit)
+        body: JSON.stringify(formBoard)
       }).then(r => r.json());
+
       if (res.success) {
-        alert('🎉 Đã cập nhật thông tin Tổ Công đoàn thành công!');
-        setEditingUnit(null);
+        alert(`🎉 ${res.message || 'Đã lưu thông tin Ban thành công!'}`);
+        setEditingBoard(null);
         await loadOrgData();
       } else {
-        alert('Lỗi: ' + (res.error || 'Không thể cập nhật'));
+        alert('Lỗi: ' + (res.error || 'Không thể lưu Ban'));
       }
     } catch (err) {
       alert('Lỗi kết nối: ' + err.message);
@@ -150,7 +232,100 @@ export default function QuanLyCoCauToChuc() {
     }
   };
 
-  // Lọc theo Ban
+  const handleDeleteBoard = async (id, name) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa "${name}" khỏi cơ cấu tổ chức? Các cán bộ thuộc Ban này sẽ được giữ lại nhưng không thuộc ban nào.`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/organizations/${id}`, { method: 'DELETE' }).then(r => r.json());
+      if (res.success) {
+        alert('✅ Đã xóa Ban thành công!');
+        await loadOrgData();
+      } else {
+        alert('Lỗi: ' + (res.error || 'Không thể xóa Ban'));
+      }
+    } catch (err) {
+      alert('Lỗi kết nối: ' + err.message);
+    }
+  };
+
+  // ─── UNIT (TỔ CÔNG ĐOÀN) ACTIONS ──────────────────────────────────────────
+  const openAddUnitModal = () => {
+    const nextNum = units.length + 1;
+    setFormUnit({
+      code: 'TCD_' + String(nextNum).padStart(2, '0'),
+      name: '',
+      leader: '',
+      email: '',
+      phone: '',
+      office: ''
+    });
+    setEditingUnit({});
+  };
+
+  const openEditUnitModal = (u) => {
+    setFormUnit({
+      code: u.code || u.MaDinhDanh || '',
+      name: u.name || u.TenToCongDoan || '',
+      leader: u.leader || u.ToTruong || '',
+      email: u.email || u.EmailLienHe || '',
+      phone: u.phone || u.SoDienThoai || '',
+      office: u.office || u.DiaChiVanPhong || ''
+    });
+    setEditingUnit(u);
+  };
+
+  const handleSaveUnit = async (e) => {
+    e.preventDefault();
+    if (!formUnit.name.trim()) {
+      alert('Vui lòng nhập Tên Tổ Công Đoàn!');
+      return;
+    }
+    setSaving(true);
+    try {
+      const isEdit = Boolean(editingUnit && (editingUnit.id || editingUnit.MaToCongDoan));
+      const unitId = editingUnit.id || editingUnit.MaToCongDoan;
+      const url = isEdit ? `/api/to-cong-doan/${unitId}` : '/api/to-cong-doan';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formUnit)
+      }).then(r => r.json());
+
+      if (res.success) {
+        alert(`🎉 ${res.message || 'Đã lưu thông tin Tổ Công đoàn thành công!'}`);
+        setEditingUnit(null);
+        await loadOrgData();
+      } else {
+        alert('Lỗi: ' + (res.error || 'Không thể lưu Tổ Công đoàn'));
+      }
+    } catch (err) {
+      alert('Lỗi kết nối: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteUnit = async (id, name) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa "${name}"? Hành động này sẽ gỡ liên kết các đoàn viên thuộc tổ này.`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/to-cong-doan/${id}`, { method: 'DELETE' }).then(r => r.json());
+      if (res.success) {
+        alert('✅ Đã xóa Tổ Công đoàn thành công!');
+        await loadOrgData();
+      } else {
+        alert('Lỗi: ' + (res.error || 'Không thể xóa tổ công đoàn'));
+      }
+    } catch (err) {
+      alert('Lỗi kết nối: ' + err.message);
+    }
+  };
+
+  // ─── LỌC CÁN BỘ THEO BAN ───────────────────────────────────────────────────
   const countBTV = cadres.filter(c => {
     const r = (c.role || c.ChucVuCongDoan || '').toLowerCase();
     return r.includes('chủ tịch') || r.includes('thường vụ') || c.board_id === 1;
@@ -187,39 +362,101 @@ export default function QuanLyCoCauToChuc() {
   return (
     <div style={{ flex: 1, overflowY: 'auto', background: '#F8FAFC', padding: '28px 36px' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#002855', margin: '0 0 6px 0' }}>
-            <i className="fa-solid fa-sitemap" style={{ marginRight: '10px', color: '#0284C7' }} />
+          <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#002855', margin: '0 0 6px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <i className="fa-solid fa-sitemap" style={{ color: '#0284C7' }} />
             Quản Lý Cơ Cấu Tổ Chức & Cán Bộ Công Đoàn
           </h1>
           <p style={{ fontSize: '13px', color: '#64748B', margin: 0 }}>
-            Cập nhật nhân sự Ban Thường Vụ, Ban Chấp Hành, Ủy Ban Kiểm Tra và 16 Tổ Công đoàn cơ sở trực tiếp vào CSDL Microsoft SQL Server
+            Quản trị Ban Thường Vụ, Ban Chấp Hành, Ủy Ban Kiểm Tra, các Ban chuyên đề và 16 Tổ Công đoàn cơ sở trực tiếp từ CSDL MSSQL
           </p>
         </div>
-        <button
-          onClick={openAddModal}
-          style={{
-            background: 'linear-gradient(135deg, #002855 0%, #0284C7 100%)',
-            color: 'white',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: '8px',
-            fontWeight: '700',
-            fontSize: '13.5px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: '0 4px 12px rgba(2,132,199,0.25)'
-          }}
-        >
-          <i className="fa-solid fa-user-plus" /> Thêm Cán Bộ Mới
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={loadOrgData}
+            style={{
+              background: '#FFFFFF',
+              color: '#002855',
+              border: '1px solid #CBD5E1',
+              padding: '10px 16px',
+              borderRadius: '8px',
+              fontWeight: '700',
+              fontSize: '13px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <i className="fa-solid fa-rotate" /> Làm Mới
+          </button>
+          {filterTab === 'boards' ? (
+            <button
+              onClick={openAddBoardModal}
+              style={{
+                background: 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                fontWeight: '700',
+                fontSize: '13.5px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 12px rgba(124,58,237,0.3)'
+              }}
+            >
+              <i className="fa-solid fa-plus" /> Thêm Ban Mới
+            </button>
+          ) : filterTab === 'units' ? (
+            <button
+              onClick={openAddUnitModal}
+              style={{
+                background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                fontWeight: '700',
+                fontSize: '13.5px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 12px rgba(2,132,199,0.3)'
+              }}
+            >
+              <i className="fa-solid fa-plus" /> Thêm Tổ Công Đoàn Mới
+            </button>
+          ) : (
+            <button
+              onClick={openAddCadreModal}
+              style={{
+                background: 'linear-gradient(135deg, #002855 0%, #0284C7 100%)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                fontWeight: '700',
+                fontSize: '13.5px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 12px rgba(2,132,199,0.25)'
+              }}
+            >
+              <i className="fa-solid fa-user-plus" /> Thêm Cán Bộ Mới
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Thẻ Thống Kê Nhanh */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         <div style={{ background: '#FFF', borderRadius: '10px', padding: '16px 20px', border: '1px solid #E2E8F0', borderLeft: '4px solid #002855' }}>
           <div style={{ fontSize: '12px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase' }}>Tổng Số Cán Bộ</div>
           <div style={{ fontSize: '26px', fontWeight: '800', color: '#002855', marginTop: '4px' }}>{cadres.length}</div>
@@ -236,13 +473,17 @@ export default function QuanLyCoCauToChuc() {
           <div style={{ fontSize: '12px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase' }}>Ủy Ban Kiểm Tra</div>
           <div style={{ fontSize: '26px', fontWeight: '800', color: '#16A34A', marginTop: '4px' }}>{countUBKT}</div>
         </div>
-        <div style={{ background: '#FFF', borderRadius: '10px', padding: '16px 20px', border: '1px solid #E2E8F0', borderLeft: '4px solid #DC2626' }}>
-          <div style={{ fontSize: '12px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase' }}>Tổ Công Đoàn Cơ Sở</div>
-          <div style={{ fontSize: '26px', fontWeight: '800', color: '#DC2626', marginTop: '4px' }}>{units.length}</div>
+        <div style={{ background: '#FFF', borderRadius: '10px', padding: '16px 20px', border: '1px solid #E2E8F0', borderLeft: '4px solid #7C3AED' }}>
+          <div style={{ fontSize: '12px', fontWeight: '700', color: '#7C3AED', textTransform: 'uppercase' }}>Các Ban / Cơ Quan</div>
+          <div style={{ fontSize: '26px', fontWeight: '800', color: '#7C3AED', marginTop: '4px' }}>{boards.length}</div>
+        </div>
+        <div style={{ background: '#FFF', borderRadius: '10px', padding: '16px 20px', border: '1px solid #E2E8F0', borderLeft: '4px solid #0284C7' }}>
+          <div style={{ fontSize: '12px', fontWeight: '700', color: '#0284C7', textTransform: 'uppercase' }}>Tổ Công Đoàn Cơ Sở</div>
+          <div style={{ fontSize: '26px', fontWeight: '800', color: '#0284C7', marginTop: '4px' }}>{units.length}</div>
         </div>
       </div>
 
-      {/* Tabs & Tìm kiếm */}
+      {/* Thanh Bộ Lọc & Tìm Kiếm */}
       <div style={{ background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', padding: '16px 20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           {[
@@ -250,7 +491,8 @@ export default function QuanLyCoCauToChuc() {
             { id: 'btv', label: `Ban Thường Vụ (${countBTV})`, color: '#D97706' },
             { id: 'bch', label: `Ban Chấp Hành (${countBCH})`, color: '#2563EB' },
             { id: 'ubkt', label: `Ủy Ban Kiểm Tra (${countUBKT})`, color: '#16A34A' },
-            { id: 'units', label: `16 Tổ Công Đoàn (${units.length})`, color: '#DC2626' }
+            { id: 'boards', label: `Quản Lý Các Ban (${boards.length})`, color: '#7C3AED' },
+            { id: 'units', label: `Tổ Công Đoàn Cơ Sở (${units.length})`, color: '#0284C7' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -272,7 +514,7 @@ export default function QuanLyCoCauToChuc() {
           ))}
         </div>
 
-        {filterTab !== 'units' && (
+        {filterTab !== 'units' && filterTab !== 'boards' && (
           <div style={{ display: 'flex', alignItems: 'center', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '6px 12px', width: '300px' }}>
             <i className="fa-solid fa-magnifying-glass" style={{ color: '#94A3B8', marginRight: '8px' }} />
             <input
@@ -291,8 +533,8 @@ export default function QuanLyCoCauToChuc() {
         )}
       </div>
 
-      {/* NỘI DUNG 1: BẢNG CÁN BỘ CÔNG ĐOÀN */}
-      {filterTab !== 'units' && (
+      {/* ── NỘI DUNG 1: BẢNG CÁN BỘ CÔNG ĐOÀN ───────────────────────────── */}
+      {filterTab !== 'units' && filterTab !== 'boards' && (
         <div style={{ background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
           {loading ? (
             <div style={{ padding: '40px', textAlign: 'center', color: '#64748B' }}>
@@ -313,60 +555,59 @@ export default function QuanLyCoCauToChuc() {
                   <th style={{ padding: '14px 16px' }}>Họ Và Tên / Học Vị</th>
                   <th style={{ padding: '14px 16px', width: '220px' }}>Chức Vụ Công Đoàn</th>
                   <th style={{ padding: '14px 16px', width: '220px' }}>Đơn Vị Chuyên Môn</th>
-                  <th style={{ padding: '14px 16px', width: '180px' }}>Email / SĐT</th>
-                  <th style={{ padding: '14px 16px', width: '130px', textAlign: 'center' }}>Thao Tác</th>
+                  <th style={{ padding: '14px 16px', width: '220px' }}>Liên Hệ</th>
+                  <th style={{ padding: '14px 16px', width: '120px', textAlign: 'center' }}>Thao Tác</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredCadres.map((c, idx) => {
+                {filteredCadres.map((c, index) => {
                   const roleStr = c.role || c.ChucVuCongDoan || 'Ủy viên';
-                  const isPresident = roleStr.toLowerCase().includes('chủ tịch');
-                  const isVice = roleStr.toLowerCase().includes('phó');
-                  const isUbkt = roleStr.toLowerCase().includes('ubkt') || roleStr.toLowerCase().includes('kiểm tra');
-
+                  const isPresident = roleStr.toLowerCase().includes('chủ tịch') && !roleStr.toLowerCase().includes('phó');
+                  const isVice = roleStr.toLowerCase().includes('phó chủ tịch');
                   return (
                     <tr
-                      key={c.id || idx}
-                      style={{ borderBottom: '1px solid #F1F5F9', transition: 'background 0.15s ease' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      key={c.id || c.MaNhanSu || index}
+                      style={{ borderBottom: '1px solid #F1F5F9', transition: 'background 0.15s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#F8FAFC'}
+                      onMouseLeave={e => e.currentTarget.style.background = '#FFF'}
                     >
-                      <td style={{ padding: '14px 16px', textAlign: 'center', fontWeight: '700', color: '#64748B' }}>
-                        {String(idx + 1).padStart(2, '0')}
+                      <td style={{ padding: '14px 16px', textAlign: 'center', fontWeight: '600', color: '#64748B' }}>
+                        {String(index + 1).padStart(2, '0')}
                       </td>
                       <td style={{ padding: '14px 16px', textAlign: 'center' }}>
                         <img
                           src={c.photo || c.HinhAnh || 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Danh.jpg'}
+                        onError={(e) => { e.target.onerror = null; e.target.src = '/images/default_avatar.png'; }}
                           alt={c.name}
-                          style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #E2E8F0' }}
-                          onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'; }}
+                          style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #E2E8F0' }}
+                          onError={(e) => { e.target.src = 'https://congdoan.tdmu.edu.vn/img/ckeditor/Images/Danh.jpg'; }}
                         />
                       </td>
                       <td style={{ padding: '14px 16px' }}>
-                        <div style={{ fontWeight: '700', color: '#002855' }}>
-                          {c.name || c.HoVaTen}
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#64748B' }}>
-                          <span style={{ background: '#EFF6FF', color: '#1D4ED8', padding: '1px 6px', borderRadius: '4px', fontWeight: '600', marginRight: '6px' }}>
-                            {c.degree || c.HocHamHocVi || 'Cử nhân'}
-                          </span>
-                          Mã: #{c.code || c.MaCanBo || `CB_${c.id}`}
+                        <div style={{ fontWeight: '700', color: '#002855', fontSize: '14px' }}>{c.name || c.HoVaTen}</div>
+                        <div style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>
+                          <span style={{ color: '#0284C7', fontWeight: '600' }}>{c.degree || c.HocHamHocVi || 'Cử nhân'}</span>
+                          <span style={{ margin: '0 6px', color: '#CBD5E1' }}>•</span>
+                          <span>Mã: #{c.code || c.MaCanBo || `CB_${c.id}`}</span>
                         </div>
                       </td>
                       <td style={{ padding: '14px 16px' }}>
-                        <span style={{
-                          padding: '4px 10px',
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          fontWeight: '700',
-                          background: isPresident ? '#FEF3C7' : (isVice ? '#E0F2FE' : (isUbkt ? '#DCFCE7' : '#F1F5F9')),
-                          color: isPresident ? '#B45309' : (isVice ? '#0369A1' : (isUbkt ? '#15803D' : '#334155'))
-                        }}>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            background: isPresident ? '#FEF3C7' : isVice ? '#FEF9C3' : '#F1F5F9',
+                            color: isPresident ? '#92400E' : isVice ? '#854D0E' : '#334155'
+                          }}
+                        >
                           {roleStr}
                         </span>
                       </td>
-                      <td style={{ padding: '14px 16px', color: '#334155', fontSize: '13px' }}>
-                        <div>{c.unit || c.unit_name || c.ChucVuChuyenMon || 'ĐH Thủ Dầu Một'}</div>
+                      <td style={{ padding: '14px 16px', fontSize: '13px', color: '#334155' }}>
+                        <div style={{ fontWeight: '600' }}>{c.unit || c.unit_name || c.ChucVuChuyenMon || 'Công đoàn Trường TDMU'}</div>
                         {c.duties && (
                           <div style={{ fontSize: '11px', color: '#64748B', display: '-webkit-box', WebKitLineClamp: 1, WebKitBoxOrient: 'vertical', overflow: 'hidden' }}>
                             {c.duties}
@@ -380,7 +621,7 @@ export default function QuanLyCoCauToChuc() {
                       <td style={{ padding: '14px 16px', textAlign: 'center' }}>
                         <div style={{ display: 'inline-flex', gap: '6px' }}>
                           <button
-                            onClick={() => openEditModal(c)}
+                            onClick={() => openEditCadreModal(c)}
                             title="Chỉnh sửa thông tin cán bộ"
                             style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', borderRadius: '6px', padding: '5px 8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
                           >
@@ -404,43 +645,83 @@ export default function QuanLyCoCauToChuc() {
         </div>
       )}
 
-      {/* NỘI DUNG 2: BẢNG 16 TỔ CÔNG ĐOÀN */}
-      {filterTab === 'units' && (
+      {/* ── NỘI DUNG 2: BẢNG CÁC BAN (dbo.ORGANIZATIONS) ─────────────────── */}
+      {filterTab === 'boards' && (
         <div style={{ background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+          <div style={{ padding: '14px 20px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontWeight: '700', color: '#002855', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <i className="fa-solid fa-shield-halved text-primary" />
+              Danh Sách Các Ban / Hội Đồng Công Đoàn (dbo.ORGANIZATIONS)
+            </div>
+            <button
+              onClick={openAddBoardModal}
+              style={{ background: '#7C3AED', color: 'white', border: 'none', padding: '7px 14px', borderRadius: '6px', fontSize: '12.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <i className="fa-solid fa-plus" /> Thêm Ban Mới
+            </button>
+          </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13.5px' }}>
             <thead>
               <tr style={{ background: '#F1F5F9', borderBottom: '1px solid #E2E8F0', color: '#475569', fontWeight: '700' }}>
-                <th style={{ padding: '14px 16px', width: '70px', textAlign: 'center' }}>Mã Tổ</th>
-                <th style={{ padding: '14px 16px' }}>Tên Tổ Công Đoàn Trực Thuộc</th>
-                <th style={{ padding: '14px 16px', width: '220px' }}>Tổ Trưởng Phụ Trách</th>
-                <th style={{ padding: '14px 16px', width: '220px' }}>Email Liên Hệ</th>
+                <th style={{ padding: '14px 16px', width: '60px', textAlign: 'center' }}>STT</th>
+                <th style={{ padding: '14px 16px', minWidth: '220px' }}>Tên Ban / Cơ Quan</th>
+                <th style={{ padding: '14px 16px', width: '180px' }}>Nhiệm Kỳ</th>
+                <th style={{ padding: '14px 16px', minWidth: '260px' }}>Chức Năng & Quyền Hạn</th>
+                <th style={{ padding: '14px 16px', width: '90px', textAlign: 'center' }}>Thứ Tự</th>
+                <th style={{ padding: '14px 16px', width: '130px', textAlign: 'center' }}>Trạng Thái</th>
                 <th style={{ padding: '14px 16px', width: '140px', textAlign: 'center' }}>Thao Tác</th>
               </tr>
             </thead>
             <tbody>
-              {units.map((u) => (
-                <tr key={u.id || u.MaToCongDoan} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                  <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                    <span style={{ fontFamily: 'monospace', fontWeight: '700', color: '#0284C7', background: '#E0F2FE', padding: '2px 8px', borderRadius: '4px' }}>
-                      {u.code || u.MaDinhDanh || `TCD${u.id}`}
+              {boards.map((b, index) => (
+                <tr
+                  key={b.id || b.MaToChuc}
+                  style={{ borderBottom: '1px solid #F1F5F9', transition: 'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#F8FAFC'}
+                  onMouseLeave={e => e.currentTarget.style.background = '#FFF'}
+                >
+                  <td style={{ padding: '14px 16px', textAlign: 'center', fontWeight: '600', color: '#64748B' }}>
+                    {index + 1}
+                  </td>
+                  <td style={{ padding: '14px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <i className="fa-solid fa-shield-halved" style={{ color: '#7C3AED' }} />
+                      <strong style={{ color: '#002855', fontSize: '14px' }}>{b.name || b.TenToChuc}</strong>
+                    </div>
+                  </td>
+                  <td style={{ padding: '14px 16px', fontSize: '12.5px', color: '#475569' }}>
+                    <span style={{ background: '#F1F5F9', padding: '3px 8px', borderRadius: '4px', fontWeight: '600' }}>
+                      {b.tenure || b.NhiemKy || 'Nhiệm kỳ 2023 - 2028'}
                     </span>
                   </td>
-                  <td style={{ padding: '14px 16px', fontWeight: '700', color: '#002855' }}>
-                    {u.name || u.TenToCongDoan}
+                  <td style={{ padding: '14px 16px', fontSize: '12.5px', color: '#334155' }}>
+                    {b.description || b.MoTaChucNang || 'Chức năng, quyền hạn theo Điều lệ Công đoàn.'}
                   </td>
-                  <td style={{ padding: '14px 16px', color: '#1E293B' }}>
-                    <i className="fa-solid fa-user-tie me-1 text-primary" /> {u.leader || u.ToTruong || 'Chưa phân công'}
-                  </td>
-                  <td style={{ padding: '14px 16px', color: '#64748B', fontSize: '12.5px' }}>
-                    <i className="fa-solid fa-envelope me-1 text-secondary" /> {u.email || u.EmailLienHe || 'congdoan@tdmu.edu.vn'}
+                  <td style={{ padding: '14px 16px', textAlign: 'center', fontWeight: '700', color: '#0284C7' }}>
+                    {b.orderIndex !== undefined ? b.orderIndex : (b.ThuTuHienThi || (index + 1))}
                   </td>
                   <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                    <button
-                      onClick={() => setEditingUnit({ ...u })}
-                      style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', borderRadius: '6px', padding: '5px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
-                    >
-                      <i className="fa-solid fa-pen" /> Sửa thông tin
-                    </button>
+                    <span style={{ background: '#DEF7EC', color: '#03543F', padding: '4px 10px', borderRadius: '999px', fontSize: '11.5px', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <i className="fa-solid fa-circle-check" /> Hoạt động
+                    </span>
+                  </td>
+                  <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                    <div style={{ display: 'inline-flex', gap: '6px' }}>
+                      <button
+                        onClick={() => openEditBoardModal(b)}
+                        title="Chỉnh sửa Ban"
+                        style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', borderRadius: '6px', padding: '5px 8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                      >
+                        <i className="fa-solid fa-pen-to-square me-1" /> Sửa
+                      </button>
+                      <button
+                        onClick={() => handleDeleteBoard(b.id || b.MaToChuc, b.name || b.TenToChuc)}
+                        title="Xóa Ban"
+                        style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', borderRadius: '6px', padding: '5px 8px', fontSize: '12px', cursor: 'pointer' }}
+                      >
+                        <i className="fa-solid fa-trash" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -449,7 +730,83 @@ export default function QuanLyCoCauToChuc() {
         </div>
       )}
 
-      {/* MODAL THÊM / CHỈNH SỬA CÁN BỘ */}
+      {/* ── NỘI DUNG 3: BẢNG 16 TỔ CÔNG ĐOÀN (dbo.UNION_BRANCHES) ───────── */}
+      {filterTab === 'units' && (
+        <div style={{ background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+          <div style={{ padding: '14px 20px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontWeight: '700', color: '#002855', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <i className="fa-solid fa-users-rectangle text-primary" />
+              Danh Sách Tổ Công Đoàn Cơ Sở (dbo.UNION_BRANCHES)
+            </div>
+            <button
+              onClick={openAddUnitModal}
+              style={{ background: '#0284C7', color: 'white', border: 'none', padding: '7px 14px', borderRadius: '6px', fontSize: '12.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <i className="fa-solid fa-plus" /> Thêm Tổ Công Đoàn Mới
+            </button>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13.5px' }}>
+            <thead>
+              <tr style={{ background: '#F1F5F9', borderBottom: '1px solid #E2E8F0', color: '#475569', fontWeight: '700' }}>
+                <th style={{ padding: '14px 16px', width: '90px', textAlign: 'center' }}>Mã Tổ</th>
+                <th style={{ padding: '14px 16px' }}>Tên Tổ Công Đoàn Trực Thuộc</th>
+                <th style={{ padding: '14px 16px', width: '220px' }}>Tổ Trưởng Phụ Trách</th>
+                <th style={{ padding: '14px 16px', width: '220px' }}>Email Liên Hệ</th>
+                <th style={{ padding: '14px 16px', width: '160px' }}>Số Điện Thoại</th>
+                <th style={{ padding: '14px 16px', width: '160px', textAlign: 'center' }}>Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {units.map((u, index) => (
+                <tr
+                  key={u.id || u.MaToCongDoan || index}
+                  style={{ borderBottom: '1px solid #F1F5F9', transition: 'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#F8FAFC'}
+                  onMouseLeave={e => e.currentTarget.style.background = '#FFF'}
+                >
+                  <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                    <span style={{ fontFamily: 'monospace', fontWeight: '700', color: '#0284C7', background: '#E0F2FE', padding: '3px 8px', borderRadius: '4px' }}>
+                      {u.code || u.MaDinhDanh || `TCD_${String(index + 1).padStart(2, '0')}`}
+                    </span>
+                  </td>
+                  <td style={{ padding: '14px 16px', fontWeight: '700', color: '#002855' }}>
+                    {u.name || u.TenToCongDoan}
+                  </td>
+                  <td style={{ padding: '14px 16px', color: '#334155' }}>
+                    <strong>{u.leader || u.ToTruong || 'Ban Chấp Hành Tổ'}</strong>
+                  </td>
+                  <td style={{ padding: '14px 16px', color: '#0284C7' }}>
+                    <i className="fa-solid fa-envelope me-1 text-muted" /> {u.email || u.EmailLienHe || 'tcd@tdmu.edu.vn'}
+                  </td>
+                  <td style={{ padding: '14px 16px', color: '#64748B' }}>
+                    <i className="fa-solid fa-phone me-1 text-success" /> {u.phone || u.SoDienThoai || '0274.3822058'}
+                  </td>
+                  <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                    <div style={{ display: 'inline-flex', gap: '6px' }}>
+                      <button
+                        onClick={() => openEditUnitModal(u)}
+                        title="Chỉnh sửa Tổ Công đoàn"
+                        style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', borderRadius: '6px', padding: '5px 8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                      >
+                        <i className="fa-solid fa-pen-to-square me-1" /> Sửa
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUnit(u.id || u.MaToCongDoan, u.name || u.TenToCongDoan)}
+                        title="Xóa Tổ Công đoàn"
+                        style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', borderRadius: '6px', padding: '5px 8px', fontSize: '12px', cursor: 'pointer' }}
+                      >
+                        <i className="fa-solid fa-trash" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ── MODAL THÊM / CHỈNH SỬA CÁN BỘ ─────────────────────────────────── */}
       {editingCadre && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div style={{ background: '#FFFFFF', borderRadius: '12px', width: '100%', maxWidth: '640px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden', border: '1px solid #E2E8F0' }}>
@@ -501,16 +858,17 @@ export default function QuanLyCoCauToChuc() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Thuộc Cơ Quan Lãnh Đạo:</label>
+                  <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Thuộc Ban / Cơ Quan Lãnh Đạo:</label>
                   <select
                     value={formCadre.board_id}
                     onChange={e => setFormCadre({ ...formCadre, board_id: parseInt(e.target.value) })}
                     style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px' }}
                   >
-                    <option value={1}>Ban Chấp Hành / Ban Thường Vụ</option>
-                    <option value={2}>Ủy Ban Kiểm Tra</option>
-                    <option value={3}>Ban Nữ Công Quần Chúng</option>
-                    <option value={4}>Tổ Công Đoàn Cơ Sở</option>
+                    {boards.map(b => (
+                      <option key={b.id || b.MaToChuc} value={b.id || b.MaToChuc}>
+                        {b.name || b.TenToChuc}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -522,19 +880,21 @@ export default function QuanLyCoCauToChuc() {
                     type="text"
                     value={formCadre.unit}
                     onChange={e => setFormCadre({ ...formCadre, unit: e.target.value })}
-                    placeholder="VD: Phòng Quản lý Khoa học"
+                    placeholder="VD: Khoa Kỹ thuật Công nghệ"
                     style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px' }}
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Trực Thuộc Tổ Công Đoàn:</label>
+                  <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Thuộc Tổ Công Đoàn Cơ Sở:</label>
                   <select
                     value={formCadre.unit_id}
                     onChange={e => setFormCadre({ ...formCadre, unit_id: parseInt(e.target.value) })}
                     style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px' }}
                   >
                     {units.map(u => (
-                      <option key={u.id} value={u.id}>{u.code || `TCD${u.id}`} - {u.name}</option>
+                      <option key={u.id || u.MaToCongDoan} value={u.id || u.MaToCongDoan}>
+                        {u.name || u.TenToCongDoan}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -542,12 +902,12 @@ export default function QuanLyCoCauToChuc() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Email TDMU:</label>
+                  <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Email Liên Hệ:</label>
                   <input
                     type="email"
                     value={formCadre.email}
                     onChange={e => setFormCadre({ ...formCadre, email: e.target.value })}
-                    placeholder="canbo@tdmu.edu.vn"
+                    placeholder="email@tdmu.edu.vn"
                     style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px' }}
                   />
                 </div>
@@ -557,31 +917,58 @@ export default function QuanLyCoCauToChuc() {
                     type="text"
                     value={formCadre.phone}
                     onChange={e => setFormCadre({ ...formCadre, phone: e.target.value })}
-                    placeholder="0912.xxx.xxx"
+                    placeholder="09xx xxx xxx"
                     style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px' }}
                   />
                 </div>
               </div>
 
               <div>
-                <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Link Ảnh Đại Diện (Avatar):</label>
-                <input
-                  type="text"
-                  value={formCadre.photo}
-                  onChange={e => setFormCadre({ ...formCadre, photo: e.target.value })}
-                  placeholder="https://... hoặc /uploads/avatar.jpg"
-                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px' }}
-                />
+                <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Ảnh Chân Dung Cán Bộ (Chọn từ máy tính):</label>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <label style={{
+                    background: '#F1F5F9',
+                    border: '1px solid #CBD5E1',
+                    padding: '8px 14px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    color: '#334155',
+                    cursor: uploadingPhoto ? 'wait' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+                    <i className={uploadingPhoto ? "fa-solid fa-spinner fa-spin" : "fa-solid fa-cloud-arrow-up"} />
+                    <span>{uploadingPhoto ? 'Đang tải...' : 'Chọn ảnh từ máy'}</span>
+                    <input type="file" accept="image/*" onChange={handlePhotoUpload} disabled={uploadingPhoto} style={{ display: 'none' }} />
+                  </label>
+                  <input
+                    type="text"
+                    value={formCadre.photo}
+                    onChange={e => setFormCadre({ ...formCadre, photo: e.target.value })}
+                    placeholder="URL ảnh hoặc chọn tệp..."
+                    style={{ flex: 1, padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '12.5px' }}
+                  />
+                  {formCadre.photo && (
+                    <img
+                      src={formCadre.photo}
+                      alt=""
+                      style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #CBD5E1' }}
+                      onError={e => { e.target.style.display = 'none'; }}
+                    />
+                  )}
+                </div>
               </div>
 
               <div>
-                <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Nhiệm Vụ Phân Công Chi Tiết:</label>
+                <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Nhiệm Vụ Phân Công:</label>
                 <textarea
-                  rows={3}
+                  rows="2"
                   value={formCadre.duties}
                   onChange={e => setFormCadre({ ...formCadre, duties: e.target.value })}
-                  placeholder="Phụ trách công tác chuyên môn, kiểm tra giám sát và các phong trào thi đua..."
-                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px', resize: 'vertical' }}
+                  placeholder="Ghi chú phân công nhiệm vụ chi tiết..."
+                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px' }}
                 />
               </div>
 
@@ -589,16 +976,16 @@ export default function QuanLyCoCauToChuc() {
                 <button
                   type="button"
                   onClick={() => setEditingCadre(null)}
-                  style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', color: '#475569', padding: '8px 16px', borderRadius: '6px', fontWeight: '700', cursor: 'pointer' }}
+                  style={{ padding: '8px 16px', border: '1px solid #CBD5E1', borderRadius: '6px', background: 'white', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
                 >
-                  Hủy bỏ
+                  Hủy Bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  style={{ background: '#0284C7', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', fontWeight: '700', cursor: 'pointer' }}
+                  style={{ padding: '8px 20px', border: 'none', borderRadius: '6px', background: '#002855', color: 'white', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}
                 >
-                  {saving ? 'Đang lưu...' : (editingCadre.id ? 'Cập Nhật Hồ Sơ' : 'Lưu Cán Bộ Mới')}
+                  {saving ? 'Đang lưu...' : (editingCadre.id ? 'Cập Nhật Hồ Sơ' : 'Thêm Cán Bộ')}
                 </button>
               </div>
             </form>
@@ -606,46 +993,164 @@ export default function QuanLyCoCauToChuc() {
         </div>
       )}
 
-      {/* MODAL CHỈNH SỬA TỔ CÔNG ĐOÀN */}
+      {/* ── MODAL THÊM / CHỈNH SỬA BAN (dbo.ORGANIZATIONS) ────────────────── */}
+      {editingBoard && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: '#FFFFFF', borderRadius: '12px', width: '100%', maxWidth: '540px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden', border: '1px solid #E2E8F0' }}>
+            <div style={{ padding: '16px 20px', background: 'linear-gradient(135deg,#7C3AED,#6D28D9)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '16px', fontWeight: '800' }}>
+                <i className="fa-solid fa-shield-halved me-2" />
+                {editingBoard.id ? `Chỉnh Sửa Ban: ${formBoard.name}` : 'Thêm Ban / Hội Đồng Mới'}
+              </div>
+              <button onClick={() => setEditingBoard(null)} style={{ background: 'none', border: 'none', color: '#E2E8F0', fontSize: '20px', cursor: 'pointer' }}>✕</button>
+            </div>
+
+            <form onSubmit={handleSaveBoard} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Tên Ban / Cơ Quan (*):</label>
+                  <input
+                    type="text"
+                    required
+                    value={formBoard.name}
+                    onChange={e => setFormBoard({ ...formBoard, name: e.target.value })}
+                    placeholder="VD: Ban Nữ Công, Ban Tuyên Giáo..."
+                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Thứ Tự:</label>
+                  <input
+                    type="number"
+                    value={formBoard.orderIndex}
+                    onChange={e => setFormBoard({ ...formBoard, orderIndex: parseInt(e.target.value) || 0 })}
+                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Nhiệm Kỳ Hoạt Động:</label>
+                <input
+                  type="text"
+                  value={formBoard.tenure}
+                  onChange={e => setFormBoard({ ...formBoard, tenure: e.target.value })}
+                  placeholder="Nhiệm kỳ 2023 - 2028"
+                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Chức Năng & Quyền Hạn:</label>
+                <textarea
+                  rows="3"
+                  value={formBoard.description}
+                  onChange={e => setFormBoard({ ...formBoard, description: e.target.value })}
+                  placeholder="Mô tả chức năng, quyền hạn hoạt động của Ban..."
+                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingBoard(null)}
+                  style={{ padding: '8px 16px', border: '1px solid #CBD5E1', borderRadius: '6px', background: 'white', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  style={{ padding: '8px 20px', border: 'none', borderRadius: '6px', background: '#7C3AED', color: 'white', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}
+                >
+                  {saving ? 'Đang lưu...' : (editingBoard.id ? 'Lưu Thay Đổi' : 'Thêm Ban Mới')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL THÊM / CHỈNH SỬA TỔ CÔNG ĐOÀN (dbo.UNION_BRANCHES) ───── */}
       {editingUnit && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div style={{ background: '#FFFFFF', borderRadius: '12px', width: '100%', maxWidth: '520px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden', border: '1px solid #E2E8F0' }}>
-            <div style={{ padding: '16px 20px', background: '#002855', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ background: '#FFFFFF', borderRadius: '12px', width: '100%', maxWidth: '540px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden', border: '1px solid #E2E8F0' }}>
+            <div style={{ padding: '16px 20px', background: 'linear-gradient(135deg,#002855,#0284C7)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontSize: '16px', fontWeight: '800' }}>
-                <i className="fa-solid fa-pen-to-square me-2" /> Cập Nhật Thông Tin Tổ Công Đoàn
+                <i className="fa-solid fa-users-rectangle me-2" />
+                {editingUnit.id ? `Cập Nhật Tổ Công Đoàn: ${formUnit.name}` : 'Thêm Tổ Công Đoàn Cơ Sở Mới'}
               </div>
               <button onClick={() => setEditingUnit(null)} style={{ background: 'none', border: 'none', color: '#E2E8F0', fontSize: '20px', cursor: 'pointer' }}>✕</button>
             </div>
 
             <form onSubmit={handleSaveUnit} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Mã Tổ (*):</label>
+                  <input
+                    type="text"
+                    required
+                    value={formUnit.code}
+                    onChange={e => setFormUnit({ ...formUnit, code: e.target.value })}
+                    placeholder="TCD_01"
+                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px', fontFamily: 'monospace' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Tên Tổ Công Đoàn (*):</label>
+                  <input
+                    type="text"
+                    required
+                    value={formUnit.name}
+                    onChange={e => setFormUnit({ ...formUnit, name: e.target.value })}
+                    placeholder="VD: Tổ Công đoàn 1 - Khối Hiệu Bộ"
+                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px' }}
+                  />
+                </div>
+              </div>
+
               <div>
-                <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Tên Tổ Công Đoàn (*):</label>
+                <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Tổ Trưởng / Người Phụ Trách:</label>
                 <input
                   type="text"
-                  required
-                  value={editingUnit.name || editingUnit.TenToCongDoan || ''}
-                  onChange={e => setEditingUnit({ ...editingUnit, name: e.target.value })}
+                  value={formUnit.leader}
+                  onChange={e => setFormUnit({ ...formUnit, leader: e.target.value })}
+                  placeholder="Đ/c Nguyễn Văn A"
                   style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px' }}
                 />
               </div>
 
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Tổ Trưởng Phụ Trách (*):</label>
-                <input
-                  type="text"
-                  required
-                  value={editingUnit.leader || editingUnit.ToTruong || ''}
-                  onChange={e => setEditingUnit({ ...editingUnit, leader: e.target.value })}
-                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px' }}
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Email Liên Hệ:</label>
+                  <input
+                    type="email"
+                    value={formUnit.email}
+                    onChange={e => setFormUnit({ ...formUnit, email: e.target.value })}
+                    placeholder="tcd01@tdmu.edu.vn"
+                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Số Điện Thoại:</label>
+                  <input
+                    type="text"
+                    value={formUnit.phone}
+                    onChange={e => setFormUnit({ ...formUnit, phone: e.target.value })}
+                    placeholder="0274.3822058"
+                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px' }}
+                  />
+                </div>
               </div>
 
               <div>
-                <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Email Liên Hệ:</label>
+                <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '4px' }}>Văn Phòng / Địa Điểm Sinh Hoạt:</label>
                 <input
-                  type="email"
-                  value={editingUnit.email || editingUnit.EmailLienHe || ''}
-                  onChange={e => setEditingUnit({ ...editingUnit, email: e.target.value })}
+                  type="text"
+                  value={formUnit.office}
+                  onChange={e => setFormUnit({ ...formUnit, office: e.target.value })}
+                  placeholder="Phòng A1.204, Khu hiệu bộ TDMU"
                   style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px' }}
                 />
               </div>
@@ -654,16 +1159,16 @@ export default function QuanLyCoCauToChuc() {
                 <button
                   type="button"
                   onClick={() => setEditingUnit(null)}
-                  style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', color: '#475569', padding: '8px 16px', borderRadius: '6px', fontWeight: '700', cursor: 'pointer' }}
+                  style={{ padding: '8px 16px', border: '1px solid #CBD5E1', borderRadius: '6px', background: 'white', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
                 >
-                  Hủy bỏ
+                  Hủy Bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  style={{ background: '#002855', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', fontWeight: '700', cursor: 'pointer' }}
+                  style={{ padding: '8px 20px', border: 'none', borderRadius: '6px', background: '#0284C7', color: 'white', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}
                 >
-                  {saving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                  {saving ? 'Đang lưu...' : (editingUnit.id ? 'Lưu Thay Đổi' : 'Thêm Tổ Mới')}
                 </button>
               </div>
             </form>

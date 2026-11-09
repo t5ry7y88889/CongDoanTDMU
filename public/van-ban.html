@@ -133,7 +133,7 @@
           <div class="panel-tdmu">
             <div class="panel-heading-tdmu"><i class="fa-solid fa-chart-simple me-2 text-warning"></i>Thống kê truy cập</div>
             <div class="p-3" style="font-size: 13px;">
-              <p class="mb-2"><i class="fa-solid fa-users text-primary me-2"></i> Đang trực tuyến: <strong>12</strong></p>
+              <p class="mb-2"><i class="fa-solid fa-users text-primary me-2"></i> Đang trực tuyến: <strong id="stat_online">1</strong></p>
               <p class="mb-0"><i class="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong id="stat_views">0</strong></p>
             </div>
           </div>
@@ -460,12 +460,13 @@
   <script src="libs/tui-pagination/tui-pagination.min.js"></script>
   <script src="js/pagination.js?v=2026"></script>
   <script src="js/bookmarks.js?v=20260901_v23"></script>
+  <script src="js/auth-nav.js?v=20261106"></script>
 
   <!-- OFFCANVAS TỦ SÁCH ĐỌC SAU (SAVED ARTICLES DRAWER) -->
   <div class="offcanvas offcanvas-end" tabindex="-1" id="bookmarksOffcanvas" style="width: 380px;">
     <div class="offcanvas-header" style="background: #002855; color: white;">
       <h5 class="offcanvas-title fw-bold" style="font-size: 16px;">
-        <i class="fa-solid fa-bookmark text-warning me-2"></i> Tủ Sách Đọc Sau (<span class="bookmark-badge-count">2</span>)
+        <i class="fa-solid fa-bookmark text-warning me-2"></i> Tủ Sách Đọc Sau (<span class="bookmark-badge-count">0</span>)
       </h5>
       <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
     </div>

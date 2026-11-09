@@ -98,9 +98,10 @@ const navSections = [
   ]},
   { label: 'NGHIỆP VỤ CÔNG ĐOÀN', items: [
     { id: 'feedback', label: 'Hòm Thư Góp Ý', icon: 'fa-solid fa-envelope-open-text', color: '#EC4899' },
-    { id: 'welfare', label: 'Quỹ Chăm Lo & Trợ Cấp', icon: 'fa-solid fa-hand-holding-heart', color: '#F59E0B' },
+    { id: 'welfare', label: 'Quản Lý Phúc Lợi', icon: 'fa-solid fa-hand-holding-heart', color: '#F59E0B' },
     { id: 'users', label: 'Cán Bộ & Phân Quyền', icon: 'fa-solid fa-users-gear', color: '#F87171' },
-    { id: 'audits', label: 'Nhật Ký Tác Nghiệp', icon: 'fa-solid fa-clock-rotate-left', color: '#A78BFA' }
+    { id: 'audits', label: 'Nhật Ký Tác Nghiệp', icon: 'fa-solid fa-clock-rotate-left', color: '#A78BFA' },
+    { id: 'banners', label: 'Quản Trị Banners', icon: 'fa-solid fa-images', color: '#F43F5E', count: '2' }
   ]}
 ];
 
@@ -112,9 +113,10 @@ const navTitles = {
   'documents': 'Kho Văn Bản Chỉ Đạo & Điều Hành',
   'templates': 'Kho Biểu Mẫu Nghiệp Vụ Công Đoàn',
   'feedback': 'Hòm Thư Góp Ý & Nguyện Vọng',
-  'welfare': 'Quản Lý Quỹ Chăm Lo & Trợ Cấp Đoàn Viên',
+  'welfare': 'Quản Lý Văn Bản & Chính Sách Phúc Lợi',
   'users': 'Cán Bộ & Phân Quyền',
-  'audits': 'Nhật Ký Tác Nghiệp Hệ Thống'
+  'audits': 'Nhật Ký Tác Nghiệp Hệ Thống',
+  'banners': 'Quản Trị Banners & Slider Trình Chiếu Trang Chủ'
 };
 
 const FB_EMOJIS = ['📢','🎓','✨','🏆','🔥','❤️','📌','🤝','⚽','🎉','👏','💪','🌟','📸','🎯'];
@@ -348,7 +350,7 @@ export default function AdminStudio() {
   useEffect(() => {
     const handleHash = () => {
       const hash = window.location.hash.replace('#', '').trim();
-      const validTabs = ['dashboard', 'articles', 'ai-creator', 'schedule', 'documents', 'templates', 'feedback', 'users', 'audits'];
+      const validTabs = ['dashboard', 'articles', 'ai-creator', 'schedule', 'documents', 'templates', 'feedback', 'welfare', 'organization', 'users', 'audits', 'banners', 'settings'];
       if (hash && validTabs.includes(hash)) {
         setActiveNav(hash);
         syncPortalTab(hash);
@@ -1358,6 +1360,18 @@ export default function AdminStudio() {
             if (pRes.success && pRes.text) {
               extractedText = pRes.text;
             }
+            // TỰ ĐỘNG BÓC TÁCH ẢNH TỪ TÀI LIỆU WORD & PDF ĐƯA VÀO TƯ LIỆU ẢNH
+            if (pRes.success && Array.isArray(pRes.images) && pRes.images.length > 0) {
+              pRes.images.forEach((img, imgIdx) => {
+                newPhotos.push({
+                  url: img.url,
+                  caption: img.caption || Ảnh trích xuất từ tài liệu Word: ,
+                  isFeatured: false,
+                  fileName: img.fileName || ${f.name}_anh_.png,
+                  isAnalyzingVision: false
+                });
+              });
+            }
           } catch (pErr) {
             console.warn('[Parse document error for ' + f.name + ']:', pErr);
           }
@@ -1792,7 +1806,16 @@ export default function AdminStudio() {
     if (!title && !bodyHtml) { alert('Vui lòng nhập nội dung!'); return; }
     setIsSaving(true);
     try {
-      const payload = { title: title || 'Bản Thảo Chưa Đặt Tên', summary: sapo, content: editorRef.current?.innerHTML || bodyHtml, status: 'draft', author: 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một', image: featuredPhoto?.url || '' };
+      const payload = {
+        title: title || 'Bản Thảo Chưa Đặt Tên',
+        summary: sapo,
+        content: editorRef.current?.innerHTML || bodyHtml,
+        noi_dung_fb: fbCaption || `${title}\n\n${sapo}\n\n#CongDoanTDMU #TDMU`,
+        noi_dung_zalo: zaloText || `${title}\n\n${sapo}`,
+        status: 'draft',
+        author: 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một',
+        image: featuredPhoto?.url || ''
+      };
       let res;
       if (activeArticleId) {
         res = await fetch(`/api/articles/${activeArticleId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(r => r.json());
@@ -1808,6 +1831,39 @@ export default function AdminStudio() {
         fetchDrafts();
         setLastSaveTime('Đã lưu ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
       } else throw new Error(res.error || 'Lỗi lưu');
+    } catch (err) { alert('Lỗi: ' + err.message); }
+    finally { setIsSaving(false); }
+  };
+
+  const submitForReview = async () => {
+    if (!title && !bodyHtml) { alert('Vui lòng nhập tiêu đề hoặc nội dung trước khi gửi duyệt!'); return; }
+    setIsSaving(true);
+    try {
+      const payload = {
+        title: title || 'Bản Thảo Chưa Đặt Tên',
+        summary: sapo,
+        content: editorRef.current?.innerHTML || bodyHtml,
+        noi_dung_fb: fbCaption || `${title}\n\n${sapo}\n\n#CongDoanTDMU #TDMU`,
+        noi_dung_zalo: zaloText || `${title}\n\n${sapo}`,
+        status: 'pending_review',
+        isResubmitted: true,
+        author: 'Cán Bộ Ban Tuyên Giáo',
+        image: featuredPhoto?.url || ''
+      };
+      let res;
+      if (activeArticleId) {
+        res = await fetch(`/api/articles/${activeArticleId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(r => r.json());
+      } else {
+        res = await fetch('/api/articles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(r => r.json());
+        if (res.success && res.data?.id) {
+          setActiveArticleId(res.data.id);
+        }
+      }
+      if (res.success) {
+        alert('📤 Đã gửi bài viết lên Ban Biên Tập thành công!\n\nBài viết đang ở trạng thái "Chờ Thẩm Định". Ban Biên Tập sẽ xem xét phê duyệt hoặc yêu cầu bổ sung chỉnh sửa.');
+        fetchDrafts();
+        setLastSaveTime('Đã gửi duyệt ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      } else throw new Error(res.error || 'Lỗi gửi duyệt');
     } catch (err) { alert('Lỗi: ' + err.message); }
     finally { setIsSaving(false); }
   };
@@ -2360,7 +2416,7 @@ export default function AdminStudio() {
         body: JSON.stringify({
           articleId: artId,
           channels: chs,
-          web: { title, summary: sapo, content: currentHtml, image: (eventPhotos[0]?.url) || 'images/banner.jpg' },
+          web: { title, summary: sapo, content: currentHtml, image: (eventPhotos[0]?.url && !eventPhotos[0]?.url.includes('banner.jpg')) ? eventPhotos[0].url : '' },
           facebook: { 
             caption: fbCaption || `${title}\n\n${sapo}\n\n#CongDoanTDMU #TDMU`, 
             imageUrl: allFbPhotos[0] || (eventPhotos[0]?.url) || '',
@@ -2397,6 +2453,110 @@ export default function AdminStudio() {
   return (
     <div style={{ background: '#F8FAFC', height: '100vh', display: 'flex', overflow: 'hidden', color: '#0F172A', fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
       <style>{`
+        .top-studio-header {
+          height: 52px;
+          background: #FFF;
+          border-bottom: 1px solid #E2E8F0;
+          padding: 0 16px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-shrink: 0;
+          z-index: 50;
+          gap: 10px;
+          overflow-x: auto;
+          overflow-y: hidden;
+          scrollbar-width: thin;
+        }
+        .top-studio-header::-webkit-scrollbar {
+          height: 3px;
+        }
+        .top-studio-header::-webkit-scrollbar-thumb {
+          background: #CBD5E1;
+          border-radius: 3px;
+        }
+        .top-studio-header, .top-studio-header * {
+          white-space: nowrap !important;
+        }
+        .header-left-cluster {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-shrink: 0;
+          white-space: nowrap;
+        }
+        .header-breadcrumb {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 12.5px;
+          color: #64748B;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+        .header-action-cluster {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-shrink: 0;
+          flex-wrap: nowrap;
+          white-space: nowrap;
+        }
+        .action-btn {
+          white-space: nowrap !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          gap: 5px !important;
+          flex-shrink: 0 !important;
+          padding: 6px 12px !important;
+          border-radius: 6px !important;
+          font-size: 12px !important;
+          font-weight: 700 !important;
+          cursor: pointer !important;
+          border: none !important;
+          transition: all 0.15s ease !important;
+          height: 33px !important;
+          box-sizing: border-box !important;
+          line-height: 1 !important;
+        }
+        .action-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .header-save-status {
+          font-size: 11.5px;
+          color: #475569;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          white-space: nowrap;
+          flex-shrink: 0;
+          padding: 5px 8px;
+          background: #F8FAFC;
+          border-radius: 6px;
+          border: 1px solid #E2E8F0;
+        }
+        @media (max-width: 1440px) {
+          .btn-text-export { display: none !important; }
+          .btn-text-settings { display: none !important; }
+          .status-time-detail { display: none !important; }
+        }
+        @media (max-width: 1220px) {
+          .breadcrumb-prefix { display: none !important; }
+          .btn-text-draft { display: none !important; }
+          .action-btn { padding: 5px 8px !important; font-size: 11px !important; }
+          .header-action-cluster { gap: 5px !important; }
+          .header-save-status { padding: 4px 6px !important; font-size: 11px !important; }
+        }
+        @media (max-width: 1024px) {
+          .header-breadcrumb { display: none !important; }
+          .btn-text-new { display: none !important; }
+          .btn-text-publish { display: none !important; }
+          .action-btn { padding: 5px 7px !important; height: 30px !important; }
+          .header-action-cluster { gap: 4px !important; }
+        }
+
         /* VÔ HIỆU HÓA HOÀN TOÀN GẠCH ĐỎ CHÍNH TẢ TRÌNH DUYỆT (SPELLCHECK OFF) */
         textarea, input, [contenteditable], .ck-editor__editable, .ck-editor__editable * {
           spellcheck: false !important;
@@ -2491,58 +2651,63 @@ export default function AdminStudio() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
         {/* TOP HEADER */}
-        <header style={{ height: '52px', background: '#FFF', borderBottom: '1px solid #E2E8F0', padding: '0 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, zIndex: 50 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', color: '#334155', cursor: 'pointer' }} title="Thu gọn / Mở rộng Danh mục">
+        <header className="top-studio-header">
+          <div className="header-left-cluster">
+            <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', color: '#334155', cursor: 'pointer', flexShrink: 0 }} title="Thu gọn / Mở rộng Danh mục">
               <i className="fa-solid fa-bars" />
             </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', color: '#64748B' }}>
-              <span>Trang Quản Trị</span><span>/</span>
+            <div className="header-breadcrumb">
+              <span className="breadcrumb-prefix">Trang Quản Trị</span>
+              <span className="breadcrumb-prefix">/</span>
               <strong style={{ color: '#002855' }}>
                 {navTitles[activeNav] || 'Soạn Thảo & Biên Tập'}
               </strong>
             </div>
             {activeNav === 'ai-creator' && (
-              <button onClick={() => setDraftsOpen(!draftsOpen)} style={{ background: draftsOpen ? '#EFF6FF' : '#F8FAFC', border: '1px solid #CBD5E1', color: draftsOpen ? '#1D4ED8' : '#64748B', borderRadius: '6px', padding: '5px 10px', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}>
-                <i className="fa-solid fa-box-archive" /> Tủ Bản Thảo ({draftsList.length})
+              <button onClick={() => setDraftsOpen(!draftsOpen)} style={{ background: draftsOpen ? '#EFF6FF' : '#F8FAFC', border: '1px solid #CBD5E1', color: draftsOpen ? '#1D4ED8' : '#64748B', borderRadius: '6px', padding: '5px 10px', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap', flexShrink: 0 }} title="Mở / Đóng Tủ Bản Thảo">
+                <i className="fa-solid fa-box-archive" /> <span>Tủ Bản Thảo ({draftsList.length})</span>
               </button>
             )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="header-action-cluster">
             {activeNav === 'ai-creator' ? (
               <>
-                <div style={{ fontSize: '11.5px', color: '#475569', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: isSaving ? '#F59E0B' : '#10B981', display: 'inline-block' }} />
-                  <span>{isSaving ? 'Đang lưu...' : (lastSaveTime ? `Lưu tự động: ${lastSaveTime}` : 'Sẵn sàng')}</span>
+                <div className="header-save-status">
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: isSaving ? '#F59E0B' : '#10B981', display: 'inline-block', flexShrink: 0 }} />
+                  <span>{isSaving ? 'Đang lưu...' : (lastSaveTime ? <span><span className="status-time-detail">Lưu tự động: </span>{lastSaveTime}</span> : 'Sẵn sàng')}</span>
                 </div>
-                <button onClick={newArticle} className="action-btn" style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px' }} title="Tạo bài mới (tự động lưu bài hiện tại vào Tủ Bản Thảo)">
-                  <i className="fa-solid fa-plus" /> Bài mới
+                <button onClick={newArticle} className="action-btn" style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', fontWeight: '700' }} title="Tạo bài mới (tự động lưu bài hiện tại vào Tủ Bản Thảo)">
+                  <i className="fa-solid fa-plus" /> <span className="btn-text-new">Bài mới</span>
                 </button>
-                <button id="btn-export-word" onClick={handleExportWord} className="action-btn" style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#15803D', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px' }} title="Tải bài viết về máy dưới dạng Microsoft Word (.docx)">
-                  <i className="fa-solid fa-file-word" /> Xuất Word
+                <button id="btn-export-word" onClick={handleExportWord} className="action-btn" style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#15803D', fontWeight: '700' }} title="Tải bài viết về máy dưới dạng Microsoft Word (.docx)">
+                  <i className="fa-solid fa-file-word" /> <span className="btn-text-export">Xuất Word</span>
                 </button>
-                <button id="btn-export-pdf" onClick={handleExportPdf} className="action-btn" style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px' }} title="Tải bài viết về máy dưới dạng Adobe PDF (.pdf)">
-                  <i className="fa-solid fa-file-pdf" /> Xuất PDF
+                <button id="btn-export-pdf" onClick={handleExportPdf} className="action-btn" style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', fontWeight: '700' }} title="Tải bài viết về máy dưới dạng Adobe PDF (.pdf)">
+                  <i className="fa-solid fa-file-pdf" /> <span className="btn-text-export">Xuất PDF</span>
                 </button>
-                <button onClick={() => setSettingsOpen(true)} className="action-btn" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }} title="Cài đặt API Key cho Gemini Vision và Groq">
-                  ⚙️ Cài Đặt AI
+                <button onClick={() => setSettingsOpen(true)} className="action-btn" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#475569' }} title="Cài đặt API Key cho Gemini Vision và Groq">
+                  <i className="fa-solid fa-gear" /> <span className="btn-text-settings">Cài Đặt AI</span>
                 </button>
-                <button onClick={saveDraft} className="action-btn" style={{ background: '#FFF', border: '1px solid #CBD5E1', color: '#002855' }}>💾 Lưu Bản Thảo</button>
-                <button onClick={publishLive} className="action-btn" style={{ background: 'linear-gradient(135deg,#002855,#2563EB)', color: 'white' }}>🚀 Xuất Bản Live</button>
+                <button onClick={saveDraft} className="action-btn" style={{ background: '#FFF', border: '1px solid #CBD5E1', color: '#002855' }} title="Lưu bản thảo (tự động đồng bộ cả 3 kênh: Báo Web, Facebook, Zalo)">
+                  <i className="fa-regular fa-floppy-disk" /> <span className="btn-text-draft">Lưu Bản Thảo</span>
+                </button>
+                <button onClick={submitForReview} className="action-btn" style={{ background: 'linear-gradient(135deg,#002855,#0284C7)', color: 'white', fontWeight: '800' }} title="Gửi bài viết lên Tòa Soạn để Ban Biên Tập thẩm định">
+                  <i className="fa-solid fa-paper-plane" /> <span className="btn-text-publish">Gửi Duyệt Bài</span>
+                </button>
               </>
             ) : (
               <>
                 <button
                   onClick={() => handleNavClick('ai-creator')}
                   className="action-btn"
-                  style={{ background: 'linear-gradient(135deg,#002855,#2563EB)', color: 'white', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  style={{ background: 'linear-gradient(135deg,#002855,#2563EB)', color: 'white', fontWeight: '700' }}
                   title="Mở Soạn Thảo & Biên Tập Tin Bài AI"
                 >
                   <i className="fa-solid fa-wand-magic-sparkles" /> Soạn Thảo Tin Bài AI
                 </button>
-                <button onClick={() => setSettingsOpen(true)} className="action-btn" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }} title="Cài đặt API Key cho Gemini Vision và Groq">
-                  ⚙️ Cài Đặt AI
+                <button onClick={() => setSettingsOpen(true)} className="action-btn" style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#475569' }} title="Cài đặt API Key cho Gemini Vision và Groq">
+                  <i className="fa-solid fa-gear" /> <span className="btn-text-settings">Cài Đặt AI</span>
                 </button>
               </>
             )}
@@ -2923,7 +3088,7 @@ export default function AdminStudio() {
                               style={{ padding: '5px 10px', borderRadius: '6px', border: '1px solid #1877F2', background: '#EFF6FF', color: '#1877F2', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
                               title="Tải thêm ảnh từ máy tính của bạn vào bài đăng Facebook"
                             >
-                              <i className="fa-solid fa-cloud-arrow-up" /> + Tải ảnh từ máy tính
+                              <i className="fa-solid fa-cloud-arrow-up" /> Tải ảnh từ máy tính
                             </button>
                             {eventPhotos.length > 0 && (
                               <button
@@ -3393,7 +3558,7 @@ export default function AdminStudio() {
                               style={{ padding: '5px 10px', borderRadius: '6px', border: '1px solid #0068FF', background: '#EFF6FF', color: '#0068FF', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
                               title="Tải ảnh đính kèm từ máy tính của bạn"
                             >
-                              <i className="fa-solid fa-cloud-arrow-up" /> + Tải ảnh từ máy tính
+                              <i className="fa-solid fa-cloud-arrow-up" /> Tải ảnh từ máy tính
                             </button>
                             {eventPhotos.length > 0 && (
                               <button

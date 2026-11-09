@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 
 export default function AdminTopHeader({
   activeNav,
@@ -73,22 +73,6 @@ export default function AdminTopHeader({
               style={{ fontSize: '12px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <i className="fa-solid fa-clipboard-check text-primary" /> Kiểm Định Báo Chí
-            </button>
-
-            <button
-              onClick={() => setOmnichannelModalOpen(true)}
-              className="btn btn-sm"
-              style={{ background: 'linear-gradient(135deg,#002855,#0284C7)', color: '#FFF', fontSize: '12px', fontWeight: '800', border: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <i className="fa-solid fa-share-nodes text-warning" /> Đăng Đa Kênh
-            </button>
-
-            <button
-              onClick={publishLive}
-              className="btn btn-sm"
-              style={{ background: '#002855', color: '#FEF08A', fontSize: '12px', fontWeight: '800', border: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <i className="fa-solid fa-paper-plane" /> Đăng Bài Ngay
             </button>
           </>
         )}

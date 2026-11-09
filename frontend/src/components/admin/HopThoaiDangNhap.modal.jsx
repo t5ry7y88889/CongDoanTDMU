@@ -27,7 +27,7 @@ export default function HopThoaiDangNhap({
   if (!isOpen) return null;
 
   // 1-Click Fast Login for Demo
-  const handleFastLogin = async (email, password = '123') => {
+  const handleFastLogin = async (email, password = '123456') => {
     setLoginEmail(email);
     setLoginPassword(password);
     setLoginLoading(true);
@@ -257,7 +257,7 @@ export default function HopThoaiDangNhap({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <button
                     type="button"
-                    onClick={() => handleFastLogin('admin@tdmu.edu.vn', '123')}
+                    onClick={() => handleFastLogin('admin@tdmu.edu.vn')}
                     style={{
                       padding: '8px 12px',
                       borderRadius: '6px',
@@ -281,7 +281,7 @@ export default function HopThoaiDangNhap({
 
                   <button
                     type="button"
-                    onClick={() => handleFastLogin('editor@tdmu.edu.vn', '123')}
+                    onClick={() => handleFastLogin('editor@tdmu.edu.vn')}
                     style={{
                       padding: '8px 12px',
                       borderRadius: '6px',
@@ -305,7 +305,7 @@ export default function HopThoaiDangNhap({
 
                   <button
                     type="button"
-                    onClick={() => handleFastLogin('contributor@tdmu.edu.vn', '123')}
+                    onClick={() => handleFastLogin('contributor@tdmu.edu.vn')}
                     style={{
                       padding: '8px 12px',
                       borderRadius: '6px',
@@ -324,6 +324,30 @@ export default function HopThoaiDangNhap({
                     </div>
                     <span style={{ background: '#FEF3C7', color: '#B45309', padding: '2px 8px', borderRadius: '12px', fontSize: '10.5px', fontWeight: '800' }}>
                       Contributor (Cộng Tác)
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleFastLogin('doanvien@tdmu.edu.vn')}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid #CBD5E1',
+                      background: '#FFF',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '12.5px', fontWeight: '700', color: '#002855' }}>Nguyễn Văn An</div>
+                      <div style={{ fontSize: '11px', color: '#64748B' }}>doanvien@tdmu.edu.vn</div>
+                    </div>
+                    <span style={{ background: '#F1F5F9', color: '#475569', padding: '2px 8px', borderRadius: '12px', fontSize: '10.5px', fontWeight: '800' }}>
+                      Member (Đoàn Viên)
                     </span>
                   </button>
                 </div>

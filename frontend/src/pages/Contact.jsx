@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 
 const LienHe = () => {
   const [formData, setFormData] = useState({
-    sender_name: 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một',
-    unit: 'Phòng Quản lý Khoa học',
-    email: 'utltk@tdmu.edu.vn',
-    phone: '0918.370.363',
+    sender_name: '',
+    unit: '',
+    email: '',
+    phone: '',
     category: 'Góp ý chế độ chính sách',
     title: '',
     content: ''

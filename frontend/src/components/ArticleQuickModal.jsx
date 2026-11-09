@@ -1,8 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const ArticleQuickModal = ({ article, isOpen, onClose }) => {
+  useEffect(() => {
+    if (isOpen && article && article.id) {
+      fetch(`/api/articles/${article.id}/react`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'view' })
+      }).catch(err => console.error('Failed to increment view:', err));
+    }
+  }, [isOpen, article?.id]);
+
   if (!isOpen || !article) return null;
+
+  const viewsCount = article.views !== undefined ? article.views : (article.viewsCount !== undefined ? article.viewsCount : (article.LuotXem || 0));
 
   return (
     <>
@@ -39,7 +51,7 @@ const ArticleQuickModal = ({ article, isOpen, onClose }) => {
               <div className="d-flex flex-wrap align-items-center gap-3 text-muted small border-bottom pb-2 mb-3">
                 <span>
                   <i className="fa-regular fa-calendar me-1 text-primary"></i>
-                  {article.date || article.createdAt || '26/06/2026'}
+                  {article.date || article.createdAt || 'Mới cập nhật'}
                 </span>
                 <span>
                   <i className="fa-solid fa-user-pen me-1 text-primary"></i>
@@ -47,7 +59,7 @@ const ArticleQuickModal = ({ article, isOpen, onClose }) => {
                 </span>
                 <span>
                   <i className="fa-regular fa-eye me-1 text-success"></i>
-                  {article.views || article.viewsCount || 140} lượt xem
+                  {viewsCount} lượt xem
                 </span>
                 {article.categoryName && (
                   <span className="badge bg-light text-primary border ms-auto">

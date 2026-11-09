@@ -1,236 +1,180 @@
 // =============================================================================
-// ADMIN WELFARE & FUND MANAGEMENT (QUẢN LÝ QUỸ CHĂM LO & TRỢ CẤP ĐOÀN VIÊN)
+// ADMIN WELFARE MANAGEMENT - QUẢN LÝ VĂN BẢN & CHÍNH SÁCH PHÚC LỢI
+// Tinh giản, chuẩn hóa đồng bộ như Kho Văn Bản và Kho Biểu Mẫu
 // =============================================================================
 
-let adminWelfareList = [];
-let currentWelfareFilter = 'all';
-let reviewingAppId = null;
+let adminWelfarePolicies = [];
+let currentWelfareCatFilter = 'all';
+let currentWelfarePage = 1;
+const welfarePageSize = 8;
 
-let currentFundData = null;
-let currentFundTransactions = [];
-let currentLedgerFilter = 'all';
-let activeWelfareSubTab = 'apps'; // 'apps' | 'ledger'
+// Escape HTML helper
+function escapeHtmlWelfare(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
-// 1. Khởi tạo và tải dữ liệu toàn diện
+// 1. Tải danh sách văn bản chính sách phúc lợi
 async function loadAdminWelfare() {
-  const tbodyApps = document.getElementById('admin_welfare_table_body');
-  if (tbodyApps) {
-    tbodyApps.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; color: #64748B;"><i class="fa-solid fa-circle-notch fa-spin me-2"></i> Đang tải dữ liệu hồ sơ trợ cấp...</td></tr>';
+  const tbody = document.getElementById('admin_welfare_pdf_table_body');
+  if (tbody) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; color: #64748B;"><i class="fa-solid fa-circle-notch fa-spin me-2"></i> Đang tải danh sách văn bản phúc lợi...</td></tr>';
   }
 
   try {
-    // 1. Tải dữ liệu Quỹ và Sổ giao dịch Thu - Chi
-    await loadAdminFund();
-
-    // 2. Tải danh sách đơn trợ cấp
-    const res = await fetch('/api/welfare/applications').then(r => r.json());
-    if (res.success) {
-      adminWelfareList = res.data || [];
-      renderAdminWelfareTable();
-      updateWelfareBadgeCount();
-      renderWelfareSummaryStats();
+    const res = await fetch('/api/welfare').then(r => r.json());
+    if (res.success && Array.isArray(res.data)) {
+      adminWelfarePolicies = res.data;
     } else {
-      if (tbodyApps) tbodyApps.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; color: #EF4444;">Không thể tải danh sách đơn trợ cấp.</td></tr>';
+      adminWelfarePolicies = [];
     }
-  } catch (e) {
-    console.error('Lỗi loadAdminWelfare:', e);
-    if (tbodyApps) tbodyApps.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; color: #EF4444;">Lỗi kết nối máy chủ khi tải dữ liệu Chăm lo.</td></tr>';
-  }
-}
 
-// 2. Tải thông tin Quỹ & Sổ thu chi
-async function loadAdminFund() {
-  try {
-    const res = await fetch('/api/welfare/fund').then(r => r.json());
-    if (res.success && res.fund) {
-      currentFundData = res.fund;
-      currentFundTransactions = res.transactions || [];
-
-      // Hiển thị KPI Thống Kê Nguồn Tiền
-      const balance = parseFloat(res.fund.current_balance) || 0;
-      const totalDeposited = parseFloat(res.fund.total_deposited) || 0;
-      const totalDisbursed = parseFloat(res.fund.total_disbursed) || 0;
-      const pendingCount = res.fund.pending_count || 0;
-      const pendingAmount = parseFloat(res.fund.pending_amount) || 0;
-      const approvedCount = res.fund.approved_count || 0;
-
-      safeSetText('welfare_stat_balance', balance.toLocaleString('vi-VN') + ' đ');
-      safeSetText('welfare_stat_total_budget', totalDeposited.toLocaleString('vi-VN') + ' đ');
-      safeSetText('welfare_stat_disbursed', totalDisbursed.toLocaleString('vi-VN') + ' đ');
-      safeSetText('welfare_stat_beneficiaries', approvedCount);
-      safeSetText('welfare_stat_pending_count', `${pendingCount} hồ sơ`);
-      safeSetText('welfare_stat_pending_amount', pendingAmount.toLocaleString('vi-VN') + ' đ');
-
-      // Cập nhật trạng thái hạn mức
-      const balanceBadge = document.getElementById('welfare_balance_status_badge');
-      if (balanceBadge) {
-        if (balance > 20000000) {
-          balanceBadge.className = 'badge bg-success';
-          balanceBadge.innerHTML = '<i class="fa-solid fa-shield-check me-1"></i>Hạn Mức An Toàn';
-        } else if (balance > 0) {
-          balanceBadge.className = 'badge bg-warning text-dark';
-          balanceBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i>Ngân Sách Thấp';
-        } else {
-          balanceBadge.className = 'badge bg-danger';
-          balanceBadge.innerHTML = '<i class="fa-solid fa-circle-exclamation me-1"></i>Đã Cạn Quỹ';
-        }
-      }
-
-      renderFundLedgerTable();
-    }
+    renderAdminWelfarePoliciesTable();
   } catch (err) {
-    console.error('Lỗi loadAdminFund:', err);
+    console.error('Lỗi loadAdminWelfare:', err);
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; color: #EF4444;">Lỗi kết nối máy chủ khi tải danh sách phúc lợi.</td></tr>';
+    }
   }
 }
 
-// 3. Cập nhật Badge số đơn chờ trên Sidebar
-function updateWelfareBadgeCount() {
-  const pendingCount = adminWelfareList.filter(d => d.status === 'pending').length;
-  const badgeEl = document.getElementById('sidebar_welfare_count');
-  if (badgeEl) {
-    badgeEl.innerText = pendingCount;
-    badgeEl.style.display = pendingCount > 0 ? 'inline-block' : 'none';
-  }
-}
+// 2. Lọc theo chuyên mục
+function filterWelfareCategory(cat) {
+  currentWelfareCatFilter = cat;
+  currentWelfarePage = 1;
 
-// 4. Thống kê tổng hợp
-function renderWelfareSummaryStats() {
-  const total = adminWelfareList.length;
-  const pending = adminWelfareList.filter(d => d.status === 'pending').length;
-  const approved = adminWelfareList.filter(d => d.status === 'approved' || d.status === 'disbursed').length;
-
-  safeSetText('welfare_stat_total_apps', total);
-  safeSetText('welfare_stat_pending', pending);
-  safeSetText('welfare_stat_approved', approved);
-}
-
-// 5. Chuyển đổi giữa 2 Sub-tab: Danh Sách Đơn vs Sổ Quỹ Thu Chi
-function switchWelfareSubTab(tabName) {
-  activeWelfareSubTab = tabName;
-  const btnApps = document.getElementById('btn_welfare_subtab_apps');
-  const btnLedger = document.getElementById('btn_welfare_subtab_ledger');
-  const paneApps = document.getElementById('welfare_subtab_apps_pane');
-  const paneLedger = document.getElementById('welfare_subtab_ledger_pane');
-
-  if (tabName === 'apps') {
-    if (btnApps) {
-      btnApps.style.background = '#002855';
-      btnApps.style.color = '#FFFFFF';
-      btnApps.style.borderColor = '#002855';
-    }
-    if (btnLedger) {
-      btnLedger.style.background = '#FFFFFF';
-      btnLedger.style.color = '#475569';
-      btnLedger.style.borderColor = '#CBD5E1';
-    }
-    if (paneApps) paneApps.style.display = 'block';
-    if (paneLedger) paneLedger.style.display = 'none';
-  } else {
-    if (btnLedger) {
-      btnLedger.style.background = '#002855';
-      btnLedger.style.color = '#FFFFFF';
-      btnLedger.style.borderColor = '#002855';
-    }
-    if (btnApps) {
-      btnApps.style.background = '#FFFFFF';
-      btnApps.style.color = '#475569';
-      btnApps.style.borderColor = '#CBD5E1';
-    }
-    if (paneApps) paneApps.style.display = 'none';
-    if (paneLedger) paneLedger.style.display = 'block';
-  }
-}
-
-// 6. Lọc đơn trợ cấp
-function filterWelfareStatus(status) {
-  currentWelfareFilter = status;
-  document.querySelectorAll('.btn-welf-filter').forEach(b => {
-    if (b.dataset.status === status) {
-      b.style.background = '#D97706';
-      b.style.color = 'white';
-      b.style.borderColor = '#D97706';
+  document.querySelectorAll('.btn-welf-cat-filter').forEach(btn => {
+    if (btn.dataset.cat === cat) {
+      btn.style.background = '#DC2626';
+      btn.style.color = 'white';
+      btn.style.fontWeight = '700';
     } else {
-      b.style.background = '#F1F5F9';
-      b.style.color = '#475569';
-      b.style.borderColor = '#E2E8F0';
+      btn.style.background = '#F1F5F9';
+      btn.style.color = '#475569';
+      btn.style.fontWeight = '600';
     }
   });
-  renderAdminWelfareTable();
+
+  renderAdminWelfarePoliciesTable();
 }
 
-function searchAdminWelfare(q) {
-  renderAdminWelfareTable(q);
+// 3. Tìm kiếm văn bản
+function searchAdminWelfare(query) {
+  currentWelfarePage = 1;
+  renderAdminWelfarePoliciesTable(query);
 }
 
-// 7. Render bảng đơn đề nghị trợ cấp
-function renderAdminWelfareTable(searchQuery = '') {
-  const tbody = document.getElementById('admin_welfare_table_body');
+// 4. Render bảng danh sách văn bản phúc lợi chuẩn như Kho Văn Bản
+function renderAdminWelfarePoliciesTable(searchQuery = '') {
+  const tbody = document.getElementById('admin_welfare_pdf_table_body');
   if (!tbody) return;
 
   const strip = str => (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
   const q = strip(searchQuery || document.getElementById('admin_welfare_search')?.value || '');
 
-  let filtered = adminWelfareList;
-  if (currentWelfareFilter !== 'all') {
-    filtered = filtered.filter(d => d.status === currentWelfareFilter);
+  let filtered = adminWelfarePolicies;
+
+  if (currentWelfareCatFilter !== 'all') {
+    filtered = filtered.filter(item => item.category === currentWelfareCatFilter);
   }
+
   if (q) {
-    filtered = filtered.filter(d =>
-      strip(d.full_name).includes(q) ||
-      strip(d.unit).includes(q) ||
-      strip(d.type).includes(q) ||
-      strip(d.reason).includes(q)
+    filtered = filtered.filter(item =>
+      strip(item.title).includes(q) ||
+      strip(item.code).includes(q) ||
+      strip(item.category_name).includes(q) ||
+      strip(item.category).includes(q)
     );
   }
 
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 32px; color: #94A3B8; font-style: italic;"><i class="fa-solid fa-inbox fa-2x mb-2 d-block text-muted"></i>Không tìm thấy hồ sơ trợ cấp nào phù hợp.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 32px; color: #94A3B8; font-style: italic;">Không tìm thấy văn bản chính sách phúc lợi nào phù hợp.</td></tr>';
+    const pager = document.getElementById('admin_welfare_pagination');
+    if (pager) pager.innerHTML = '';
     return;
   }
 
-  const statusBadges = {
-    pending: '<span style="background: #FEF3C7; color: #D97706; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-clock"></i>Chờ Xét Duyệt</span>',
-    approved: '<span style="background: #EFF6FF; color: #1D4ED8; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-check-circle"></i>Đã Duyệt Hỗ Trợ</span>',
-    disbursed: '<span style="background: #ECFDF5; color: #059669; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-money-bill-transfer"></i>Đã Chi Trả Tiền</span>',
-    rejected: '<span style="background: #FEE2E2; color: #DC2626; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-xmark"></i>Không Đủ ĐK</span>'
+  const categoryBadges = {
+    le_tet: '<span style="background: #FEF3C7; color: #92400E; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11.5px;"><i class="fa-solid fa-gift me-1 text-warning"></i>Lễ, Tết &amp; Kỷ Niệm</span>',
+    tro_cap: '<span style="background: #EFF6FF; color: #1E40AF; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11.5px;"><i class="fa-solid fa-hand-holding-heart me-1 text-primary"></i>Trợ Cấp Khó Khăn</span>',
+    vay_von: '<span style="background: #ECFDF5; color: #065F46; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11.5px;"><i class="fa-solid fa-money-bill-wave me-1 text-success"></i>Quỹ Trợ Vốn CEP</span>',
+    y_te: '<span style="background: #F0FDF4; color: #15803D; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11.5px;"><i class="fa-solid fa-heart-pulse me-1 text-danger"></i>Khám Sức Khỏe</span>',
+    nu_cong: '<span style="background: #FDF2F8; color: #9D174D; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11.5px;"><i class="fa-solid fa-children me-1 text-pink"></i>Nữ Công &amp; Thiếu Nhi</span>',
+    uu_dai: '<span style="background: #F3F4F6; color: #374151; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11.5px;"><i class="fa-solid fa-tags me-1 text-secondary"></i>Ưu Đãi Đoàn Viên</span>'
   };
 
-  tbody.innerHTML = filtered.map(d => {
-    const dateStr = d.submitted_at ? new Date(d.submitted_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A';
-    const reqAmount = (parseFloat(d.amount_requested) || 0).toLocaleString('vi-VN') + ' đ';
-    const appAmount = d.amount_approved !== null && d.amount_approved !== undefined ? (parseFloat(d.amount_approved)).toLocaleString('vi-VN') + ' đ' : '<span style="color: #94A3B8;">Chưa duyệt</span>';
+  // Phân trang
+  const totalItems = filtered.length;
+  const totalPages = Math.ceil(totalItems / welfarePageSize) || 1;
+  if (currentWelfarePage > totalPages) currentWelfarePage = totalPages;
+  const startIndex = (currentWelfarePage - 1) * welfarePageSize;
+  const pagedItems = filtered.slice(startIndex, startIndex + welfarePageSize);
+
+  renderWelfarePaginationBar(totalItems, totalPages);
+
+  tbody.innerHTML = pagedItems.map(item => {
+    const pdfUrl = item.file_url || '/uploads/welfare/Quy_Che_Phuc_Loi_Le_Tet_2026.pdf';
+    const pdfSize = item.file_size || '1.8 MB';
+    const fileName = pdfUrl.split('/').pop();
+    const downloadCount = parseInt(item.downloads_count || item.LuotTai || 0);
 
     return `
       <tr style="border-bottom: 1px solid #F1F5F9; transition: background 0.15s;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'">
-        <td style="padding: 14px 16px; font-weight: 800; color: #002855; white-space: nowrap;">
-          <span style="background: #F1F5F9; color: #002855; padding: 3px 8px; border-radius: 4px; font-size: 12px;">#TC-${d.id}</span>
-          <div style="font-size: 11px; font-weight: 500; color: #94A3B8; margin-top: 4px;"><i class="fa-regular fa-calendar me-1"></i>${dateStr}</div>
+        <!-- Cột 1: Số / Ký hiệu -->
+        <td style="padding: 12px 16px; font-weight: 800; color: #002855; white-space: nowrap;">
+          <span style="font-family: monospace; font-size: 13px; background: #F1F5F9; padding: 3px 8px; border-radius: 4px; border: 1px solid #CBD5E1;">
+            ${escapeHtmlWelfare(item.code || 'PL-0' + item.id)}
+          </span>
         </td>
-        <td style="padding: 14px 16px;">
-          <div style="font-weight: 700; color: #1E293B; font-size: 13.5px;">${escapeHtml(d.full_name)}</div>
-          <div style="font-size: 12px; color: #64748B;"><i class="fa-solid fa-building-columns me-1 text-muted"></i>${escapeHtml(d.unit)}</div>
-          <div style="font-size: 11.5px; color: #0284C7; margin-top: 2px;"><i class="fa-solid fa-phone me-1"></i>${escapeHtml(d.phone || 'N/A')}</div>
+
+        <!-- Cột 2: Trích yếu chính sách -->
+        <td style="padding: 12px 16px;">
+          <div style="font-weight: 700; color: #003865; font-size: 13.5px; line-height: 1.4;">
+            ${escapeHtmlWelfare(item.title)}
+          </div>
         </td>
-        <td style="padding: 14px 16px;">
-          <div style="font-weight: 700; color: #003865; margin-bottom: 3px; font-size: 13px;">${escapeHtml(d.type)}</div>
-          <div style="font-size: 12px; color: #475569; line-height: 1.45; max-width: 320px;">${escapeHtml(d.reason)}</div>
-          ${d.proof_url ? `<div style="margin-top: 4px;"><a href="${d.proof_url}" target="_blank" style="font-size: 11.5px; color: #0284C7; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-paperclip"></i> Xem hồ sơ minh chứng đính kèm</a></div>` : ''}
+
+        <!-- Cột 3: Chuyên mục -->
+        <td style="padding: 12px 16px; white-space: nowrap;">
+          ${categoryBadges[item.category] || '<span class="badge bg-secondary">Chăm Lo Chung</span>'}
         </td>
-        <td style="padding: 14px 16px; white-space: nowrap; font-weight: 800; color: #B45309; font-size: 13.5px;">
-          ${reqAmount}
+
+        <!-- Cột 4: Ngày ban hành -->
+        <td style="padding: 12px 16px; white-space: nowrap; color: #475569; font-size: 12.5px;">
+          <i class="fa-regular fa-calendar me-1 text-muted"></i>${escapeHtmlWelfare(item.date || '15/01/2026')}
         </td>
-        <td style="padding: 14px 16px; white-space: nowrap;">
-          ${statusBadges[d.status] || '<span class="badge bg-secondary">Khác</span>'}
+
+        <!-- Cột 5: Tệp đính kèm (PDF/Word) -->
+        <td style="padding: 12px 16px; white-space: nowrap;">
+          <div style="display: inline-flex; align-items: center; gap: 6px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 6px; padding: 4px 8px;">
+            <i class="fa-solid fa-file-pdf text-danger" style="font-size: 16px;"></i>
+            <span style="font-size: 11.5px; font-weight: 600; color: #991B1B; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtmlWelfare(fileName)}">
+              ${escapeHtmlWelfare(fileName)}
+            </span>
+            <a href="/api/welfare/download/${item.id}" target="_blank" onclick="trackPdfDownload(${item.id})" style="background: #DC2626; color: white; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: 700; text-decoration: none; margin-left: 2px;" title="Tải về">
+              <i class="fa-solid fa-download"></i>
+            </a>
+          </div>
         </td>
-        <td style="padding: 14px 16px; white-space: nowrap;">
-          <div style="font-weight: 800; color: #059669; font-size: 13.5px;">${appAmount}</div>
-          <div style="font-size: 11px; color: #64748B; max-width: 200px; white-space: normal; line-height: 1.35; margin-top: 2px;">${escapeHtml(d.decision_note || '')}</div>
+
+        <!-- Cột 6: Lượt tải -->
+        <td style="padding: 12px 16px; text-align: center; white-space: nowrap;">
+          <span style="background: #F8FAFC; color: #002855; font-weight: 700; font-size: 12px; padding: 2px 8px; border-radius: 12px; border: 1px solid #CBD5E1;">
+            <i class="fa-solid fa-download text-muted me-1" style="font-size: 10px;"></i>${downloadCount}
+          </span>
         </td>
-        <td style="padding: 14px 16px; text-align: right; white-space: nowrap;">
-          <button type="button" onclick="openReviewWelfareModal(${d.id})" style="background: #D97706; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; margin-right: 4px; box-shadow: 0 1px 3px rgba(217,119,6,0.25);">
-            <i class="fa-solid fa-gavel"></i> Xét Duyệt
+
+        <!-- Cột 7: Thao tác -->
+        <td style="padding: 12px 16px; text-align: right; white-space: nowrap;">
+          <button type="button" onclick="openEditWelfarePostModal(${item.id})" style="background: #003865; color: white; border: none; border-radius: 5px; padding: 5px 10px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; margin-right: 4px;">
+            <i class="fa-solid fa-pen-to-square"></i> Sửa
           </button>
-          <button type="button" onclick="deleteAdminWelfare(${d.id})" style="background: #FEE2E2; border: 1px solid #FECACA; color: #DC2626; border-radius: 6px; padding: 6px 10px; font-size: 12px; cursor: pointer;" title="Xóa hồ sơ">
+          <button type="button" onclick="deleteWelfarePost(${item.id})" style="background: transparent; border: 1px solid #CBD5E1; color: #EF4444; border-radius: 5px; padding: 4px 8px; font-size: 12px; cursor: pointer;" title="Xóa văn bản">
             <i class="fa-solid fa-trash-can"></i>
           </button>
         </td>
@@ -239,266 +183,194 @@ function renderAdminWelfareTable(searchQuery = '') {
   }).join('');
 }
 
-// 8. Render Bảng Sổ Quỹ Thu - Chi (Ledger)
-function filterFundLedger(type) {
-  currentLedgerFilter = type;
-  document.querySelectorAll('.btn-ledger-filter').forEach(b => {
-    if (b.dataset.type === type) {
-      b.style.background = '#059669';
-      b.style.color = 'white';
-      b.style.borderColor = '#059669';
-    } else {
-      b.style.background = '#F1F5F9';
-      b.style.color = '#475569';
-      b.style.borderColor = '#E2E8F0';
-    }
-  });
-  renderFundLedgerTable();
-}
+// 5. Thanh phân trang
+function renderWelfarePaginationBar(totalItems, totalPages) {
+  const container = document.getElementById('admin_welfare_pagination');
+  if (!container) return;
 
-function searchFundLedger(q) {
-  renderFundLedgerTable(q);
-}
-
-function renderFundLedgerTable(searchQuery = '') {
-  const tbody = document.getElementById('admin_fund_ledger_table_body');
-  if (!tbody) return;
-
-  const strip = str => (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
-  const q = strip(searchQuery || document.getElementById('admin_ledger_search')?.value || '');
-
-  let list = currentFundTransactions || [];
-  if (currentLedgerFilter !== 'all') {
-    list = list.filter(d => d.type === currentLedgerFilter);
-  }
-  if (q) {
-    list = list.filter(d =>
-      strip(d.code).includes(q) ||
-      strip(d.source_name).includes(q) ||
-      strip(d.decision_no).includes(q) ||
-      strip(d.note).includes(q) ||
-      strip(d.created_by).includes(q)
-    );
-  }
-
-  if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 32px; color: #94A3B8; font-style: italic;"><i class="fa-solid fa-receipt fa-2x mb-2 d-block text-muted"></i>Chưa có giao dịch thu / chi nào trong sổ quỹ.</td></tr>';
+  if (totalItems <= welfarePageSize) {
+    container.innerHTML = `<span style="font-size: 12px; color: #64748B;">Tổng số <strong>${totalItems}</strong> văn bản chính sách phúc lợi</span>`;
     return;
   }
 
-  tbody.innerHTML = list.map(t => {
-    const isDeposit = (t.type === 'DEPOSIT');
-    const typeBadge = isDeposit
-      ? '<span style="background: #ECFDF5; color: #059669; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-arrow-down-left"></i>+ NẠP QUỸ / CẤP KINH PHÍ</span>'
-      : '<span style="background: #FEF2F2; color: #DC2626; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-arrow-up-right"></i>- CHI TRỢ CẤP ĐOÀN VIÊN</span>';
+  let html = `
+    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 10px;">
+      <span style="font-size: 12px; color: #64748B;">
+        Hiển thị <strong>${(currentWelfarePage - 1) * welfarePageSize + 1} - ${Math.min(currentWelfarePage * welfarePageSize, totalItems)}</strong> / Tổng <strong>${totalItems}</strong> văn bản
+      </span>
+      <div style="display: flex; gap: 4px; align-items: center;">
+        <button type="button" onclick="changeWelfarePage(${currentWelfarePage - 1})" ${currentWelfarePage <= 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} style="background: white; border: 1px solid #CBD5E1; border-radius: 5px; padding: 4px 9px; font-size: 12px; font-weight: 600; color: #334155; cursor: pointer;">
+          <i class="fa-solid fa-chevron-left me-1"></i>Trước
+        </button>
+  `;
 
-    const amtDisplay = isDeposit
-      ? `<span style="color: #059669; font-weight: 800; font-size: 14px;">+ ${(parseFloat(t.amount) || 0).toLocaleString('vi-VN')} đ</span>`
-      : `<span style="color: #DC2626; font-weight: 800; font-size: 14px;">- ${(parseFloat(t.amount) || 0).toLocaleString('vi-VN')} đ</span>`;
-
-    const dateStr = t.date ? new Date(t.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
-
-    return `
-      <tr style="border-bottom: 1px solid #F1F5F9; transition: background 0.15s;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'">
-        <td style="padding: 12px 16px; white-space: nowrap;">
-          <div style="font-weight: 800; color: #002855; font-size: 12.5px;">${escapeHtml(t.code || 'GD-N/A')}</div>
-          <div style="font-size: 11px; color: #94A3B8; margin-top: 3px;"><i class="fa-regular fa-clock me-1"></i>${dateStr}</div>
-        </td>
-        <td style="padding: 12px 16px; white-space: nowrap;">
-          ${typeBadge}
-        </td>
-        <td style="padding: 12px 16px; white-space: nowrap;">
-          ${amtDisplay}
-        </td>
-        <td style="padding: 12px 16px;">
-          <div style="font-weight: 700; color: #1E293B; font-size: 13px;">${escapeHtml(t.source_name || 'Nguồn Công đoàn')}</div>
-          ${t.related_don_id ? `<div style="font-size: 11.5px; color: #0284C7; margin-top: 2px;"><i class="fa-solid fa-link me-1"></i>Hồ sơ trợ cấp: #TC-${t.related_don_id}</div>` : ''}
-        </td>
-        <td style="padding: 12px 16px; white-space: nowrap;">
-          <span style="font-size: 12px; font-weight: 600; color: #475569; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 2px 8px; border-radius: 4px;">
-            ${escapeHtml(t.decision_no || 'Không số')}
-          </span>
-        </td>
-        <td style="padding: 12px 16px; font-size: 12.5px; color: #334155; white-space: nowrap;">
-          <i class="fa-solid fa-user-check me-1 text-muted"></i>${escapeHtml(t.created_by || 'Ban Thường Vụ')}
-        </td>
-        <td style="padding: 12px 16px; font-size: 12px; color: #64748B; max-width: 280px; line-height: 1.4;">
-          ${escapeHtml(t.note || '')}
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
-// 9. Modal Nạp Tiền Vào Quỹ
-function openDepositFundModal() {
-  const modal = document.getElementById('modal_deposit_welfare_fund');
-  if (!modal) return;
-
-  // Reset form
-  document.getElementById('deposit_fund_amount').value = '';
-  document.getElementById('deposit_fund_decision_no').value = '';
-  document.getElementById('deposit_fund_note').value = 'Cấp bổ sung ngân sách Quỹ Chăm lo và Tương trợ đoàn viên';
-  
-  // Hiển thị số dư hiện tại trong modal
-  const curBal = currentFundData ? (parseFloat(currentFundData.current_balance) || 0).toLocaleString('vi-VN') + ' đ' : '---';
-  safeSetText('modal_deposit_current_balance', curBal);
-
-  modal.style.display = 'flex';
-}
-
-function closeDepositFundModal() {
-  const modal = document.getElementById('modal_deposit_welfare_fund');
-  if (modal) modal.style.display = 'none';
-}
-
-function setDepositQuickAmount(amt) {
-  const input = document.getElementById('deposit_fund_amount');
-  if (input) {
-    input.value = amt;
-    input.focus();
-  }
-}
-
-async function submitDepositFund() {
-  const amount = parseFloat(document.getElementById('deposit_fund_amount').value) || 0;
-  const source_name = document.getElementById('deposit_fund_source').value.trim();
-  const decision_no = document.getElementById('deposit_fund_decision_no').value.trim();
-  const note = document.getElementById('deposit_fund_note').value.trim();
-  const created_by = document.getElementById('deposit_fund_created_by')?.value.trim() || 'Ban Thường Vụ Công Đoàn';
-
-  if (amount <= 0) {
-    alert('⚠️ Vui lòng nhập số tiền nạp quỹ hợp lệ lớn hơn 0 đồng!');
-    document.getElementById('deposit_fund_amount').focus();
-    return;
-  }
-
-  if (!source_name) {
-    alert('⚠️ Vui lòng chọn hoặc điền nguồn kinh phí cấp nạp!');
-    return;
-  }
-
-  const btn = document.getElementById('btn_submit_deposit');
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang ghi nhận...';
-  }
-
-  try {
-    const res = await fetch('/api/welfare/fund/deposit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        amount,
-        source_name,
-        decision_no,
-        note,
-        created_by
-      })
-    }).then(r => r.json());
-
-    if (res.success) {
-      alert(`🎉 ${res.message}`);
-      closeDepositFundModal();
-      await loadAdminWelfare();
-      // Chuyển sang xem Sổ quỹ để thấy ngay giao dịch
-      switchWelfareSubTab('ledger');
-    } else {
-      alert('Lỗi nạp quỹ: ' + (res.error || res.message));
-    }
-  } catch (e) {
-    alert('Lỗi kết nối khi nạp quỹ: ' + e.message);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Xác Nhận Nạp Quỹ';
+  for (let p = 1; p <= totalPages; p++) {
+    if (p === 1 || p === totalPages || (p >= currentWelfarePage - 1 && p <= currentWelfarePage + 1)) {
+      html += `
+        <button type="button" onclick="changeWelfarePage(${p})" style="background: ${p === currentWelfarePage ? '#DC2626' : 'white'}; color: ${p === currentWelfarePage ? 'white' : '#334155'}; border: 1px solid ${p === currentWelfarePage ? '#DC2626' : '#CBD5E1'}; border-radius: 5px; padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer;">
+          ${p}
+        </button>
+      `;
+    } else if (p === currentWelfarePage - 2 || p === currentWelfarePage + 2) {
+      html += `<span style="padding: 0 3px; color: #94A3B8;">...</span>`;
     }
   }
+
+  html += `
+        <button type="button" onclick="changeWelfarePage(${currentWelfarePage + 1})" ${currentWelfarePage >= totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} style="background: white; border: 1px solid #CBD5E1; border-radius: 5px; padding: 4px 9px; font-size: 12px; font-weight: 600; color: #334155; cursor: pointer;">
+          Sau<i class="fa-solid fa-chevron-right ms-1"></i>
+        </button>
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = html;
 }
 
-// 10. Modal Xét Duyệt Hồ Sơ Trợ Cấp
-function openReviewWelfareModal(id) {
-  const item = adminWelfareList.find(d => d.id === id);
+function changeWelfarePage(newPage) {
+  currentWelfarePage = newPage;
+  renderAdminWelfarePoliciesTable();
+  const top = document.getElementById('tab_welfare_content');
+  if (top) top.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// 6. Modal Thêm / Chỉnh sửa văn bản phúc lợi
+function openAddWelfarePostModal() {
+  document.getElementById('modal_welf_post_heading').innerHTML = '<i class="fa-solid fa-file-pdf text-danger me-2"></i>Thêm Văn Bản Phúc LỢi Mới';
+  document.getElementById('welf_post_id').value = '';
+  document.getElementById('welf_post_code').value = `PL-0${adminWelfarePolicies.length + 1}`;
+  document.getElementById('welf_post_title').value = '';
+  document.getElementById('welf_post_category').value = 'le_tet';
+  document.getElementById('welf_post_date').value = new Date().toISOString().substring(0, 10);
+  document.getElementById('welf_post_file_url').value = '/uploads/welfare/Quy_Che_Phuc_Loi_Le_Tet_2026.pdf';
+  document.getElementById('welf_post_file_size').value = '1.8 MB';
+
+  const fileInput = document.getElementById('welf_post_file_input');
+  if (fileInput) fileInput.value = '';
+  const currentWrap = document.getElementById('welf_post_current_file_wrap');
+  if (currentWrap) currentWrap.style.display = 'none';
+
+  document.getElementById('modal_welfare_post').style.display = 'flex';
+}
+
+function openEditWelfarePostModal(id) {
+  const item = adminWelfarePolicies.find(p => p.id === id);
   if (!item) return;
 
-  reviewingAppId = id;
-  document.getElementById('modal_welf_name').innerText = `${item.full_name} (${item.unit})`;
-  document.getElementById('modal_welf_contact').innerText = `SĐT: ${item.phone || 'N/A'} | Email: ${item.email || 'N/A'}`;
-  document.getElementById('modal_welf_type').innerText = item.type;
-  document.getElementById('modal_welf_reason').innerText = item.reason;
-  document.getElementById('modal_welf_req_amount').innerText = (item.amount_requested || 0).toLocaleString('vi-VN') + ' đ';
+  document.getElementById('modal_welf_post_heading').innerHTML = `<i class="fa-solid fa-pen-to-square text-primary me-2"></i>Chỉnh Sửa Văn Bản Phúc Lợi #${item.id}`;
+  document.getElementById('welf_post_id').value = item.id;
+  document.getElementById('welf_post_code').value = item.code || '';
+  document.getElementById('welf_post_title').value = item.title || '';
+  document.getElementById('welf_post_category').value = item.category || 'le_tet';
+  document.getElementById('welf_post_date').value = item.date ? item.date.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$2-$1') : new Date().toISOString().substring(0, 10);
+  document.getElementById('welf_post_file_url').value = item.file_url || '/uploads/welfare/Quy_Che_Phuc_Loi_Le_Tet_2026.pdf';
+  document.getElementById('welf_post_file_size').value = item.file_size || '1.8 MB';
 
-  // Hiển thị số dư quỹ khả dụng cho người xét duyệt xem
-  const availBalance = currentFundData ? (parseFloat(currentFundData.current_balance) || 0) : 0;
-  const availEl = document.getElementById('modal_welf_avail_fund');
-  if (availEl) {
-    availEl.innerText = availBalance.toLocaleString('vi-VN') + ' đ';
-    if (availBalance <= 0) {
-      availEl.style.color = '#DC2626';
-    } else {
-      availEl.style.color = '#059669';
-    }
+  const fileInput = document.getElementById('welf_post_file_input');
+  if (fileInput) fileInput.value = '';
+  const currentWrap = document.getElementById('welf_post_current_file_wrap');
+  if (currentWrap) {
+    currentWrap.style.display = 'flex';
+    const fileNameEl = document.getElementById('welf_post_current_file_name');
+    const fileSizeEl = document.getElementById('welf_post_current_file_size');
+    if (fileNameEl) fileNameEl.innerText = (item.file_url || '').split('/').pop() || 'Tệp đính kèm';
+    if (fileSizeEl) fileSizeEl.innerText = item.file_size || '1.8 MB';
   }
 
-  document.getElementById('modal_welf_app_amount').value = item.amount_approved !== null && item.amount_approved !== undefined ? item.amount_approved : item.amount_requested || 1000000;
-  document.getElementById('modal_welf_status_select').value = item.status || 'approved';
-  document.getElementById('modal_welf_note').value = item.decision_note || 'Ban Thường Vụ phê duyệt chi trợ cấp trích từ Quỹ Chăm lo Công đoàn.';
-
-  document.getElementById('modal_review_welfare').style.display = 'flex';
+  document.getElementById('modal_welfare_post').style.display = 'flex';
 }
 
-function closeReviewWelfareModal() {
-  document.getElementById('modal_review_welfare').style.display = 'none';
-  reviewingAppId = null;
+function closeWelfarePostModal() {
+  document.getElementById('modal_welfare_post').style.display = 'none';
 }
 
-async function submitWelfareReview() {
-  if (!reviewingAppId) return;
+// 7. Lưu form Thêm / Sửa
+async function submitWelfarePostForm() {
+  const id = document.getElementById('welf_post_id').value;
+  const code = document.getElementById('welf_post_code').value.trim();
+  const title = document.getElementById('welf_post_title').value.trim();
+  const category = document.getElementById('welf_post_category').value;
+  const dateVal = document.getElementById('welf_post_date').value;
+  const file_url = document.getElementById('welf_post_file_url')?.value.trim() || '';
+  const file_size = document.getElementById('welf_post_file_size')?.value.trim() || '1.8 MB';
+  const fileInput = document.getElementById('welf_post_file_input');
 
-  const status = document.getElementById('modal_welf_status_select').value;
-  const amount_approved = parseFloat(document.getElementById('modal_welf_app_amount').value) || 0;
-  const decision_note = document.getElementById('modal_welf_note').value.trim();
-
-  // Kiểm tra hạn mức quỹ nếu duyệt hoặc chi trả
-  if ((status === 'approved' || status === 'disbursed') && currentFundData) {
-    const availBalance = parseFloat(currentFundData.current_balance) || 0;
-    if (amount_approved > availBalance) {
-      const confirmOver = confirm(`⚠️ CẢNH BÁO QUỸ:\nSố tiền duyệt (${amount_approved.toLocaleString('vi-VN')} đ) lớn hơn Số Dư Khả Dụng hiện tại của Quỹ (${availBalance.toLocaleString('vi-VN')} đ)!\n\nBạn có muốn tiếp tục phê duyệt không? (Khuyến nghị: Hãy nạp bổ sung kinh phí vào Quỹ trước khi giải ngân).`);
-      if (!confirmOver) return;
-    }
+  if (!title) {
+    alert('Vui lòng nhập trích yếu / tiêu đề văn bản phúc lợi!');
+    return;
   }
+
+  let fileBase64 = '';
+  let fileName = '';
+
+  if (fileInput && fileInput.files && fileInput.files[0]) {
+    const f = fileInput.files[0];
+    fileName = f.name;
+    fileBase64 = await new Promise(res => {
+      const reader = new FileReader();
+      reader.onload = () => res(reader.result);
+      reader.readAsDataURL(f);
+    });
+  }
+
+  if (!id && !fileBase64 && !file_url) {
+    alert('Vui lòng chọn tệp văn bản đính kèm (PDF / Word)!');
+    return;
+  }
+
+  let formattedDate = '15/01/2026';
+  if (dateVal) {
+    const parts = dateVal.split('-');
+    if (parts.length === 3) formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
+  const payload = {
+    title,
+    code: code || `PL-0${adminWelfarePolicies.length + 1}`,
+    category,
+    date: formattedDate,
+    file_url,
+    file_size,
+    fileName,
+    fileBase64
+  };
 
   try {
-    const res = await fetch(`/api/welfare/applications/${reviewingAppId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        status,
-        amount_approved,
-        decision_note,
-        approved_by: 'Ban Thường Vụ Công Đoàn'
-      })
-    }).then(r => r.json());
+    let res;
+    if (id) {
+      res = await fetch(`/api/welfare/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(r => r.json());
+    } else {
+      res = await fetch('/api/welfare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(r => r.json());
+    }
 
     if (res.success) {
-      alert('✅ Đã cập nhật kết quả xét duyệt hồ sơ trợ cấp thành công!');
-      closeReviewWelfareModal();
-      await loadAdminWelfare();
+      alert(id ? '✅ Đã cập nhật văn bản phúc lợi thành công!' : '✅ Đã đăng tải văn bản phúc lợi mới thành công!');
+      closeWelfarePostModal();
+      loadAdminWelfare();
     } else {
-      alert('Lỗi: ' + (res.error || res.message));
+      alert('Lỗi: ' + res.error);
     }
-  } catch (e) {
-    alert('Lỗi kết nối: ' + e.message);
+  } catch (err) {
+    alert('Lỗi kết nối máy chủ: ' + err.message);
   }
 }
 
-// 11. Xóa hồ sơ
-async function deleteAdminWelfare(id) {
-  if (!confirm(`Xác nhận xóa hồ sơ đề nghị trợ cấp #TC-${id}?`)) return;
+// 8. Xóa bài đăng văn bản phúc lợi
+async function deleteWelfarePost(id) {
+  if (!confirm(`Bạn có chắc chắn muốn xóa văn bản phúc lợi #${id} này?`)) return;
+
   try {
-    const res = await fetch(`/api/welfare/applications/${id}`, { method: 'DELETE' }).then(r => r.json());
+    const res = await fetch(`/api/welfare/${id}`, { method: 'DELETE' }).then(r => r.json());
     if (res.success) {
-      alert('✅ Đã xóa hồ sơ trợ cấp thành công!');
+      alert('✅ Đã xóa văn bản phúc lợi thành công!');
       loadAdminWelfare();
     } else {
       alert('Lỗi: ' + res.error);
@@ -508,49 +380,28 @@ async function deleteAdminWelfare(id) {
   }
 }
 
-// 12. Xuất Báo Cáo Sổ Quỹ Thu Chi (CSV UTF-8 BOM tải về trực tiếp)
-function exportFundLedger() {
-  if (!currentFundTransactions || !currentFundTransactions.length) {
-    alert('Chưa có dữ liệu giao dịch trong sổ quỹ để xuất báo cáo.');
-    return;
-  }
-
-  const headers = ['Mã Giao Dịch', 'Thời Gian', 'Loại Giao Dịch', 'Số Tiền (VNĐ)', 'Nguồn Cấp / Thụ Hưởng', 'Số Quyết Định / Chứng Từ', 'Người Thực Hiện', 'Ghi Chú'];
-  const rows = currentFundTransactions.map(t => [
-    `"${t.code || ''}"`,
-    `"${t.date ? new Date(t.date).toLocaleString('vi-VN') : ''}"`,
-    `"${t.type === 'DEPOSIT' ? 'Nạp Quỹ / Cấp Ngân Sách' : 'Xuất Chi Trợ Cấp'}"`,
-    `"${t.amount || 0}"`,
-    `"${(t.source_name || '').replace(/"/g, '""')}"`,
-    `"${(t.decision_no || '').replace(/"/g, '""')}"`,
-    `"${(t.created_by || '').replace(/"/g, '""')}"`,
-    `"${(t.note || '').replace(/"/g, '""')}"`
-  ]);
-
-  const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `So_Quy_Cham_Lo_Cong_Doan_TDMU_${new Date().toISOString().slice(0, 10)}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+// 9. Theo dõi lượt tải
+async function trackPdfDownload(id) {
+  try {
+    await fetch(`/api/welfare/${id}/download`, { method: 'POST' });
+    const item = adminWelfarePolicies.find(p => p.id === id);
+    if (item) {
+      item.downloads_count = (parseInt(item.downloads_count || 0) + 1);
+      renderAdminWelfarePoliciesTable();
+    }
+  } catch (e) {}
 }
 
-// Helpers
-function safeSetText(id, text) {
-  const el = document.getElementById(id);
-  if (el) el.innerText = text;
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+// Window exports
+window.loadAdminWelfare = loadAdminWelfare;
+window.filterWelfareCategory = filterWelfareCategory;
+window.searchAdminWelfare = searchAdminWelfare;
+window.renderAdminWelfarePoliciesTable = renderAdminWelfarePoliciesTable;
+window.renderWelfarePaginationBar = renderWelfarePaginationBar;
+window.changeWelfarePage = changeWelfarePage;
+window.openAddWelfarePostModal = openAddWelfarePostModal;
+window.openEditWelfarePostModal = openEditWelfarePostModal;
+window.closeWelfarePostModal = closeWelfarePostModal;
+window.submitWelfarePostForm = submitWelfarePostForm;
+window.deleteWelfarePost = deleteWelfarePost;
+window.trackPdfDownload = trackPdfDownload;

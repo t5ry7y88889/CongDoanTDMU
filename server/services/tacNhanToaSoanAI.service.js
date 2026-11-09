@@ -686,7 +686,7 @@ Phong cách ứng xử: Chuyên nghiệp, nhã nhặn, tôn trọng chuẩn mự
 
   // 1. NẾU CÓ GEMINI API KEY VÀ KHÔNG PHẢI TÁC VỤ SỬA ĐOẠN -> CHẠY TOOL LOOP AGENT ĐÍCH THỰC (MULTI-STEP STREAM)
   if (activeKey) {
-    const candidateModels = ['gemini-flash-lite-latest', 'gemini-2.5-flash'];
+    const candidateModels = ['gemini-2.5-flash', 'gemini-flash-lite-latest'];
     for (const modelName of candidateModels) {
       try {
         const google = createGoogleGenerativeAI({ apiKey: activeKey });
@@ -1458,7 +1458,7 @@ QUY TẮC BẮT BUỘC:
 ${wordCountPrompt}
 3. Trả về nội dung mới đã sửa, không bọc dấu ngoặc kép, không kèm lời giải thích hay dẫn dắt.`;
 
-        const candidateModels = ['gemini-flash-lite-latest', 'gemini-2.5-flash'];
+        const candidateModels = ['gemini-2.5-flash', 'gemini-flash-lite-latest'];
         for (const model of candidateModels) {
           try {
             const resp = await aiGen.models.generateContent({ model, contents: rewritePrompt });

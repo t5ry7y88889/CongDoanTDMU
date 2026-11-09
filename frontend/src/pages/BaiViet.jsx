@@ -14,9 +14,9 @@ const BaiViet = () => {
   const [submittingComment, setSubmittingComment] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [relatedArticles, setRelatedArticles] = useState([]);
-  const [likes, setLikes] = useState(128);
+  const [likes, setLikes] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
-  const [claps, setClaps] = useState(64);
+  const [claps, setClaps] = useState(0);
   const [isClapped, setIsClapped] = useState(false);
 
   const { toggleBookmark, isBookmarked } = useBookmarks();
@@ -67,6 +67,43 @@ const BaiViet = () => {
       }
     } catch (err) {
       console.warn('Related fetch error:', err);
+    }
+  };
+
+
+  const handleLike = async () => {
+    try {
+      const res = await fetch(`/api/articles/${articleId}/react`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'like' })
+      }).then(r => r.json());
+      if (res.success) {
+        setIsLiked(!isLiked);
+        if (res.likesCount !== undefined) setLikes(res.likesCount);
+        else setLikes(prev => isLiked ? Math.max(0, prev - 1) : prev + 1);
+      }
+    } catch (e) {
+      setIsLiked(!isLiked);
+      setLikes(prev => isLiked ? Math.max(0, prev - 1) : prev + 1);
+    }
+  };
+
+  const handleClap = async () => {
+    try {
+      const res = await fetch(`/api/articles/${articleId}/react`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'clap' })
+      }).then(r => r.json());
+      if (res.success) {
+        setIsClapped(!isClapped);
+        if (res.clapsCount !== undefined) setClaps(res.clapsCount);
+        else setClaps(prev => isClapped ? Math.max(0, prev - 1) : prev + 1);
+      }
+    } catch (e) {
+      setIsClapped(!isClapped);
+      setClaps(prev => isClapped ? Math.max(0, prev - 1) : prev + 1);
     }
   };
 
@@ -198,7 +235,7 @@ const BaiViet = () => {
               </div>
               <div className="d-flex align-items-center gap-3">
                 <span><i className="fa-regular fa-clock me-1 text-warning"></i> 3 phút đọc</span>
-                <span><i className="fa-regular fa-eye me-1 text-success"></i> <strong>{article.viewsCount || article.views || 162}</strong> lượt xem</span>
+                <span><i className="fa-regular fa-eye me-1 text-success"></i> <strong>{(article.viewsCount !== undefined && article.viewsCount !== null) ? article.viewsCount : (article.views !== undefined ? article.views : (article.LuotXem || 0))}</strong> lượt xem</span>
                 <span><i className="fa-regular fa-comment-dots me-1 text-primary"></i> <strong>{comments.length}</strong> bình luận</span>
               </div>
             </div>

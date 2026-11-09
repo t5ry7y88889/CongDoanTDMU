@@ -226,7 +226,7 @@ export default function FacebookChannel({
                     style={{ padding: '5px 10px', borderRadius: '6px', border: '1px solid #1877F2', background: '#EFF6FF', color: '#1877F2', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
                     title="Tải thêm ảnh từ máy tính của bạn vào bài đăng Facebook"
                   >
-                    <i className="fa-solid fa-cloud-arrow-up" /> + Tải ảnh từ máy tính
+                    <i className="fa-solid fa-cloud-arrow-up" /> Tải ảnh từ máy tính
                   </button>
                   {(eventPhotos || []).length > 0 && (
                     <button

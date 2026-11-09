@@ -1,5 +1,95 @@
 [
   {
+    "id": 1794192973972,
+    "recipientEmail": "admin@tdmu.edu.vn",
+    "recipientName": "Ban Thường Vụ Công Đoàn",
+    "subject": "[Công Đoàn TDMU] Phản hồi ý kiến: \"[Công Đoàn TDMU] Phản hồi ý kiến: \"1\"\"",
+    "content": "123",
+    "sentAt": "2026-11-09T02:56:13.972Z",
+    "status": "sent"
+  },
+  {
+    "id": 1794170288122,
+    "recipientEmail": "utltk@tdmu.edu.vn",
+    "recipientName": "TS. Lê Thị Kim Út",
+    "subject": "[Công Đoàn TDMU] Phản hồi ý kiến: \"Đề xuất nâng cấp trang thiết bị phòng nghiên cứu cho giảng viên\"",
+    "content": "Ban Thường Vụ đã tiếp nhận đề xuất của TS. Lê Thị Kim Út và đã chuyển Hội đồng Khoa học & Ban Tài chính phê duyệt cấp bổ sung kinh phí.",
+    "sentAt": "2026-11-08T20:38:08.122Z",
+    "status": "sent"
+  },
+  {
+    "id": 1794168919950,
+    "recipientEmail": "utltk@tdmu.edu.vn",
+    "recipientName": "Ban Thường Vụ Công Đoàn",
+    "subject": "[Công Đoàn TDMU] Phản hồi ý kiến: \"[Công Đoàn TDMU] Phản hồi ý kiến: \"Đề xuất cải thiện\"\"",
+    "content": "1",
+    "sentAt": "2026-11-08T20:15:19.950Z",
+    "status": "sent"
+  },
+  {
+    "id": 1794168781516,
+    "recipientEmail": "admin@tdmu.edu.vn",
+    "recipientName": "Ban Thường Vụ Công Đoàn",
+    "subject": "[Công Đoàn TDMU] Phản hồi ý kiến: \"[Công Đoàn TDMU] Thông báo kết quả giải quyết ý kiến đóng góp\"",
+    "content": "Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một đã tiếp nhận ý kiến đóng góp của Quý Thầy/Cô. Ý kiến đã được chuyển đến Ban Chuyên môn liên quan để xử lý.",
+    "sentAt": "2026-11-08T20:13:01.516Z",
+    "status": "sent"
+  },
+  {
+    "id": 1794168771833,
+    "recipientEmail": "admin@tdmu.edu.vn",
+    "recipientName": "Ban Thường Vụ Công Đoàn",
+    "subject": "[Công Đoàn TDMU] Phản hồi ý kiến: \"[Công Đoàn TDMU] Thông báo kết quả giải quyết ý kiến đóng góp\"",
+    "content": "Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một đã tiếp nhận ý kiến đóng góp của Quý Thầy/Cô. Ý kiến đã được chuyển đến Ban Chuyên môn liên quan để xử lý.",
+    "sentAt": "2026-11-08T20:12:51.833Z",
+    "status": "sent"
+  },
+  {
+    "id": 1794071670294,
+    "recipientEmail": "2424802010319@student.tdmu.edu.vn",
+    "recipientName": "Huỳnh Đăng Khoa (Đoàn viên TDMU)",
+    "subject": "[Công Đoàn TDMU] Phản hồi ý kiến: \"Đóng góp ý kiến về chế độ phúc lợi và hoạt động Công đoàn 2026\"",
+    "content": "Kính gửi Đồng chí Khoa, Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một đã tiếp nhận ý kiến đóng góp của Đồng chí. Ban Thường Vụ trân trọng cảm ơn tinh thần trách nhiệm và đóng góp quý báu của Quý Thầy/Cô.",
+    "sentAt": "2026-11-07T17:14:30.294Z",
+    "status": "sent"
+  },
+  {
+    "id": 1794071658096,
+    "recipientEmail": "2424802010319@student.tdmu.edu.vn",
+    "recipientName": "Huỳnh Đăng Khoa (Đoàn viên TDMU)",
+    "subject": "[Công Đoàn TDMU] Phản hồi ý kiến: \"Đóng góp ý kiến về chế độ phúc lợi và hoạt động Công đoàn 2026\"",
+    "content": "Kính gửi Đồng chí Khoa, Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một đã tiếp nhận ý kiến đóng góp của Đồng chí. Ban Thường Vụ trân trọng cảm ơn tinh thần trách nhiệm và đóng góp quý báu của Quý Thầy/Cô.",
+    "sentAt": "2026-11-07T17:14:18.096Z",
+    "status": "sent"
+  },
+  {
+    "id": 1793986310983,
+    "recipientEmail": "mailoan.tt@tdmu.edu.vn",
+    "recipientName": "ThS. Trần Thị Mai Loan",
+    "subject": "[Công Đoàn TDMU] Phản hồi ý kiến: \"Hỏi về thời hạn đăng ký hồ sơ trợ cấp khó khăn đợt 1 năm 2026\"",
+    "content": "Kính gửi Đồng chí Mai Loan, Ban Thường Vụ Công đoàn đã nhận được ý kiến của Đồng chí. Thời hạn tiếp nhận hồ sơ trợ cấp đợt 1 kéo dài đến hết 17h00 ngày 25/11/2026 tại Văn phòng Công đoàn (Phòng A1-204). Đồng chí có thể tải biểu mẫu tại mục Phúc Lợi Đoàn Viên trên Cổng thông tin. Chúc gia đình đồng chí nhiều sức khỏe!",
+    "sentAt": "2026-11-06T17:31:50.983Z",
+    "status": "sent"
+  },
+  {
+    "id": 1793986121028,
+    "recipientEmail": "mailoan.tt@tdmu.edu.vn",
+    "recipientName": "ThS. Trần Thị Mai Loan",
+    "subject": "[Công Đoàn TDMU] Phản hồi ý kiến: \"Hỏi về thời hạn đăng ký hồ sơ trợ cấp khó khăn đợt 1 năm 2026\"",
+    "content": "Kính gửi Đồng chí Mai Loan, Ban Thường Vụ Công đoàn đã nhận được ý kiến của Đồng chí. Thời hạn tiếp nhận hồ sơ trợ cấp đợt 1 kéo dài đến hết 17h00 ngày 25/11/2026 tại Văn phòng Công đoàn (Phòng A1-204). Đồng chí có thể tải biểu mẫu tại mục Phúc Lợi Đoàn Viên trên Cổng thông tin. Chúc gia đình đồng chí nhiều sức khỏe!",
+    "sentAt": "2026-11-06T17:28:41.028Z",
+    "status": "sent"
+  },
+  {
+    "id": 1793985270563,
+    "recipientEmail": "doanvien@tdmu.edu.vn",
+    "recipientName": "Đoàn viên Nguyễn Văn An",
+    "subject": "[Công Đoàn TDMU] Phản hồi ý kiến: \"Đề xuất nâng cấp đường truyền wifi khu vực văn phòng Viện\"",
+    "content": "Kính gửi Đồng chí Nguyễn Văn An, Ban Thường Vụ Công đoàn đã làm việc với Trung tâm CNTT để bổ sung thêm 02 bộ phát wifi công suất cao tại tầng 3 dãy B. Dự kiến hoàn tất nghiệm thu vào ngày 10/11/2026. Trân trọng cảm ơn ý kiến đóng góp của Đồng chí!",
+    "sentAt": "2026-11-06T17:14:30.563Z",
+    "status": "sent"
+  },
+  {
     "id": 1793032610445,
     "recipientEmail": "utltk@tdmu.edu.vn",
     "recipientName": "Ban Thường Vụ Công Đoàn",

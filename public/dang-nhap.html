@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cổng Xác Thực &amp; Đăng Nhập Tập Trung (SSO) | Công Đoàn ĐH Thủ Dầu Một</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/portal.css?v=20261106">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    :root {
+      --primary-navy: #002855;
+      --primary-blue: #004080;
+      --accent-gold: #d97706;
+      --gold-light: #fef3c7;
+      --surface-card: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-subtle: #e2e8f0;
+      --input-bg: #f8fafc;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: radial-gradient(circle at 15% 25%, rgba(0, 40, 85, 0.95), rgba(0, 20, 45, 0.98)),
+                  url('images/banner.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: var(--text-main);
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 24, 52, 0.78);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 0;
+    }
+
+    /* TOP INSTITUTIONAL NAV */
+    .portal-topbar {
+      position: relative;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 12px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+
+    .brand-logo-img {
+      height: 48px;
+      width: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+    }
+
+    .brand-text-block {
+      line-height: 1.25;
+    }
+
+    .brand-title {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: #FFFFFF;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      font-weight: 600;
+      color: #FCD34D;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-portal-back {
+      color: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-portal-back:hover {
+      background: #FFFFFF;
+      color: var(--primary-navy);
+      border-color: #FFFFFF;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* MAIN STAGE */
+    .portal-stage {
+      position: relative;
+      z-index: 5;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 15px;
+    }
+
+    /* THE HERO IDENTITY CARD */
+    .portal-auth-card {
+      background: var(--surface-card);
+      border-radius: 24px;
+      overflow: hidden;
+      width: 100%;
+      max-width: 1120px;
+      min-height: 640px;
+      display: flex;
+      box-shadow: 0 30px 90px -15px rgba(0, 15, 45, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.15);
+      position: relative;
+    }
+
+    /* LEFT SIDE: INSTITUTIONAL BRANDING */
+    .card-banner-side {
+      flex: 1;
+      background: linear-gradient(155deg, #001f42 0%, #002855 50%, #003e7e 100%);
+      color: #FFFFFF;
+      padding: 48px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-banner-side::before {
+      content: '';
+      position: absolute;
+      top: -120px;
+      right: -120px;
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle, rgba(217, 119, 6, 0.2) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .card-banner-side::after {
+      content: '';
+      position: absolute;
+      bottom: -100px;
+      left: -100px;
+      width: 280px;
+      height: 280px;
+      background: radial-gradient(circle, rgba(2, 132, 199, 0.25) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .banner-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #FCD34D;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      backdrop-filter: blur(10px);
+      width: fit-content;
+    }
+
+    .banner-hero-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #FFFFFF;
+      line-height: 1.35;
+      margin: 18px 0 6px;
+      letter-spacing: -0.3px;
+    }
+
+    .banner-hero-motto {
+      font-size: 13.5px;
+      color: #FBBF24;
+      font-weight: 700;
+      font-style: italic;
+      letter-spacing: 0.3px;
+      margin-bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .banner-features-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin: 20px 0;
+    }
+
+    .feature-item {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      backdrop-filter: blur(8px);
+      transition: all 0.2s ease;
+    }
+
+    .feature-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(251, 191, 36, 0.35);
+      transform: translateX(4px);
+    }
+
+    .feature-icon-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .feature-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 2px;
+    }
+
+    .feature-desc {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.72);
+      line-height: 1.45;
+      margin: 0;
+    }
+
+    .banner-footer-info {
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      padding-top: 16px;
+      font-size: 11.5px;
+      color: rgba(255, 255, 255, 0.75);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* RIGHT SIDE: AUTH FORM */
+    .card-form-side {
+      flex: 1.2;
+      padding: 44px 44px 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: #FFFFFF;
+    }
+
+    /* ROLE SWITCHER PILLS */
+    .quick-roles-wrapper {
+      background: #F8FAFC;
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 10px 14px;
+      margin-bottom: 20px;
+    }
+
+    .quick-roles-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .quick-roles-label {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .quick-roles-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .role-select-chip {
+      background: #FFFFFF;
+      border: 1px solid #CBD5E1;
+      border-radius: 8px;
+      padding: 7px 4px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #1E293B;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .role-select-chip:hover {
+      border-color: var(--primary-navy);
+      background: #EFF6FF;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0, 40, 85, 0.1);
+    }
+
+    .role-select-chip.active {
+      background: var(--primary-navy);
+      color: #FFFFFF;
+      border-color: var(--primary-navy);
+    }
+
+    .role-select-chip.active i {
+      color: #FCD34D !important;
+    }
+
+    /* SEGMENTED TAB SWITCH */
+    .segmented-auth-switch {
+      background: #F1F5F9;
+      padding: 4px;
+      border-radius: 12px;
+      display: flex;
+      margin-bottom: 20px;
+      border: 1px solid #E2E8F0;
+    }
+
+    .auth-segment-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 9px 12px;
+      border-radius: 9px;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #64748B;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .auth-segment-btn.active {
+      background: #FFFFFF;
+      color: var(--primary-navy);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    /* GOOGLE SSO BUTTON */
+    .btn-google-workspace {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      background: #FFFFFF;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #1E293B;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .btn-google-workspace:hover {
+      background: #F8FAFC;
+      border-color: #94A3B8;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .sso-divider-line {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 18px 0;
+      color: #94A3B8;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .sso-divider-line::before, .sso-divider-line::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #E2E8F0;
+    }
+
+    .sso-divider-line span {
+      padding: 0 12px;
+    }
+
+    /* FORM INPUT GROUPS */
+    .field-group {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .field-label {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #334155;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .input-shell {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-shell-icon {
+      position: absolute;
+      left: 14px;
+      color: #94A3B8;
+      font-size: 15px;
+      pointer-events: none;
+      transition: color 0.15s;
+    }
+
+    .input-shell-control {
+      width: 100%;
+      height: 46px;
+      padding: 10px 14px 10px 42px;
+      background: #F8FAFC;
+      border: 1.5px solid #CBD5E1;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #0F172A;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .input-shell-control:focus {
+      background: #FFFFFF;
+      border-color: var(--primary-navy);
+      box-shadow: 0 0 0 4px rgba(0, 40, 85, 0.08);
+    }
+
+    .input-shell-control:focus + .input-shell-icon {
+      color: var(--primary-navy);
+    }
+
+    .btn-eye-toggle {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      color: #94A3B8;
+      cursor: pointer;
+      font-size: 15px;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s;
+    }
+
+    .btn-eye-toggle:hover {
+      color: var(--primary-navy);
+    }
+
+    /* PRIMARY AUTH CTA */
+    .btn-auth-master {
+      width: 100%;
+      height: 48px;
+      background: linear-gradient(135deg, #002855 0%, #004b99 100%);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 11px;
+      font-size: 14.5px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(0, 40, 85, 0.3);
+      transition: all 0.2s ease;
+      margin-top: 6px;
+    }
+
+    .btn-auth-master:hover {
+      background: linear-gradient(135deg, #001938 0%, #003366 100%);
+      box-shadow: 0 6px 20px rgba(0, 40, 85, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-auth-master:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* FOOTER BAR */
+    .portal-bottom-bar {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 14px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    @media (max-width: 900px) {
+      .portal-auth-card {
+        flex-direction: column;
+        max-width: 500px;
+      }
+      .card-banner-side {
+        padding: 30px 24px;
+      }
+      .card-form-side {
+        padding: 30px 24px;
+      }
+      .quick-roles-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP HEADER -->
+  <header class="portal-topbar">
+    <a href="/" class="brand-wrap">
+      <img src="images/logo-congdoan-2025.png" alt="Công đoàn TDMU" class="brand-logo-img" onerror="this.src='images/logo_cong_doan.png'">
+      <div class="brand-text-block">
+        <h1 class="brand-title">CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h1>
+        <div class="brand-subtitle">
+          <i class="fa-solid fa-shield-halved text-warning"></i> CỔNG ĐĂNG NHẬP &amp; XÁC THỰC TẬP TRUNG (IDENTITY SSO PORTAL)
+        </div>
+      </div>
+    </a>
+    <div>
+      <a href="/" class="btn-portal-back">
+        <i class="fa-solid fa-arrow-left"></i> Về Cổng Thông Tin
+      </a>
+    </div>
+  </header>
+
+  <!-- MAIN STAGE -->
+  <main class="portal-stage">
+    <div class="portal-auth-card">
+
+      <!-- LEFT: INSTITUTIONAL BRAND PANEL -->
+      <section class="card-banner-side">
+        <div>
+          <div class="banner-badge">
+            <i class="fa-solid fa-certificate text-warning"></i> CƠ QUAN CÔNG ĐOÀN CƠ SỞ TDMU
+          </div>
+
+          <h2 class="banner-hero-title">Hệ Thống Định Danh Số &amp; Chăm Lo Đời Sống</h2>
+          <div class="banner-hero-motto">
+            <i class="fa-solid fa-quote-left"></i> Đổi mới &bull; Dân chủ &bull; Đoàn kết &bull; Phát triển <i class="fa-solid fa-quote-right"></i>
+          </div>
+
+          <p style="font-size: 12.5px; color: rgba(255,255,255,0.78); line-height: 1.5; margin-bottom: 20px;">
+            Cổng xác thực một điểm dành cho toàn thể Cán bộ, Giảng viên, Người lao động và Đoàn viên kết nối với các dịch vụ số công đoàn.
+          </p>
+
+          <div class="banner-features-list">
+            <!-- Item 1 -->
+            <div class="feature-item">
+              <div class="feature-icon-box text-warning">
+                <i class="fa-solid fa-id-card"></i>
+              </div>
+              <div>
+                <div class="feature-title">Hồ Sơ Đoàn Viên &amp; Thẻ Số Hóa</div>
+                <p class="feature-desc">Quản lý mã định danh, sinh hoạt 16 Tổ Công đoàn và hồ sơ thi đua khen thưởng.</p>
+              </div>
+            </div>
+
+            <!-- Item 2 -->
+            <div class="feature-item">
+              <div class="feature-icon-box text-info">
+                <i class="fa-solid fa-hand-holding-heart"></i>
+              </div>
+              <div>
+                <div class="feature-title">Chăm Lo Phúc Lợi &amp; Trợ Cấp</div>
+                <p class="feature-desc">Tra cứu chính sách PDF, tiếp nhận hỗ trợ khó khăn, vay vốn quỹ CEP và khám sức khỏe.</p>
+              </div>
+            </div>
+
+            <!-- Item 3 -->
+            <div class="feature-item">
+              <div class="feature-icon-box text-success">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+              </div>
+              <div>
+                <div class="feature-title">Studio Biên Tập Tin Bài AI</div>
+                <p class="feature-desc">Không gian xuất bản nội dung đa kênh, AI tổng hợp tin và quản trị truyền thông.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="banner-footer-info">
+          <span><i class="fa-solid fa-shield-check text-warning me-1"></i> MSSQL Live Sync &bull; SSL 256-Bit</span>
+          <span>Hotline: <strong>(0274) 3.815.184</strong></span>
+        </div>
+      </section>
+
+      <!-- RIGHT: AUTHENTICATION FORM PANEL -->
+      <section class="card-form-side">
+        <div>
+          <!-- ROLE QUICK-SELECTOR (FOR TESTERS / EVALUATORS) -->
+          <div class="quick-roles-wrapper">
+            <div class="quick-roles-header">
+              <span class="quick-roles-label">
+                <i class="fa-solid fa-users-gear text-primary"></i> Tài Khoản Kiểm Thử / Đánh Giá Đề Tài:
+              </span>
+              <span style="font-size: 11px; color: #059669; font-weight: 700;">
+                <i class="fa-solid fa-bolt"></i> 1-Chạm điền &amp; đăng nhập
+              </span>
+            </div>
+            <div class="quick-roles-grid">
+              <button type="button" class="role-select-chip active" onclick="applyQuickRole('admin@tdmu.edu.vn', '123456', this)">
+                <i class="fa-solid fa-crown text-warning"></i>
+                <span>Quản Trị (Admin)</span>
+              </button>
+              <button type="button" class="role-select-chip" onclick="applyQuickRole('editor@tdmu.edu.vn', '123456', this)">
+                <i class="fa-solid fa-pen-nib text-primary"></i>
+                <span>Biên Tập (Editor)</span>
+              </button>
+              <button type="button" class="role-select-chip" onclick="applyQuickRole('contributor@tdmu.edu.vn', '123456', this)">
+                <i class="fa-solid fa-user-check text-success"></i>
+                <span>Cộng Tác Viên</span>
+              </button>
+              <button type="button" class="role-select-chip" onclick="applyQuickRole('doanvien@tdmu.edu.vn', '123456', this)">
+                <i class="fa-solid fa-graduation-cap text-info"></i>
+                <span>Đoàn Viên Mẫu</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- SEGMENTED TABS -->
+          <div class="segmented-auth-switch">
+            <button type="button" class="auth-segment-btn active" id="tabBtnLogin" onclick="switchAuthTab('login')">
+              <i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập Cổng
+            </button>
+            <button type="button" class="auth-segment-btn" id="tabBtnRegister" onclick="switchAuthTab('register')">
+              <i class="fa-solid fa-user-plus"></i> Đăng Ký Đoàn Viên
+            </button>
+          </div>
+
+          <!-- NOTIFICATION ALERT -->
+          <div id="authAlert" class="alert d-none py-2 px-3 mb-3 small" style="border-radius: 8px;"></div>
+
+          <!-- ================= TAB 1: FORM ĐĂNG NHẬP ================= -->
+          <div id="tabContentLogin">
+            <!-- GOOGLE WORKSPACE SSO -->
+            <button type="button" class="btn-google-workspace" onclick="handleGoogleOneTapLogin()">
+              <svg width="20" height="20" viewBox="0 0 48 48">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+              </svg>
+              <span>Đăng nhập nhanh bằng tài khoản Google Trường (@tdmu.edu.vn)</span>
+            </button>
+
+            <div class="sso-divider-line">
+              <span>hoặc đăng nhập bằng email &amp; mật khẩu</span>
+            </div>
+
+            <form id="formLogin" onsubmit="submitLogin(event)" autocomplete="off">
+              <!-- Field Email -->
+              <div class="field-group">
+                <label class="field-label" for="loginEmail">Email Cán Bộ / Đoàn Viên (*):</label>
+                <div class="input-shell">
+                  <i class="fa-solid fa-envelope input-shell-icon"></i>
+                  <input type="email" class="input-shell-control" id="loginEmail" placeholder="admin@tdmu.edu.vn" value="admin@tdmu.edu.vn" autocomplete="off" required>
+                </div>
+              </div>
+
+              <!-- Field Password -->
+              <div class="field-group">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <label class="field-label" for="loginPassword" style="margin: 0;">Mật khẩu truy cập (*):</label>
+                  <a href="#" onclick="showForgotPasswordModal(); return false;" style="font-size: 12px; color: #0284C7; text-decoration: none; font-weight: 700;">Quên mật khẩu?</a>
+                </div>
+                <div class="input-shell">
+                  <i class="fa-solid fa-lock input-shell-icon"></i>
+                  <input type="password" class="input-shell-control" id="loginPassword" placeholder="123456" value="123456" autocomplete="new-password" required>
+                  <button type="button" class="btn-eye-toggle" onclick="togglePasswordVisibility('loginPassword', 'loginPasswordEye')">
+                    <i class="fa-solid fa-eye" id="loginPasswordEye"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Remember me -->
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #475569; cursor: pointer; user-select: none;">
+                  <input type="checkbox" id="rememberMe" checked style="width: 16px; height: 16px; accent-color: var(--primary-navy);">
+                  Duy trì phiên đăng nhập (30 ngày)
+                </label>
+                <span style="font-size: 11.5px; color: #059669; font-weight: 700;">
+                  <i class="fa-solid fa-lock"></i> Kết nối an toàn
+                </span>
+              </div>
+
+              <!-- Submit -->
+              <button type="submit" class="btn-auth-master" id="btnLoginSubmit">
+                <span>XÁC THỰC &amp; ĐĂNG NHẬP VÀO CỔNG</span>
+                <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </form>
+          </div>
+
+          <!-- ================= TAB 2: FORM ĐĂNG KÝ ================= -->
+          <div id="tabContentRegister" class="d-none">
+            <form id="formRegister" onsubmit="submitRegister(event)" autocomplete="off">
+              <div class="row g-2 mb-2">
+                <div class="col-md-6 field-group mb-2">
+                  <label class="field-label">Họ và tên (*):</label>
+                  <div class="input-shell">
+                    <i class="fa-solid fa-user input-shell-icon"></i>
+                    <input type="text" class="input-shell-control" id="regFullName" placeholder="Nguyễn Văn A" required>
+                  </div>
+                </div>
+                <div class="col-md-6 field-group mb-2">
+                  <label class="field-label">Email TDMU (*):</label>
+                  <div class="input-shell">
+                    <i class="fa-solid fa-envelope input-shell-icon"></i>
+                    <input type="email" class="input-shell-control" id="regEmail" placeholder="an.nv@tdmu.edu.vn" required>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-2 mb-2">
+                <div class="col-md-6 field-group mb-2">
+                  <label class="field-label">Số điện thoại:</label>
+                  <div class="input-shell">
+                    <i class="fa-solid fa-phone input-shell-icon"></i>
+                    <input type="tel" class="input-shell-control" id="regPhone" placeholder="09xxxxxxxx">
+                  </div>
+                </div>
+                <div class="col-md-6 field-group mb-2">
+                  <label class="field-label">Tổ Công đoàn cơ sở (*):</label>
+                  <select class="input-shell-control" id="regBranch" style="padding-left: 14px;" required>
+                    <option value="">-- Chọn 1 trong 16 Tổ Công đoàn --</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-md-6 field-group mb-2">
+                  <label class="field-label">Mật khẩu (*):</label>
+                  <div class="input-shell">
+                    <i class="fa-solid fa-lock input-shell-icon"></i>
+                    <input type="password" class="input-shell-control" id="regPassword" placeholder="Tối thiểu 6 ký tự" required>
+                  </div>
+                </div>
+                <div class="col-md-6 field-group mb-2">
+                  <label class="field-label">Nhập lại mật khẩu (*):</label>
+                  <div class="input-shell">
+                    <i class="fa-solid fa-check-double input-shell-icon"></i>
+                    <input type="password" class="input-shell-control" id="regPasswordConfirm" placeholder="Xác nhận lại" required>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-auth-master" id="btnRegisterSubmit">
+                <span>GỬI ĐĂNG KÝ GIA NHẬP ĐOÀN VIÊN</span>
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </form>
+          </div>
+
+        </div>
+
+        <!-- BOTTOM HELPER -->
+        <div style="font-size: 11.5px; color: #94A3B8; text-align: center; margin-top: 18px; border-top: 1px solid #F1F5F9; padding-top: 12px;">
+          Cổng thông tin &amp; Cơ sở dữ liệu Công đoàn Trường Đại học Thủ Dầu Một &bull; Hệ thống phân quyền RBAC
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="portal-bottom-bar">
+    &copy; 2026 CÔNG ĐOÀN CƠ SỞ TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT &bull; Địa chỉ: Số 06 Trần Văn Ơn, P. Phú Hòa, TP. Thủ Dầu Một, Bình Dương
+  </footer>
+
+  <script>
+    // 1. Tải danh sách 16 Tổ công đoàn
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Clear browser autofill junk if any
+      const emailEl = document.getElementById('loginEmail');
+      const passEl = document.getElementById('loginPassword');
+      if (emailEl && (!emailEl.value || emailEl.value === 'Công Đoàn')) {
+        emailEl.value = 'admin@tdmu.edu.vn';
+      }
+      if (passEl && (!passEl.value || passEl.value.length > 20)) {
+        passEl.value = '123456';
+      }
+
+      try {
+        const res = await fetch('/api/auth/branches');
+        const data = await res.json();
+        if (data.success && data.data) {
+          const select = document.getElementById('regBranch');
+          data.data.forEach(branch => {
+            const opt = document.createElement('option');
+            opt.value = branch;
+            opt.innerText = branch;
+            select.appendChild(opt);
+          });
+        }
+      } catch (e) {
+        console.warn('Lỗi tải danh sách tổ công đoàn:', e);
+      }
+
+      // Check if already logged in
+      const token = localStorage.getItem('tdmu_token');
+      if (token) {
+        const params = new URLSearchParams(window.location.search);
+        const redirect = params.get('redirect');
+        if (redirect) {
+          window.location.href = redirect;
+        }
+      }
+    });
+
+    // 2. Chuyển đổi tab Đăng nhập / Đăng ký
+    function switchAuthTab(tab) {
+      const loginTab = document.getElementById('tabContentLogin');
+      const regTab = document.getElementById('tabContentRegister');
+      const tabBtnLogin = document.getElementById('tabBtnLogin');
+      const tabBtnRegister = document.getElementById('tabBtnRegister');
+      const alertBox = document.getElementById('authAlert');
+      alertBox.classList.add('d-none');
+
+      if (tab === 'login') {
+        loginTab.classList.remove('d-none');
+        regTab.classList.add('d-none');
+        tabBtnLogin.classList.add('active');
+        tabBtnRegister.classList.remove('active');
+      } else {
+        loginTab.classList.add('d-none');
+        regTab.classList.remove('d-none');
+        tabBtnLogin.classList.remove('active');
+        tabBtnRegister.classList.add('active');
+      }
+    }
+
+    // 3. Chọn nhanh vai trò kiểm thử
+    function applyQuickRole(email, password, btnElement) {
+      document.querySelectorAll('.role-select-chip').forEach(c => c.classList.remove('active'));
+      if (btnElement) btnElement.classList.add('active');
+
+      document.getElementById('loginEmail').value = email;
+      document.getElementById('loginPassword').value = password;
+
+      // Hiển thị thông báo nhẹ nhàng
+      showAlert(`Đã chọn tài khoản: <strong>${email}</strong> (Mật khẩu: 123456). Bấm Đăng Nhập để vào cổng!`, true);
+    }
+
+    // 4. Toggle ẩn hiện mật khẩu
+    function togglePasswordVisibility(inputId, eyeId) {
+      const input = document.getElementById(inputId);
+      const eye = document.getElementById(eyeId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        eye.classList.remove('fa-eye');
+        eye.classList.add('fa-eye-slash');
+      } else {
+        input.type = 'password';
+        eye.classList.remove('fa-eye-slash');
+        eye.classList.add('fa-eye');
+      }
+    }
+
+    // 5. Hiển thị thông báo
+    function showAlert(msg, isSuccess = false) {
+      const el = document.getElementById('authAlert');
+      el.className = `alert ${isSuccess ? 'alert-success' : 'alert-danger'} py-2 px-3 small`;
+      el.innerHTML = msg;
+      el.classList.remove('d-none');
+    }
+
+    // 6. Xử lý Đăng Nhập
+    async function submitLogin(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const btn = document.getElementById('btnLoginSubmit');
+
+      if (!email) return showAlert('Vui lòng nhập Email cán bộ / đoàn viên!');
+      if (!password) return showAlert('Vui lòng nhập mật khẩu truy cập!');
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Đang xác thực định danh...';
+
+      try {
+        const resp = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const res = await resp.json();
+
+        if (res.success && res.token) {
+          showAlert(res.message || 'Đăng nhập thành công! Đang chuyển hướng...', true);
+          localStorage.setItem('tdmu_token', res.token);
+          localStorage.setItem('tdmu_user', JSON.stringify(res.user));
+
+          const params = new URLSearchParams(window.location.search);
+          const redirect = params.get('redirect');
+
+          setTimeout(() => {
+            if (redirect) {
+              window.location.href = redirect;
+            } else if (res.user.role === 'admin' || res.user.role === 'editor') {
+              window.location.href = 'admin.html';
+            } else {
+              window.location.href = 'ho-so.html';
+            }
+          }, 600);
+        } else {
+          showAlert(res.error || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!');
+          btn.disabled = false;
+          btn.innerHTML = '<span>XÁC THỰC &amp; ĐĂNG NHẬP VÀO CỔNG</span> <i class="fa-solid fa-arrow-right"></i>';
+        }
+      } catch (err) {
+        showAlert('Lỗi kết nối máy chủ xác thực: ' + err.message);
+        btn.disabled = false;
+        btn.innerHTML = '<span>XÁC THỰC &amp; ĐĂNG NHẬP VÀO CỔNG</span> <i class="fa-solid fa-arrow-right"></i>';
+      }
+    }
+
+    // 7. Xử lý Đăng Ký
+    async function submitRegister(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const ho_ten = document.getElementById('regFullName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const phone = document.getElementById('regPhone').value.trim();
+      const unit = document.getElementById('regBranch').value;
+      const password = document.getElementById('regPassword').value;
+      const confirmPassword = document.getElementById('regPasswordConfirm').value;
+      const btn = document.getElementById('btnRegisterSubmit');
+
+      if (!ho_ten || !email || !unit || !password) {
+        return showAlert('Vui lòng điền đầy đủ các thông tin bắt buộc (*)!');
+      }
+      if (password !== confirmPassword) {
+        return showAlert('Mật khẩu xác nhận không khớp! Vui lòng nhập lại.');
+      }
+      if (password.length < 6) {
+        return showAlert('Mật khẩu phải có tối thiểu 6 ký tự để đảm bảo an toàn!');
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Đang đăng ký...';
+
+      try {
+        const resp = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ho_ten, email, phone, unit, password })
+        });
+        const res = await resp.json();
+
+        if (res.success && res.token) {
+          showAlert(res.message || 'Đăng ký tài khoản đoàn viên thành công!', true);
+          localStorage.setItem('tdmu_token', res.token);
+          localStorage.setItem('tdmu_user', JSON.stringify(res.user));
+          setTimeout(() => {
+            window.location.href = 'ho-so.html';
+          }, 800);
+        } else {
+          showAlert(res.error || 'Đăng ký thất bại!');
+          btn.disabled = false;
+          btn.innerHTML = '<span>GỬI ĐĂNG KÝ GIA NHẬP ĐOÀN VIÊN</span> <i class="fa-solid fa-paper-plane"></i>';
+        }
+      } catch (err) {
+        showAlert('Lỗi kết nối máy chủ: ' + err.message);
+        btn.disabled = false;
+        btn.innerHTML = '<span>GỬI ĐĂNG KÝ GIA NHẬP ĐOÀN VIÊN</span> <i class="fa-solid fa-paper-plane"></i>';
+      }
+    }
+
+    // 8. Đăng nhập 1-chạm Google (Demo & Real Support)
+    async function handleGoogleOneTapLogin() {
+      try {
+        const testUser = {
+          email: 'doanvien.google@tdmu.edu.vn',
+          name: 'TS. Nguyễn Văn Tuấn (Google Account)',
+          picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
+          sub: 'google_oauth_sub_demo_12345'
+        };
+
+        const resp = await fetch('/api/auth/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ googleUser: testUser })
+        });
+        const res = await resp.json();
+
+        if (res.success && res.token) {
+          showAlert(res.message, true);
+          localStorage.setItem('tdmu_token', res.token);
+          localStorage.setItem('tdmu_user', JSON.stringify(res.user));
+          setTimeout(() => {
+            window.location.href = 'ho-so.html';
+          }, 600);
+        } else {
+          showAlert(res.error || 'Đăng nhập Google thất bại');
+        }
+      } catch (err) {
+        showAlert('Lỗi kết nối Google SSO: ' + err.message);
+      }
+    }
+
+    // 9. Quên mật khẩu
+    function showForgotPasswordModal() {
+      alert('HỆ THỐNG XÁC THỰC CÔNG ĐOÀN TDMU:\\n\\nVui lòng liên hệ Văn phòng Công đoàn Trường (Phòng A1-204, Nhà Điều Hành, Hotline: 0274.3815.184) hoặc gửi email công vụ đến congdoan@tdmu.edu.vn để được hỗ trợ cấp lại mật khẩu truy cập.');
+    }
+  </script>
+</body>
+</html>

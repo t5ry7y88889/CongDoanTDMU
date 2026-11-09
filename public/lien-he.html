@@ -98,23 +98,8 @@
                 <th>Email Liên Hệ</th>
               </tr>
             </thead>
-            <tbody>
-              <tr><td>1</td><td><strong>Tổ Công đoàn 1 - Khối Hiệu Bộ</strong></td><td>Đ/c Nguyễn Văn A</td><td>tcd01@tdmu.edu.vn</td></tr>
-              <tr><td>2</td><td><strong>Tổ Công đoàn 2 - Phòng Đào Tạo &amp; Khảo Thí</strong></td><td>Đ/c Trần Thị B</td><td>tcd02@tdmu.edu.vn</td></tr>
-              <tr><td>3</td><td><strong>Tổ Công đoàn 3 - Viện Công Nghệ Số</strong></td><td>Đ/c Lê Văn C</td><td>tcd03@tdmu.edu.vn</td></tr>
-              <tr><td>4</td><td><strong>Tổ Công đoàn 4 - Khoa Khoa Học Tự Nhiên</strong></td><td>Đ/c Nguyễn Thị Hương</td><td>tcd04@tdmu.edu.vn</td></tr>
-              <tr><td>5</td><td><strong>Tổ Công đoàn 5 - Khoa Khoa Học Xã Hội</strong></td><td>Đ/c Phạm Văn Dũng</td><td>tcd05@tdmu.edu.vn</td></tr>
-              <tr><td>6</td><td><strong>Tổ Công đoàn 6 - Khoa Kinh Tế</strong></td><td>Đ/c Hoàng Minh Tuấn</td><td>tcd06@tdmu.edu.vn</td></tr>
-              <tr><td>7</td><td><strong>Tổ Công đoàn 7 - Khoa Ngoại Ngữ</strong></td><td>Đ/c Vũ Thị Mai</td><td>tcd07@tdmu.edu.vn</td></tr>
-              <tr><td>8</td><td><strong>Tổ Công đoàn 8 - Khoa Kỹ Thuật Công Nghệ</strong></td><td>Đ/c Đặng Văn Long</td><td>tcd08@tdmu.edu.vn</td></tr>
-              <tr><td>9</td><td><strong>Tổ Công đoàn 9 - Khoa Kiến Trúc</strong></td><td>Đ/c Bùi Thị Lan</td><td>tcd09@tdmu.edu.vn</td></tr>
-              <tr><td>10</td><td><strong>Tổ Công đoàn 10 - Khoa Sư Phạm</strong></td><td>Đ/c Đỗ Văn Hùng</td><td>tcd10@tdmu.edu.vn</td></tr>
-              <tr><td>11</td><td><strong>Tổ Công đoàn 11 - Khoa Luật</strong></td><td>Đ/c Ngô Thị Bích</td><td>tcd11@tdmu.edu.vn</td></tr>
-              <tr><td>12</td><td><strong>Tổ Công đoàn 12 - Viện Đào Tạo Sau Đại Học</strong></td><td>Đ/c Dương Văn Nam</td><td>tcd12@tdmu.edu.vn</td></tr>
-              <tr><td>13</td><td><strong>Tổ Công đoàn 13 - Trung Tâm Học Liệu &amp; CNTT</strong></td><td>Đ/c Lý Thị Thu</td><td>tcd13@tdmu.edu.vn</td></tr>
-              <tr><td>14</td><td><strong>Tổ Công đoàn 14 - Phòng Công Tác Sinh Viên</strong></td><td>Đ/c Trịnh Văn Phát</td><td>tcd14@tdmu.edu.vn</td></tr>
-              <tr><td>15</td><td><strong>Tổ Công đoàn 15 - Phòng Quản Trị &amp; Cơ Sở Vật Chất</strong></td><td>Đ/c Mai Thị Ngọc</td><td>tcd15@tdmu.edu.vn</td></tr>
-              <tr><td>16</td><td><strong>Tổ Công đoàn 16 - Trung Tâm Ngoại Ngữ - Tin Học</strong></td><td>Đ/c Đoàn Văn Khải</td><td>tcd16@tdmu.edu.vn</td></tr>
+            <tbody id="table_union_branches_body">
+              <tr><td colspan="4" class="text-center py-4 text-muted"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang tải danh bạ 16 Tổ công đoàn từ CSDL...</td></tr>
             </tbody>
           </table>
         
@@ -129,19 +114,19 @@
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label fw-bold small text-secondary">Họ và Tên (*):</label>
-                  <input type="text" class="form-control" id="fbName" value="Ban Thường Vụ Công Đoàn" required>
+                  <input type="text" class="form-control" id="fbName" placeholder="Nhập họ và tên của bạn..." required>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label fw-bold small text-secondary">Đơn vị / Tổ Công đoàn (*):</label>
-                  <input type="text" class="form-control" id="fbUnit" value="Phòng Quản lý Khoa học" required>
+                  <input type="text" class="form-control" id="fbUnit" placeholder="Ví dụ: Khoa CNTT, Tổ CĐ 1, Phòng QLKH..." required>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label fw-bold small text-secondary">Email nhận phản hồi (*):</label>
-                  <input type="email" class="form-control" id="fbEmail" value="utltk@tdmu.edu.vn" required>
+                  <input type="email" class="form-control" id="fbEmail" placeholder="email@tdmu.edu.vn hoặc email cá nhân..." required>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label fw-bold small text-secondary">Số điện thoại liên hệ:</label>
-                  <input type="tel" class="form-control" id="fbPhone" value="0918.370.363">
+                  <input type="tel" class="form-control" id="fbPhone" placeholder="Số điện thoại di động liên hệ...">
                 </div>
                 <div class="col-12">
                   <label class="form-label fw-bold small text-secondary">Tiêu đề phản ánh / Góp ý (*):</label>
@@ -213,7 +198,7 @@
           <div class="panel-tdmu">
             <div class="panel-heading-tdmu"><i class="fa-solid fa-chart-simple me-2 text-warning"></i>Thống kê truy cập</div>
             <div class="p-3" style="font-size: 13px;">
-              <p class="mb-2"><i class="fa-solid fa-users text-primary me-2"></i> Đang trực tuyến: <strong>12</strong></p>
+              <p class="mb-2"><i class="fa-solid fa-users text-primary me-2"></i> Đang trực tuyến: <strong id="stat_online">1</strong></p>
               <p class="mb-0"><i class="fa-solid fa-eye text-success me-2"></i> Tổng lượt xem: <strong id="stat_views">0</strong></p>
             </div>
           </div>
@@ -244,12 +229,13 @@
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/bookmarks.js?v=20260901_v23"></script>
+  <script src="js/auth-nav.js?v=20261106"></script>
 
   <!-- OFFCANVAS TỦ SÁCH ĐỌC SAU (SAVED ARTICLES DRAWER) -->
   <div class="offcanvas offcanvas-end" tabindex="-1" id="bookmarksOffcanvas" style="width: 380px;">
     <div class="offcanvas-header" style="background: #002855; color: white;">
       <h5 class="offcanvas-title fw-bold" style="font-size: 16px;">
-        <i class="fa-solid fa-bookmark text-warning me-2"></i> Tủ Sách Đọc Sau (<span class="bookmark-badge-count">2</span>)
+        <i class="fa-solid fa-bookmark text-warning me-2"></i> Tủ Sách Đọc Sau (<span class="bookmark-badge-count">0</span>)
       </h5>
       <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
     </div>
@@ -378,6 +364,50 @@
       }
     }
 
+    
+    async function loadUnionBranchesTable() {
+      const tbody = document.getElementById('table_union_branches_body');
+      if (!tbody) return;
+      try {
+        const res = await fetch('/api/to-cong-doan').then(r => r.json());
+        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+          tbody.innerHTML = res.data.map((b, idx) => `
+            <tr>
+              <td class="text-center font-monospace">${idx + 1}</td>
+              <td>
+                <strong class="text-primary">${b.name || b.TenToCongDoan}</strong>
+                ${b.units || b.DonViThanhPhan ? '<div class="small text-muted">' + (b.units || b.DonViThanhPhan) + '</div>' : ''}
+              </td>
+              <td><strong>${b.leader || b.ToTruong || 'Đang kiện toàn'}</strong>${b.ChucVu ? '<div class="small text-muted">' + b.ChucVu + '</div>' : ''}</td>
+              <td>
+                <a href="mailto:${b.email || b.EmailLienHe || 'congdoan@tdmu.edu.vn'}" style="text-decoration: none;">
+                  ${b.email || b.EmailLienHe || 'congdoan@tdmu.edu.vn'}
+                </a>
+                ${b.phone || b.SoDienThoai ? '<div class="small text-muted"><i class="fa-solid fa-phone me-1"></i>' + (b.phone || b.SoDienThoai) + '</div>' : ''}
+              </td>
+            </tr>
+          `).join('');
+        }
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-danger">Không thể tải danh sách tổ công đoàn từ máy chủ.</td></tr>';
+      }
+    }
+
+    async function loadLienHeSettings() {
+      try {
+        const res = await fetch('/api/settings').then(r => r.json());
+        if (res.success && res.data) {
+          const s = res.data;
+          const brandTitle = document.querySelector('.brand-title-main');
+          const brandSub = document.querySelector('.brand-sub-main');
+          const hotline = document.querySelector('.badge-hotline');
+          if (brandTitle && s.brandTitle) brandTitle.innerText = s.brandTitle;
+          if (brandSub && s.brandSub) brandSub.innerText = s.brandSub;
+          if (hotline && s.hotline) hotline.innerHTML = '<i class="fa-solid fa-phone me-1 text-warning"></i> Hotline: ' + s.hotline;
+        }
+      } catch (e) {}
+    }
+
     async function loadPublicResolvedFeedback() {
       const container = document.getElementById('publicResolvedFeedbackList');
       if (!container) return;
@@ -413,6 +443,8 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       loadPublicResolvedFeedback();
+      loadUnionBranchesTable();
+      loadLienHeSettings();
     });
 
   </script>

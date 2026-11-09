@@ -34,11 +34,11 @@ async function getAllArticles(req, res) {
 }
 
 /**
- * Lấy danh sách bản thảo bài viết cho Drawer bên trái
+ * Lấy danh sách bản thảo bài viết cho Drawer bên trái (bao gồm cả bài chờ duyệt, chờ sửa, đã duyệt)
  */
 async function getDrafts(req, res) {
   try {
-    const list = await getArticlesFromDb('all', 'draft');
+    const list = await getArticlesFromDb('all', 'drafts_drawer');
     list.sort((a, b) => (new Date(b.createdAt || b.updatedAt || 0)) - (new Date(a.createdAt || a.updatedAt || 0)));
     res.json({ success: true, count: list.length, data: list });
   } catch (err) {
@@ -94,6 +94,9 @@ async function createArticle(req, res) {
       status: isDraft ? 'draft' : (rawData.status || 'published'),
       isAiGenerated: Boolean(rawData.isAiGenerated),
       aiPrompt: rawData.aiPrompt || null,
+      noi_dung_fb: rawData.noi_dung_fb || rawData.noiDungFb || rawData.fbCaption || null,
+      noi_dung_zalo: rawData.noi_dung_zalo || rawData.noiDungZalo || rawData.zaloText || null,
+      reviewNotes: rawData.reviewNotes || rawData.ghi_chu_kiem_duyet || null,
       publishedAt: isDraft ? null : (rawData.publishedAt || new Date().toISOString())
     };
 
@@ -112,6 +115,43 @@ async function updateArticle(req, res) {
     const updated = await updateArticleInDb(req.params.id, req.body);
     if (!updated) return res.status(404).json({ success: false, message: 'Không tìm thấy bài viết để cập nhật' });
     res.json({ success: true, data: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/**
+ * Thẩm định, duyệt bài hoặc trả bài yêu cầu sửa (Dành cho Ban Biên Tập / Admin)
+ */
+async function reviewArticle(req, res) {
+  try {
+    const { id } = req.params;
+    const { action, reviewNotes, reviewerName, reviewerId } = req.body;
+    let targetStatus = 'approved';
+    if (action === 'request_revision' || action === 'reject') {
+      targetStatus = 'requires_revision';
+    } else if (action === 'publish') {
+      targetStatus = 'published';
+    } else if (action === 'approved' || action === 'approve') {
+      targetStatus = 'approved';
+    }
+
+    const updated = await updateArticleInDb(id, {
+      status: targetStatus,
+      reviewNotes: reviewNotes || (targetStatus === 'approved' ? 'Bài viết đã được duyệt phê duyệt' : 'Yêu cầu chỉnh sửa bài viết'),
+      authorId: reviewerId || 1
+    });
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy bài viết để thẩm định' });
+    }
+
+    res.json({
+      success: true,
+      message: targetStatus === 'approved' ? 'Đã duyệt bài viết thành công' : (targetStatus === 'requires_revision' ? 'Đã trả bài và gửi yêu cầu chỉnh sửa đến cán bộ' : 'Đã xuất bản bài viết thành công'),
+      status: targetStatus,
+      reviewNotes
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -162,5 +202,6 @@ module.exports = {
   createArticle,
   updateArticle,
   deleteArticle,
-  reactArticle
+  reactArticle,
+  reviewArticle
 };

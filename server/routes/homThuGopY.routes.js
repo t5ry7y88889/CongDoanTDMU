@@ -23,7 +23,7 @@ router.get('/feedback', async (req, res) => {
   const { status, search } = req.query;
   try {
     const list = await getFeedbackFromDb(status, search);
-    if (list && list.length > 0) {
+    if (Array.isArray(list)) {
       return res.json({ success: true, count: list.length, data: list });
     }
   } catch (err) {
@@ -46,6 +46,45 @@ router.get('/feedback', async (req, res) => {
     );
   }
   res.json({ success: true, count: list.length, data: list });
+});
+
+// Gửi email kiểm tra hoặc gửi trực tiếp từ admin
+router.post('/feedback/send-email', async (req, res) => {
+  const { recipientEmail, recipientName, feedbackTitle, replyContent, responderName } = req.body;
+  const targetEmail = recipientEmail || '2424802010319@student.tdmu.edu.vn';
+
+  try {
+    const result = await sendFeedbackReplyEmail({
+      recipientEmail: targetEmail,
+      recipientName: recipientName || 'Quý Thầy/Cô, Đoàn viên',
+      feedbackTitle: feedbackTitle || 'Ý kiến đóng góp hoạt động Công đoàn',
+      replyContent: replyContent || 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một xin chân thành cảm ơn ý kiến đóng góp của Quý Thầy/Cô.',
+      responderName: responderName || 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một'
+    });
+
+    res.json({
+      success: true,
+      data: result,
+      message: result.message || `Đã chuyển phát email thành công tới ${targetEmail}`
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Tra cứu danh sách email đã gửi phản hồi (Outbox)
+// Tra cứu danh sách email đã gửi phản hồi (Outbox)
+router.get(['/feedback/outbox', '/feedback-outbox'], (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const outboxPath = path.join(__dirname, '../data/email_outbox.json');
+    if (fs.existsSync(outboxPath)) {
+      const logs = JSON.parse(fs.readFileSync(outboxPath, 'utf8') || '[]');
+      return res.json({ success: true, count: logs.length, data: logs });
+    }
+  } catch (e) {}
+  res.json({ success: true, count: 0, data: [] });
 });
 
 router.get('/feedback/:id', async (req, res) => {
@@ -113,41 +152,51 @@ router.post('/feedback', async (req, res) => {
 
 router.put('/feedback/:id', async (req, res) => {
   const id = parseInt(req.params.id);
-  const { status, response, resolved_by } = req.body;
+  const { status, response, reply, resolved_by, send_email, email_subject } = req.body;
+  const replyContent = (response !== undefined ? response : (reply !== undefined ? reply : '')).trim();
 
   try {
-    await updateFeedbackInDb(id, { status, response, resolved_by });
+    await updateFeedbackInDb(id, { status, response: replyContent, resolved_by });
   } catch (e) {
     console.error('Error updating feedback in MSSQL:', e.message);
   }
+
+  // Luôn tìm kiếm ý kiến từ cả MSSQL lẫn JSON DB
+  let feedbackItem = null;
+  try {
+    const list = await getFeedbackFromDb('all', '');
+    feedbackItem = (list || []).find(f => f.id === id);
+  } catch (e) {}
 
   const db = loadDB();
   db.inbox_feedback = db.inbox_feedback || [];
   const idx = db.inbox_feedback.findIndex(f => f.id === id);
 
-  if (idx === -1) {
+  if (idx !== -1) {
+    if (status) db.inbox_feedback[idx].status = status;
+    if (replyContent) db.inbox_feedback[idx].response = replyContent;
+    if (resolved_by) db.inbox_feedback[idx].resolved_by = resolved_by;
+    if (status === 'resolved' && !db.inbox_feedback[idx].resolved_at) {
+      db.inbox_feedback[idx].resolved_at = new Date().toISOString();
+    }
+    saveDB(db);
+    feedbackItem = db.inbox_feedback[idx];
+  } else if (!feedbackItem) {
     return res.status(404).json({ success: false, error: 'Không tìm thấy ý kiến góp ý cần cập nhật!' });
   }
 
-  if (status) db.inbox_feedback[idx].status = status;
-  if (response !== undefined) db.inbox_feedback[idx].response = response;
-  if (resolved_by) db.inbox_feedback[idx].resolved_by = resolved_by;
-  if (status === 'resolved' && !db.inbox_feedback[idx].resolved_at) {
-    db.inbox_feedback[idx].resolved_at = new Date().toISOString();
-  }
-
-  saveDB(db);
-
-  // Tự động gửi email phản hồi trực tiếp cho người gửi liên hệ
-  const feedbackItem = db.inbox_feedback[idx];
+  // Tự động gửi email phản hồi trực tiếp cho người gửi liên hệ nếu có email và người dùng bật gửi mail
   let emailResult = null;
-  if (response && feedbackItem && feedbackItem.email) {
+  const recipientEmail = (feedbackItem.email || '').trim();
+  const shouldSend = send_email !== false && recipientEmail && recipientEmail.includes('@');
+
+  if (replyContent && shouldSend) {
     try {
       emailResult = await sendFeedbackReplyEmail({
-        recipientEmail: feedbackItem.email,
-        recipientName: feedbackItem.sender_name,
-        feedbackTitle: feedbackItem.title,
-        replyContent: response,
+        recipientEmail: recipientEmail,
+        recipientName: feedbackItem.sender_name || 'Đoàn viên công đoàn',
+        feedbackTitle: email_subject || feedbackItem.title || 'Ý kiến đóng góp công đoàn',
+        replyContent: replyContent,
         responderName: resolved_by || 'Ban Thường Vụ Công Đoàn Trường Đại học Thủ Dầu Một'
       });
     } catch (eMail) {
@@ -156,21 +205,25 @@ router.put('/feedback/:id', async (req, res) => {
   }
 
   const successMsg = emailResult?.success 
-    ? `Đã cập nhật xử lý và gửi email phản hồi chính thức thành công tới ${feedbackItem.email}!` 
-    : 'Đã cập nhật xử lý ý kiến thành công!';
+    ? `Đã lưu phản hồi vào CSDL và gửi email chính thức thành công tới ${recipientEmail}!` 
+    : 'Đã lưu phản hồi vào CSDL và cập nhật trạng thái thành công!';
 
   res.json({
     success: true,
-    data: db.inbox_feedback[idx],
+    data: feedbackItem,
     emailResult,
+    emailSent: Boolean(emailResult?.success),
     message: successMsg
   });
 });
 
+
+
 router.delete('/feedback/:id', async (req, res) => {
   const id = parseInt(req.params.id);
+  let deletedFromSql = false;
   try {
-    await deleteFeedbackFromDb(id);
+    deletedFromSql = await deleteFeedbackFromDb(id);
   } catch (e) {
     console.error('Error deleting feedback from MSSQL:', e.message);
   }
@@ -178,14 +231,16 @@ router.delete('/feedback/:id', async (req, res) => {
   const db = loadDB();
   db.inbox_feedback = db.inbox_feedback || [];
   const idx = db.inbox_feedback.findIndex(f => f.id === id);
-
-  if (idx === -1) {
-    return res.status(404).json({ success: false, error: 'Không tìm thấy ý kiến góp ý!' });
+  if (idx >= 0) {
+    db.inbox_feedback.splice(idx, 1);
+    saveDB(db);
   }
 
-  const removed = db.inbox_feedback.splice(idx, 1)[0];
-  saveDB(db);
-  res.json({ success: true, message: 'Đã xóa ý kiến góp ý thành công!', data: removed });
+  if (deletedFromSql || idx >= 0) {
+    return res.json({ success: true, message: 'Đã xóa ý kiến góp ý thành công!' });
+  }
+
+  res.status(404).json({ success: false, error: 'Không tìm thấy ý kiến góp ý!' });
 });
 
 router.get('/inbox-feedback', async (req, res) => {

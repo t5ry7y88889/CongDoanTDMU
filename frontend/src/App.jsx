@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-ro
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import BookmarksDrawer from './components/BookmarksDrawer';
+import Home from './pages/Home';
 import TrangChu from './pages/TrangChu';
 import GioiThieu from './pages/GioiThieu';
 import CoCauToChuc from './pages/CoCauToChuc';
@@ -13,6 +14,8 @@ import BieuMau from './pages/BieuMau';
 import LienHe from './pages/LienHe';
 import BaiViet from './pages/BaiViet';
 import PhongBienTapStudio from './pages/PhongBienTapStudio';
+import DangNhap from './pages/DangNhap';
+import HoSoCaNhan from './pages/HoSoCaNhan';
 
 export const BookmarkContext = createContext();
 
@@ -180,31 +183,39 @@ function AppContent() {
 
           <ErrorBoundary>
             <Routes>
-              <Route path="/" element={<TrangChu />} />
-              <Route path="/index" element={<TrangChu />} />
-              <Route path="/gioi-thieu" element={<About />} />
-              <Route path="/co-cau-to-chuc" element={<Organization />} />
-              <Route path="/tin-tuc" element={<News />} />
-              <Route path="/phuc-loi-doan-vien" element={<Welfare />} />
-              <Route path="/van-ban" element={<Documents />} />
-              <Route path="/bieu-mau" element={<Forms />} />
-              <Route path="/lien-he" element={<Contact />} />
-              <Route path="/bai-viet" element={<ArticleDetail />} />
+              <Route path="/" element={<Home />} />
+              <Route path="/index" element={<Home />} />
+              <Route path="/gioi-thieu" element={<GioiThieu />} />
+              <Route path="/co-cau-to-chuc" element={<CoCauToChuc />} />
+              <Route path="/tin-tuc" element={<TinTuc />} />
+              <Route path="/phuc-loi-doan-vien" element={<PhucLoiDoanVien />} />
+              <Route path="/van-ban" element={<VanBan />} />
+              <Route path="/bieu-mau" element={<BieuMau />} />
+              <Route path="/lien-he" element={<LienHe />} />
+              <Route path="/bai-viet" element={<BaiViet />} />
               <Route path="/admin" element={<PhongBienTapStudio />} />
               <Route path="/admin/studio" element={<PhongBienTapStudio />} />
               <Route path="/admin.html" element={<PhongBienTapStudio />} />
 
               {/* Aliases without hyphens */}
-              <Route path="/gioithieu" element={<About />} />
-              <Route path="/cocautochuc" element={<Organization />} />
-              <Route path="/tintuc" element={<News />} />
-              <Route path="/phucloi" element={<Welfare />} />
-              <Route path="/vanban" element={<Documents />} />
-              <Route path="/bieumau" element={<Forms />} />
-              <Route path="/lienhe" element={<Contact />} />
-              <Route path="/baiviet" element={<ArticleDetail />} />
+              <Route path="/gioithieu" element={<GioiThieu />} />
+              <Route path="/cocautochuc" element={<CoCauToChuc />} />
+              <Route path="/tintuc" element={<TinTuc />} />
+              <Route path="/phucloi" element={<PhucLoiDoanVien />} />
+              <Route path="/vanban" element={<VanBan />} />
+              <Route path="/bieumau" element={<BieuMau />} />
+              <Route path="/lienhe" element={<LienHe />} />
+              <Route path="/baiviet" element={<BaiViet />} />
+              <Route path="/dang-nhap" element={<DangNhap />} />
+              <Route path="/dangnhap" element={<DangNhap />} />
+              <Route path="/dang-ky" element={<DangNhap />} />
+              <Route path="/dangky" element={<DangNhap />} />
+              <Route path="/ho-so" element={<HoSoCaNhan />} />
+              <Route path="/hoso" element={<HoSoCaNhan />} />
+              <Route path="/tai-khoan" element={<HoSoCaNhan />} />
+              <Route path="/taikhoan" element={<HoSoCaNhan />} />
 
-              <Route path="*" element={<TrangChu />} />
+              <Route path="*" element={<Home />} />
             </Routes>
           </ErrorBoundary>
         </div>

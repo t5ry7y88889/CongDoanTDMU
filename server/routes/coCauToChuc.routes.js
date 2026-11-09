@@ -7,7 +7,16 @@ const {
   insertCadreToDb,
   updateCadreInDb,
   deleteCadreFromDb,
-  updateUnionBranchInDb
+  updateUnionBranchInDb,
+  insertUnionBranchToDb,
+  deleteUnionBranchFromDb,
+  insertBoardToDb,
+  updateBoardInDb,
+  deleteBoardFromDb,
+  getNavigationMenusFromDb,
+  insertNavigationMenuToDb,
+  updateNavigationMenuInDb,
+  deleteNavigationMenuFromDb
 } = require('../mssql_db');
 
 // =========================================================================
@@ -120,7 +129,7 @@ router.get('/org-full-tree', async (req, res) => {
     const nhanSu = orgData.cadres || [];
 
     const stats = {
-      total_members: toCongDoan.reduce((acc, u) => acc + (u.TongDoanVien || u.members || 45), 0) || 760,
+      total_members: toCongDoan.reduce((acc, u) => acc + (parseInt(u.TongDoanVien || u.members) || 0), 0),
       total_units: toCongDoan.length,
       total_boards: toChuc.length,
       total_cadres: nhanSu.length
@@ -218,36 +227,296 @@ router.get('/categories', async (req, res) => {
 });
 
 router.get('/users', async (req, res) => {
-  const list = await getUsersFromDb();
-  res.json({ success: true, data: list });
+  try {
+    const list = await getUsersFromDb();
+    res.json({ success: true, data: list });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
-router.post('/users', (req, res) => {
-  const { name, ho_ten, email, department, unit, role, roleId } = req.body;
-  const roleStr = role || (roleId === 1 ? 'admin' : roleId === 2 ? 'editor' : 'contributor');
-  const { loadDB, saveDB } = require('../db');
-  const db = loadDB();
-  db.users = db.users || [];
-  const newUser = {
-    id: Date.now(),
-    ho_ten: (ho_ten || name || '').trim(),
-    email: (email || '').trim().toLowerCase(),
-    unit: (unit || department || 'Đại học Thủ Dầu Một').trim(),
-    role: roleStr,
-    password: '123'
-  };
-  db.users.push(newUser);
-  saveDB(db);
-  res.json({ success: true, message: 'Tạo tài khoản cán bộ thành công', data: newUser });
+// CẬP NHẬT PHÂN QUYỀN VAI TRÒ CÁN BỘ (ADMIN / EDITOR / CONTRIBUTOR)
+router.put('/users/:id/role', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { role } = req.body;
+    if (!role) return res.status(400).json({ success: false, message: 'Vui lòng cung cấp vai trò cần cấp quyền!' });
+
+    const normalizedRole = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+
+    // 1. Cập nhật trực tiếp vào Microsoft SQL Server dbo.USERS
+    const { getMssqlPool, isMssqlConnected } = require('../mssql_db');
+    const pool = getMssqlPool ? getMssqlPool() : null;
+    if (pool && pool.connected) {
+      try {
+        const sql = require('mssql');
+        const reqSql = pool.request();
+        reqSql.input('id', sql.Int, id);
+        reqSql.input('role', sql.NVarChar, normalizedRole);
+        await reqSql.query('UPDATE dbo.USERS SET VaiTro = @role WHERE UserId = @id');
+      } catch (sqlErr) {
+        console.error('Lỗi cập nhật vai trò MSSQL:', sqlErr.message);
+      }
+    }
+
+    // 2. Cập nhật tệp JSON backup
+    const { loadDB, saveDB } = require('../db');
+    const db = loadDB();
+    if (db.users) {
+      const u = db.users.find(x => x.id === id);
+      if (u) {
+        u.role = normalizedRole;
+        saveDB(db);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Cập nhật phân quyền thành công! Vai trò mới: ${normalizedRole}`,
+      data: { id, role: normalizedRole }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
-router.delete('/users/:id', (req, res) => {
+// BẬT / TẮT (KÍCH HOẠT HOẶC KHÓA) TÀI KHOẢN CÁN BỘ (KHÔNG XÓA DỮ LIỆU)
+router.put('/users/:id/status', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    let { active, is_active } = req.body;
+    const newStatus = (active !== undefined ? active : (is_active !== undefined ? is_active : 1)) ? 1 : 0;
+
+    // 1. Cập nhật Microsoft SQL Server
+    const { getMssqlPool } = require('../mssql_db');
+    const pool = getMssqlPool ? getMssqlPool() : null;
+    if (pool && pool.connected) {
+      try {
+        const sql = require('mssql');
+        const reqSql = pool.request();
+        reqSql.input('id', sql.Int, id);
+        reqSql.input('status', sql.Int, newStatus);
+        await reqSql.query('UPDATE dbo.USERS SET TrangThai = @status WHERE UserId = @id');
+      } catch (sqlErr) {
+        console.error('Lỗi cập nhật trạng thái MSSQL:', sqlErr.message);
+      }
+    }
+
+    // 2. Cập nhật tệp JSON backup
+    const { loadDB, saveDB } = require('../db');
+    const db = loadDB();
+    if (db.users) {
+      const u = db.users.find(x => x.id === id);
+      if (u) {
+        u.active = newStatus;
+        u.is_active = newStatus;
+        u.TrangThai = newStatus;
+        saveDB(db);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: newStatus === 1 ? 'Đã kích hoạt mở lại tài khoản thành công!' : 'Đã tạm khóa vô hiệu hóa tài khoản thành công!',
+      active: newStatus,
+      is_active: newStatus
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// TẠO MỚI TÀI KHOẢN CÁN BỘ & GÁN VAI TRÒ VÀO CSDL
+router.post('/users', async (req, res) => {
+  try {
+    const { name, ho_ten, email, department, unit, role, roleId, phone, avatar, position } = req.body;
+    const fullName = (ho_ten || name || '').trim();
+    const normEmail = (email || '').trim().toLowerCase();
+    const userUnit = (unit || department || 'Đại học Thủ Dầu Một').trim();
+    const userPos = (position || 'Cán bộ Công đoàn').trim();
+    const userAvatar = avatar || '/images/default_avatar.png';
+    const roleStr = role || (roleId === 1 ? 'Admin' : roleId === 2 ? 'Editor' : 'Contributor');
+    const normalizedRole = roleStr.charAt(0).toUpperCase() + roleStr.slice(1).toLowerCase();
+
+    if (!fullName || !normEmail) {
+      return res.status(400).json({ success: false, message: 'Họ tên và email công vụ là bắt buộc!' });
+    }
+
+    let newId = Date.now();
+
+    // 1. Thêm vào MSSQL dbo.USERS
+    const { getMssqlPool } = require('../mssql_db');
+    const pool = getMssqlPool ? getMssqlPool() : null;
+    if (pool && pool.connected) {
+      try {
+        const sql = require('mssql');
+        const reqSql = pool.request();
+        reqSql.input('email', sql.VarChar, normEmail);
+        reqSql.input('name', sql.NVarChar, fullName);
+        reqSql.input('role', sql.NVarChar, normalizedRole);
+        reqSql.input('unit', sql.NVarChar, userUnit);
+        reqSql.input('pos', sql.NVarChar, userPos);
+        reqSql.input('phone', sql.VarChar, phone || '0274.3815.184');
+        reqSql.input('avatar', sql.NVarChar, userAvatar);
+
+        const ins = await reqSql.query(`
+          INSERT INTO dbo.USERS (Email, PasswordHash, HoTen, VaiTro, AvatarUrl, SoDienThoai, DonVi, ChucVu, TrangThai, NgayTao)
+          OUTPUT INSERTED.UserId
+          VALUES (@email, '$2a$10$samplepwd', @name, @role, @avatar, @phone, @unit, @pos, 1, SYSDATETIME())
+        `);
+        if (ins.recordset && ins.recordset[0]) {
+          newId = ins.recordset[0].UserId;
+        }
+      } catch (sqlErr) {
+        console.error('Lỗi thêm cán bộ vào MSSQL:', sqlErr.message);
+      }
+    }
+
+    const newUser = {
+      id: newId,
+      name: fullName,
+      ho_ten: fullName,
+      email: normEmail,
+      unit: userUnit,
+      position: userPos,
+      role: normalizedRole,
+      avatar: userAvatar,
+      phone: phone || '0274.3815.184',
+      active: 1,
+      is_active: 1,
+      created_at: new Date().toISOString()
+    };
+
+    // 2. Thêm vào JSON backup
+    const { loadDB, saveDB } = require('../db');
+    const db = loadDB();
+    db.users = db.users || [];
+    db.users.push(newUser);
+    saveDB(db);
+
+    res.json({
+      success: true,
+      message: 'Tạo tài khoản và phân quyền cán bộ thành công!',
+      data: newUser
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// XÓA TÀI KHOẢN (NGHIÊM CẤM HARD-DELETE -> CHUYỂN SANG KHÓA TÀI KHOẢN)
+router.delete('/users/:id', async (req, res) => {
+  // Thay vì xóa dữ liệu gốc làm mất tính toàn vẹn vết kiểm duyệt, ta khóa tài khoản (TrangThai = 0)
   const id = parseInt(req.params.id);
+  const { getMssqlPool } = require('../mssql_db');
+  const pool = getMssqlPool ? getMssqlPool() : null;
+  if (pool && pool.connected) {
+    try {
+      const sql = require('mssql');
+      const reqSql = pool.request();
+      reqSql.input('id', sql.Int, id);
+      await reqSql.query('UPDATE dbo.USERS SET TrangThai = 0 WHERE UserId = @id');
+    } catch {}
+  }
   const { loadDB, saveDB } = require('../db');
   const db = loadDB();
-  db.users = (db.users || []).filter(u => u.id !== id);
-  saveDB(db);
-  res.json({ success: true, message: 'Đã xóa tài khoản cán bộ' });
+  if (db.users) {
+    const u = db.users.find(x => x.id === id);
+    if (u) { u.active = 0; u.is_active = 0; u.TrangThai = 0; saveDB(db); }
+  }
+  res.json({ success: true, message: 'Đã khóa vô hiệu hóa tài khoản cán bộ thành công (bảo toàn vết kiểm duyệt lịch sử)!' });
+});
+
+
+// =========================================================================
+// CRUD TỔ CÔNG ĐOÀN (dbo.UNION_BRANCHES)
+// =========================================================================
+router.post(['/to-cong-doan', '/union-branches'], async (req, res) => {
+  try {
+    const item = await insertUnionBranchToDb(req.body);
+    res.status(201).json({ success: true, message: 'Đã thêm Tổ công đoàn mới thành công!', data: item });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete(['/to-cong-doan/:id', '/union-branches/:id'], async (req, res) => {
+  try {
+    await deleteUnionBranchFromDb(req.params.id);
+    res.json({ success: true, message: 'Đã xóa Tổ công đoàn thành công!' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =========================================================================
+// CRUD CÁC BAN / CƠ CẤU TỔ CHỨC (dbo.ORGANIZATIONS)
+// =========================================================================
+router.post(['/to-chuc', '/organizations', '/boards'], async (req, res) => {
+  try {
+    const item = await insertBoardToDb(req.body);
+    res.status(201).json({ success: true, message: 'Đã thêm Ban / Bộ phận mới thành công!', data: item });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put(['/to-chuc/:id', '/organizations/:id', '/boards/:id'], async (req, res) => {
+  try {
+    const item = await updateBoardInDb(req.params.id, req.body);
+    res.json({ success: true, message: 'Đã cập nhật Ban thành công!', data: item });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete(['/to-chuc/:id', '/organizations/:id', '/boards/:id'], async (req, res) => {
+  try {
+    await deleteBoardFromDb(req.params.id);
+    res.json({ success: true, message: 'Đã xóa Ban khỏi cơ cấu tổ chức thành công!' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =========================================================================
+// CRUD MENU ĐIỀU HƯỚNG WEBSITE (dbo.NAVIGATION_MENUS)
+// =========================================================================
+router.get(['/navigation-menus', '/nav-menus', '/menu-items'], async (req, res) => {
+  try {
+    const isAll = req.query.all === 'true' || req.query.all === '1';
+    const list = await getNavigationMenusFromDb(isAll);
+    res.json({ success: true, count: list.length, data: list });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post(['/navigation-menus', '/nav-menus'], async (req, res) => {
+  try {
+    const item = await insertNavigationMenuToDb(req.body);
+    res.status(201).json({ success: true, message: 'Đã thêm mục Menu mới thành công!', data: item });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put(['/navigation-menus/:id', '/nav-menus/:id'], async (req, res) => {
+  try {
+    const item = await updateNavigationMenuInDb(req.params.id, req.body);
+    res.json({ success: true, message: 'Đã cập nhật mục Menu thành công!', data: item });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete(['/navigation-menus/:id', '/nav-menus/:id'], async (req, res) => {
+  try {
+    await deleteNavigationMenuFromDb(req.params.id);
+    res.json({ success: true, message: 'Đã xóa mục Menu thành công!' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 module.exports = router;

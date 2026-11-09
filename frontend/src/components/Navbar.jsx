@@ -1,14 +1,60 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const Navbar = ({ onOpenBookmarks, bookmarkCount = 0 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
   const [docDropdownOpen, setDocDropdownOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   const orgDropdownRef = useRef(null);
   const docDropdownRef = useRef(null);
+  const userDropdownRef = useRef(null);
+
+  const [settings, setSettings] = useState({
+    brandTitle: 'CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT',
+    brandSub: 'THU DAU MOT UNIVERSITY TRADE UNION',
+    hotline: '(0274) 3.815.184'
+  });
+
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('tdmu_user') || 'null');
+    } catch (e) {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    const syncUser = () => {
+      try {
+        const u = JSON.parse(localStorage.getItem('tdmu_user') || 'null');
+        setCurrentUser(u);
+      } catch (e) {
+        setCurrentUser(null);
+      }
+    };
+
+    window.addEventListener('tdmu_auth_change', syncUser);
+    window.addEventListener('storage', syncUser);
+    return () => {
+      window.removeEventListener('tdmu_auth_change', syncUser);
+      window.removeEventListener('storage', syncUser);
+    };
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(res => {
+        if (res.success && res.data) {
+          setSettings(prev => ({ ...prev, ...res.data }));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -17,6 +63,9 @@ const Navbar = ({ onOpenBookmarks, bookmarkCount = 0 }) => {
       }
       if (docDropdownRef.current && !docDropdownRef.current.contains(e.target)) {
         setDocDropdownOpen(false);
+      }
+      if (userDropdownRef.current && !userDropdownRef.current.contains(e.target)) {
+        setUserDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -27,6 +76,7 @@ const Navbar = ({ onOpenBookmarks, bookmarkCount = 0 }) => {
     setMobileMenuOpen(false);
     setOrgDropdownOpen(false);
     setDocDropdownOpen(false);
+    setUserDropdownOpen(false);
   }, [location.pathname]);
 
   const isActive = (path) => {
@@ -34,6 +84,22 @@ const Navbar = ({ onOpenBookmarks, bookmarkCount = 0 }) => {
     if (path !== '/' && location.pathname.startsWith(path)) return true;
     return false;
   };
+
+  const handleLogout = () => {
+    if (window.confirm('Bạn có chắc chắn muốn đăng xuất tài khoản?')) {
+      localStorage.removeItem('tdmu_token');
+      localStorage.removeItem('tdmu_user');
+      localStorage.removeItem('tdmu_user_id');
+      localStorage.removeItem('tdmu_user_name');
+      setCurrentUser(null);
+      window.dispatchEvent(new Event('tdmu_auth_change'));
+      navigate('/', { replace: true });
+    }
+  };
+
+  const role = (currentUser?.role || '').toLowerCase();
+  const isCadre = (role === 'admin' || role === 'editor' || role === 'contributor');
+  const roleTitle = role === 'admin' ? 'Quản Trị Viên' : (role === 'editor' ? 'Biên Tập Viên' : (role === 'contributor' ? 'Cộng Tác Viên' : 'Đoàn Viên'));
 
   return (
     <>
@@ -48,15 +114,15 @@ const Navbar = ({ onOpenBookmarks, bookmarkCount = 0 }) => {
               />
             </Link>
             <div>
-              <h1 className="brand-title-main">CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT</h1>
-              <span className="brand-sub-main">THU DAU MOT UNIVERSITY TRADE UNION</span>
+              <h1 className="brand-title-main">{settings.brandTitle}</h1>
+              <span className="brand-sub-main">{settings.brandSub}</span>
             </div>
           </div>
           <div className="d-flex align-items-center gap-2">
             <span className="badge-hotline d-none d-md-inline-flex">
-              <i className="fa-solid fa-phone me-1 text-warning"></i> Hotline: (0274) 3.815.184
+              <i className="fa-solid fa-phone me-1 text-warning"></i> Hotline: {settings.hotline}
             </span>
-            <a href="/admin.html" className="btn-portal-access">
+            <a href="/admin.html" className="btn-portal-access" title="Truy cập Bảng điều hành Quản trị Công đoàn TDMU">
               <i className="fa-solid fa-sliders me-1 text-warning"></i> Quản lý website truyền thông công đoàn TDMU
             </a>
           </div>
@@ -95,6 +161,7 @@ const Navbar = ({ onOpenBookmarks, bookmarkCount = 0 }) => {
                     e.preventDefault();
                     setOrgDropdownOpen(!orgDropdownOpen);
                     setDocDropdownOpen(false);
+                    setUserDropdownOpen(false);
                   }}
                   role="button"
                 >
@@ -143,6 +210,7 @@ const Navbar = ({ onOpenBookmarks, bookmarkCount = 0 }) => {
                     e.preventDefault();
                     setDocDropdownOpen(!docDropdownOpen);
                     setOrgDropdownOpen(false);
+                    setUserDropdownOpen(false);
                   }}
                   role="button"
                 >
@@ -184,6 +252,7 @@ const Navbar = ({ onOpenBookmarks, bookmarkCount = 0 }) => {
               </li>
             </ul>
 
+            {/* Read Later Bookmark Badge */}
             {onOpenBookmarks && (
               <button
                 type="button"
@@ -198,6 +267,73 @@ const Navbar = ({ onOpenBookmarks, bookmarkCount = 0 }) => {
                 </span>
               </button>
             )}
+
+            {/* Auth User Menu or Login Button */}
+            {currentUser ? (
+              <div className="dropdown position-relative ms-lg-2 my-2 my-lg-0" ref={userDropdownRef}>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-light dropdown-toggle d-flex align-items-center gap-2 rounded-pill px-2 py-1"
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  style={{ borderColor: 'rgba(255,255,255,0.4)' }}
+                >
+                  <img
+                    src={currentUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'}
+                    alt="Avatar"
+                    className="rounded-circle border border-white"
+                    style={{ width: '28px', height: '28px', objectFit: 'cover' }}
+                  />
+                  <span className="d-none d-lg-inline small fw-semibold text-truncate" style={{ maxWidth: '130px', color: '#ffffff' }}>
+                    {currentUser.ho_ten || currentUser.name || 'Đoàn viên'}
+                  </span>
+                </button>
+                <ul className={`dropdown-menu dropdown-menu-end shadow border-0 py-1 ${userDropdownOpen ? 'show' : ''}`} style={{ minWidth: '220px', fontSize: '13.5px', borderRadius: '12px' }}>
+                  <li className="px-3 py-2 bg-light border-bottom">
+                    <div className="fw-bold text-dark text-truncate">{currentUser.ho_ten || currentUser.name}</div>
+                    <span className="badge bg-primary text-white" style={{ fontSize: '10.5px' }}>{roleTitle}</span>
+                  </li>
+                  <li>
+                    <Link className="dropdown-item py-2" to="/ho-so" onClick={() => setUserDropdownOpen(false)}>
+                      <i className="fa-solid fa-id-card me-2 text-primary"></i> Hồ sơ cá nhân
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      className="dropdown-item py-2"
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        if (onOpenBookmarks) onOpenBookmarks();
+                      }}
+                    >
+                      <i className="fa-solid fa-bookmark me-2 text-warning"></i> Tủ sách đọc sau
+                    </button>
+                  </li>
+                  {isCadre && (
+                    <li>
+                      <a className="dropdown-item py-2" href="/admin.html">
+                        <i className="fa-solid fa-sliders me-2 text-success"></i> Quản trị website & Studio AI
+                      </a>
+                    </li>
+                  )}
+                  <li><hr className="dropdown-divider my-1" /></li>
+                  <li>
+                    <button type="button" className="dropdown-item py-2 text-danger fw-semibold" onClick={handleLogout}>
+                      <i className="fa-solid fa-arrow-right-from-bracket me-2"></i> Đăng xuất
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            ) : (
+              <Link
+                to="/dang-nhap"
+                className="btn btn-warning btn-sm rounded-pill text-dark fw-bold px-3 ms-lg-2 my-2 my-lg-0 d-flex align-items-center gap-1 shadow-sm"
+              >
+                <i className="fa-solid fa-arrow-right-to-bracket"></i>
+                <span>Đăng Nhập</span>
+              </Link>
+            )}
+
           </div>
         </div>
       </nav>

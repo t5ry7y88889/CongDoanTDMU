@@ -17,6 +17,10 @@ router.post('/', baiVietController.createArticle);
 router.put('/:id', baiVietController.updateArticle);
 router.delete('/:id', baiVietController.deleteArticle);
 
+// Thẩm định & Phê duyệt bài viết (Biên tập viên / Admin)
+router.post('/:id/review', baiVietController.reviewArticle);
+router.put('/:id/review', baiVietController.reviewArticle);
+
 // Tương tác cảm xúc
 router.post('/:id/react', baiVietController.reactArticle);
 

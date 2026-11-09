@@ -262,7 +262,7 @@ const TinTuc = () => {
                         <div className="d-flex justify-content-between align-items-center text-muted small pt-2 border-top">
                           <div>
                             <span className="me-2"><i className="fa-regular fa-calendar me-1 text-primary"></i> {a.publishedAt ? String(a.publishedAt).split('T')[0].split(' ')[0] : (a.createdAt ? String(a.createdAt).split('T')[0] : '2026-01-30')}</span>
-                            <span><i className="fa-regular fa-eye text-success me-1"></i> {a.viewsCount || a.views || 140}</span>
+                            <span><i className="fa-regular fa-eye text-success me-1"></i> {a.viewsCount || a.views || a.LuotXem || 0}</span>
                           </div>
                           <button
                             type="button"

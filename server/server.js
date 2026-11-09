@@ -28,6 +28,8 @@ const homThuGopYRoutes = require('./routes/homThuGopY.routes');
 const phatHanhRoutes = require('./routes/phatHanh.routes');
 const bieuMauMauRoutes = require('./routes/bieuMauMau.routes');
 const xacThucRoutes = require('./routes/xacThuc.routes');
+const binhLuanRoutes = require('./routes/binhLuan.routes');
+const heThongRoutes = require('./routes/heThong.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -45,19 +47,22 @@ app.use((req, res, next) => {
   next();
 });
 
-// 2. Điều hướng trang Quản trị Studio (Phục vụ trực tiếp Cổng Quản Trị Studio chuẩn)
-app.get(['/admin', '/admin.html', '/admin-portal', '/admin-portal.html', '/admin/studio'], (req, res) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
+// 2. Phục vụ tài nguyên tĩnh (Static Assets)
+app.use('/assets', express.static(path.join(__dirname, '../frontend/dist/assets')));
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+app.use('/Ho_So_Mau_Tu_Lieu', express.static(path.join(__dirname, '../public/Ho_So_Mau_Tu_Lieu')));
+app.use('/images', express.static(path.join(__dirname, '../public/images')));
+app.use('/css', express.static(path.join(__dirname, '../public/css')));
+app.use('/js', express.static(path.join(__dirname, '../public/js')));
+app.use(express.static(path.join(__dirname, '../frontend/dist'), { etag: false, maxAge: 0 }));
+
+// Route dự phòng nếu cần xem bản HTML cũ
+app.get(['/legacy-portal', '/admin-portal.html', '/admin-portal'], (req, res) => {
   res.sendFile(path.join(__dirname, '../public/admin.html'));
 });
 
-// 3. Phục vụ tài nguyên tĩnh (Static Assets)
-app.use('/assets', express.static(path.join(__dirname, '../frontend/dist/assets')));
-app.use('/spa', express.static(path.join(__dirname, '../frontend/dist'), { etag: false, maxAge: 0 }));
-app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
-app.use(express.static(path.join(__dirname, '../public'), { etag: false, maxAge: 0 }));
+// Đường dẫn file bundle React SPA
+const spaHtml = path.join(__dirname, '../frontend/dist/index.html');
 
 // 4. Đăng ký các Endpoint API chính thức
 app.use('/api/ai', triTueNhanTaoRoutes); app.use('/api/tri-tue-nhan-tao', triTueNhanTaoRoutes);
@@ -70,10 +75,16 @@ app.use('/api/reports', baoCaoThongKeRoutes); app.use('/api/bao-cao', baoCaoThon
 app.use('/api/publish', phatHanhRoutes); app.use('/api/phat-hanh', phatHanhRoutes);
 app.use('/api/templates', bieuMauMauRoutes); app.use('/api/bieu-mau', bieuMauMauRoutes);
 app.use('/api/auth', xacThucRoutes); app.use('/api/xac-thuc', xacThucRoutes);
+app.use('/api/comments', binhLuanRoutes); app.use('/api/binh-luan', binhLuanRoutes);
+app.use('/api/bookmarks', (req, res, next) => {
+  req.url = '/bookmarks' + req.url;
+  xacThucRoutes(req, res, next);
+});
 
 // Ánh xạ các phân hệ Tổ chức, Nhân sự, Góp ý, Phản hồi
 app.use('/api', coCauToChucRoutes);
 app.use('/api', homThuGopYRoutes);
+app.use('/api', heThongRoutes);
 
 // Tương thích ngược endpoint tạo bài viết
 app.post('/api/generate-article', (req, res, next) => {
@@ -122,19 +133,15 @@ setInterval(() => {
 const { startScheduleWorker } = require('./services/dichVuDaKenh.service');
 startScheduleWorker();
 
-// 6. Định tuyến URL thân thiện cho các trang cổng thông tin
-const cleanRoutes = [
-  'gioi-thieu', 'co-cau-to-chuc', 'tin-tuc', 'bai-viet',
-  'phuc-loi-doan-vien', 'van-ban', 'bieu-mau', 'lien-he', 'bao-cao-thang'
-];
-cleanRoutes.forEach(slug => {
-  app.get(`/${slug}`, (req, res) => {
-    res.sendFile(path.join(__dirname, `../public/${slug}.html`));
-  });
-});
-
-app.get('/spa/*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+// 6. Toàn bộ các trang người dùng và quản trị được điều hướng qua React Single Page Application (SPA)
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+    return next();
+  }
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.sendFile(spaHtml);
 });
 
 // 7. Khởi động lắng nghe máy chủ

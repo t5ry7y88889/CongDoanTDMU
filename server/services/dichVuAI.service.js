@@ -2,11 +2,10 @@ const { GoogleGenAI: RawGoogleGenAI } = require('@google/genai');
 const { fixVietnameseFont } = require('./dichVuDocTaiLieu.service');
 
 const GEMINI_MODELS = [
-  'gemini-flash-lite-latest',
   'gemini-2.5-flash',
+  'gemini-flash-lite-latest',
   'gemini-2.0-flash',
-  'gemini-1.5-flash',
-  'gemini-flash-latest'
+  'gemini-1.5-flash'
 ];
 
 let geminiQuotaExhaustedUntil = 0;
@@ -356,18 +355,25 @@ async function inspectPhotoWithAiVision({ imageBase64, mimeType, filePath, conte
       finalBase64 = imageBase64;
     }
   } else if (filePath) {
-    let absPath = filePath;
-    if (!path.isAbsolute(absPath)) {
-      absPath = path.join(__dirname, '../..', filePath);
-    }
-    if (fs.existsSync(absPath)) {
-      finalBase64 = fs.readFileSync(absPath).toString('base64');
-      const ext = path.extname(absPath).toLowerCase().replace('.', '');
-      finalMime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+    let cleanRel = (filePath || '').replace(/^\//, '');
+    let candidates = [
+      path.join(__dirname, '../../public', cleanRel),
+      path.join(__dirname, '../../frontend/public', cleanRel),
+      path.join(__dirname, '../..', cleanRel)
+    ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) {
+        try {
+          finalBase64 = fs.readFileSync(c).toString('base64');
+          const ext = path.extname(c).toLowerCase().replace('.', '');
+          finalMime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+          break;
+        } catch {}
+      }
     }
   }
 
-  if (!finalBase64) {
+  if (!finalBase64 || finalBase64.length < 20) {
     const fallbackText = context ? `Hình ảnh hoạt động ghi nhận tại ${context.slice(0, 80)}` : 'Hình ảnh hoạt động Công đoàn Trường Đại học Thủ Dầu Một';
     return { caption: fallbackText, source: 'Default' };
   }

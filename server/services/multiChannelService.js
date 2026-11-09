@@ -71,6 +71,7 @@ module.exports = {
 
   // Đa kênh & Lập lịch
   publishMultiChannel,
+  publishOmnichannel: publishMultiChannel,
   createScheduledPost,
   getScheduledPosts,
   cancelScheduledPost,

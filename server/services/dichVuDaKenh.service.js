@@ -16,7 +16,62 @@ const { loadDB, saveDB } = require('../db');
 /**
  * Phát hành đồng thời bài viết lên các kênh được chọn
  */
-async function publishMultiChannel({ channels = ['web'], articleId, title, sapo, content, fbCaption, fbPhotos, zaloText, zaloPhoto, scheduledAt }) {
+async function publishMultiChannel(params = {}) {
+  let {
+    channels = ['web'],
+    articleId,
+    title,
+    sapo,
+    content,
+    fbCaption,
+    fbPhotos,
+    zaloText,
+    zaloPhoto,
+    facebookData,
+    zaloData,
+    webData,
+    facebookAccountId,
+    zaloAccountId,
+    scheduledAt
+  } = params;
+
+  if (webData) {
+    if (!title && webData.title) title = webData.title;
+    if (!sapo && webData.summary) sapo = webData.summary;
+    if (!content && webData.content) content = webData.content;
+    if (!zaloPhoto && webData.image) zaloPhoto = webData.image;
+    if ((!fbPhotos || !fbPhotos.length) && webData.image) fbPhotos = [webData.image];
+  }
+  if (facebookData) {
+    if (!fbCaption && facebookData.caption) fbCaption = facebookData.caption;
+    if ((!fbPhotos || !fbPhotos.length) && facebookData.imageUrls) fbPhotos = facebookData.imageUrls;
+    if ((!fbPhotos || !fbPhotos.length) && facebookData.imageUrl) fbPhotos = [facebookData.imageUrl];
+  }
+  if (zaloData) {
+    if (!zaloText && zaloData.content) zaloText = zaloData.content;
+    if (!zaloPhoto && zaloData.imageUrl) zaloPhoto = zaloData.imageUrl;
+  }
+
+  if (articleId && (!title || !fbCaption || !zaloText)) {
+    try {
+      const { getArticlesFromDb } = require('../mssql_db');
+      const allArticles = await getArticlesFromDb({ status: 'all' });
+      const found = allArticles.find(a => String(a.id) === String(articleId));
+      if (found) {
+        if (!title) title = found.title;
+        if (!sapo) sapo = found.summary || found.sapo;
+        if (!content) content = found.content;
+        if (!fbCaption) fbCaption = found.noi_dung_fb || found.fbCaption || (found.title + '\n\n' + (found.summary || '') + '\n\n#CongDoanTDMU #TDMU');
+        if (!zaloText) zaloText = found.noi_dung_zalo || found.zaloText || (found.title + '\n\n' + (found.summary || ''));
+        if (!fbPhotos || !fbPhotos.length) {
+          if (found.image) fbPhotos = [found.image];
+        }
+        if (!zaloPhoto) zaloPhoto = found.image;
+      }
+    } catch (e) {
+      console.warn('[publishMultiChannel] Warning loading article:', e.message);
+    }
+  }
   // Nếu có hẹn giờ trong tương lai
   if (scheduledAt && new Date(scheduledAt) > new Date()) {
     const post = createScheduledPost({
@@ -65,11 +120,14 @@ async function publishMultiChannel({ channels = ['web'], articleId, title, sapo,
   // Kênh 2: Facebook Fanpage
   if (channels.includes('facebook') || channels.includes('fb')) {
     try {
+      const allPhotos = Array.isArray(fbPhotos) ? fbPhotos : (fbPhotos ? [fbPhotos] : []);
       results.facebook = await publishToFacebook({
         caption: fbCaption || sapo || title,
         articleTitle: title,
         articleId,
-        imageUrls: Array.isArray(fbPhotos) ? fbPhotos : []
+        imageUrls: allPhotos,
+        imageUrl: allPhotos[0] || null,
+        accountId: facebookAccountId
       });
       if (results.facebook && results.facebook.success && articleId) {
         try {
@@ -92,7 +150,8 @@ async function publishMultiChannel({ channels = ['web'], articleId, title, sapo,
         title,
         content: zaloText || sapo || title,
         articleId,
-        imageUrl: zaloPhoto || (Array.isArray(fbPhotos) ? fbPhotos[0] : null)
+        imageUrl: zaloPhoto || (Array.isArray(fbPhotos) ? fbPhotos[0] : null),
+        accountId: zaloAccountId
       });
       if (results.zalo && results.zalo.success && articleId) {
         try {

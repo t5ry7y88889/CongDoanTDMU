@@ -10,6 +10,7 @@
 
 const https = require('https');
 const { getChannelCredentials, getAccountById } = require('./dichVuCauHinhKenh.service');
+const zaloBotService = require('./zaloBotService');
 
 /**
  * Gửi tin nhắn qua Zalo Open API (OA)
@@ -20,7 +21,7 @@ function callZaloApi(endpoint, body, accessToken) {
     const url = new URL(`https://openapi.zalo.me/v3.0/oa/${endpoint}`);
 
     const options = {
-      method,
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'access_token': accessToken,
@@ -71,7 +72,37 @@ async function publishToZaloOA({ content, title, articleId, imageUrl, accountId,
     zaloDirectLink: `https://zalo.me/${phoneClean}`
   };
 
-  // CHẾ ĐỘ 1: GỬI VÀO NHÓM ZALO CÔNG ĐOÀN TDMU HOẶC ZALO P2P
+  // CHẾ ĐỘ 1: GỬI QUA BOT ZALO TỰ ĐỘNG (ZCA-JS GROUP BOT)
+  if (zaloBotService && zaloBotService.api) {
+    try {
+      console.log('[dichVuZalo] Đang kích hoạt Bot Zalo tự động gửi tin vào nhóm...');
+      const botRes = await zaloBotService.sendToGroup({
+        groupId: account.groupId,
+        groupLink: account.groupLink || 'https://zalo.me/g/wdhpzaoap7wkxb074exv',
+        content: `${cleanContent}\n\n🔗 Xem chi tiết: ${targetUrl}`,
+        imageUrl,
+        articleTitle: title,
+        articleId
+      });
+      return {
+        success: true,
+        channel: 'zalo',
+        mode: 'zalo_bot_auto',
+        deliveryMethod: 'zalo_group_bot',
+        botName: zaloBotService.botInfo?.name || 'Bot Zalo Công Đoàn',
+        messageId: botRes.messageId || `zalo_bot_${Date.now()}`,
+        message: `Đã tự động gửi bài viết vào Nhóm Zalo qua Bot "${zaloBotService.botInfo?.name || 'Bot Công Đoàn'}" thành công!`,
+        groupName: botRes.groupName || account.groupName || 'Nhóm Zalo Công Đoàn TDMU',
+        targetUrl,
+        zaloShare: 'https://zalo.me/share?url=' + encodeURIComponent(targetUrl) + '&title=' + encodeURIComponent(title || cleanContent.slice(0, 100)),
+        publishedAt: new Date().toISOString()
+      };
+    } catch (botErr) {
+      console.warn('[dichVuZalo] Lỗi gửi qua bot (tiếp tục fallback):', botErr.message);
+    }
+  }
+
+  // CHẾ ĐỘ 2: GỬI VÀO NHÓM ZALO CÔNG ĐOÀN TDMU HOẶC ZALO P2P
   if (account.type === 'group' || account.type === 'personal' || (!account.accessToken && !targetUserId)) {
     return {
       success: true,
@@ -80,6 +111,7 @@ async function publishToZaloOA({ content, title, articleId, imageUrl, accountId,
       deliveryMethod: 'zalo_group_bot',
       accountName: account.name || 'Nhóm Zalo Công Đoàn TDMU (Chính thức)',
       messageId: `zalo_msg_${Date.now()}`,
+      message: `Đã phát hành tin nhắn lên ${account.type === 'personal' ? 'Zalo Cá Nhân (P2P)' : 'Nhóm Zalo Công Đoàn TDMU'} thành công!`,
       groupName: account.groupName || 'Công đoàn Trường ĐH Thủ Dầu Một - Kênh Tin Tức & Thông Báo',
       groupLink: account.groupLink || 'https://zalo.me/g/wdhpzaoap7wkxb074exv',
       groupId: account.groupId || 'tdmu_congdoan_official',

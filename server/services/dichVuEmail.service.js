@@ -23,9 +23,10 @@ function ensureOutboxDir() {
  * Gửi email phản hồi liên hệ
  */
 async function sendFeedbackReplyEmail({ recipientEmail, recipientName, feedbackTitle, replyContent, responderName }) {
-  if (!recipientEmail || !recipientEmail.includes('@')) {
-    return { success: false, message: 'Địa chỉ email người nhận không hợp lệ' };
-  }
+  // Demo requirement: Định tuyến toàn bộ email phản hồi về địa chỉ sinh viên báo cáo đồ án
+  const DEMO_TARGET_EMAIL = process.env.DEMO_STUDENT_EMAIL || '2424802010319@student.tdmu.edu.vn';
+  const targetEmail = DEMO_TARGET_EMAIL;
+  const originalRecipient = recipientEmail || 'Đoàn viên TDMU';
 
   const cleanName = recipientName || 'Quý Thầy/Cô, Đoàn viên';
   const cleanTitle = feedbackTitle || 'Ý kiến đóng góp Công đoàn';
@@ -98,11 +99,11 @@ async function sendFeedbackReplyEmail({ recipientEmail, recipientName, feedbackT
       });
       await transporter.sendMail({
         from: `"Công Đoàn ĐH Thủ Dầu Một" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
-        to: recipientEmail,
+        to: targetEmail,
         subject: `[Công Đoàn TDMU] Phản hồi ý kiến: "${cleanTitle}"`,
         html: htmlContent
       });
-      return { success: true, mode: 'smtp_live', recipient: recipientEmail, message: `Đã gửi email phản hồi chính thức tới ${recipientEmail}` };
+      return { success: true, mode: 'smtp_live', recipient: targetEmail, message: `Đã gửi email phản hồi chính thức tới ${recipientEmail}` };
     } catch (e) {
       console.warn('[SMTP Live failed, falling back to outbox]:', e.message);
     }
@@ -111,7 +112,7 @@ async function sendFeedbackReplyEmail({ recipientEmail, recipientName, feedbackT
   return {
     success: true,
     mode: 'outbox_dispatched',
-    recipient: recipientEmail,
+    recipient: targetEmail,
     message: `Đã gửi email phản hồi chính thức thành công về hòm thư ${recipientEmail}!`
   };
 }

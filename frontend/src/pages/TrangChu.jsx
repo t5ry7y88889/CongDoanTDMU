@@ -7,7 +7,9 @@ import ArticleQuickModal from '../components/ArticleQuickModal';
 const Home = () => {
   const [articles, setArticles] = useState([]);
   const [documents, setDocuments] = useState([]);
-  const [stats, setStats] = useState({ online: 12, totalViews: 811221 });
+  const [externalLinks, setExternalLinks] = useState([]);
+  const [quickNotices, setQuickNotices] = useState([]);
+  const [stats, setStats] = useState({ online: 1, totalViews: 0 });
   const [loading, setLoading] = useState(true);
 
   // Pagination states
@@ -40,18 +42,51 @@ const Home = () => {
       })
       .catch(() => {});
 
-    // 3. Fetch live visitor stats
-    fetch('/api/stats')
+    // 3. Fetch live external links
+    fetch('/api/external-links')
       .then((r) => r.json())
       .then((data) => {
-        if (data) {
-          setStats({
-            online: data.online || 12,
-            totalViews: data.totalViews || 811221
-          });
+        if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
+          setExternalLinks(data.data);
         }
       })
       .catch(() => {});
+
+    // 4. Fetch live quick notices
+    fetch('/api/quick-notices')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
+          setQuickNotices(data.data);
+        }
+      })
+      .catch(() => {});
+
+    // 5. Fetch true live visitor stats
+    const fetchStats = () => {
+      fetch('/api/stats/realtime')
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && data.success) {
+            setStats({
+              online: data.online || 1,
+              totalViews: data.totalViews || 0
+            });
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchStats();
+    // Heartbeat ping & stats refresh every 30 seconds
+    fetch('/api/stats/ping', { method: 'POST' }).catch(() => {});
+    const interval = setInterval(() => {
+      fetch('/api/stats/ping', { method: 'POST' })
+        .then(() => fetchStats())
+        .catch(() => {});
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const openQuickArticle = (art) => {
@@ -130,7 +165,7 @@ const Home = () => {
                         <i className="fa-regular fa-clock me-1 text-primary"></i>
                         {art.publishedAt ? String(art.publishedAt).slice(0, 16) : (art.createdAt ? String(art.createdAt).slice(0, 16) : 'Vừa cập nhật')} &nbsp;|&nbsp;
                         <i className="fa-regular fa-eye me-1 text-success"></i>
-                        {art.viewsCount || art.views || 0} lượt xem &nbsp;|&nbsp;
+                        {art.viewsCount || art.views || art.LuotXem || 0} lượt xem &nbsp;|&nbsp;
                         <span className="badge bg-light text-primary border">{art.categoryName || 'Tin tức'}</span>
                       </span>
                       <span className="new_item_desc">
@@ -168,24 +203,32 @@ const Home = () => {
                   <i className="fa-solid fa-link me-2 text-primary"></i>Liên kết website
                 </div>
                 <div className="list-group-tdmu">
-                  <a href="https://tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
-                    <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đại học Thủ Dầu Một
-                  </a>
-                  <a href="https://danguy.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
-                    <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đảng Bộ ĐH Thủ Dầu Một
-                  </a>
-                  <a href="https://congdoanvietnam.vn" target="_blank" rel="noreferrer" className="list-group-item">
-                    <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Tổng LĐLĐ Việt Nam
-                  </a>
-                  <a href="https://binhduong.congdoan.vn/" target="_blank" rel="noreferrer" className="list-group-item">
-                    <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> LĐLĐ Tỉnh Bình Dương
-                  </a>
-                  <a href="https://laodong.vn/" target="_blank" rel="noreferrer" className="list-group-item">
-                    <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Báo Lao Động
-                  </a>
-                  <a href="http://doanvien.congdoan.vn/" target="_blank" rel="noreferrer" className="list-group-item">
-                    <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Phần mềm quản lý đoàn viên
-                  </a>
+                  {externalLinks.length > 0 ? (
+                    externalLinks.map((link) => (
+                      <a
+                        key={link.id}
+                        href={link.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="list-group-item d-flex align-items-center"
+                      >
+                        <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>
+                        <span>{link.title}</span>
+                      </a>
+                    ))
+                  ) : (
+                    <>
+                      <a href="https://tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+                        <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đại học Thủ Dầu Một
+                      </a>
+                      <a href="https://danguy.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item">
+                        <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Đảng Bộ ĐH Thủ Dầu Một
+                      </a>
+                      <a href="https://congdoanvietnam.vn" target="_blank" rel="noreferrer" className="list-group-item">
+                        <i className="fa-solid fa-chevron-right me-1 text-muted small"></i> Tổng LĐLĐ Việt Nam
+                      </a>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -252,15 +295,6 @@ const Home = () => {
                         <i className="fa-solid fa-download me-1"></i> 1.2 MB
                       </span>
                     </Link>
-                    <Link to="/van-ban#ke-hoach" className="list-group-vb-item d-flex justify-content-between align-items-center">
-                      <span>
-                        <i className="fa-regular fa-file-pdf text-danger me-2 fa-lg"></i>
-                        <strong>[25/KH-CĐCS]</strong> Kế hoạch tổ chức giải Bóng đá truyền thống "Công đoàn trường ĐH Thủ Dầu Một"
-                      </span>
-                      <span className="badge bg-light text-primary border">
-                        <i className="fa-solid fa-download me-1"></i> 3.1 MB
-                      </span>
-                    </Link>
                   </>
                 )}
               </div>
@@ -272,14 +306,23 @@ const Home = () => {
                 <i className="fa-solid fa-bell me-2 text-warning"></i>THÔNG BÁO NHANH
               </div>
               <div className="notice-quick-box">
-                <p className="mb-2">
-                  <i className="fa-solid fa-circle-info text-primary me-1"></i>
-                  <strong>Hội nghị Cán bộ, Viên chức:</strong> Năm học 2026 - 2027 dự kiến tổ chức vào tháng 10/2026.
-                </p>
-                <p className="mb-0">
-                  <i className="fa-solid fa-circle-check text-success me-1"></i>
-                  <strong>Khám sức khỏe:</strong> 100% đoàn viên tham gia khám sức khỏe định kỳ năm 2026.
-                </p>
+                {quickNotices.length > 0 ? (
+                  quickNotices.map((notice, idx) => (
+                    <p key={notice.id || idx} className={idx === quickNotices.length - 1 ? 'mb-0' : 'mb-2'}>
+                      <i className={`fa-solid ${notice.icon || 'fa-circle-info text-primary'} me-1`}></i>
+                      <strong>{notice.title} </strong>
+                      {notice.linkUrl ? (
+                        <Link to={notice.linkUrl} style={{ textDecoration: 'none', color: 'inherit' }}>
+                          {notice.content}
+                        </Link>
+                      ) : (
+                        notice.content
+                      )}
+                    </p>
+                  ))
+                ) : (
+                  <p className="mb-0 text-muted">Không có thông báo mới.</p>
+                )}
               </div>
             </div>
           </div>

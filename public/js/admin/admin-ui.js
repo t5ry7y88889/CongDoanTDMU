@@ -32,6 +32,12 @@ document.addEventListener('DOMContentLoaded', () => {
   loadAuditLogs();
   loadFacebookPublishSelect();
 
+  // Khởi tạo phân quyền người dùng thực tế
+  const savedRole = localStorage.getItem('tdmu_admin_active_role') || 'admin';
+  const roleSwitcher = document.getElementById('role_switcher');
+  if (roleSwitcher) roleSwitcher.value = savedRole;
+  switchUserRole(savedRole);
+
   const rawHash = window.location.hash.replace('#', '');
   showAdminTab(rawHash || 'ai-creator');
 });
@@ -70,15 +76,87 @@ function setEditorContent(id, content) {
   if (el) el.value = content;
 }
 
+// =============================================================================
+// ROLE-BASED ACCESS CONTROL (RBAC) - PHÂN QUYỀN CHÍNH XÁC THEO VAI TRÒ
+// =============================================================================
 function switchUserRole(role) {
-  currentUserRole = role;
+  currentUserRole = (role || 'admin').toLowerCase();
+  localStorage.setItem('tdmu_admin_active_role', currentUserRole);
+
   const nameEl = document.getElementById('current_user_name');
+  const avatarEl = document.getElementById('current_user_avatar');
+
+  // Kiểm tra nếu có tài khoản thực tế trong localStorage
+  let savedUser = null;
+  try {
+    savedUser = JSON.parse(localStorage.getItem('tdmu_user') || 'null');
+  } catch(e) {}
+
   if (nameEl) {
-    if (role === 'admin') nameEl.innerText = "Ban Thường Vụ Công Đoàn";
-    else if (role === 'editor') nameEl.innerText = "Đ/c Trần Thị B";
-    else nameEl.innerText = "Đ/c Nguyễn Văn C";
+    if (currentUserRole === 'admin') {
+      nameEl.innerText = savedUser?.ho_ten || "Ban Thường Vụ Công Đoàn";
+      if (avatarEl) avatarEl.innerText = "BTV";
+    } else if (currentUserRole === 'editor') {
+      nameEl.innerText = (savedUser?.role === 'editor' && savedUser?.ho_ten) ? savedUser.ho_ten : "Ban Biên Tập & Tuyên Giáo";
+      if (avatarEl) avatarEl.innerText = "BBT";
+    } else if (currentUserRole === 'contributor') {
+      nameEl.innerText = (savedUser?.role === 'contributor' && savedUser?.ho_ten) ? savedUser.ho_ten : "Tổ Trưởng CĐ & CTV";
+      if (avatarEl) avatarEl.innerText = "CTV";
+    } else {
+      nameEl.innerText = (savedUser?.ho_ten) ? savedUser.ho_ten : "Đoàn Viên Công Đoàn";
+      if (avatarEl) avatarEl.innerText = "ĐV";
+    }
   }
-  loadAdminArticles();
+
+  // Áp dụng bộ quyền thực tế lên giao diện
+  applyRbacPermissions(currentUserRole);
+
+  if (typeof loadAdminArticles === 'function') loadAdminArticles();
+}
+
+function applyRbacPermissions(role) {
+  const r = (role || 'admin').toLowerCase();
+
+  // Danh sách các menu sidebar cần phân quyền
+  const menuUsers = document.getElementById('menu_users');
+  const menuSettings = document.getElementById('menu_settings');
+  const menuAudits = document.getElementById('menu_audits');
+  const menuWelfare = document.getElementById('menu_welfare');
+  const menuFeedback = document.getElementById('menu_feedback');
+
+  // Đặt lại hiển thị mặc định
+  if (menuUsers) menuUsers.style.display = 'flex';
+  if (menuSettings) menuSettings.style.display = 'flex';
+  if (menuAudits) menuAudits.style.display = 'flex';
+  if (menuWelfare) menuWelfare.style.display = 'flex';
+  if (menuFeedback) menuFeedback.style.display = 'flex';
+
+  if (r === 'admin') {
+    // Super Admin / Ban Thường Vụ: Toàn quyền
+    console.log('[RBAC] Áp dụng quyền Ban Thường Vụ (Super Admin)');
+  } else if (r === 'editor') {
+    // Biên Tập Viên / Ban Tuyên Giáo: Quản lý tin tức, văn bản, biểu mẫu, phúc lợi, banners, hòm thư
+    // KHÔNG được cấu hình bảo mật hoặc quản lý tài khoản người dùng
+    console.log('[RBAC] Áp dụng quyền Ban Biên Tập (Editor)');
+    if (menuUsers) {
+      menuUsers.title = 'Chỉ Ban Thường Vụ mới có quyền quản lý tài khoản';
+      menuUsers.style.opacity = '0.5';
+    }
+    if (menuSettings) {
+      menuSettings.title = 'Chỉ Ban Thường Vụ mới có quyền cấu hình hệ thống gốc';
+      menuSettings.style.opacity = '0.5';
+    }
+  } else if (r === 'contributor') {
+    // Cộng Tác Viên: Chỉ soạn bài gửi duyệt, tra cứu văn bản
+    console.log('[RBAC] Áp dụng quyền Cộng Tác Viên (Contributor)');
+    if (menuUsers) menuUsers.style.display = 'none';
+    if (menuSettings) menuSettings.style.display = 'none';
+    if (menuAudits) menuAudits.style.display = 'none';
+  } else if (r === 'member') {
+    // Đoàn viên thường: Cảnh báo không có quyền quản trị
+    console.warn('[RBAC] Tài khoản Đoàn viên không có quyền quản trị!');
+    alert('Thông báo phân quyền (RBAC):\n\nTài khoản Đoàn viên chỉ có quyền tra cứu, nộp hồ sơ và gửi ý kiến tại Cổng thông tin công khai, không có quyền quản trị hệ thống CMS.');
+  }
 }
 
 function showAdminTab(rawTabName, subFilter = null) {
@@ -86,7 +164,7 @@ function showAdminTab(rawTabName, subFilter = null) {
   if (['writer', 'studio', 'composer', 'editor', 'tinbaiviet', 'tab_writer'].includes(rawTabName) || ['writer', 'studio', 'composer', 'editor', 'tinbaiviet'].includes(tabName)) {
     tabName = 'ai-creator';
   }
-  const tabs = ['dashboard', 'articles', 'ai-creator', 'organization', 'welfare', 'feedback', 'templates', 'documents', 'schedule', 'users', 'audits'];
+  const tabs = ['dashboard', 'articles', 'ai-creator', 'organization', 'welfare', 'feedback', 'templates', 'documents', 'schedule', 'users', 'audits', 'settings', 'banners', 'menus'];
   if (!tabs.includes(tabName)) {
     tabName = 'ai-creator';
   }
@@ -106,12 +184,15 @@ function showAdminTab(rawTabName, subFilter = null) {
     'ai-creator': 'Soạn Thảo & Biên Tập Tin Bài',
     'feedback': 'Hòm Thư Góp Ý & Nguyện Vọng Đoàn Viên',
     'organization': 'Quản Lý Cơ Cấu Tổ Chức & Cán Bộ',
-    'welfare': 'Quản Lý & Xét Duyệt Đơn Trợ Cấp Khó Khăn',
+    'welfare': 'Quản Lý Văn Bản & Chính Sách Phúc Lợi',
     'templates': 'Kho Biểu Mẫu Nghiệp Vụ Công Đoàn',
     'documents': 'Kho Văn Bản Chỉ Đạo & Điều Hành',
     'schedule': 'Lịch Xuất Bản Đa Kênh',
     'users': 'Quản Lý Cán Bộ & Phân Quyền (3 Roles)',
-    'audits': 'Nhật Ký Tác Nghiệp Hệ Thống'
+    'audits': 'Nhật Ký Tác Nghiệp Hệ Thống',
+    'banners': 'Quản Trị Banners & Slider Trình Chiếu Trang Chủ',
+    'menus': 'Quản Trị Menu Điều Hướng Website (Portal Navigation)',
+    'settings': 'Cấu Hình Hệ Thống, Banners & Truyền Thông'
   };
 
   const breadcrumbEl = document.getElementById('current_breadcrumb_title');
@@ -137,12 +218,20 @@ function showAdminTab(rawTabName, subFilter = null) {
   if (tabName === 'articles') loadAdminArticles(subFilter || 'all');
   if (tabName === 'documents') loadAdminDocuments();
   if (tabName === 'templates') loadAdminTemplates();
+  if (tabName === 'menus' && typeof loadAdminMenus === 'function') loadAdminMenus();
+  if (tabName === 'banners') {
+    // Bật giao diện quản trị Banners chuyên dụng
+    const secSettings = document.getElementById('tab_settings_content');
+    if (secSettings) secSettings.style.display = 'block';
+    if (typeof switchSettingsSubTab === 'function') switchSettingsSubTab('banners');
+  }
   if (tabName === 'organization' && typeof loadAdminOrganization === 'function') loadAdminOrganization();
   if (tabName === 'welfare' && typeof loadAdminWelfare === 'function') loadAdminWelfare();
   if (tabName === 'feedback') loadAdminFeedback();
   if (tabName === 'schedule') loadScheduleTable();
   if (tabName === 'users') loadUsersTable();
   if (tabName === 'audits') loadAuditLogs();
+  if (tabName === 'settings' && typeof loadAdminSettings === 'function') loadAdminSettings();
 }
 
 function toggleSidebarCollapse() {
@@ -184,3 +273,6 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+window.applyRbacPermissions = applyRbacPermissions;
+window.switchUserRole = switchUserRole;

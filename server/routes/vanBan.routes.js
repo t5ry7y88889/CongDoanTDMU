@@ -63,6 +63,60 @@ router.get('/', async (req, res) => {
 
 const { parseDocumentBuffer } = require('../services/dichVuDocTaiLieu.service');
 
+
+// Route 1-Click Demo Tinbaiviet: Reads files from Ho_So_Bai_Viet_Tieu_Chuan
+router.get('/demo-tinbaiviet', (req, res) => {
+  try {
+    const dir = path.join(__dirname, '../Ho_So_Bai_Viet_Tieu_Chuan');
+    const altDir = path.join(__dirname, '../../Ho_So_Bai_Viet_Tieu_Chuan');
+    const finalDir = fs.existsSync(dir) ? dir : altDir;
+
+    if (!fs.existsSync(finalDir)) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy thư mục Ho_So_Bai_Viet_Tieu_Chuan' });
+    }
+
+    const fileNames = fs.readdirSync(finalDir).filter(f => !f.endsWith('.txt'));
+    const files = [];
+
+    const mimeMap = {
+      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.pdf': 'application/pdf',
+      '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png'
+    };
+
+    for (const name of fileNames) {
+      const fullPath = path.join(finalDir, name);
+      const stat = fs.statSync(fullPath);
+      const ext = path.extname(name).toLowerCase();
+      const type = mimeMap[ext] || 'application/octet-stream';
+      const buffer = fs.readFileSync(fullPath);
+      const base64 = buffer.toString('base64');
+      const sizeKB = Math.round(stat.size / 1024 * 10) / 10;
+      const sizeStr = sizeKB > 1024 ? (sizeKB / 1024).toFixed(1) + ' MB' : sizeKB + ' KB';
+
+      files.push({
+        name,
+        type,
+        size: sizeStr,
+        base64,
+        dataUrl: type.startsWith('image/') ? 'data:' + type + ';base64,' + base64 : null
+      });
+    }
+
+    res.json({
+      success: true,
+      count: files.length,
+      files
+    });
+  } catch (err) {
+    console.error('Lỗi nạp demo-tinbaiviet:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.get('/:id', (req, res) => {
   const db = loadDB();
   const id = parseInt(req.params.id);

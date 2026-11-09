@@ -117,6 +117,10 @@ function cleanAndFilterText(rawText) {
   // Fix decomposed / corrupt Vietnamese fonts across all ingested text
   text = fixVietnameseFont(text);
 
+  // Bảo vệ thông tin cá nhân (PII Masking): Tự động che SĐT và CCCD trước khi chuyển qua AI
+  text = text.replace(/(?:\+84|0)(?:3|5|7|8|9)\d{8}\b/g, '[SĐT_ĐÃ_ẨN]');
+  text = text.replace(/\b\d{12}\b/g, '[CCCD_ĐÃ_ẨN]');
+
   return text.trim();
 }
 

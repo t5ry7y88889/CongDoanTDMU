@@ -21,6 +21,11 @@ USE TDMU_TradeUnion_DB;
 GO
 
 -- XÓA BẢNG CŨ THEO THỨ TỰ RÀNG BUỘC KHÓA NGOẠI (NẾU ĐÃ TỒN TẠI)
+IF OBJECT_ID('dbo.VISITOR_SESSIONS', 'U') IS NOT NULL DROP TABLE dbo.VISITOR_SESSIONS;
+IF OBJECT_ID('dbo.EXTERNAL_LINKS', 'U') IS NOT NULL DROP TABLE dbo.EXTERNAL_LINKS;
+IF OBJECT_ID('dbo.QUICK_NOTICES', 'U') IS NOT NULL DROP TABLE dbo.QUICK_NOTICES;
+IF OBJECT_ID('dbo.SITE_SETTINGS', 'U') IS NOT NULL DROP TABLE dbo.SITE_SETTINGS;
+IF OBJECT_ID('dbo.BANNERS', 'U') IS NOT NULL DROP TABLE dbo.BANNERS;
 IF OBJECT_ID('dbo.BOOKMARKS', 'U') IS NOT NULL DROP TABLE dbo.BOOKMARKS;
 IF OBJECT_ID('dbo.COMMENTS', 'U') IS NOT NULL DROP TABLE dbo.COMMENTS;
 IF OBJECT_ID('dbo.ARTICLE_AUDITS', 'U') IS NOT NULL DROP TABLE dbo.ARTICLE_AUDITS;
@@ -286,6 +291,75 @@ CREATE TABLE dbo.INBOX_FEEDBACK (
 GO
 
 -- =========================================================================
+-- 16. BẢNG: BANNERS (Banner trình chiếu lớn ngoài trang chủ)
+-- =========================================================================
+CREATE TABLE dbo.BANNERS (
+    BannerId INT IDENTITY(1,1) PRIMARY KEY,
+    TieuDe NVARCHAR(255) NOT NULL,
+    PhuDe NVARCHAR(500) NULL,
+    HinhAnhUrl NVARCHAR(500) NOT NULL,
+    DuongDanLienKet NVARCHAR(500) NULL,
+    ThuTu INT NOT NULL DEFAULT 1,
+    IsActive BIT NOT NULL DEFAULT 1,
+    NgayTao DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+
+-- =========================================================================
+-- 17. BẢNG: SITE_SETTINGS (Cấu hình hệ thống, thông tin liên hệ, thương hiệu)
+-- =========================================================================
+CREATE TABLE dbo.SITE_SETTINGS (
+    SettingKey VARCHAR(50) PRIMARY KEY,
+    SettingValue NVARCHAR(MAX) NOT NULL,
+    MoTa NVARCHAR(255) NULL,
+    NgayCapNhat DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+
+-- =========================================================================
+-- 18. BẢNG: QUICK_NOTICES (Thông báo nhanh trang chủ)
+-- =========================================================================
+CREATE TABLE dbo.QUICK_NOTICES (
+    NoticeId INT IDENTITY(1,1) PRIMARY KEY,
+    TieuDe NVARCHAR(255) NOT NULL,
+    NoiDung NVARCHAR(1000) NOT NULL,
+    IconClass VARCHAR(100) NULL DEFAULT 'fa-solid fa-bullhorn',
+    DuongDanLienKet NVARCHAR(500) NULL,
+    BadgeText NVARCHAR(50) NULL DEFAULT N'MỚI',
+    BadgeColor VARCHAR(50) NULL DEFAULT '#DC2626',
+    ThuTu INT NOT NULL DEFAULT 1,
+    IsActive BIT NOT NULL DEFAULT 1,
+    NgayTao DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+
+-- =========================================================================
+-- 19. BẢNG: EXTERNAL_LINKS (Liên kết website đối tác và cơ quan cấp trên)
+-- =========================================================================
+CREATE TABLE dbo.EXTERNAL_LINKS (
+    LinkId INT IDENTITY(1,1) PRIMARY KEY,
+    TenLienKet NVARCHAR(255) NOT NULL,
+    DuongDanUrl NVARCHAR(500) NOT NULL,
+    ThuTu INT NOT NULL DEFAULT 1,
+    IsActive BIT NOT NULL DEFAULT 1,
+    NgayTao DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+
+-- =========================================================================
+-- 20. BẢNG: VISITOR_SESSIONS (Theo dõi phiên truy cập trực tuyến thời gian thực)
+-- =========================================================================
+CREATE TABLE dbo.VISITOR_SESSIONS (
+    SessionId VARCHAR(100) PRIMARY KEY,
+    IpAddress VARCHAR(50) NULL,
+    UserAgent NVARCHAR(500) NULL,
+    LastActive DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+
+
+-- =========================================================================
 -- NẠP DỮ LIỆU KHỞI TẠO MẪU (SEED DATA CHUẨN 100% THỰC TẾ)
 -- =========================================================================
 
@@ -424,13 +498,51 @@ INSERT INTO dbo.INBOX_FEEDBACK (HoTen, Email, TieuDe, NoiDung, TrangThai, TraLoi
 (N'ThS. Lê Nguyễn Xuân Lan', 'lanlnx@tdmu.edu.vn', N'Đề xuất tổ chức thêm các buổi giao lưu thể thao định kỳ', N'Kính gửi Công đoàn trường, đề nghị tổ chức thêm giải cầu lông và bóng bàn định kỳ hàng quý.', 'resolved', N'Ban Thường vụ đã đưa nội dung này vào kế hoạch hoạt động quý 4/2026. Xin chân thành cảm ơn Cô.');
 GO
 
+-- 16. NẠP BANNERS (Banner trang chủ)
+INSERT INTO dbo.BANNERS (TieuDe, PhuDe, HinhAnhUrl, DuongDanLienKet, ThuTu, IsActive) VALUES
+(N'CÔNG ĐOÀN CƠ SỞ TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT', N'Đổi mới - Dân chủ - Đoàn kết - Phát triển vì quyền lợi người lao động', 'images/banner.jpg', '/gioi-thieu', 1, 1),
+(N'CHÀO MỪNG ĐẠI HỘI CÔNG ĐOÀN CƠ SỞ NHIỆM KỲ 2023 - 2028', N'Phát huy tinh thần trách nhiệm, đổi mới sáng tạo, chuyển đổi số toàn diện', 'images/sports.jpg', '/tin-tuc', 2, 1);
+GO
+
+-- 17. NẠP SITE_SETTINGS (Cấu hình hệ thống động)
+INSERT INTO dbo.SITE_SETTINGS (SettingKey, SettingValue, MoTa) VALUES
+('brandTitle', N'CÔNG ĐOÀN TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT', N'Tên thương hiệu tiêu đề website'),
+('brandSub', N'THU DAU MOT UNIVERSITY TRADE UNION', N'Tên tiếng Anh phụ đề website'),
+('hotline', N'(0274) 3.815.184', N'Đường dây nóng liên hệ'),
+('email', N'congdoan@tdmu.edu.vn', N'Hộp thư điện tử liên hệ'),
+('address', N'Lầu 1, Dãy A, Cổng 1, Số 06 Trần Văn Ơn, P. Phú Lợi, TP. Thủ Dầu Một, Bình Dương', N'Địa chỉ văn phòng công đoàn'),
+('websiteUrl', N'congdoan.tdmu.edu.vn', N'Tên miền cổng thông tin'),
+('facebookUrl', N'https://facebook.com/congdoantdmu', N'Trang Fanpage Facebook'),
+('zaloUrl', N'https://zalo.me/congdoantdmu', N'Kênh Zalo Official Account'),
+('totalViewsOffset', N'0', N'Số lượt xem cơ sở tích lũy trước đây');
+GO
+
+-- 18. NẠP QUICK_NOTICES (Thông báo nhanh)
+INSERT INTO dbo.QUICK_NOTICES (TieuDe, NoiDung, IconClass, DuongDanLienKet, ThuTu, IsActive) VALUES
+(N'Hội nghị Cán bộ, Viên chức:', N'Năm học 2026 - 2027 dự kiến tổ chức vào tháng 10/2026.', 'fa-circle-info text-primary', '/tin-tuc', 1, 1),
+(N'Khám sức khỏe:', N'100% đoàn viên tham gia khám sức khỏe định kỳ năm 2026.', 'fa-circle-check text-success', '/phuc-loi-doan-vien', 2, 1);
+GO
+
+-- 19. NẠP EXTERNAL_LINKS (Liên kết ngoài)
+INSERT INTO dbo.EXTERNAL_LINKS (TenLienKet, DuongDanUrl, ThuTu, IsActive) VALUES
+(N'Đại học Thủ Dầu Một', 'https://tdmu.edu.vn/', 1, 1),
+(N'Đảng Bộ ĐH Thủ Dầu Một', 'https://danguy.tdmu.edu.vn/', 2, 1),
+(N'Tổng LĐLĐ Việt Nam', 'https://congdoanvietnam.vn', 3, 1),
+(N'LĐLĐ Tỉnh Bình Dương', 'https://binhduong.congdoan.vn/', 4, 1),
+(N'Báo Lao Động', 'https://laodong.vn/', 5, 1),
+(N'Phần mềm quản lý đoàn viên', 'http://doanvien.congdoan.vn/', 6, 1);
+GO
+
+
 PRINT N'=================================================================';
 PRINT N'✅ KHỞI TẠO CƠ SỞ DỮ LIỆU TDMU_TradeUnion_DB THÀNH CÔNG 100%!';
-PRINT N'📊 ĐÚNG 15 BẢNG CHUẨN 3NF KHỚP 100% BÁO CÁO GỐC CHƯƠNG 3:';
+PRINT N'📊 ĐẦY ĐỦ 20 BẢNG CSDL ĐỘNG TOÀN DIỆN (15 BẢNG CHƯƠNG 3 + 5 BẢNG QUẢN TRỊ NÂNG CAO):';
 PRINT N'   1. ORGANIZATIONS      6. DOCUMENTS        11. COMMENTS';
 PRINT N'   2. UNION_BRANCHES     7. TEMPLATES        12. BOOKMARKS';
 PRINT N'   3. MEMBERS            8. SCHEDULES        13. WELFARE_PROGRAMS';
 PRINT N'   4. CATEGORIES         9. USERS            14. WELFARE_CATEGORIES';
 PRINT N'   5. ARTICLES          10. ARTICLE_AUDITS   15. INBOX_FEEDBACK';
+PRINT N'   16. BANNERS         17. SITE_SETTINGS    18. QUICK_NOTICES';
+PRINT N'   19. EXTERNAL_LINKS  20. VISITOR_SESSIONS';
 PRINT N'=================================================================';
 GO

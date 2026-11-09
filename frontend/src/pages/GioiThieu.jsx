@@ -2,23 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const GioiThieu = () => {
-  const [stats, setStats] = useState({ online: 12, totalViews: 811221 });
+  const [stats, setStats] = useState({ online: 1, totalViews: 0 });
+  const [externalLinks, setExternalLinks] = useState([]);
 
   useEffect(() => {
-    // Fetch live access stats if available
-    fetch('/api/stats')
+    // 1. Fetch live access stats
+    fetch('/api/stats/realtime')
       .then(res => res.json())
       .then(data => {
-        if (data && data.online !== undefined) {
+        if (data && data.success) {
           setStats({
-            online: data.online || 12,
-            totalViews: data.totalViews || 811221
+            online: data.online || 1,
+            totalViews: data.totalViews || 0
           });
         }
       })
-      .catch(() => {
-        // Fallback default stats
-      });
+      .catch(() => {});
+
+    // 2. Fetch live external links
+    fetch('/api/external-links')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.success && Array.isArray(data.data)) {
+          setExternalLinks(data.data);
+        }
+      })
+      .catch(() => {});
+
+    // 3. Heartbeat ping
+    fetch('/api/stats/ping', { method: 'POST' }).catch(() => {});
   }, []);
 
   return (
@@ -58,25 +70,21 @@ const GioiThieu = () => {
               </li>
               <li className="list-group-item px-0 py-2 border-0 d-flex align-items-start gap-2">
                 <i className="fa-solid fa-certificate text-danger mt-1"></i>
-                <div><strong>Bằng khen của Chủ tịch UBND Tỉnh Bình Dương</strong> về thành tích xuất sắc trong phong trào thi đua "Lao động giỏi - Lao động sáng tạo".</div>
+                <div><strong>Bằng khen của Chủ tịch UBND Tỉnh Bình Dương</strong> về thành tích xuất sắc trong phong trào thi đua lao động giỏi, lao động sáng tạo.</div>
               </li>
               <li className="list-group-item px-0 py-2 border-0 d-flex align-items-start gap-2">
-                <i className="fa-solid fa-circle-check text-success mt-1"></i>
-                <div><strong>100% Tổ Công đoàn</strong> trực thuộc hoàn thành tốt và hoàn thành xuất sắc nhiệm vụ được giao hàng năm.</div>
-              </li>
-              <li className="list-group-item px-0 py-2 border-0 d-flex align-items-start gap-2">
-                <i className="fa-solid fa-hand-holding-heart text-info mt-1"></i>
-                <div>Hàng trăm lượt cán bộ, giảng viên, nhân viên được hỗ trợ khó khăn, tặng quà tết và hưởng các gói phúc lợi đoàn viên công đoàn ưu việt.</div>
+                <i className="fa-solid fa-star text-primary mt-1"></i>
+                <div><strong>100% Tổ công đoàn bộ phận</strong> đạt danh hiệu hoàn thành tốt nhiệm vụ, tích cực chăm lo bảo vệ lợi ích hợp pháp cho hơn 800 cán bộ viên chức.</div>
               </li>
             </ul>
 
-            <h5 className="fw-bold mt-4 text-primary d-flex align-items-center">
-              <i className="fa-solid fa-compass me-2 text-primary"></i>III. PHƯƠNG CHÂM HOẠT ĐỘNG
-            </h5>
-            <div className="alert alert-primary bg-light border-primary p-3 rounded-3">
-              <div className="fst-italic fw-semibold text-primary mb-1">
-                "Đổi mới - Dân chủ - Đoàn kết - Phát triển"
-              </div>
+            <div className="alert alert-light border border-primary-subtle p-3 rounded" style={{ background: '#F8FAFC' }}>
+              <h6 className="fw-bold text-primary mb-1">
+                <i className="fa-solid fa-quote-left me-2"></i>Khẩu hiệu hành động nhiệm kỳ 2023 - 2028:
+              </h6>
+              <p className="mb-0 fw-bold text-dark fs-6" style={{ fontStyle: 'italic' }}>
+                "ĐỔI MỚI - DÂN CHỦ - ĐOÀN KẾT - PHÁT TRIỂN"
+              </p>
               <small className="text-muted">
                 Tất cả vì quyền lợi chính đáng của người lao động, đồng hành cùng sự phát triển bền vững của Trường Đại học Thủ Dầu Một.
               </small>
@@ -92,24 +100,25 @@ const GioiThieu = () => {
               <i className="fa-solid fa-link me-2 text-primary"></i>Liên kết website
             </div>
             <div className="list-group list-group-flush" style={{ fontSize: '13.5px' }}>
-              <a href="https://tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
-                <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>Đại học Thủ Dầu Một
-              </a>
-              <a href="https://danguy.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
-                <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>Đảng Bộ ĐH Thủ Dầu Một
-              </a>
-              <a href="https://congdoanvietnam.vn" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
-                <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>Tổng LĐLĐ Việt Nam
-              </a>
-              <a href="https://binhduong.congdoan.vn/" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
-                <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>LĐLĐ Tỉnh Bình Dương
-              </a>
-              <a href="https://laodong.vn/" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
-                <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>Báo Lao Động
-              </a>
-              <a href="http://doanvien.congdoan.vn/" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
-                <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>QL Đoàn Viên Toàn Quốc
-              </a>
+              {externalLinks.length > 0 ? (
+                externalLinks.map(l => (
+                  <a key={l.id} href={l.url} target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
+                    <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>{l.title}
+                  </a>
+                ))
+              ) : (
+                <>
+                  <a href="https://tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
+                    <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>Đại học Thủ Dầu Một
+                  </a>
+                  <a href="https://danguy.tdmu.edu.vn/" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
+                    <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>Đảng Bộ ĐH Thủ Dầu Một
+                  </a>
+                  <a href="https://congdoanvietnam.vn" target="_blank" rel="noreferrer" className="list-group-item list-group-item-action py-2">
+                    <i className="fa-solid fa-chevron-right me-2 text-muted small"></i>Tổng LĐLĐ Việt Nam
+                  </a>
+                </>
+              )}
             </div>
           </div>
 
